@@ -27,15 +27,15 @@
   ### - Useful Discussions:
 
   * planning vs re-scheduling
-  https://discourse.aicrowd.com/t/discussion-planning-vs-re-scheduling/1647
+    https://discourse.aicrowd.com/t/discussion-planning-vs-re-scheduling/1647
   * Additional Programming language
-  https://discourse.aicrowd.com/t/additional-programming-language/1684
+    https://discourse.aicrowd.com/t/additional-programming-language/1684
 
 ---
 
 ## Quick Guide to Flatland Library
 
-  will do tonight
+
 
 ---
 
@@ -43,17 +43,9 @@
 
   ### - To-Do:
 
-  * Create Interface to run C++ code in Python. Therefore, the C++ implementation of the MAPF algorithms could be used directly. 
-  * May require modifications on the C++ algorithms to allow output that could be directly fed to Flatland Library. 
-
-  * Alternatively, Implement algorithms in Python and use it with the Flatland Library directly. 
 
 
-  ### - List of Algoithm(s):
 
-  please list algorithms that you would like to try in the 1st round.
-
-  * ...
 
 ---
 
