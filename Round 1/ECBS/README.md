@@ -17,6 +17,6 @@ To run the code:
 
 ## To do list:
 * Use a better data structure for constraint table.
-* Replace Grid2d with a new graph class designed for Flatland, and change the code accordingly.
-
+* Replace Grid2d with a new graph class designed for Flatland, and change the code accordingly (i.e., the duplicate detection for the single-agent search).
+* Change the high-level focal search so that it prioritizes the CT node with the minimum number of collisions and break ties by the sum of costs.
 
