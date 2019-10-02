@@ -1,0 +1,8 @@
+{
+  "challenge_id": "aicrowd_flatland_challenge_2019",
+  "grader_id": "aicrowd_flatland_challenge_2019",
+  "authors": ["mohanty"],
+  "description": "Random Agent for Flatland Challenge.",
+  "debug" : true
+}
+
