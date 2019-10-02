@@ -138,8 +138,9 @@ void FlatlandMap::preprocessing_heuristics()
 	heuristics.resize(num_of_agents);
 	for (size_t i = 0; i < num_of_agents; i++)
 	{
-    std::cout <<"H for agent " << i << "  goal: " << goal_locations[i] << std::endl; 
 		compute_heuristics(goal_locations[i], heuristics[i]);
+    // std::cout <<"H for agent " << i << " in its start position: " << heuristics[i][start_locations[i]] << std::endl;
+
 	}
 }
 
@@ -239,9 +240,9 @@ void FlatlandMap::compute_heuristics(int goal_location, vector<int>& heuristics)
 		delete (s);
 	}
 
-  for (int i = 0; i < heuristics.size(); i ++){
-    std::cout << i << ":  " << heuristics[i] << std::endl;
-  }
+  // for (int i = 0; i < heuristics.size(); i ++){
+  //   std::cout << i << ":  " << heuristics[i] << std::endl;
+  // }
 
 	nodes.clear();
 	heap.clear();
