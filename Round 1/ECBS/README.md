@@ -10,10 +10,13 @@ make
 
 To run the code:
 ```
-./ECBS -m ../map.txt  -a ../agents.txt -o ../paths.txt -t 60 -w 1.2
+./ECBS -m ../map.txt  -a ../agents.txt -o ../paths.txt -t 60 -w 1.2 --makespan 1000
 ```
 
-## To do list:
-* Use a better data structure for constraint table.
-* Change the high-level focal search so that it prioritizes the CT node with the minimum number of collisions and break ties by the sum of costs.
+The resulting solution is guaranteed to be:
+* conflict-free.
+* $\sum l_i \leq w * opt$.
+* $\max\{l_i} \leq makespan$.
+
+where $l_i$ is the length of the path for agent $i$.
 
