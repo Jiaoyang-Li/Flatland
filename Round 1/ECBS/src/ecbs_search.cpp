@@ -512,8 +512,9 @@ bool ECBSSearch<MyGraph>::runECBSSearch()
 }
 
 template<class MyGraph>
-ECBSSearch<MyGraph>::ECBSSearch(const MyGraph& G, double focal_w, bool disjointSplitting, double cutoffTime) :
-	focal_w(focal_w), disjointSplitting(disjointSplitting), G(G), single_planner(G.map_size())
+ECBSSearch<MyGraph>::ECBSSearch(const MyGraph& G, double focal_w, int makespan, bool disjointSplitting, double cutoffTime) :
+	focal_w(focal_w), max_makespan(makespan), disjointSplitting(disjointSplitting), G(G),
+	single_planner(G.map_size(), makespan)
 {
 	// set timer
 	std::clock_t start;
