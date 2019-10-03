@@ -12,6 +12,9 @@ To run the code:
 ```
 ./ECBS -m ../map.txt  -a ../agents.txt -o ../paths.txt -t 60 -w 1.2 --makespan 1000
 ```
+NOTE: 
+The above cmd is for running from ./ECBS folder. If run the code from a different folder, please relocate the agents.txt, map.txt files.
+
 
 The resulting solution is guaranteed to be:
 * conflict-free.
