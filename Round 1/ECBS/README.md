@@ -16,7 +16,7 @@ To run the code:
 The resulting solution is guaranteed to be:
 * conflict-free.
 * $\sum l_i \leq w * opt$.
-* $\max\{l_i} \leq makespan$.
+* $\max l_i \leq makespan$.
 
 where $l_i$ is the length of the path for agent $i$.
 
