@@ -17,3 +17,12 @@ std::ostream& operator<<(std::ostream& os, const Conflict& conflict)
 		<< get<2>(conflict) << ", " << get<3>(conflict) << ", " << get<4>(conflict) << ">";
 	return os;
 }
+
+std::ostream& operator<<(std::ostream& os, const Path& path)
+{
+    for (const auto& p: path)
+    {
+        os << p.id << ",";
+    }
+    return os;
+}

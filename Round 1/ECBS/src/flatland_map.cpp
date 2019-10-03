@@ -64,8 +64,8 @@ bool FlatlandMap::load_agents(string fname)
 		boost::tokenizer< boost::char_separator<char> > tok(line, sep);
 		boost::tokenizer< boost::char_separator<char> >::iterator beg = tok.begin();
 		int num_of_agents = atoi((*beg).c_str());
-		start_locations.resize(num_of_agents);
-		goal_locations.resize(num_of_agents);
+		start_ids.resize(num_of_agents);
+		goal_ids.resize(num_of_agents);
 		r_velocities.resize(num_of_agents);
 		for (int i = 0; i<num_of_agents; i++)
 		{
@@ -73,9 +73,9 @@ bool FlatlandMap::load_agents(string fname)
 			boost::tokenizer< boost::char_separator<char> > col_tok(line, sep);
 			boost::tokenizer< boost::char_separator<char> >::iterator c_beg = col_tok.begin();
 			// read start [row,col] for agent i
-			start_locations[i] = atoi((*c_beg).c_str());
+			start_ids[i] = atoi((*c_beg).c_str());
 			c_beg++;
-			goal_locations[i] = atoi((*c_beg).c_str());
+			goal_ids[i] = atoi((*c_beg).c_str());
 			c_beg++;
 			r_velocities[i] = atoi((*c_beg).c_str());
 		}
@@ -104,8 +104,8 @@ list<int> FlatlandMap::children_vertices(int vertex_id) const
 {
   auto list = adjacent_vertices(vertex_id);
   if (allowed_wait)
-  list.push_back(vertex_id);
-
+    list.push_back(vertex_id);
+  return list;
 }
 
 
@@ -134,11 +134,11 @@ bool FlatlandMap::is_edge_conflict(int from_0, int to_0, int from_1, int to_1) c
 
 void FlatlandMap::preprocessing_heuristics()
 {
-	size_t num_of_agents = start_locations.size();
+	size_t num_of_agents = start_ids.size();
 	heuristics.resize(num_of_agents);
 	for (size_t i = 0; i < num_of_agents; i++)
 	{
-		compute_heuristics(goal_locations[i], heuristics[i]);
+		compute_heuristics(goal_ids[i], heuristics[i]);
     // std::cout <<"H for agent " << i << " in its start position: " << heuristics[i][start_locations[i]] << std::endl;
 
 	}

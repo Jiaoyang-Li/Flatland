@@ -46,8 +46,8 @@ bool Grid2D::load_agents(string fname)
 		boost::tokenizer< boost::char_separator<char> > tok(line, sep);
 		boost::tokenizer< boost::char_separator<char> >::iterator beg = tok.begin();
 		int num_of_agents = atoi((*beg).c_str());
-		start_locations.resize(num_of_agents);
-		goal_locations.resize(num_of_agents);
+		start_ids.resize(num_of_agents);
+		goal_ids.resize(num_of_agents);
 		for (int i = 0; i<num_of_agents; i++)
 		{
 			getline(myfile, line);
@@ -57,13 +57,13 @@ bool Grid2D::load_agents(string fname)
 			int row = atoi((*c_beg).c_str());
 			c_beg++;
 			int col = atoi((*c_beg).c_str());
-			start_locations[i] = linearize_coordinate(row, col);
+			start_ids[i] = linearize_coordinate(row, col);
 			// read goal [row,col] for agent i
 			c_beg++;
 			row = atoi((*c_beg).c_str());
 			c_beg++;
 			col = atoi((*c_beg).c_str());
-			goal_locations[i] = linearize_coordinate(row, col);
+			goal_ids[i] = linearize_coordinate(row, col);
 		}
 		myfile.close();
 		return true;
@@ -71,7 +71,7 @@ bool Grid2D::load_agents(string fname)
 	return false;
 }
 
-list<int> Grid2D::adjacent_vertices(int vertex_id) const
+list<int> Grid2D::children_vertices(int vertex_id) const
 {
 	list<int> vertices;
 	for (int direction = 0; direction < 5; direction++)
@@ -86,11 +86,11 @@ list<int> Grid2D::adjacent_vertices(int vertex_id) const
 
 void Grid2D::preprocessing_heuristics()
 {
-	size_t num_of_agents = start_locations.size();
+	size_t num_of_agents = start_ids.size();
 	heuristics.resize(num_of_agents);
 	for (size_t i = 0; i < num_of_agents; i++)
 	{
-		compute_heuristics(goal_locations[i], heuristics[i]);
+		compute_heuristics(goal_ids[i], heuristics[i]);
 	}
 }
 
@@ -161,7 +161,7 @@ void Grid2D::compute_heuristics(int goal_location, vector<int>& heuristics)
 	{
 		MyNode* curr = heap.top();
 		heap.pop();
-		auto neighbours = adjacent_vertices(curr->loc);
+		auto neighbours = children_vertices(curr->loc);
 		for (auto next_loc : neighbours)
 		{
 			int next_g_val = (int)curr->g_val + 1;
