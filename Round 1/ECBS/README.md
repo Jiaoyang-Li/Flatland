@@ -1,7 +1,5 @@
 # ECBS
 
-The code currently is tested on the MAPF benchmark instances.
-
 The code requires the external library: BOOST (https://www.boost.org/).
 
 To compile the code:
