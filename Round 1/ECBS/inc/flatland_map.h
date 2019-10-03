@@ -4,8 +4,8 @@
 class FlatlandMap
 {
  public:
-  vector<int> start_locations;
-  vector<int> goal_locations;
+  vector<int> start_ids;
+  vector<int> goal_ids;
   vector<int> r_velocities; // reciprocals of velocities, how many timesteps for train to cross an edge
   vector< vector<int> > heuristics; // [agent_id][loc]
 
@@ -13,7 +13,7 @@ class FlatlandMap
 
   list<int> children_vertices(int vertex_id) const;
 
-
+  int get_location(int id) const {return node2loc[id]; }
   bool is_node_conflict(int id_0, int id_1) const;
   bool is_edge_conflict(int from_0, int to_0, int from_1, int to_1) const;
 
