@@ -9,6 +9,7 @@ class ECBSSearch
 public:
 	//settings
 	double focal_w;
+	int max_makespan;
 	 bool disjointSplitting;
 	 double time_limit;
 	 int screen = 0;
@@ -26,7 +27,7 @@ public:
 	  bool solution_found = false;
 	  double solution_cost = -1;
 
-	  ECBSSearch(const MyGraph& G, double focal_w, bool disjointSplitting, double cutoffTime);
+	  ECBSSearch(const MyGraph& G, double focal_w, int makespan, bool disjointSplitting, double cutoffTime);
 	~ECBSSearch();
 	  bool runECBSSearch();
 

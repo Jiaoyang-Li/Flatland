@@ -27,11 +27,8 @@ public:
 	bool runFocalSearch(const MyGraph& G, int agent_id, double f_weight, const vector < list< tuple<int, int, bool> > >* constraints,
 		const CAT& res_table); // the original ECBS low-level search
 
-	template<class MyGraph>
-	bool runBoundedSearch(const MyGraph& G, int agent_id, int deadline_timestep, const vector < list< tuple<int, int, bool> > >* constraints,
-		const CAT& res_table); // return a path within the given deadline timestep
 
-	SingleAgentPlanner(size_t map_size): map_size(map_size) {}
+	SingleAgentPlanner(size_t map_size, int max_makespan): map_size(map_size), max_makespan(max_makespan) {}
 
 	vector<pathEntry> path;  // a path that takes the agent from initial to goal location satisying all constraints
 	int path_cost;  
@@ -40,6 +37,7 @@ public:
 	int num_of_conf;
 
 	const size_t map_size;
+	const int max_makespan;
 
 	uint64_t num_expanded;
 	uint64_t num_generated;
@@ -89,6 +87,8 @@ const CAT& res_table)
         for (auto next_id : neighbours)
         {
             int next_timestep = curr->timestep + 1;
+            if (next_timestep > max_makespan)
+                continue;
             if (!isConstrained(G.get_location(curr->id), G.get_location(next_id), next_timestep, constraints))
             {
                 // compute cost to next_id via curr node
@@ -199,113 +199,4 @@ const CAT& res_table)
     path.clear();
     releaseClosedListNodes(allNodes_table);
     return false;
-}
-
-
-// Returns true if a collision free path found (with cost up to deadline_timestep) while
-// minimizing the number of internal conflicts (that is conflicts with known_paths for other agents found so far).
-template<class MyGraph>
-bool SingleAgentPlanner::runBoundedSearch(const MyGraph& G, int agent_id, int deadline_timestep,
-	const vector < list< tuple<int, int, bool> > >* constraints,
-	const CAT& res_table)
-{
-	clear();
-	hashtable_t::iterator it;  // will be used for find()
-
-	// generate start and add it to the FOCAL list
-	int start_id = G.start_locations[agent_id];
-	Node* start = new Node(start_id, 0, G.heuristics[agent_id][start_id], NULL, 0);
-	num_generated++;
-
-	start->focal_handle = focal_list.push(start);
-	start->in_openlist = true;
-	allNodes_table.insert(start);
-	min_f_val = start->getFVal();
-
-	int lastGoalConsTime = extractLastGoalTimestep(G.goal_locations[agent_id], constraints);
-
-	while (!focal_list.empty())
-	{
-		Node* curr = focal_list.top(); focal_list.pop();
-		curr->in_openlist = false;
-		num_expanded++;
-
-		// check if the popped node is a goal
-		if (curr->id == G.goal_locations[agent_id] && curr->timestep > lastGoalConsTime)
-		{
-			updatePath(curr);
-			releaseClosedListNodes(allNodes_table);
-			return true;
-		}
-
-		// iterator over all possible actions
-		auto neighbours = G.children_vertices(curr->id);
-		for (auto next_id : neighbours)
-		{
-			int next_timestep = curr->timestep + 1;
-			if (!isConstrained(G.getlocation(curr->id), G.get_location(next_id), next_timestep, constraints))
-			{
-				// compute cost to next_id via curr node
-				int next_g_val = curr->g_val + 1;
-				int next_h_val = G.heuristics[agent_id][next_id];
-				if (next_g_val + next_h_val > deadline_timestep)
-					continue;
-				int next_internal_conflicts = 0;
-				next_internal_conflicts = curr->num_internal_conf + numOfConflictsForStep(G.getlocation(curr->id),
-				        G.get_location(next_id), next_timestep, res_table, G.map_size());
-				// generate (maybe temporary) node
-				Node* next = new Node(next_id, next_g_val, next_h_val,
-					curr, next_timestep, next_internal_conflicts);
-
-				// try to retrieve it from the hash table
-				it = allNodes_table.find(next);
-
-				if (it == allNodes_table.end())
-				{
-					next->in_openlist = true;
-					num_generated++;
-					next->focal_handle = focal_list.push(next);
-					allNodes_table.insert(next);
-				}
-				else
-				{  // update existing node's if needed (only in the open_list)
-					delete(next);  // not needed anymore -- we already generated it before
-					Node* existing_next = *it;
-					if (existing_next->in_openlist == true)
-					{  // if its in the open list
-						if (existing_next->getFVal() > next_g_val + next_h_val ||
-							(existing_next->getFVal() == next_g_val + next_h_val &&
-								existing_next->num_internal_conf > next_internal_conflicts))
-						{
-							// update existing node
-							existing_next->g_val = next_g_val;
-							existing_next->h_val = next_h_val;
-							existing_next->parent = curr;
-							existing_next->num_internal_conf = next_internal_conflicts;
-							focal_list.update(existing_next->focal_handle);
-						}
-					}
-					else
-					{  // if its in the closed list (reopen)
-						if (existing_next->getFVal() > next_g_val + next_h_val ||
-							(existing_next->getFVal() == next_g_val + next_h_val 	&&
-								existing_next->num_internal_conf > next_internal_conflicts))
-						{
-							// if f-val decreased through this new path (or it remains the same and there's less internal conflicts)
-							existing_next->g_val = next_g_val;
-							existing_next->h_val = next_h_val;
-							existing_next->parent = curr;
-							existing_next->num_internal_conf = next_internal_conflicts;
-							existing_next->in_openlist = true;
-							existing_next->focal_handle = focal_list.push(existing_next);
-						}
-					}  // end update a node in closed list
-				}  // end update an existing node
-			}
-		}  // end for loop that generates successors
-	}  // end while loop
-	   // no path found
-	path.clear();
-	releaseClosedListNodes(allNodes_table);
-	return false;
 }
