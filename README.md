@@ -33,15 +33,15 @@
 
 ---
 
-## Quick Guide to Flatland Library
-
-
-
----
-
 ## Round 1 Plan
 
   ### - To-Do:
+
+1. Move the working code from round 1 notebook to the run.py for round 1
+2. Write a multi-threading python code for running 4 solvers on 4 cpus. 
+   1. All Terminate when once one of solvers finds the solution? May need to confirm.
+3. Pack everything and try local evaluation
+4. Try submission.
 
 
 
