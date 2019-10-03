@@ -12,7 +12,7 @@ make
 
 To run the code:
 ```
-./ECBS -m instances/lak503d.map  -a instances/lak503dmap-100agents-1.agents -o test.csv -t 60 -w 1.2
+./ECBS -m ../map.txt  -a ../agents.txt -o ../paths.txt -t 60 -w 1.2
 ```
 
 ## To do list:
