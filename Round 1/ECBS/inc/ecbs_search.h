@@ -9,13 +9,14 @@ class ECBSSearch
 public:
 	//settings
 	double focal_w;
+	int max_makespan;
 	 bool disjointSplitting;
-	 int time_limit;
+	 double time_limit;
 	 int screen = 0;
 
 	 // statistics of efficiency
 	 double runtime = 0; // not include preprocessing
-	 int prepTime = 0; // CPU time for preprocessing
+	 double prepTime = 0; // CPU time for preprocessing
 	 uint64_t HL_num_expanded = 0;
 	 uint64_t HL_num_generated = 0;
 	 uint64_t LL_num_expanded = 0;
@@ -26,10 +27,11 @@ public:
 	  bool solution_found = false;
 	  double solution_cost = -1;
 
-	  ECBSSearch(const MyGraph& G, double focal_w, bool disjointSplitting, int cutoffTime);
+	  ECBSSearch(const MyGraph& G, double focal_w, int makespan, bool disjointSplitting, double cutoffTime);
 	~ECBSSearch();
 	  bool runECBSSearch();
 
+	  const vector<Path*>& get_solution() const {return paths; }
 	  // print
 	  void printPaths() const;
 	  void printResults() const;
@@ -44,8 +46,8 @@ private:
 	ECBSNode* dummy_start;
 	vector <int> paths_costs_found_initially;
 	vector <int> ll_min_f_vals_found_initially;  // contains initial ll_min_f_vals found
-	vector < vector<pathEntry>* > paths_found_initially;  // contain initial paths found
-	vector < vector<pathEntry>* > paths;  // agents paths
+	vector < Path* > paths_found_initially;  // contain initial paths found
+	vector < Path* > paths;  // agents paths
 	vector <int> ll_min_f_vals;  // each entry [i] represent the lower bound found for agent[i]
 	vector <int> paths_costs;
 

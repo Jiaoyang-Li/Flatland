@@ -1,6 +1,9 @@
-#include "grid2D.h"
+#include "flatland_map.h"
 
-bool Grid2D::load_map(string fname)
+#include<iostream>
+
+
+bool FlatlandMap::load_map(string fname)
 {
   string line;
   ifstream myfile (fname.c_str());
@@ -8,32 +11,47 @@ bool Grid2D::load_map(string fname)
   {
     getline (myfile,line);
     boost::char_separator<char> sep(",");
-	boost::tokenizer< boost::char_separator<char> > tok(line, sep);
-	boost::tokenizer< boost::char_separator<char> >::iterator beg=tok.begin();
-    rows = atoi ( (*beg).c_str() ); // read number of rows
-    beg++;
-    cols = atoi ( (*beg).c_str() ); // read number of cols
-    my_map.resize(rows * cols);
-    // read map
-    for (int i=0; i<rows; i++) {
-		getline (myfile, line);
-		for (int j=0; j<cols; j++) {
-		  my_map[cols*i + j] = (line[j] != '.');
-		}
+    boost::tokenizer< boost::char_separator<char> > tok(line, sep);
+    boost::tokenizer< boost::char_separator<char> >::iterator beg=tok.begin();
+    num_vertexes = atoi ( (*beg).c_str() ); // read number of rows
+    node2loc.resize(num_vertexes);
+    edges.resize(num_vertexes);
+    edges_r.resize(num_vertexes);
+
+
+    // read nodes
+    for (int i=0; i<num_vertexes; i++) {
+      getline (myfile, line);
+      boost::tokenizer< boost::char_separator<char> > l_tok(line, sep);
+      boost::tokenizer< boost::char_separator<char> >::iterator l_beg=tok.begin();
+
+			int location = atoi((*l_beg).c_str());
+      node2loc[i] = location;
+    }
+    // read edge
+    getline (myfile, line);
+    boost::tokenizer< boost::char_separator<char> > edge_num_tok(line, sep);
+    boost::tokenizer< boost::char_separator<char> >::iterator edge_num_beg=edge_num_tok.begin();
+    int num_edges= atoi ( (*edge_num_beg).c_str() ); // read number of rows
+    // read nodes
+    for (int i=0; i<num_edges; i++) {
+      getline (myfile, line);
+      boost::tokenizer< boost::char_separator<char> > l_tok(line, sep);
+      boost::tokenizer< boost::char_separator<char> >::iterator l_beg=l_tok.begin();
+
+			int from = atoi((*l_beg).c_str());
+			l_beg++;
+			int to = atoi((*l_beg).c_str());
+      edges[from].push_back(to);
+      edges_r[to].push_back(from);
     }
     myfile.close();
-    // initialize moves_offset array
-    moves_offset[Grid2D::valid_moves_t::WAIT_MOVE] = 0;
-    moves_offset[Grid2D::valid_moves_t::NORTH] = -cols;
-    moves_offset[Grid2D::valid_moves_t::EAST] = 1;
-    moves_offset[Grid2D::valid_moves_t::SOUTH] = cols;
-    moves_offset[Grid2D::valid_moves_t::WEST] = -1;
-	return true;
+    return true;
   }
   return false;
 }
 
-bool Grid2D::load_agents(string fname)
+bool FlatlandMap::load_agents(string fname)
 {
 	string line;
 
@@ -48,22 +66,18 @@ bool Grid2D::load_agents(string fname)
 		int num_of_agents = atoi((*beg).c_str());
 		start_ids.resize(num_of_agents);
 		goal_ids.resize(num_of_agents);
+		r_velocities.resize(num_of_agents);
 		for (int i = 0; i<num_of_agents; i++)
 		{
 			getline(myfile, line);
 			boost::tokenizer< boost::char_separator<char> > col_tok(line, sep);
 			boost::tokenizer< boost::char_separator<char> >::iterator c_beg = col_tok.begin();
 			// read start [row,col] for agent i
-			int row = atoi((*c_beg).c_str());
+			start_ids[i] = atoi((*c_beg).c_str());
 			c_beg++;
-			int col = atoi((*c_beg).c_str());
-			start_ids[i] = linearize_coordinate(row, col);
-			// read goal [row,col] for agent i
+			goal_ids[i] = atoi((*c_beg).c_str());
 			c_beg++;
-			row = atoi((*c_beg).c_str());
-			c_beg++;
-			col = atoi((*c_beg).c_str());
-			goal_ids[i] = linearize_coordinate(row, col);
+			r_velocities[i] = atoi((*c_beg).c_str());
 		}
 		myfile.close();
 		return true;
@@ -71,31 +85,67 @@ bool Grid2D::load_agents(string fname)
 	return false;
 }
 
-list<int> Grid2D::children_vertices(int vertex_id) const
+list<int> FlatlandMap::adjacent_vertices(int vertex_id) const
+{
+  list<int> vertices;
+  for (auto i: edges[vertex_id]){
+    vertices.push_back(i);
+  }
+	// for (int direction = 0; direction < 5; direction++)
+	// {
+	// 	int next_id = vertex_id + moves_offset[direction];
+	// 	if (0 <= next_id && next_id < cols * rows && !my_map[next_id] && abs(next_id % cols - vertex_id % cols) < 2)
+	// 		vertices.push_back(next_id);
+	// }
+	return vertices;
+}
+
+list<int> FlatlandMap::children_vertices(int vertex_id) const
+{
+  auto list = adjacent_vertices(vertex_id);
+  if (allowed_wait)
+    list.push_back(vertex_id);
+  return list;
+}
+
+
+list<int> FlatlandMap::adjacent_vertices_r(int vertex_id) const
 {
 	list<int> vertices;
-	for (int direction = 0; direction < 5; direction++)
-	{
-		int next_id = vertex_id + moves_offset[direction];
-		if (0 <= next_id && next_id < cols * rows && !my_map[next_id] && abs(next_id % cols - vertex_id % cols) < 2)
-			vertices.push_back(next_id);
-	}
+  for (auto i: edges_r[vertex_id]){
+    vertices.push_back(i);
+      }
+	// for (int direction = 0; direction < 5; direction++)
+	// {
+	// 	int next_id = vertex_id + moves_offset[direction];
+	// 	if (0 <= next_id && next_id < cols * rows && !my_map[next_id] && abs(next_id % cols - vertex_id % cols) < 2)
+	// 		vertices.push_back(next_id);
+	// }
 	return vertices;
 }
 
 
-void Grid2D::preprocessing_heuristics()
+bool FlatlandMap::is_node_conflict(int id_0, int id_1) const
+{return node2loc[id_0] == node2loc[id_1];}
+
+bool FlatlandMap::is_edge_conflict(int from_0, int to_0, int from_1, int to_1) const
+{return node2loc[to_0] == node2loc[from_1] && node2loc[to_1] == node2loc[from_0];}
+
+
+void FlatlandMap::preprocessing_heuristics()
 {
 	size_t num_of_agents = start_ids.size();
 	heuristics.resize(num_of_agents);
 	for (size_t i = 0; i < num_of_agents; i++)
 	{
 		compute_heuristics(goal_ids[i], heuristics[i]);
+    // std::cout <<"H for agent " << i << " in its start position: " << heuristics[i][start_locations[i]] << std::endl;
+
 	}
 }
 
 // compute low-level heuristics
-void Grid2D::compute_heuristics(int goal_location, vector<int>& heuristics)
+void FlatlandMap::compute_heuristics(int goal_location, vector<int>& heuristics)
 {
 	struct MyNode
 	{
@@ -161,7 +211,7 @@ void Grid2D::compute_heuristics(int goal_location, vector<int>& heuristics)
 	{
 		MyNode* curr = heap.top();
 		heap.pop();
-		auto neighbours = children_vertices(curr->loc);
+		auto neighbours = adjacent_vertices_r(curr->loc);
 		for (auto next_loc : neighbours)
 		{
 			int next_g_val = (int)curr->g_val + 1;
@@ -182,13 +232,18 @@ void Grid2D::compute_heuristics(int goal_location, vector<int>& heuristics)
 		}
 	}
 	// iterate over all nodes
-	heuristics.resize(rows * cols, INT_MAX);
+	heuristics.resize(map_size(), INT_MAX);
 	for (auto it = nodes.begin(); it != nodes.end(); it++)
 	{
 		MyNode* s = *it;
 		heuristics[s->loc] = (int)s->g_val;
 		delete (s);
 	}
+
+  // for (int i = 0; i < heuristics.size(); i ++){
+  //   std::cout << i << ":  " << heuristics[i] << std::endl;
+  // }
+
 	nodes.clear();
 	heap.clear();
 }

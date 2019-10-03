@@ -1,16 +1,11 @@
 #pragma once
 #include "common.h"
 
-struct pathEntry
-{
-  int location;
-};
-
 class Node 
 {
 	public:
 
-	int loc;
+	int id;
 
 	int g_val;
 	int h_val = 0;
@@ -100,7 +95,7 @@ class Node
 		bool operator()(const Node* s1, const Node* s2) const
 		{
 			return (s1 == s2) || (s1 && s2 &&
-								s1->loc == s2->loc &&
+								s1->id == s2->id &&
 								s1->timestep == s2->timestep);
 		}
 	};
@@ -111,9 +106,9 @@ class Node
 	{
 		std::size_t operator()(const Node* n) const
 		{
-			size_t loc_hash = std::hash<int>()(n->loc);
+			size_t id_hash = std::hash<int>()(n->id);
 			size_t timestep_hash = std::hash<int>()(n->timestep);
-			return (loc_hash  ^ (timestep_hash << 1));
+			return (id_hash  ^ (timestep_hash << 1));
 		}
 	};
 };

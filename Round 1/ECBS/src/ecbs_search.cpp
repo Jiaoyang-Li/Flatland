@@ -1,5 +1,7 @@
 #include "ecbs_search.h"
 
+#include <memory>
+
 
 //////////////////// PRINT ///////////////////////////
 template<class MyGraph>
@@ -30,12 +32,13 @@ void ECBSSearch<MyGraph>::printResults() const
 	{
 		std::cout << "        Succeed ; ";
 	}
-	std::cout << solution_cost << "," << min_sum_f_vals << "," <<
-		dummy_start->sum_min_f_vals << "," <<
-		prepTime << "," <<
-		HL_num_expanded << "," << HL_num_generated << "," <<
-		LL_num_expanded << "," << LL_num_generated << "," <<
-		runtime << endl;
+	std::cout << "cost: " << solution_cost << "," << " ;lowerbound: " << min_sum_f_vals << //"," <<
+		// dummy_start->sum_min_f_vals << "," <<
+		"; preTime: " << prepTime << //"," <<
+        "; runtime: " << runtime <<
+        "; nodes:   " << HL_num_expanded << //"," << HL_num_generated << "," <<
+		//LL_num_expanded << "," << LL_num_generated << "," <<
+		endl;
 }
 
 template<class MyGraph>
@@ -86,7 +89,7 @@ vector < list< tuple<int, int, bool> > >* ECBSSearch<MyGraph>::collectConstraint
 
 
 	// initialize a constraint vector of length max_timestep+1. Each entry is an empty list< tuple<int,int, bool> > (loc1,loc2, positive)
-	vector < list< tuple<int, int, bool> > >* cons_vec = new vector < list< tuple<int, int, bool> > >(max_timestep + 1, list< tuple<int, int, bool> >());
+	auto cons_vec = new vector < list< tuple<int, int, bool> > >(max_timestep + 1, list< tuple<int, int, bool> >());
 	for (list< tuple<int, int, int, bool> >::iterator it = constraints_positive.begin(); it != constraints_positive.end(); it++)
 	{
 		if (get<1>(*it) < 0) // vertex constraint
@@ -127,11 +130,11 @@ inline int ECBSSearch<MyGraph>::getAgentLocation(int agent_id, size_t timestep)
 {
 	// if last timestep > plan length, agent remains in its last location
 	if (timestep >= paths[agent_id]->size())
-		return paths[agent_id]->back().location;
+		return G.get_location(paths[agent_id]->back().id);
 	else if (timestep < 0)
-		return paths[agent_id]->front().location;
+		return G.get_location(paths[agent_id]->front().id);
 	else  // otherwise, return its location for that timestep
-		return paths[agent_id]->at(timestep).location;
+		return G.get_location(paths[agent_id]->at(timestep).id);
 }
 
  // return true iff agent1 and agent2 switched locations at timestep [t,t+1] 
@@ -250,30 +253,30 @@ void ECBSSearch<MyGraph>::findConflicts(list<std::shared_ptr<Conflict>>& set, in
 	size_t min_path_length = paths[a1]->size() < paths[a2]->size() ? paths[a1]->size() : paths[a2]->size();
 	for (size_t timestep = 0; timestep < min_path_length; timestep++)
 	{
-		int loc1 = paths[a1]->at(timestep).location;
-		int loc2 = paths[a2]->at(timestep).location;
+		int loc1 = getAgentLocation(a1, timestep);
+		int loc2 = getAgentLocation(a2, timestep);
+        int next_loc1 = getAgentLocation(a1, timestep + 1);
+        int next_loc2 = getAgentLocation(a2, timestep + 1);
 		if (loc1 == loc2)// vertex conflict
 		{
-			set.push_back(std::shared_ptr<Conflict>(new Conflict(a1, a2, loc1, -1, timestep))); 
+			set.push_back(std::make_shared<Conflict>(a1, a2, loc1, -1, timestep));
 		}
-		else if (timestep < min_path_length - 1
-			&& loc1 == paths[a2]->at(timestep + 1).location
-			&& loc2 == paths[a1]->at(timestep + 1).location)// edge conflict
+		else if (loc1 != next_loc1 && loc1 == next_loc2 && loc2 == next_loc1)// edge conflict
 		{
-			set.push_back(std::shared_ptr<Conflict>(new Conflict(a1, a2, loc1, loc2, timestep + 1))); 
+			set.push_back(std::make_shared<Conflict>(a1, a2, loc1, loc2, timestep + 1));
 		}
 	}
 	if (paths[a1]->size() != paths[a2]->size()) 
 	{// check whether there are conflicts that occur after one agent reaches its goal
 		int a1_ = paths[a1]->size() < paths[a2]->size() ? a1 : a2;
 		int a2_ = paths[a1]->size() < paths[a2]->size() ? a2 : a1;
-		int loc1 = paths[a1_]->back().location;
+		int loc1 = getAgentLocation(a1_, INT_MAX);
 		for (size_t timestep = min_path_length; timestep < paths[a2_]->size(); timestep++)
 		{
-			int loc2 = paths[a2_]->at(timestep).location;
+			int loc2 = getAgentLocation(a2_, timestep);
 			if (loc1 == loc2)
 			{// It's at least a semi conflict			
-				set.push_front(std::shared_ptr<Conflict>(new Conflict(a1_, a2_, loc1, -1, timestep)));
+				set.push_front(std::make_shared<Conflict>(a1_, a2_, loc1, -1, timestep));
 			}
 		}
 	}
@@ -309,12 +312,12 @@ void ECBSSearch<MyGraph>::updateReservationTable(size_t max_path_len, int exclud
 		{
 			for (size_t timestep = 0; timestep < max_path_len; timestep++)
 			{
-				int id = getAgentLocation(ag, timestep);
-				cat[timestep].insert(id);
-				int prev_id = getAgentLocation(ag, timestep - 1);
-				if (prev_id != id)
+				int loc = getAgentLocation(ag, timestep);
+				cat[timestep].insert(loc);
+				int prev_loc = getAgentLocation(ag, timestep - 1);
+				if (prev_loc != loc)
 				{
-					cat[timestep].insert(id + (1 + prev_id) * (int)map_size);
+					cat[timestep].insert(loc + (1 + prev_loc) * (int)map_size);
 				}
 			}
 		}
@@ -415,7 +418,7 @@ bool ECBSSearch<MyGraph>::runECBSSearch()
 	// start is already in the open_list
 	while (!focal_list.empty())
 	{
-		runtime = (std::clock() - start) * 1000.0 / CLOCKS_PER_SEC;
+		runtime = (double)(std::clock() - start) / CLOCKS_PER_SEC;
 		if (runtime > time_limit) // timeout
 		{
 			break;
@@ -503,21 +506,22 @@ bool ECBSSearch<MyGraph>::runECBSSearch()
 	}  // end of while loop
 
 
-	runtime = (std::clock() - start) * 1000.0 / CLOCKS_PER_SEC; //  get time
+	runtime = (double)(std::clock() - start) / CLOCKS_PER_SEC; //  get time
 	printResults();
 	return solution_found;
 }
 
 template<class MyGraph>
-ECBSSearch<MyGraph>::ECBSSearch(const MyGraph& G, double focal_w, bool disjointSplitting, int cutoffTime) :
-	focal_w(focal_w), disjointSplitting(disjointSplitting), G(G), single_planner(G.map_size())
+ECBSSearch<MyGraph>::ECBSSearch(const MyGraph& G, double focal_w, int makespan, bool disjointSplitting, double cutoffTime) :
+	focal_w(focal_w), max_makespan(makespan), disjointSplitting(disjointSplitting), G(G),
+	single_planner(G.map_size(), makespan)
 {
 	// set timer
 	std::clock_t start;
 	start = std::clock();
 
-	time_limit = cutoffTime * 1000;
-	num_of_agents = (int)G.start_locations.size();
+	time_limit = cutoffTime;
+	num_of_agents = (int)G.start_ids.size();
 	map_size = G.map_size();
 	ll_min_f_vals = vector <int>(num_of_agents);
 	paths_costs = vector <int>(num_of_agents);
@@ -569,7 +573,7 @@ ECBSSearch<MyGraph>::ECBSSearch(const MyGraph& G, double focal_w, bool disjointS
 	min_sum_f_vals = dummy_start->sum_min_f_vals;
 	focal_list_threshold = focal_w * dummy_start->sum_min_f_vals;
 
-	prepTime = std::clock() - start;
+	prepTime = (double)(std::clock() - start) / CLOCKS_PER_SEC;
 }
 
 template<class MyGraph>

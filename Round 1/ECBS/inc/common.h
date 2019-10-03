@@ -74,3 +74,11 @@ struct ConstraintState
 };
 
 typedef vector< unordered_set< int > > CAT;
+
+struct pathEntry
+{
+    int id;
+};
+
+typedef vector<pathEntry> Path;
+std::ostream& operator<<(std::ostream& os, const Path& path);

@@ -1,4 +1,5 @@
 ﻿#include "grid2D.h"
+#include "flatland_map.h"
 #include "ecbs_search.h"
 #include "ecbs_search.cpp"
 
@@ -18,6 +19,7 @@ int main(int argc, char** argv)
 		("agents,a", po::value<std::string>()->required(), "input file for agents")
 		("output,o", po::value<std::string>()->required(), "output file for schedule")
 		("weight,w", po::value<double>()->required(), "suboptimal bound for ECBS")
+		("makespan", po::value<int>()->default_value(INT_MAX), "Maximum makespan")
 		("disjoint,d", po::value<bool>()->default_value(false), "disjoint splitting")		
 		("screen,s", po::value<int>()->default_value(0), "screen (0: only results; 1: details)")
 		("cutoffTime,t", po::value<int>()->default_value(300), "cutoff time (seconds)")
@@ -34,18 +36,36 @@ int main(int argc, char** argv)
 
 	po::notify(vm);
 
-	Grid2D G;
-	G.load_map(vm["map"].as<string>());
-	G.load_agents(vm["agents"].as<string>());
+	// Grid2D G;
+    FlatlandMap G;
+	if (!G.load_map(vm["map"].as<string>()))
+	{
+	    cerr << "Fail to load the map" << endl;
+	    return -1;
+	}
+	if (!G.load_agents(vm["agents"].as<string>()))
+    {
+        cerr << "Fail to load the agents" << endl;
+        return -1;
+    }
 	G.preprocessing_heuristics();
 
 	srand(vm["seed"].as<int>());
 
-	ECBSSearch<Grid2D> ecbs(G, vm["weight"].as<double>(), vm["disjoint"].as<bool>(), vm["cutoffTime"].as<int>());
+	ECBSSearch<FlatlandMap> ecbs(G, vm["weight"].as<double>(),
+        vm["makespan"].as<int>(), vm["disjoint"].as<bool>(), vm["cutoffTime"].as<int>());
+	// ECBSSearch<Grid2D> ecbs(G, vm["weight"].as<double>(), vm["disjoint"].as<bool>(), vm["cutoffTime"].as<int>());
 	ecbs.screen = vm["screen"].as<int>();
 	ecbs.runECBSSearch();
-	ecbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>());
+	// ecbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>());
+    ofstream stats;
+    stats.open(vm["output"].as<string>(), std::ios::app);
+    for (const auto& path: ecbs.get_solution())
+    {
+        stats << *path << endl;
+    }
 
+    stats.close();
 	return 0;
 
 }
