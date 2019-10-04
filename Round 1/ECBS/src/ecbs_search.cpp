@@ -2,6 +2,52 @@
 
 #include <memory>
 
+template<class MyGraph>
+bool ECBSSearch<MyGraph>::evaluateSolution() const
+{
+    for (int i = 0; i < num_of_agents; i++)
+    {
+        for (size_t timestep = 0; timestep < paths[i]->size() - 1; timestep++)
+        {
+            int id = paths[i]->at(timestep).id;
+            int next_id = paths[i]->at(timestep + 1).id;
+            bool connected = false;
+            for (auto children : G.children_vertices(id))
+            {
+                if (children == next_id)
+                {
+                    connected = true;
+                    break;
+                }
+            }
+            if (!connected)
+                return false;
+        }
+    }
+    for (int i = 0; i < num_of_agents; i++)
+    {
+        for (int j = i + 1; j < num_of_agents; j++)
+        {
+            size_t max_path_length = paths[i]->size() > paths[j]->size() ? paths[i]->size() : paths[j]->size();
+            for (size_t timestep = 0; timestep < max_path_length; timestep++)
+            {
+                int loc1 = getAgentLocation(i, timestep);
+                int loc2 = getAgentLocation(j, timestep);
+                int next_loc1 = getAgentLocation(i, timestep + 1);
+                int next_loc2 = getAgentLocation(j, timestep + 1);
+                if (loc1 == loc2)// vertex conflict
+                {
+                    return false;
+                }
+                else if (loc1 != next_loc1 && loc1 == next_loc2 && loc2 == next_loc1)// edge conflict
+                {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
+}
 
 //////////////////// PRINT ///////////////////////////
 template<class MyGraph>
@@ -126,7 +172,7 @@ vector < list< tuple<int, int, bool> > >* ECBSSearch<MyGraph>::collectConstraint
 // Note -- if timestep is longer than its plan length,
 // then the location remains the same as its last location
 template<class MyGraph>
-inline int ECBSSearch<MyGraph>::getAgentLocation(int agent_id, size_t timestep) 
+inline int ECBSSearch<MyGraph>::getAgentLocation(int agent_id, size_t timestep) const
 {
 	// if last timestep > plan length, agent remains in its last location
 	if (timestep >= paths[agent_id]->size())
