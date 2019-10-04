@@ -18,9 +18,9 @@ from flatland.envs.rail_env import RailEnv
 
 class MapDecoder:
     """
-    straightward implementation, could be optimized
+    straightforward implementation, could be optimized
     The node id is in the form (x,y), could be a linear mapping from
-    the most leftupper cornner to the most rightlower corner
+    the most left-upper corner to the most right-lower corner
     Flatland map encoding scheme, NESW -> N:[NESW], E:[NESW], S[NESW], W[NESW]
     Deadend cell is different, agent faces the opposite to the direction that it can goes.
     """
