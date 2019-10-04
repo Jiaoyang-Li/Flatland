@@ -20,10 +20,10 @@ int main(int argc, char** argv)
 		("output,o", po::value<std::string>()->required(), "output file for schedule")
 		("weight,w", po::value<double>()->required(), "suboptimal bound for ECBS")
 		("makespan", po::value<int>()->default_value(INT_MAX), "Maximum makespan")
-		("disjoint,d", po::value<bool>()->default_value(false), "disjoint splitting")		
-		("screen,s", po::value<int>()->default_value(0), "screen (0: only results; 1: details)")
+		("disjoint,d", po::value<bool>()->default_value(false), "disjoint splitting")
 		("cutoffTime,t", po::value<int>()->default_value(300), "cutoff time (seconds)")
 		("seed", po::value<int>()->default_value(0), "random seed")
+		("debug", po::value<bool>()->default_value(false), "debug")
 	;
 
 	po::variables_map vm;
@@ -55,8 +55,18 @@ int main(int argc, char** argv)
 	ECBSSearch<FlatlandMap> ecbs(G, vm["weight"].as<double>(),
         vm["makespan"].as<int>(), vm["disjoint"].as<bool>(), vm["cutoffTime"].as<int>());
 	// ECBSSearch<Grid2D> ecbs(G, vm["weight"].as<double>(), vm["disjoint"].as<bool>(), vm["cutoffTime"].as<int>());
-	ecbs.screen = vm["screen"].as<int>();
+	ecbs.screen = 0;
+	if (vm["debug"].as<bool>())
+        ecbs.screen = 1;
 	ecbs.runECBSSearch();
+
+	// test the solution, only needed for debug
+	if (vm["debug"].as<bool>() && !ecbs.evaluateSolution())
+    {
+	    cout << "The solution is not feasible!" << endl;
+	    return -1;
+    }
+
 	// ecbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>());
     ofstream stats;
     stats.open(vm["output"].as<string>(), std::ios::app);

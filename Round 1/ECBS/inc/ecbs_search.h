@@ -36,6 +36,8 @@ public:
 	  void printPaths() const;
 	  void printResults() const;
 	  void saveResults(const string& outputFile, const string& agentFile) const;
+	  
+	  bool evaluateSolution() const;
 
 private:
 
@@ -61,9 +63,10 @@ private:
 	// input
 	size_t map_size;
 	int num_of_agents;
+	
 
 	inline bool switchedLocations(int agent1_id, int agent2_id, size_t timestep);
-	inline int getAgentLocation(int agent_id, size_t timestep);
+	inline int getAgentLocation(int agent_id, size_t timestep) const;
 	bool finfConflicts(ECBSNode& curr);
 	void findConflicts(list<std::shared_ptr<Conflict>>& set, int a1, int a2);
 	std::shared_ptr<Conflict>  chooseConflict(const list<std::shared_ptr<Conflict>>& conflicts);
