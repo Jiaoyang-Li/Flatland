@@ -8,6 +8,7 @@ import numpy as np
 import time
 import logging
 import sys
+import pickle
 
 from flatland.utils.rendertools import RenderTool
 from flatland.envs.observations import GlobalObsForRailEnv
@@ -39,24 +40,20 @@ class MapDecoder:
             next_nodes.append(next_node)
             # print("N", next_node)
 
-        elif int(short_bits[1]) == 1:  # East
+        if int(short_bits[1]) == 1:  # East
             next_node = (current_node[0], current_node[1]+1)
             next_nodes.append(next_node)
             # print("E", next_node)
 
-        elif int(short_bits[2]) == 1:  # South
+        if int(short_bits[2]) == 1:  # South
             next_node = (current_node[0]+1, current_node[1])
             next_nodes.append(next_node)
             # print("S", next_node)
 
-        elif int(short_bits[3]) == 1:  # West
+        if int(short_bits[3]) == 1:  # West
             next_node = (current_node[0], current_node[1]-1)
             next_nodes.append(next_node)
             # print("W", next_node)
-
-        else:
-            logging.ERROR('Invalid encoding')
-            exit(1)
 
         return next_nodes
 
@@ -70,45 +67,40 @@ class MapDecoder:
 
         previous_nodes = {}
 
-        if int(bits) > 0:  # check previously whether the gird has a train
-            # Facing North
-            if bits[0:4] != "0000":
-                next_nodes = self.case_matching(current_node, bits[0:4])
-                # add one previous node, and what nodes the agent can go from current node.
-                previous_nodes[(current_node[0]+1, current_node[1])] = next_nodes
-                # print("N, and returned next nodes", next_nodes)
-                # print("N, and current previous nodes", previous_nodes)
+        # Facing North
+        if bits[0:4] != "0000":
+            next_nodes = self.case_matching(current_node, bits[0:4])
+            # add one previous node, and what nodes the agent can go from current node.
+            previous_nodes[(current_node[0]+1, current_node[1])] = next_nodes
+            # print("N, and returned next nodes", next_nodes)
+            # print("N, and current previous nodes", previous_nodes)
 
-            # East
-            elif bits[4:8] != "0000":
-                next_nodes = self.case_matching(current_node, bits[4:8])
-                previous_nodes[(current_node[0], current_node[1]-1)] = next_nodes
-                # print("E",next_nodes)
-                # print("E, and current previous nodes", previous_nodes)
+        # East
+        if bits[4:8] != "0000":
+            next_nodes = self.case_matching(current_node, bits[4:8])
+            previous_nodes[(current_node[0], current_node[1]-1)] = next_nodes
+            # print("E",next_nodes)
+            # print("E, and current previous nodes", previous_nodes)
 
-            # South
-            elif bits[8:12] != "0000":
-                next_nodes = self.case_matching(current_node, bits[8:12])
-                # print("S",next_nodes)
-                previous_nodes[(current_node[0]-1, current_node[1])] = next_nodes
-                # print("S, and current previous nodes", previous_nodes)
+        # South
+        if bits[8:12] != "0000":
+            next_nodes = self.case_matching(current_node, bits[8:12])
+            # print("S",next_nodes)
+            previous_nodes[(current_node[0]-1, current_node[1])] = next_nodes
+            # print("S, and current previous nodes", previous_nodes)
 
-            # West
-            elif bits[12:16] != "0000":
-                next_nodes = self.case_matching(current_node, bits[12:16])
-                # print("W",next_nodes)
-                previous_nodes[(current_node[0], current_node[1]+1)] = next_nodes
-                # print("W, and current previous nodes", previous_nodes)
-
-            else:
-                logging.ERROR('Invalid decoding')
-                exit(1)
+        # West
+        if bits[12:16] != "0000":
+            next_nodes = self.case_matching(current_node, bits[12:16])
+            # print("W",next_nodes)
+            previous_nodes[(current_node[0], current_node[1]+1)] = next_nodes
+            # print("W, and current previous nodes", previous_nodes)
 
         return previous_nodes
 
     def convert_ori_rail_map(self):
-        for row in range(0, self.original_map.shape[0]):
-            for col in range(0, self.original_map.shape[1]):
+        for row in range(0, len(self.original_map)):
+            for col in range(0, len(self.original_map[row])):
                 # Current node: (row,col)
                 current_node = (row, col)
                 # print("Current node:", (row, col))
@@ -186,24 +178,18 @@ if __name__ == '__main__':
     # print(obs[0][0].shape)
 
     # tool to render environments
-    env_renderer = RenderTool(env, gl="PIL")
-    env_renderer.render_env(show=True, frames=False, show_observations=False)
+    # env_renderer = RenderTool(env, gl="PIL")
+    # env_renderer.render_env(show=True, frames=False, show_observations=False)
 
     # The original railway map from the complex_rail_generator
     original_rail_map = env.rail.grid.copy()
     # print('type: original_rail_map', type(original_rail_map))
     # print('type: original_rail_map', original_rail_map.shape)
-    np.set_printoptions(threshold=sys.maxsize)
+    # np.set_printoptions(threshold=sys.maxsize)
     # print(original_rail_map)
 
     result = MapDecoder(original_rail_map).convert_ori_rail_map()
-    print('result')
-    print(len(result.keys()))
-    print(result[((0, 18), (1, 18))])
-
-    # pretty print result
-    # for i in result.items():
-    #     print(i, '\n')
+    print(result)
 
     # Obtain the start and target locations
     # Assuming that each agent is going from one assigned start location to one fixed target location.
@@ -221,25 +207,26 @@ if __name__ == '__main__':
                          old_position     
     '''
 
-    agent_info = {}
+    idx2node = {idx: k for idx, k in enumerate(result.keys())}  # {index:(current, previous)}
+    print('--------------')
+    print(idx2node)
+    print('--------------')
+    node2idx = {k: idx for idx, k in idx2node.items()}  # {(current, previous) : index}
+    idx2pos = {k: v[0] for (k, v) in idx2node.items()}  # {index:current}
 
-    # for index, agent in enumerate(env.agents):
-    #     print(index, agent)
-
-    # idx2node: {index:(current, previous)}
-    idx2node = {idx: k for idx, k in enumerate(result.keys())}
-
-    # node2idx: {(current, previous) : index}
-    node2idx = {k: idx for idx, k in idx2node.items()}
-
-    # idx2pos: {index:current}
-    idx2pos = {k: v[0] for (k, v) in idx2node.items()}
+    # save for rendering
+    with open('config/idx2node_'+str(seed)+'.pkl', 'wb') as fout:
+        pickle.dump(idx2node, fout)
+    with open('config/node2idx_' + str(seed) + '.pkl', 'wb') as fout:
+        pickle.dump(node2idx, fout)
+    with open('config/idx2pos_' + str(seed) + '.pkl', 'wb') as fout:
+        pickle.dump(idx2pos, fout)
 
     edges = []
     for cur, prev in result:
-        # print(cur, prev, result[(cur, prev)])
+        print('cur, prev', cur, prev, result[(cur, prev)])
         for to in result[(cur, prev)]:
-            # print(to)
+            print('to', to)
             edges.append((node2idx[(cur, prev)], node2idx[(to, cur)]))
 
     # convert agent start information from the format "start_position, direction = a number" to edge
@@ -328,5 +315,6 @@ if __name__ == '__main__':
         # show results
         # print("Observation: \n", obs)
         # print("Rewards: {}, [done={}]".format(all_rewards, done))
-        # env_renderer.render_env(show=True, frames=False, show_observations=False)
+        env_renderer = RenderTool(env, gl="PIL")
+        env_renderer.render_env(show=True, frames=False, show_observations=False)
         time.sleep(600)
