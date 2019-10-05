@@ -61,10 +61,15 @@ int main(int argc, char** argv)
 	ecbs.runECBSSearch();
 
 	// test the solution, only needed for debug
-	if (vm["debug"].as<bool>() && !ecbs.evaluateSolution())
+	if (vm["debug"].as<bool>())
     {
-	    cout << "The solution is not feasible!" << endl;
-	    return -1;
+        if (ecbs.evaluateSolution())
+            cout << "The solution is conflict-free!" << endl;
+        else
+        {
+            cout << "The solution is not feasible!" << endl;
+            return -1;
+        }
     }
 
 	// ecbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>());
