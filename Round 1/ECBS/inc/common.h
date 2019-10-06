@@ -56,9 +56,10 @@ enum lowlevel_hval { DEFAULT, DH, LLH_COUNT };
 
 enum conflict_type { CARDINAL, SEMICARDINAL, NONCARDINAL, CONFLICT_COYNT };
 
-// <int loc1, int loc2, int timestep, bool positive_constraint>
+// <int loc1, int loc2, int t_min, int t_max, bool positive_constraint>
 // NOTE loc2 = -1 for vertex constraints; loc2 = loation2 for edge constraints
-typedef std::tuple<int, int, int, bool> Constraint;
+// [t_min, t_max) is the prhobited time range
+typedef std::tuple<int, int, int, int, bool> Constraint;
 std::ostream& operator<<(std::ostream& os, const Constraint& constraint);
 
 // <int agent1, int agent2, int loc1, int loc2, int timestep>
@@ -74,3 +75,11 @@ struct ConstraintState
 };
 
 typedef vector< unordered_set< int > > CAT;
+
+struct pathEntry
+{
+    int id;
+};
+
+typedef vector<pathEntry> Path;
+std::ostream& operator<<(std::ostream& os, const Path& path);
