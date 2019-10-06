@@ -76,7 +76,7 @@ int main(int argc, char** argv)
 
 	// ecbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>());
     ofstream stats;
-    stats.open(vm["output"].as<string>(), std::ios::app);
+    stats.open(vm["output"].as<string>(), std::ios::out);
     for (const auto& path: ecbs.get_solution())
     {
         stats << *path << endl;
