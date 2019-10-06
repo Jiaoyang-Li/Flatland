@@ -24,11 +24,11 @@ bool ECBSSearch<MyGraph>::evaluateSolution() const
                 return false;
         }
     }
+    list<std::shared_ptr<Conflict>> conflicts;
     for (int i = 0; i < num_of_agents; i++)
     {
         for (int j = i + 1; j < num_of_agents; j++)
         {
-            list<std::shared_ptr<Conflict>> conflicts;
             findConflicts(conflicts, i, j);
             if (!conflicts.empty())
                 return false;
@@ -68,7 +68,6 @@ void ECBSSearch<MyGraph>::printResults() const
 	}
 	std::cout << "cost: " << solution_cost << "," << " ;lowerbound: " << min_sum_f_vals << //"," <<
 		// dummy_start->sum_min_f_vals << "," <<
-		"; preTime: " << prepTime << //"," <<
         "; runtime: " << runtime <<
         "; nodes:   " << HL_num_expanded << //"," << HL_num_generated << "," <<
 		//LL_num_expanded << "," << LL_num_generated << "," <<
@@ -82,7 +81,6 @@ void ECBSSearch<MyGraph>::saveResults(const string& outputFile, const string& ag
 	stats.open(outputFile, std::ios::app);
 	stats <<  solution_cost << "," << min_sum_f_vals <<  "," << 
 		dummy_start->sum_min_f_vals << "," <<
-		prepTime << "," <<
 		HL_num_expanded << "," << HL_num_generated << "," <<
 		LL_num_expanded << "," << LL_num_generated << "," <<
 		runtime << "," <<
@@ -182,11 +180,9 @@ inline bool ECBSSearch<MyGraph>::switchedLocations(int agent1_id, int agent2_id,
   // if both agents at their goal, they are done moving (cannot switch places)
   if ( timestep >= paths[agent1_id]->size() && timestep >= paths[agent2_id]->size() )
     return false;
-  if ( getAgentLocation(agent1_id, timestep) == getAgentLocation(agent2_id, timestep+1) &&
-       getAgentLocation(agent1_id, timestep+1) == getAgentLocation(agent2_id, timestep) )
-    return true;
-  return false;
-}
+     return getAgentLocation(agent1_id, timestep) == getAgentLocation(agent2_id, timestep + 1) &&
+            getAgentLocation(agent1_id, timestep + 1) == getAgentLocation(agent2_id, timestep);
+ }
 
 // Returns the maximal path length (among all agent)
 template<class MyGraph>
@@ -221,7 +217,7 @@ inline void ECBSSearch<MyGraph>::updatePaths(ECBSNode* curr)
 	vector<bool> updated(num_of_agents, false);  // initialized for false
 	while (curr->parent != nullptr)
 	{
-		for (list<tuple<int, vector<pathEntry>, int, int>>::iterator it = curr->paths_updated.begin();
+		for (auto it = curr->paths_updated.begin();
 			it != curr->paths_updated.end(); it++)
 		{
 			if (!updated[get<0>(*it)])
@@ -279,10 +275,7 @@ bool ECBSSearch<MyGraph>::findConflicts(ECBSNode& curr)
 			}
 		}
 	}
-	if (curr.conflicts.empty())
-		return false;
-	else
-		return true;
+    return !curr.conflicts.empty();
 }
 
 // find conflicts between paths of agents a1 and a2
@@ -505,6 +498,8 @@ bool ECBSSearch<MyGraph>::runECBSSearch()
 	std::clock_t start;
 	start = std::clock();
 
+    generateRoot();
+
 	// start is already in the open_list
 	while (!focal_list.empty())
 	{
@@ -601,14 +596,59 @@ bool ECBSSearch<MyGraph>::runECBSSearch()
 }
 
 template<class MyGraph>
+void ECBSSearch<MyGraph>::generateRoot()
+{
+    // initialize paths_found_initially
+    paths_found_initially.resize(num_of_agents, nullptr);
+    for (int i = 0; i < num_of_agents; i++)
+    {
+        paths = paths_found_initially;
+        int max_plan_len = getPathsMaxLength() + k_robust;
+        updateReservationTable(max_plan_len, i);
+        if (single_planner.runFocalSearch(G, i, focal_w, nullptr, cat) == false)
+        {
+            cout << "NO SOLUTION EXISTS FOR AGENT " << i;
+            exit(-1);
+        }
+        paths_found_initially[i] = new vector<pathEntry>(single_planner.path);
+        ll_min_f_vals_found_initially[i] = single_planner.min_f_val;
+        paths_costs_found_initially[i] = single_planner.path_cost;
+        LL_num_expanded += single_planner.num_expanded;
+        LL_num_generated += single_planner.num_generated;
+    }
+
+    paths = paths_found_initially;
+    ll_min_f_vals = ll_min_f_vals_found_initially;
+    paths_costs = paths_costs_found_initially;
+
+    // generate dummy start and update data structures
+    dummy_start = new ECBSNode();
+    dummy_start->agent_id = -1;
+    dummy_start->g_val = 0;
+    dummy_start->sum_min_f_vals = 0;
+    for (int i = 0; i < num_of_agents; i++)
+    {
+        dummy_start->g_val += paths_costs[i];
+        dummy_start->sum_min_f_vals += ll_min_f_vals[i];
+    }
+    findConflicts(*dummy_start);
+    dummy_start->num_of_collisions = (int)dummy_start->conflicts.size();
+    dummy_start->open_handle = open_list.push(dummy_start);
+    dummy_start->focal_handle = focal_list.push(dummy_start);
+    HL_num_generated++;
+    dummy_start->time_generated = HL_num_generated;
+
+    allNodes_table.push_back(dummy_start);
+
+    min_sum_f_vals = dummy_start->sum_min_f_vals;
+    focal_list_threshold = focal_w * dummy_start->sum_min_f_vals;
+}
+
+template<class MyGraph>
 ECBSSearch<MyGraph>::ECBSSearch(const MyGraph& G, double focal_w, int makespan, bool disjointSplitting, double cutoffTime) :
 	focal_w(focal_w), max_makespan(makespan), disjointSplitting(disjointSplitting), G(G),
 	single_planner(G.map_size(), makespan)
 {
-	// set timer
-	std::clock_t start;
-	start = std::clock();
-
 	time_limit = cutoffTime;
 	num_of_agents = (int)G.start_ids.size();
 	map_size = G.map_size();
@@ -616,53 +656,6 @@ ECBSSearch<MyGraph>::ECBSSearch(const MyGraph& G, double focal_w, int makespan, 
 	paths_costs = vector <int>(num_of_agents);
 	ll_min_f_vals_found_initially = vector <int>(num_of_agents);
 	paths_costs_found_initially = vector <int>(num_of_agents);
-
-	// initialize paths_found_initially
-	paths_found_initially.resize(num_of_agents, nullptr);
-	for (int i = 0; i < num_of_agents; i++)
-	{
-		paths = paths_found_initially;
-		int max_plan_len = getPathsMaxLength();
-		updateReservationTable(max_plan_len, i);
-		if (single_planner.runFocalSearch(G, i, focal_w, nullptr, cat) == false)
-		{
-			cout << "NO SOLUTION EXISTS FOR AGENT " << i;
-			exit(-1);
-		}
-		paths_found_initially[i] = new vector<pathEntry>(single_planner.path);
-		ll_min_f_vals_found_initially[i] = single_planner.min_f_val;
-		paths_costs_found_initially[i] = single_planner.path_cost;
-		LL_num_expanded += single_planner.num_expanded;
-		LL_num_generated += single_planner.num_generated;
-	}
-
-	paths = paths_found_initially;
-	ll_min_f_vals = ll_min_f_vals_found_initially;
-	paths_costs = paths_costs_found_initially;
-
-	// generate dummy start and update data structures
-	dummy_start = new ECBSNode();
-	dummy_start->agent_id = -1;
-	dummy_start->g_val = 0;
-	dummy_start->sum_min_f_vals = 0;
-	for (int i = 0; i < num_of_agents; i++)
-	{
-		dummy_start->g_val += paths_costs[i];
-		dummy_start->sum_min_f_vals += ll_min_f_vals[i];
-	}
-	findConflicts(*dummy_start);
-	dummy_start->num_of_collisions = (int)dummy_start->conflicts.size();
-	dummy_start->open_handle = open_list.push(dummy_start);
-	dummy_start->focal_handle = focal_list.push(dummy_start);
-	HL_num_generated++;
-	dummy_start->time_generated = HL_num_generated;
-
-	allNodes_table.push_back(dummy_start);
-
-	min_sum_f_vals = dummy_start->sum_min_f_vals;
-	focal_list_threshold = focal_w * dummy_start->sum_min_f_vals;
-
-	prepTime = (double)(std::clock() - start) / CLOCKS_PER_SEC;
 }
 
 template<class MyGraph>
