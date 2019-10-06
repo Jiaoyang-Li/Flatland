@@ -16,8 +16,7 @@ public:
     int screen = 0;
 
     // statistics of efficiency
-    double runtime = 0; // not include preprocessing
-    double prepTime = 0; // CPU time for preprocessing
+    double runtime = 0;
     uint64_t HL_num_expanded = 0;
     uint64_t HL_num_generated = 0;
     uint64_t LL_num_expanded = 0;
@@ -41,6 +40,8 @@ public:
     bool evaluateSolution() const;
 
 private:
+
+    void generateRoot();
 
     const MyGraph& G;
     CAT cat; // conflict-avoidance table
