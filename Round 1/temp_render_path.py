@@ -53,7 +53,7 @@ class Controller:
                     return temp_path
 
         else:
-            logging.ERROR('Invalid file for reading pickle file.')
+            logging.ERROR('Invalid file name.')
             exit(1)
 
     def pos2action(self, time_step, agent):
@@ -66,12 +66,20 @@ class Controller:
             next_pos = self.idx2pose[self.path_list[agent][time_step+1]]  # type: tuple
 
             # Relative to global frame, type:np.array
-            agent_dir = np.subtract(curr_pos, prev_pos) // np.linalg.norm(np.subtract(curr_pos, prev_pos))
-            move_dir = np.subtract(next_pos, curr_pos) // np.linalg.norm(np.subtract(next_pos, curr_pos))
+            agent_dir = np.subtract(curr_pos, prev_pos)
+            move_dir = np.subtract(next_pos, curr_pos)
 
-            if not np.any(agent_dir + move_dir):  # meet deadend
+            if np.linalg.norm(agent_dir) > 0:
+                agent_dir = agent_dir // np.linalg.norm(agent_dir)
+            if np.linalg.norm(move_dir) > 0:
+                move_dir = move_dir // np.linalg.norm(move_dir)
+
+            # meet deadend
+            if (not np.any(agent_dir + move_dir)) and np.linalg.norm(agent_dir) > 0 and np.linalg.norm(move_dir) > 0:
                 print('Agent {0} meets deadend at time step {1}'.format(agent, time_step))
                 return 2
+
+            # Transform move direction into agent frame
             else:
                 # Relative to agent frame
                 out_dir = (agent_dir[0]*move_dir[0] + agent_dir[1]*move_dir[1],
@@ -89,12 +97,15 @@ class Controller:
 
     def get_actions(self, time_step):
         _actions = {}
+        single_agent = -1  # use for single agent movement. e.g. move agent 9 only -> single_agent = 9
         for _idx in range(self.n_agent):
-            # if _idx == 9:
-            #     _actions[_idx] = self.pos2action(time_step, _idx)
-            # else:
-            #     _actions[_idx] = 4
-            _actions[_idx] = self.pos2action(time_step, _idx)
+            if single_agent > -1:
+                if _idx == single_agent:
+                    _actions[_idx] = self.pos2action(time_step, _idx)
+                else:
+                    _actions[_idx] = 4
+            else:
+                _actions[_idx] = self.pos2action(time_step, _idx)
         return _actions
 
     def render_actions(self):
@@ -105,7 +116,7 @@ class Controller:
             _obs, _all_rewards, _done, _ = self.env.step(out_actions)  # take one step with the provided actions.
             self.env_renderer.render_env(show=True, frames=False, show_observations=False)
             time.sleep(self.duration)
-            input('Press enter to move on')
+            # input('Press enter to move on')  # un-command this line if you want to show step-by-step motion
 
 
 if __name__ == '__main__':
