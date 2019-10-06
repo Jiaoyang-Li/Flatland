@@ -28,22 +28,10 @@ bool ECBSSearch<MyGraph>::evaluateSolution() const
     {
         for (int j = i + 1; j < num_of_agents; j++)
         {
-            size_t max_path_length = paths[i]->size() > paths[j]->size() ? paths[i]->size() : paths[j]->size();
-            for (size_t timestep = 0; timestep < max_path_length; timestep++)
-            {
-                int loc1 = getAgentLocation(i, timestep);
-                int loc2 = getAgentLocation(j, timestep);
-                int next_loc1 = getAgentLocation(i, timestep + 1);
-                int next_loc2 = getAgentLocation(j, timestep + 1);
-                if (loc1 == loc2)// vertex conflict
-                {
-                    return false;
-                }
-                else if (loc1 != next_loc1 && loc1 == next_loc2 && loc2 == next_loc1)// edge conflict
-                {
-                    return false;
-                }
-            }
+            list<std::shared_ptr<Conflict>> conflicts;
+            findConflicts(conflicts, i, j);
+            if (!conflicts.empty())
+                return false;
         }
     }
     return true;
@@ -115,7 +103,7 @@ vector < list< tuple<int, int, bool> > >* ECBSSearch<MyGraph>::collectConstraint
 	int max_timestep = -1;
 	while (curr != dummy_start)
 	{
-		if (get<3>(curr->constraint)) // positive constraint is valid for everyone
+		/*if (get<3>(curr->constraint)) // positive constraint is valid for everyone
 		{
 			if (curr->agent_id == agent_id) // for the constrained agent, it is a landmark
 				constraints_positive.push_back(curr->constraint);
@@ -124,7 +112,8 @@ vector < list< tuple<int, int, bool> > >* ECBSSearch<MyGraph>::collectConstraint
 			if (get<2>(curr->constraint) > max_timestep) // calc constraints' max_timestep
 				max_timestep = get<2>(curr->constraint);
 		}
-		else if (curr->agent_id == agent_id)
+		else*/
+		if (curr->agent_id == agent_id)
 		{
 			constraints_negative.push_back(curr->constraint);
 			if (get<2>(curr->constraint) > max_timestep) // calc constraints' max_timestep
@@ -135,31 +124,35 @@ vector < list< tuple<int, int, bool> > >* ECBSSearch<MyGraph>::collectConstraint
 
 
 	// initialize a constraint vector of length max_timestep+1. Each entry is an empty list< tuple<int,int, bool> > (loc1,loc2, positive)
-	auto cons_vec = new vector < list< tuple<int, int, bool> > >(max_timestep + 1, list< tuple<int, int, bool> >());
-	for (list< tuple<int, int, int, bool> >::iterator it = constraints_positive.begin(); it != constraints_positive.end(); it++)
+	auto cons_vec = new vector < list< tuple<int, int, bool> > >(max_timestep + k_robust + 1, list< tuple<int, int, bool> >());
+	for (const auto & it : constraints_positive)
 	{
-		if (get<1>(*it) < 0) // vertex constraint
-			cons_vec->at(get<2>(*it)).push_back(make_tuple(get<0>(*it), -1, true));
+		if (get<1>(it) < 0) // vertex constraint
+			cons_vec->at(get<2>(it)).push_back(make_tuple(get<0>(it), -1, true));
 		else // edge constraint
 		{
-			cons_vec->at(get<2>(*it) - 1).push_back(make_tuple(get<0>(*it), -1, true));
-			cons_vec->at(get<2>(*it)).push_back(make_tuple(get<1>(*it), -1, true));
+			cons_vec->at(get<2>(it) - 1).push_back(make_tuple(get<0>(it), -1, true));
+			cons_vec->at(get<2>(it)).push_back(make_tuple(get<1>(it), -1, true));
 		}
 	}
-	for (list< tuple<int, int, int, bool> >::iterator it = constraints_negative.begin(); it != constraints_negative.end(); it++)
+	for (const auto & it : constraints_negative)
 	{
-		if (!get<3>(*it)) // it is a negetive constraint for this agent
-		{
-			cons_vec->at(get<2>(*it)).push_back(make_tuple(get<0>(*it), get<1>(*it), false));
-		}
-		else if (get<1>(*it) < 0) // positive vertex constraint for other agent
-			cons_vec->at(get<2>(*it)).push_back(make_tuple(get<0>(*it), -1, false));
+		//if (!get<3>(it)) // it is a negetive constraint for this agent
+		//{
+		    for (int t = get<2>(it); t <= get<3>(it); t++)
+			    cons_vec->at(t).push_back(make_tuple(get<0>(it), get<1>(it), false));
+		/*}
+		else if (get<1>(it) < 0) // positive vertex constraint for other agent
+        {
+            for (int t = get<2>(*it) - ; t <= get<3>(it); t++)
+                cons_vec->at(t).push_back(make_tuple(get<0>(it), get<1>(it), false));
+        }	cons_vec->at(get<2>(it)).push_back(make_tuple(get<0>(it), -1, false));
 		else // positive edge constraint for other agent
 		{
 			cons_vec->at(get<2>(*it)).push_back(make_tuple(get<1>(*it), get<0>(*it), false));
 			cons_vec->at(get<2>(*it) - 1).push_back(make_tuple(get<0>(*it), -1, false));
 			cons_vec->at(get<2>(*it)).push_back(make_tuple(get<1>(*it), -1, false));
-		}
+		}*/
 	}
 
 	return cons_vec;
@@ -201,7 +194,7 @@ int ECBSSearch<MyGraph>::getPathsMaxLength()
 {
 	int retVal = 0;
 	for (int ag = 0; ag < num_of_agents; ag++)
-		if (paths[ag] != NULL && (int)paths[ag]->size() > retVal)
+		if (paths[ag] != nullptr && (int)paths[ag]->size() > retVal)
 			retVal = (int)paths[ag]->size();
 	return retVal;
 }
@@ -226,7 +219,7 @@ inline void ECBSSearch<MyGraph>::updatePaths(ECBSNode* curr)
 	ll_min_f_vals = ll_min_f_vals_found_initially;
 	paths_costs = paths_costs_found_initially;
 	vector<bool> updated(num_of_agents, false);  // initialized for false
-	while (curr->parent != NULL)
+	while (curr->parent != nullptr)
 	{
 		for (list<tuple<int, vector<pathEntry>, int, int>>::iterator it = curr->paths_updated.begin();
 			it != curr->paths_updated.end(); it++)
@@ -246,9 +239,9 @@ inline void ECBSSearch<MyGraph>::updatePaths(ECBSNode* curr)
 //////////////////// CONFLICTS ///////////////////////////
 // find all conflict in the current solution
 template<class MyGraph>
-bool ECBSSearch<MyGraph>::finfConflicts(ECBSNode& curr)
+bool ECBSSearch<MyGraph>::findConflicts(ECBSNode& curr)
 {
-	if(curr.parent == NULL) // Root node
+	if(curr.parent == nullptr) // Root node
 	{
 		int a2 = 0;
 		for (int a1 = 0; a1 < num_of_agents; a1++) 
@@ -294,22 +287,56 @@ bool ECBSSearch<MyGraph>::finfConflicts(ECBSNode& curr)
 
 // find conflicts between paths of agents a1 and a2
 template<class MyGraph>
-void ECBSSearch<MyGraph>::findConflicts(list<std::shared_ptr<Conflict>>& set, int a1, int a2)
+void ECBSSearch<MyGraph>::findConflicts(list<std::shared_ptr<Conflict>>& set, int a1_, int a2_) const
 {
+    int a1 = paths[a1_]->size() > paths[a2_]->size() ? a1_ : a2_;
+    int last_timestep = (int)paths[a1]->size() - 1;
+    int a2 = paths[a1_]->size() > paths[a2_]->size() ? a2_ : a1_;
+	for (int t1  = 0; t1 <= last_timestep; t1++)
+	{
+		int loc1 = getAgentLocation(a1, t1);
+		if (k_robust == 0)
+        {
+            int loc2 = getAgentLocation(a2, t1);
+            int next_loc1 = getAgentLocation(a1, t1 + 1);
+            int next_loc2 = getAgentLocation(a2, t1 + 1);
+            if (loc1 == loc2)// vertex conflict
+            {
+                set.push_back(std::make_shared<Conflict>(a1, a2, loc1, -1, t1));
+            }
+            else if (loc1 != next_loc1 && loc1 == next_loc2 && loc2 == next_loc1)// edge conflict
+            {
+                set.push_back(std::make_shared<Conflict>(a1, a2, loc1, loc2, t1 + 1));
+            }
+        } else{
+		    for (int t2 = max(0, t1 - k_robust); t2 <= min(last_timestep, t1 + k_robust); t2++)
+            {
+		        int loc2 = getAgentLocation(a2, t2);
+                if (loc1 == loc2)// vertex conflict
+                    set.push_back(std::make_shared<Conflict>(a1, a2, loc1, -1, min(t1, t2)));
+            }
+		}
+	}
+}
+ /*{
 	size_t min_path_length = paths[a1]->size() < paths[a2]->size() ? paths[a1]->size() : paths[a2]->size();
 	for (size_t timestep = 0; timestep < min_path_length; timestep++)
 	{
 		int loc1 = getAgentLocation(a1, timestep);
 		int loc2 = getAgentLocation(a2, timestep);
-        int next_loc1 = getAgentLocation(a1, timestep + 1);
-        int next_loc2 = getAgentLocation(a2, timestep + 1);
-		if (loc1 == loc2)// vertex conflict
-		{
-			set.push_back(std::make_shared<Conflict>(a1, a2, loc1, -1, timestep));
-		}
-		else if (loc1 != next_loc1 && loc1 == next_loc2 && loc2 == next_loc1)// edge conflict
-		{
-			set.push_back(std::make_shared<Conflict>(a1, a2, loc1, loc2, timestep + 1));
+		if (k_robust == 0)
+        {
+            int next_loc1 = getAgentLocation(a1, timestep + 1);
+            int next_loc2 = getAgentLocation(a2, timestep + 1);
+            if (loc1 == loc2)// vertex conflict
+            {
+                set.push_back(std::make_shared<Conflict>(a1, a2, loc1, -1, timestep));
+            }
+            else if (loc1 != next_loc1 && loc1 == next_loc2 && loc2 == next_loc1)// edge conflict
+            {
+                set.push_back(std::make_shared<Conflict>(a1, a2, loc1, loc2, timestep + 1));
+            }
+        } else{
 		}
 	}
 	if (paths[a1]->size() != paths[a2]->size()) 
@@ -326,7 +353,7 @@ void ECBSSearch<MyGraph>::findConflicts(list<std::shared_ptr<Conflict>>& set, in
 			}
 		}
 	}
-}
+}*/
 
 // choose a conflict to split
 template<class MyGraph>
@@ -341,7 +368,7 @@ std::shared_ptr<Conflict> ECBSSearch<MyGraph>::chooseConflict(const list<std::sh
 		else
 			i++;
 	}
-	return NULL;
+	return nullptr;
 }
 
 // Generates a boolean reservation table (i.e., conflict avoidance table) for paths (cube of map_size*max_timestep).
@@ -352,20 +379,37 @@ void ECBSSearch<MyGraph>::updateReservationTable(size_t max_path_len, int exclud
 {
 	cat.clear();
 	cat.resize(max_path_len);
-	for (int ag = 0; ag < num_of_agents; ag++) 
+	for (int i = 0; i < num_of_agents; i++)
 	{
-		if (ag != exclude_agent && paths[ag] != NULL)
+		if (i != exclude_agent && paths[i] != nullptr)
 		{
-			for (size_t timestep = 0; timestep < max_path_len; timestep++)
-			{
-				int loc = getAgentLocation(ag, timestep);
-				cat[timestep].insert(loc);
-				int prev_loc = getAgentLocation(ag, timestep - 1);
-				if (prev_loc != loc)
-				{
-					cat[timestep].insert(loc + (1 + prev_loc) * (int)map_size);
-				}
-			}
+		    if (k_robust > 0)
+            {
+                auto prev = 0;
+                auto curr = 1;
+                while (curr <= (int)paths[i]->size())
+                {
+                    if (curr == (int)paths[i]->size() || paths[i]->at(prev).id != paths[i]->at(curr).id)
+                    {
+                        int loc = getAgentLocation(i, prev);
+                        for (int t = max(0, prev - k_robust); t < curr + k_robust; t++)
+                            cat[t].insert(loc);
+                        prev = curr;
+                    }
+                    ++curr;
+                }
+            } else{
+                for (size_t timestep = 0; timestep < max_path_len; timestep++)
+                {
+                    int loc = getAgentLocation(i, timestep);
+                    cat[timestep].insert(loc);
+                    int prev_loc = getAgentLocation(i, timestep - 1);
+                    if (prev_loc != loc)
+                    {
+                        cat[timestep].insert(loc + (1 + prev_loc) * (int)map_size);
+                    }
+                }
+		    }
 		}
 	}
 }
@@ -381,7 +425,7 @@ bool ECBSSearch<MyGraph>::findPathForSingleAgent(ECBSNode*  node, int ag)
 	ECBSNode* curr = node;
 	vector < list< tuple<int, int, bool> > >* cons_vec = collectConstraints(curr, ag);
 	// build reservation table
-	int max_plan_len = getPathsMaxLength();
+	int max_plan_len = getPathsMaxLength() + k_robust;
 	updateReservationTable(max_plan_len, ag);
 	// find a path w.r.t cons_vec (and prioretize by res_table).
 	bool foundSol = single_planner.runFocalSearch(G, ag, focal_w, cons_vec, cat);
@@ -436,7 +480,7 @@ bool ECBSSearch<MyGraph>::generateChild(ECBSNode*  node)
 			return false;
 	}
 
-	finfConflicts(*node);
+	findConflicts(*node);
 	node->num_of_collisions = (int)node->conflicts.size(); //computeNumOfCollidingAgents();
 
 	// update handles
@@ -490,8 +534,8 @@ bool ECBSSearch<MyGraph>::runECBSSearch()
 		int agent1_id, agent2_id, location1, location2, timestep;
 		tie(agent1_id, agent2_id, location1, location2, timestep) = *chooseConflict(curr->conflicts);
 
-		ECBSNode* n1 = new ECBSNode();
-		ECBSNode* n2 = new ECBSNode();
+		auto n1 = new ECBSNode();
+		auto n2 = new ECBSNode();
 		n1->parent = curr;
 		n2->parent = curr;
 		n1->g_val = curr->g_val;
@@ -511,24 +555,23 @@ bool ECBSSearch<MyGraph>::runECBSSearch()
 			n2->agent_id = id;
 			if (location2 >= 0 && id == agent2_id) //edge constraint for the second agent
 			{
-				n1->constraint = make_tuple(location2, location1, timestep, true);
-				n2->constraint = make_tuple(location2, location1, timestep, false);
+				// TODO: implement disjoint splitting with k_robust
 			}
 			else
 			{
-				n1->constraint = make_tuple(location1, location2, timestep, true);
-				n2->constraint = make_tuple(location1, location2, timestep, false);
+				n1->constraint = make_tuple(location1, location2, timestep, timestep + 1, true);
+				n2->constraint = make_tuple(location1, location2, timestep, timestep + 1, false);
 			}
 		}
 		else //Non-disjoint
 		{
 			n1->agent_id = agent1_id;
 			n2->agent_id = agent2_id;
-			n1->constraint = make_tuple(location1, location2, timestep, false);
+			n1->constraint = make_tuple(location1, location2, timestep, timestep + k_robust + 1, false);
 			if (location2 < 0)
-				n2->constraint = make_tuple(location1, location2, timestep, false);
+				n2->constraint = make_tuple(location1, location2, timestep, timestep + k_robust + 1, false);
 			else
-				n2->constraint = make_tuple(location2, location1, timestep, false);
+				n2->constraint = make_tuple(location2, location1, timestep, timestep + 1, false);
 		}
 		vector<vector<pathEntry>*> copy(paths);
 		generateChild(n1);
@@ -575,13 +618,13 @@ ECBSSearch<MyGraph>::ECBSSearch(const MyGraph& G, double focal_w, int makespan, 
 	paths_costs_found_initially = vector <int>(num_of_agents);
 
 	// initialize paths_found_initially
-	paths_found_initially.resize(num_of_agents, NULL);
+	paths_found_initially.resize(num_of_agents, nullptr);
 	for (int i = 0; i < num_of_agents; i++)
 	{
 		paths = paths_found_initially;
 		int max_plan_len = getPathsMaxLength();
 		updateReservationTable(max_plan_len, i);
-		if (single_planner.runFocalSearch(G, i, focal_w, NULL, cat) == false)
+		if (single_planner.runFocalSearch(G, i, focal_w, nullptr, cat) == false)
 		{
 			cout << "NO SOLUTION EXISTS FOR AGENT " << i;
 			exit(-1);
@@ -607,7 +650,7 @@ ECBSSearch<MyGraph>::ECBSSearch(const MyGraph& G, double focal_w, int makespan, 
 		dummy_start->g_val += paths_costs[i];
 		dummy_start->sum_min_f_vals += ll_min_f_vals[i];
 	}
-	finfConflicts(*dummy_start);
+	findConflicts(*dummy_start);
 	dummy_start->num_of_collisions = (int)dummy_start->conflicts.size();
 	dummy_start->open_handle = open_list.push(dummy_start);
 	dummy_start->focal_handle = focal_list.push(dummy_start);
@@ -627,6 +670,6 @@ ECBSSearch<MyGraph>::~ECBSSearch()
 {
 	for (size_t i = 0; i < paths_found_initially.size(); i++)
 		delete (paths_found_initially[i]);
-	for (list<ECBSNode*>::iterator it = allNodes_table.begin(); it != allNodes_table.end(); it++)
-		delete *it;
+	for (const auto& n : allNodes_table)
+		delete n;
 }
