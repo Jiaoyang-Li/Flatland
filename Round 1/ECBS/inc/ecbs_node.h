@@ -8,7 +8,7 @@ public:
 	Constraint constraint; 
 	list<std::shared_ptr<Conflict>> conflicts;
 
-	ECBSNode* parent = NULL;
+	ECBSNode* parent = nullptr;
 	list<tuple<int, vector<pathEntry>, int, int>> paths_updated; // agent id + new path + cost + lower bound
 	int g_val;  // (total cost)
 	int num_of_collisions;
