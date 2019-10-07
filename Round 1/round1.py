@@ -7,7 +7,6 @@
 import numpy as np
 import time
 import logging
-import sys
 import pickle
 
 from flatland.utils.rendertools import RenderTool
@@ -136,15 +135,27 @@ def parse_line_path(l):
     return [int(_node) for _node in l.split(",")[:-1]]
 
 
+def get_datetime_str():
+    temp_now = time.gmtime()
+    return time.strftime("%m%d%Y_%H%M%S", temp_now)
+
+
 if __name__ == '__main__':
-    nr_start_goal = 10  # number of start and goal connections
+    map_width = 100
+    map_height = 100
+    nr_agent = 50  # number of agents
+    nr_start_goal = 50  # number of start and goal connections
     nr_extra = 2  # number of extra railway elements added
     min_dist = 8  # minimum grid distance between start and goal
     max_dist = 99999  # maximum grid distance between start and goal
-    nr_agent = 10  # number of agents
-
     # seed = np.random.randint(0, 1000)
-    seed = 0
+    seed = 10
+
+    # Save configuration ofr render
+    file_prefix = get_datetime_str()
+    config_list = [map_width, map_height, nr_agent, nr_start_goal, nr_extra, min_dist, max_dist, seed]
+    with open('config/config_' + file_prefix + '.pkl', 'wb') as fout:
+        pickle.dump(config_list, fout)
 
     """
     parameters that control the dimensions of the map.
@@ -166,8 +177,8 @@ if __name__ == '__main__':
         2 A 2D arrays (map_height, map_width, 2) containing respectively the position of the given agent\
             target and the positions of the other agents targets.
     """
-    env = RailEnv(width=30,
-                  height=30,
+    env = RailEnv(width=map_width,
+                  height=map_height,
                   rail_generator=complex_rail_generator(nr_start_goal, nr_extra, min_dist, max_dist, seed),
                   schedule_generator=complex_schedule_generator(),
                   obs_builder_object=GlobalObsForRailEnv(),
@@ -215,11 +226,11 @@ if __name__ == '__main__':
     idx2pos = {k: v[0] for (k, v) in idx2node.items()}  # {index:current}
 
     # save for rendering
-    with open('config/idx2node_'+str(seed)+'.pkl', 'wb') as fout:
+    with open('config/idx2node_' + file_prefix + '.pkl', 'wb') as fout:
         pickle.dump(idx2node, fout)
-    with open('config/node2idx_' + str(seed) + '.pkl', 'wb') as fout:
+    with open('config/node2idx_' + file_prefix + '.pkl', 'wb') as fout:
         pickle.dump(node2idx, fout)
-    with open('config/idx2pos_' + str(seed) + '.pkl', 'wb') as fout:
+    with open('config/idx2pos_' + file_prefix + '.pkl', 'wb') as fout:
         pickle.dump(idx2pos, fout)
 
     edges = []
