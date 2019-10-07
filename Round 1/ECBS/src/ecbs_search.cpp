@@ -114,7 +114,7 @@ vector < list< tuple<int, int, bool> > >* ECBSSearch<MyGraph>::collectConstraint
 		if (curr->agent_id == agent_id)
 		{
 			constraints_negative.push_back(curr->constraint);
-			if (get<2>(curr->constraint) > max_timestep) // calc constraints' max_timestep
+			if (get<3>(curr->constraint) > max_timestep) // calc constraints' max_timestep
 				max_timestep = get<2>(curr->constraint);
 		}
 		curr = curr->parent;
@@ -137,7 +137,7 @@ vector < list< tuple<int, int, bool> > >* ECBSSearch<MyGraph>::collectConstraint
 	{
 		//if (!get<3>(it)) // it is a negetive constraint for this agent
 		//{
-		    for (int t = get<2>(it); t <= get<3>(it); t++)
+		    for (int t = get<2>(it); t < get<3>(it); t++)
 			    cons_vec->at(t).push_back(make_tuple(get<0>(it), get<1>(it), false));
 		/*}
 		else if (get<1>(it) < 0) // positive vertex constraint for other agent
