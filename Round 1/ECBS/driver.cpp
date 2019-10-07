@@ -24,6 +24,7 @@ int main(int argc, char** argv)
 		("cutoffTime,t", po::value<int>()->default_value(300), "cutoff time (seconds)")
 		("seed", po::value<int>()->default_value(0), "random seed")
 		("debug", po::value<bool>()->default_value(false), "debug")
+		("k_robust", po::value<int>()->default_value(1), "k-robust distance")
 	;
 
 	po::variables_map vm;
@@ -58,18 +59,24 @@ int main(int argc, char** argv)
 	ecbs.screen = 0;
 	if (vm["debug"].as<bool>())
         ecbs.screen = 1;
+	ecbs.k_robust = vm["k_robust"].as<int>();
 	ecbs.runECBSSearch();
 
 	// test the solution, only needed for debug
-	if (vm["debug"].as<bool>() && !ecbs.evaluateSolution())
+	if (vm["debug"].as<bool>())
     {
-	    cout << "The solution is not feasible!" << endl;
-	    return -1;
+        if (ecbs.evaluateSolution())
+            cout << "The solution is conflict-free!" << endl;
+        else
+        {
+            cout << "The solution is not feasible!" << endl;
+            return -1;
+        }
     }
 
 	// ecbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>());
     ofstream stats;
-    stats.open(vm["output"].as<string>(), std::ios::app);
+    stats.open(vm["output"].as<string>(), std::ios::out);
     for (const auto& path: ecbs.get_solution())
     {
         stats << *path << endl;
