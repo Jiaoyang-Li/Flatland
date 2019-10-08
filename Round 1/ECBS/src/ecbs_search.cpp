@@ -115,7 +115,7 @@ vector < list< tuple<int, int, bool> > >* ECBSSearch<MyGraph>::collectConstraint
 		{
 			constraints_negative.push_back(curr->constraint);
 			if (get<3>(curr->constraint) > max_timestep) // calc constraints' max_timestep
-				max_timestep = get<2>(curr->constraint);
+				max_timestep = get<3>(curr->constraint);
 		}
 		curr = curr->parent;
 	}
