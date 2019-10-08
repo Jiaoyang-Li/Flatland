@@ -56,17 +56,17 @@ class Controller:
         self.env = in_env
         self.env_renderer = RenderTool(in_env, gl='PILSVG')
         self.max_step = 1000
-        self.duration = 0.2
+        self.duration = 0.1
 
     @staticmethod
     def read_file(file_name=None):
         if type(file_name) == str:
             if file_name.split('.')[-1] == 'pkl':
-                with open(file_name, 'rb') as fin:
-                    return pickle.load(file=fin)
+                with open(file_name, 'rb') as _fin:
+                    return pickle.load(file=_fin)
             elif file_name.split('.')[-1] == 'txt':
-                with open(file_name, 'r') as fin:
-                    path_str = fin.readlines()
+                with open(file_name, 'r') as _fin:
+                    path_str = _fin.readlines()
                     temp_path = list()
                     for path in path_str:
                         temp_path.append(list(map(int, path.split(',')[:-1])))
@@ -142,22 +142,32 @@ class Controller:
             # input('Press enter to move on')  # un-command this line if you want to show step-by-step motion
 
 
+def get_prefix(in_str):
+    return in_str.split('/')[-1].split('.')[0].split('_')[1] + '_' + in_str.split('/')[-1].split('.')[0].split('_')[2]
+
+
 if __name__ == '__main__':
     # add arg parser
     parser = argparse.ArgumentParser(description='Loading config.pkl, map.txt, and agent.txt')
     parser.add_argument('--config', type=str, default=None)
-    parser.add_argument('--map', type=str, default='map.txt')
-    parser.add_argument('--agent', type=str, default='agent.txt')
-    parser.add_argument('--path', type=str, default='paths_test.txt')
+    parser.add_argument('--path', type=str, default='path_test.txt')
     args = parser.parse_args()
 
     if args.config is None:
         env, obs = create_env()
         file_prefix = None
     else:
-        config_list = args.config
-        file_prefix = args.config.split('.')[0].split('_')[-1]
-        env, obs = create_env(config_list[0], config_list[1], config_list[2], config_list[3], config_list[4],
-                              config_list[5], config_list[6], config_list[7])
+        with open(args.config, 'rb') as fin:
+            config_dict = pickle.load(fin)
+
+        file_prefix = get_prefix(args.config)
+        env, obs = create_env(map_width=config_dict['map_width'],
+                              map_height=config_dict['map_height'],
+                              nr_agent=config_dict['nr_agent'],
+                              nr_start_goal=config_dict['nr_start_goal'],
+                              nr_extra=config_dict['nr_extra'],
+                              min_dist=config_dict['min_dist'],
+                              max_dist=config_dict['max_dist'],
+                              seed=config_dict['seed'])
     my_controller = Controller(in_env=env, in_prefix=file_prefix)
     my_controller.render_actions()

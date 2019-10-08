@@ -2,10 +2,17 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="9becf672-22fa-4420-8575-a668317d3633" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/Round 1/agents.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Round 1/agents.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/map.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Round 1/map.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/path_test.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/paths.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Round 1/agents.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Round 1/config/idx2node_0.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Round 1/config/idx2node_10.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Round 1/config/idx2pos_0.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Round 1/config/idx2pos_10.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Round 1/config/node2idx_0.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Round 1/config/node2idx_10.pkl" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Round 1/map.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Round 1/paths_test.txt" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Round 1/round1.py" beforeDir="false" afterPath="$PROJECT_DIR$/Round 1/round1.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Round 1/temp_render_path.py" beforeDir="false" afterPath="$PROJECT_DIR$/Round 1/temp_render_path.py" afterDir="false" />
     </list>
@@ -20,8 +27,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Round 1/temp_render_path.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="466">
-              <caret line="132" column="13" selection-start-line="132" selection-start-column="13" selection-end-line="132" selection-end-column="13" />
+            <state relative-caret-position="223">
+              <caret line="145" selection-start-line="145" selection-end-line="145" />
               <folding>
                 <element signature="e#17#35#0" expanded="true" />
               </folding>
@@ -32,8 +39,11 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Round 1/round1.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="119">
-              <caret line="7" column="11" lean-forward="true" selection-start-line="7" selection-start-column="11" selection-end-line="7" selection-end-column="11" />
+            <state relative-caret-position="499">
+              <caret line="167" column="16" selection-start-line="167" selection-start-column="16" selection-end-line="167" selection-end-column="16" />
+              <folding>
+                <element signature="e#169#187#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -59,7 +69,15 @@
       <find>(1, 18)</find>
       <find>save</find>
       <find>SVG</find>
+      <find>file_prefix</find>
+      <find>map</find>
+      <find>config_list</find>
+      <find>args.config</find>
     </findStrings>
+    <replaceStrings>
+      <replace>config_dict</replace>
+      <replace>in_str</replace>
+    </replaceStrings>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -68,6 +86,7 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/../Documents/temp_round_1.py" />
+        <option value="$PROJECT_DIR$/README.md" />
         <option value="$PROJECT_DIR$/Round 1/round1.py" />
         <option value="$PROJECT_DIR$/Round 1/temp_render_path.py" />
       </list>
@@ -96,7 +115,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -109,20 +127,16 @@
               <item name="Flatland" type="462c0819:PsiDirectoryNode" />
               <item name="Round 1" type="462c0819:PsiDirectoryNode" />
             </path>
-            <path>
-              <item name="Flatland" type="b2602c69:ProjectViewProjectNode" />
-              <item name="Flatland" type="462c0819:PsiDirectoryNode" />
-              <item name="Round 1" type="462c0819:PsiDirectoryNode" />
-              <item name="config" type="462c0819:PsiDirectoryNode" />
-            </path>
           </expand>
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/Round 1/temp_render_path.py" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
@@ -184,10 +198,9 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="1505" y="-4" width="1855" height="1084" extended-state="6" />
-    <editor active="true" />
+    <frame x="1504" y="-4" width="1857" height="1085" extended-state="6" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.09552402" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.23580787" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
@@ -197,10 +210,10 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="Version Control" order="6" weight="0.3291536" />
-      <window_info anchor="bottom" id="Terminal" order="7" weight="0.38035527" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="7" visible="true" weight="0.26436782" />
       <window_info anchor="bottom" id="Event Log" order="8" side_tool="true" />
       <window_info anchor="bottom" id="TODO" order="9" weight="0.3291536" />
-      <window_info active="true" anchor="bottom" id="Python Console" order="10" visible="true" weight="0.2633229" />
+      <window_info anchor="bottom" id="Python Console" order="10" weight="0.2998955" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -247,13 +260,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Round 1/paths.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="153">
-          <caret line="9" column="81" lean-forward="true" selection-start-line="9" selection-start-column="81" selection-end-line="9" selection-end-column="81" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/Round 1/paths.txt" />
     <entry file="file://$PROJECT_DIR$/Round 1/map.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1547">
@@ -261,13 +268,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Round 1/path_test.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="17">
-          <caret line="1" column="28" selection-start-line="1" selection-start-column="28" selection-end-line="1" selection-end-column="28" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/Round 1/path_test.txt" />
     <entry file="file://$PROJECT_DIR$/Round 1/paths_test.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="17">
@@ -275,17 +276,30 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="272">
+            <caret line="52" column="10" lean-forward="true" selection-start-line="52" selection-start-column="10" selection-end-line="52" selection-end-column="10" />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Round 1/round1.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="119">
-          <caret line="7" column="11" lean-forward="true" selection-start-line="7" selection-start-column="11" selection-end-line="7" selection-end-column="11" />
+        <state relative-caret-position="499">
+          <caret line="167" column="16" selection-start-line="167" selection-start-column="16" selection-end-line="167" selection-end-column="16" />
+          <folding>
+            <element signature="e#169#187#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Round 1/temp_render_path.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="466">
-          <caret line="132" column="13" selection-start-line="132" selection-start-column="13" selection-end-line="132" selection-end-column="13" />
+        <state relative-caret-position="223">
+          <caret line="145" selection-start-line="145" selection-end-line="145" />
           <folding>
             <element signature="e#17#35#0" expanded="true" />
           </folding>

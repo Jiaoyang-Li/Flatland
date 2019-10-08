@@ -153,9 +153,16 @@ if __name__ == '__main__':
 
     # Save configuration ofr render
     file_prefix = get_datetime_str()
-    config_list = [map_width, map_height, nr_agent, nr_start_goal, nr_extra, min_dist, max_dist, seed]
-    with open('config/config_' + file_prefix + '.pkl', 'wb') as fout:
-        pickle.dump(config_list, fout)
+    config_dict = {'map_width': map_width,
+                   'map_height': map_height,
+                   'nr_agent': nr_agent,
+                   'nr_start_goal': nr_start_goal,
+                   'nr_extra': nr_extra,
+                   'min_dist': min_dist,
+                   'max_dist': max_dist,
+                   'seed': seed}
+    with open('./config/config_' + file_prefix + '.pkl', 'wb') as fout:
+        pickle.dump(config_dict, fout)
 
     """
     parameters that control the dimensions of the map.
@@ -219,25 +226,20 @@ if __name__ == '__main__':
     '''
 
     idx2node = {idx: k for idx, k in enumerate(result.keys())}  # {index:(current, previous)}
-    print('--------------')
-    print(idx2node)
-    print('--------------')
     node2idx = {k: idx for idx, k in idx2node.items()}  # {(current, previous) : index}
     idx2pos = {k: v[0] for (k, v) in idx2node.items()}  # {index:current}
 
     # save for rendering
-    with open('config/idx2node_' + file_prefix + '.pkl', 'wb') as fout:
+    with open('./config/idx2node_' + file_prefix + '.pkl', 'wb') as fout:
         pickle.dump(idx2node, fout)
-    with open('config/node2idx_' + file_prefix + '.pkl', 'wb') as fout:
+    with open('./config/node2idx_' + file_prefix + '.pkl', 'wb') as fout:
         pickle.dump(node2idx, fout)
-    with open('config/idx2pos_' + file_prefix + '.pkl', 'wb') as fout:
+    with open('./config/idx2pos_' + file_prefix + '.pkl', 'wb') as fout:
         pickle.dump(idx2pos, fout)
 
     edges = []
     for cur, prev in result:
-        print('cur, prev', cur, prev, result[(cur, prev)])
         for to in result[(cur, prev)]:
-            print('to', to)
             edges.append((node2idx[(cur, prev)], node2idx[(to, cur)]))
 
     # convert agent start information from the format "start_position, direction = a number" to edge
@@ -297,7 +299,7 @@ if __name__ == '__main__':
 
     map_file = node_file + edge_file
 
-    file = open("map.txt", "w")
+    file = open("./config/map_" + file_prefix + ".txt", "w")
     file.write(map_file)
     file.close()
 
@@ -307,25 +309,24 @@ if __name__ == '__main__':
     for i, agent in enumerate(env.agents):
         start_goal_pos_file += str(start_idx[i]) + "," + str(target_idx[i]) + ",1\n"
 
-    file = open("agents.txt", "w")
+    file = open("./config/agents_" + file_prefix + ".txt", "w")
     file.write(start_goal_pos_file)
     file.close()
 
-    for step in range(1):
-        # Get agents' handles to give actions
-        # handles = env.get_agent_handles()
-        # e.g. giving two agents actions, action_dict = {handles[0]:0, handles[1]:0}
+    # Get agents' handles to give actions
+    # handles = env.get_agent_handles()
+    # e.g. giving two agents actions, action_dict = {handles[0]:0, handles[1]:0}
 
-        _action = my_controller(n_agent=nr_agent)
+    _action = my_controller(n_agent=nr_agent)
 
-        # obs, all_rewards, done: dictionary indexed by agents handles
-        # values: correspond to the relevant observations, rewards and terminal status for each agent.
+    # obs, all_rewards, done: dictionary indexed by agents handles
+    # values: correspond to the relevant observations, rewards and terminal status for each agent.
 
-        obs, all_rewards, done, _ = env.step(_action)  # environment take one step with the provided actions.
+    obs, all_rewards, done, _ = env.step(_action)  # environment take one step with the provided actions.
 
-        # show results
-        # print("Observation: \n", obs)
-        # print("Rewards: {}, [done={}]".format(all_rewards, done))
-        env_renderer = RenderTool(env, gl="PIL")
-        env_renderer.render_env(show=True, frames=False, show_observations=False)
-        time.sleep(600)
+    # show results
+    # print("Observation: \n", obs)
+    # print("Rewards: {}, [done={}]".format(all_rewards, done))
+    # env_renderer = RenderTool(env, gl="PIL")
+    # env_renderer.render_env(show=True, frames=False, show_observations=False)
+    # time.sleep(1.5)

@@ -46,10 +46,11 @@ $ python3 round1.py
 $ cd ECBS
 $ ./ECBS -m ../[map_name.txt]  -a ../[agent_name.txt] -o ../[path_name.txt] -t 60 -w 1.2 --makespan [number]
 ```
-* where num = (width + height) * 1.5
+* where number = (width + height) * 1.5
 3. Run **temp_render_path.py**:
 ```bash
-$ python3 temp_render_path.py --config [config_name.pkl] --map [map_name.txt] --agent [agent_name.txt] --path [path_name.txt]
+$ cd ..  # back to Round 1
+$ python3 temp_render_path.py --config [config_file.pkl] --path [path_file.txt]
 ```
 
 ### - To-Do:
