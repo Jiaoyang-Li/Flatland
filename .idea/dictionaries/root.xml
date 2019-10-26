@@ -2,12 +2,17 @@
   <dictionary name="root">
     <words>
       <w>deadend</w>
+      <w>ecbs</w>
       <w>envs</w>
       <w>fout</w>
+      <w>isin</w>
       <w>linearize</w>
+      <w>mapf</w>
       <w>nesw</w>
+      <w>networkx</w>
       <w>pilsvg</w>
       <w>printoptions</w>
+      <w>stnu</w>
     </words>
   </dictionary>
 </component>
