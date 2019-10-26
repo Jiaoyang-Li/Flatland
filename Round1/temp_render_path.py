@@ -34,8 +34,8 @@ def create_env(map_width=30,
 
 
 def load_config(file_name):
-    with open(file_name, 'rb') as fin:
-        return pickle.load(fin)
+    with open(file_name, 'rb') as _fin:
+        return pickle.load(_fin)
 
 
 class Controller:

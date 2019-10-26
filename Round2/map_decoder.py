@@ -8,12 +8,13 @@ import numpy as np
 import time
 import logging
 import pickle
+from typing import Dict
 
 from flatland.utils.rendertools import RenderTool
 from flatland.envs.observations import GlobalObsForRailEnv
 from flatland.envs.rail_generators import complex_rail_generator
 from flatland.envs.schedule_generators import complex_schedule_generator
-from flatland.envs.rail_env import RailEnv
+from flatland.envs.rail_env import RailEnv, RailEnvActions
 
 
 class MapDecoder:
@@ -127,7 +128,7 @@ def my_controller(n_agent):
     """
     out_action = {}
     for _idx in range(n_agent):
-        out_action[_idx] = np.random.randint(0, 5)
+        out_action[_idx] = RailEnvActions(np.random.randint(0, 5))
     return out_action
 
 
@@ -141,15 +142,16 @@ def get_datetime_str():
 
 
 if __name__ == '__main__':
-    map_width = 100
-    map_height = 100
-    nr_agent = 50  # number of agents
-    nr_start_goal = 50  # number of start and goal connections
-    nr_extra = 2  # number of extra railway elements added
+    map_width = 20
+    map_height = 20
+    nr_agent = 10  # number of agents
+    nr_start_goal = 10  # number of start and goal connections
+    nr_extra = 1  # number of extra railway elements added
     min_dist = 8  # minimum grid distance between start and goal
     max_dist = 99999  # maximum grid distance between start and goal
     # seed = np.random.randint(0, 1000)
     seed = 10
+    save_flag = True
 
     # Save configuration ofr render
     file_prefix = get_datetime_str()
@@ -206,8 +208,8 @@ if __name__ == '__main__':
     # np.set_printoptions(threshold=sys.maxsize)
     # print(original_rail_map)
 
+    print('Converting to nodes for ECBS.')
     result = MapDecoder(original_rail_map).convert_ori_rail_map()
-    print(result)
 
     # Obtain the start and target locations
     # Assuming that each agent is going from one assigned start location to one fixed target location.
@@ -230,12 +232,14 @@ if __name__ == '__main__':
     idx2pos = {k: v[0] for (k, v) in idx2node.items()}  # {index:current}
 
     # save for rendering
-    with open('./config/idx2node_' + file_prefix + '.pkl', 'wb') as fout:
-        pickle.dump(idx2node, fout)
-    with open('./config/node2idx_' + file_prefix + '.pkl', 'wb') as fout:
-        pickle.dump(node2idx, fout)
-    with open('./config/idx2pos_' + file_prefix + '.pkl', 'wb') as fout:
-        pickle.dump(idx2pos, fout)
+    if save_flag:
+        print('Saving pickle files')
+        with open('./config/idx2node_' + file_prefix + '.pkl', 'wb') as fout:
+            pickle.dump(idx2node, fout)
+        with open('./config/node2idx_' + file_prefix + '.pkl', 'wb') as fout:
+            pickle.dump(node2idx, fout)
+        with open('./config/idx2pos_' + file_prefix + '.pkl', 'wb') as fout:
+            pickle.dump(idx2pos, fout)
 
     edges = []
     for cur, prev in result:
@@ -247,7 +251,7 @@ if __name__ == '__main__':
     for agent in env.agents:
         # print(agent.position)
         # print(agent.direction)  # direction encoding: {0: North, 1: East, 2: South, 3: West}
-        current_pos = agent.position
+        current_pos = agent.initial_position
         prev_pos = None
 
         if agent.direction == 0:
@@ -264,11 +268,7 @@ if __name__ == '__main__':
 
         start_node = (current_pos, prev_pos)
         index = node2idx[start_node]
-
         start_idx.append(index)
-        # print(start_node, index)
-
-    # print(start_idx)
 
     pos2nodes = dict()
     for _, (cur, prev) in idx2node.items():
@@ -279,54 +279,55 @@ if __name__ == '__main__':
     target_idx = []
     for i, agent in enumerate(env.agents):
         goal_nodes = pos2nodes[agent.target]
-        # print(goal_nodes)
         if len(goal_nodes) > 1:
             print("Goal node is not a deadend")
 
         target_idx.append(node2idx[goal_nodes[0]])
 
-    # map file
-    node_file = ""
-    edge_file = ""
+    if save_flag:
+        # map file
+        node_file = ""
+        edge_file = ""
 
-    node_file += str(len(idx2node)) + "\n"
-    for idx, node in idx2node.items():
-        node_file += str(linearize_loc(env, idx2pos[idx])) + "\n"
+        node_file += str(len(idx2node)) + "\n"
+        for idx, node in idx2node.items():
+            node_file += str(linearize_loc(env, idx2pos[idx])) + "\n"
 
-    edge_file += str(len(edges)) + "\n"
-    for edge in edges:
-        edge_file += str(edge[0]) + "," + str(edge[1]) + "\n"
+        edge_file += str(len(edges)) + "\n"
+        for edge in edges:
+            edge_file += str(edge[0]) + "," + str(edge[1]) + "\n"
 
-    map_file = node_file + edge_file
+        map_file = node_file + edge_file
 
-    file = open("./config/map_" + file_prefix + ".txt", "w")
-    file.write(map_file)
-    file.close()
+        file = open("./config/map_" + file_prefix + ".txt", "w")
+        file.write(map_file)
+        file.close()
 
-    # agent file
-    start_goal_pos_file = ""
-    start_goal_pos_file += str(len(env.agents)) + "\n"
-    for i, agent in enumerate(env.agents):
-        start_goal_pos_file += str(start_idx[i]) + "," + str(target_idx[i]) + ",1\n"
+        # agent file
+        start_goal_pos_file = ""
+        start_goal_pos_file += str(len(env.agents)) + "\n"
+        for i, agent in enumerate(env.agents):
+            start_goal_pos_file += str(start_idx[i]) + "," + str(target_idx[i]) + ",1\n"
 
-    file = open("./config/agents_" + file_prefix + ".txt", "w")
-    file.write(start_goal_pos_file)
-    file.close()
+        file = open("./config/agents_" + file_prefix + ".txt", "w")
+        file.write(start_goal_pos_file)
+        file.close()
 
     # Get agents' handles to give actions
     # handles = env.get_agent_handles()
     # e.g. giving two agents actions, action_dict = {handles[0]:0, handles[1]:0}
-
-    _action = my_controller(n_agent=nr_agent)
+    _action: Dict[int, RailEnvActions] = my_controller(n_agent=nr_agent)
 
     # obs, all_rewards, done: dictionary indexed by agents handles
     # values: correspond to the relevant observations, rewards and terminal status for each agent.
-
     obs, all_rewards, done, _ = env.step(_action)  # environment take one step with the provided actions.
 
+    # get agents' speeds and position
+    for _agent in env.agents:
+        print(_agent.speed_data)
+
     # show results
-    # print("Observation: \n", obs)
-    # print("Rewards: {}, [done={}]".format(all_rewards, done))
-    # env_renderer = RenderTool(env, gl="PIL")
-    # env_renderer.render_env(show=True, frames=False, show_observations=False)
-    # time.sleep(1.5)
+    print("Rewards: {}, [done={}]".format(all_rewards, done))
+    env_renderer = RenderTool(env, gl="PIL")
+    env_renderer.render_env(show=True, frames=False, show_observations=False)
+    time.sleep(1.5)

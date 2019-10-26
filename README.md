@@ -38,7 +38,7 @@ https://discourse.aicrowd.com/t/additional-programming-language/1684
 ### Generate instances and render solution
 1. Run **round1.py**:
 ```bash
-$ cd Round 1
+$ cd Round1
 $ python3 round1.py 
 ```
 2. Run ECBS:
@@ -49,7 +49,7 @@ $ ./ECBS -m ../[map_name.txt]  -a ../[agent_name.txt] -o ../[path_name.txt] -t 6
 * where number = (width + height) * 1.5
 3. Run **temp_render_path.py**:
 ```bash
-$ cd ..  # back to Round 1
+$ cd ..  # back to Round1
 $ python3 temp_render_path.py --config [config_file.pkl] --path [path_file.txt]
 ```
 
