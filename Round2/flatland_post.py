@@ -3,17 +3,19 @@
 import numpy as np
 import pickle
 import argparse
-from Round2.stn import STN
-from Round2.controller import Controller, create_env, get_prefix
+from stn import STN
+from controller import Controller, create_env, get_prefix
 from typing import List, Tuple
 from flatland.envs.rail_env import RailEnv
 import time
+import networkx as nx
+import matplotlib.pyplot as plt
 
 
 class FlatlandPost(Controller):
-    def __init__(self, in_env: RailEnv, in_prefix: str, speed_list: List):
-        Controller.__init__(self, in_env=in_env, in_prefix=in_prefix)
-        self._speed_list = speed_list
+    def __init__(self, in_env: RailEnv, in_prefix: str, in_path: str, in_speed_list: List):
+        Controller.__init__(self, in_env=in_env, in_prefix=in_prefix, in_path=in_path)
+        self._speed_list = in_speed_list
         self.stn = STN()
 
     @property
@@ -31,17 +33,18 @@ class FlatlandPost(Controller):
         return
 
     @staticmethod
-    def encode_stn_node(in_position: int, in_agent_id: int, in_time_step: int):
-        return str(in_position) + '_' + str(in_agent_id) + '_' + str(in_time_step)
+    def encode_stn_node(in_agent_id: int, in_time_step: int, in_position: int):
+        return str(in_agent_id) + '_' + str(in_time_step) + '_' + str(in_position)
 
     @staticmethod
     def decode_stn_node(in_stn_node: str):
         """
         Decode the string to integers
         :param in_stn_node: string label of a mapf node
-        :return: agent_id, time_step,
+        :return: agent_id, time_step, position
         """
-        return int(in_stn_node.split('_')[0]), int(in_stn_node.split('_')[1]), int(in_stn_node.split('_')[2])
+        temp_seg = in_stn_node.split('_')
+        return int(temp_seg[0]), int(temp_seg[1]), int(temp_seg[2])
 
     def construct_stn(self):
         start_time = time.time()
@@ -53,38 +56,55 @@ class FlatlandPost(Controller):
 
         # Create nodes and type1 edges
         for j in range(self.n_agent):
-            mapf_node.append(self.encode_stn_node(self.path_list[j][0], j, 0))
-            temp_node = mapf_node[0]
+            v_j_0 = self.encode_stn_node(j, 0, self.path_list[j][0])
+            mapf_node.append(v_j_0)
+            isin_mapf_node[j][0] = True
+            v = v_j_0
+
             for t in range(1, len(self.path_list[j])):
-                if not self.path_list[j][t-1] == self.path_list[j][t]:
-                    mapf_node.append(self.encode_stn_node(self.path_list[j][t], j, t))
-                    mapf_edge.append((temp_node, mapf_node[t], {'lb': 1.0/self._speed_list[j], 'ub': np.inf}))
+                if self.path_list[j][t-1] != self.path_list[j][t]:
+                    v_j_t = self.encode_stn_node(j, t, self.path_list[j][t])
+                    mapf_node.append(v_j_t)
+                    mapf_edge.append((v, v_j_t, {'lb': 1.0/self._speed_list[j], 'ub': np.inf}))
                     isin_mapf_node[j][t] = True
-                    temp_node = mapf_node[t]
+                    v = v_j_t
 
         # Create type2 edges
         for j in range(self.n_agent):
             for t_j in range(0, len(self.path_list[j])):
                 if isin_mapf_node[j][t_j]:
                     for k in range(self.n_agent):
-                        if not j == k:
+                        if j != k:
                             for t_k in range(t_j+1, len(self.path_list[k])):
                                 if isin_mapf_node[k][t_k] and self.path_list[j][t_j] == self.path_list[k][t_k]:
-                                    mapf_edge.append((self.encode_stn_node(self.path_list[j][t_j], j, t_j),
-                                                      self.encode_stn_node(self.path_list[k][t_k], k, t_k),
+                                    mapf_edge.append((self.encode_stn_node(j, t_j, self.path_list[j][t_j]),
+                                                      self.encode_stn_node(k, t_k, self.path_list[k][t_k]),
                                                       {'lb': 1.0/self.speed_list[j], 'ub': np.inf}))
                                     break
 
         # build STN through networkx
-        self.stn.build(node_list=mapf_node, edge_list=mapf_edge)
-        print('Done! Require time (s): ', int(time.time() - start_time))
+        self.stn.build(in_nodes=mapf_node, in_edges=mapf_edge)
+        print('Done! Require time (s): {0:.5f}'.format(time.time() - start_time))
         return
 
-    def iteration(self):
-        """
-        Update every iteration
-        :return:
-        """
+    def draw_stn(self):
+        temp_fig = plt.figure(figsize=(12.8, 4.8))
+        h_step = 1
+        w_step = 1
+        temp_pos = dict()
+        temp_label = dict()
+        for n in self.stn.constraint_graph.nodes:
+            temp_agent, temp_time, temp_idx = self.decode_stn_node(n)
+            temp_pos[n] = (temp_time*w_step, (len(self.path_list)-temp_agent)*h_step)
+            temp_label[n] = temp_idx
+        nx.draw_networkx(self.stn.constraint_graph, pos=temp_pos, with_labels=False, node_size=500)
+        nx.draw_networkx_labels(self.stn.constraint_graph, pos=temp_pos, labels=temp_label)
+        temp_fig.savefig('./stn.png')
+        temp_fig.show()
+        return
+
+    def replan(self):
+        self.stn.solve()
 
         return
 
@@ -119,4 +139,8 @@ if __name__ == '__main__':
         speed_list.append(_agent.speed_data['speed'])
     print('speed_list: ', speed_list)
 
-    my_post = FlatlandPost(in_env=env, in_prefix=file_prefix, speed_list=speed_list)
+    my_post = FlatlandPost(in_env=env, in_prefix=file_prefix, in_path=args.path, in_speed_list=speed_list)
+    my_post.construct_stn()
+
+    # Draw STN
+    my_post.draw_stn()

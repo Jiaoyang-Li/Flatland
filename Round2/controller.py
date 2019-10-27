@@ -39,7 +39,7 @@ def load_config(file_name):
 
 
 class Controller:
-    def __init__(self, in_env, in_prefix):
+    def __init__(self, in_env, in_prefix, in_path):
         print('Controller Initialization')
 
         if in_prefix is None:
@@ -51,7 +51,7 @@ class Controller:
             self.idx2pose = self.read_file('./config/idx2pos_' + in_prefix + '.pkl')
             self.node2idx = self.read_file('./config/node2idx_' + in_prefix + '.pkl')
 
-        self.path_list = self.read_file(args.path)
+        self.path_list = self.read_file(in_path)
         self.n_agent = len(self.path_list)
         self.env = in_env
         self.env_renderer = RenderTool(in_env, gl='PILSVG')
@@ -173,5 +173,5 @@ if __name__ == '__main__':
                               min_dist=config_dict['min_dist'],
                               max_dist=config_dict['max_dist'],
                               seed=config_dict['seed'])
-    my_controller = Controller(in_env=env, in_prefix=file_prefix)
+    my_controller = Controller(in_env=env, in_prefix=file_prefix, in_path=args.path)
     my_controller.render_actions()

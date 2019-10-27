@@ -8,12 +8,13 @@ from logging import warning
 
 class STN:
     def __init__(self):
-        self.constraint_graph = nx.DiGraph()
+        self.constraint_graph: nx.DiGraph = nx.DiGraph()
         self.min_time = -1
 
-    def build(self, node_list: List, edge_list: List[Tuple]):
-        self.constraint_graph.add_nodes_from(node_list, value=np.inf)
-        self.constraint_graph.add_edges_from(edge_list)
+    def build(self, in_nodes: List[str], in_edges: List[Tuple]):
+        print('Build STN ...')
+        self.constraint_graph.add_nodes_from(in_nodes, value=np.inf)
+        self.constraint_graph.add_edges_from(in_edges)
         return
 
     def solve(self):
@@ -46,10 +47,10 @@ class STN:
 
 if __name__ == '__main__':
     a = STN()
-    a.build(node_list=list(['a', 'b', 'c', 'd', 'e']),
-            edge_list=[('a', 'b', {'lb': 10, 'ub': 20}),
-                       ('b', 'c', {'lb': 30, 'ub': 40}),
-                       ('d', 'c', {'lb': 10, 'ub': 20}),
-                       ('d', 'e', {'lb': 40, 'ub': 50}),
-                       ('a', 'e', {'lb': 60, 'ub': 70})])
+    a.build(in_nodes=list(['a', 'b', 'c', 'd', 'e']),
+            in_edges=[('a', 'b', {'lb': 10, 'ub': 20}),
+                      ('b', 'c', {'lb': 30, 'ub': 40}),
+                      ('d', 'c', {'lb': 10, 'ub': 20}),
+                      ('d', 'e', {'lb': 40, 'ub': 50}),
+                      ('a', 'e', {'lb': 60, 'ub': 70})])
     a.solve()

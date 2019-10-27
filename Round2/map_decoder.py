@@ -142,10 +142,10 @@ def get_datetime_str():
 
 
 if __name__ == '__main__':
-    map_width = 20
-    map_height = 20
-    nr_agent = 10  # number of agents
-    nr_start_goal = 10  # number of start and goal connections
+    map_width = 10
+    map_height = 10
+    nr_agent = 5  # number of agents
+    nr_start_goal = 5  # number of start and goal connections
     nr_extra = 1  # number of extra railway elements added
     min_dist = 8  # minimum grid distance between start and goal
     max_dist = 99999  # maximum grid distance between start and goal
