@@ -397,7 +397,7 @@ void ECBSSearch<MyGraph>::updateReservationTable(size_t max_path_len, int exclud
                     int loc = getAgentLocation(i, timestep);
                     cat[timestep].insert(loc);
                     int prev_loc = getAgentLocation(i, timestep - 1);
-                    if (prev_loc != loc)
+                    if (prev_loc >= 0 && prev_loc != loc)
                     {
                         cat[timestep].insert(loc + (1 + prev_loc) * (int)map_size);
                     }
@@ -520,6 +520,16 @@ bool ECBSSearch<MyGraph>::runECBSSearch()
 		{  // found a solution (and finish the while look)
 			solution_found = true;
 			solution_cost = curr->g_val;
+			for (int i = 0; i < num_of_agents; i++)
+            {
+			    for (int t = 0; t < (int)paths[i]->size(); t++)
+                {
+			        if (paths[i]->at(t).id < 0)
+                        paths[i]->at(t).id = G.start_ids[i];
+			        else
+			            break;
+                }
+            }
 			break;
 		}
 
