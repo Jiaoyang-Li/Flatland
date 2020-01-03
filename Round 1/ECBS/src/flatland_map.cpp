@@ -23,7 +23,7 @@ bool FlatlandMap::load_map(string fname)
     for (int i=0; i<num_vertexes; i++) {
       getline (myfile, line);
       boost::tokenizer< boost::char_separator<char> > l_tok(line, sep);
-      boost::tokenizer< boost::char_separator<char> >::iterator l_beg=tok.begin();
+      boost::tokenizer< boost::char_separator<char> >::iterator l_beg= l_tok.begin();
 
 			int location = atoi((*l_beg).c_str());
       node2loc[i] = location;
