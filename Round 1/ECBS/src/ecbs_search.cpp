@@ -308,7 +308,7 @@ void ECBSSearch<MyGraph>::findConflicts(list<std::shared_ptr<Conflict>>& set, in
                 set.push_back(std::make_shared<Conflict>(a1, a2, loc1, loc2, t1 + 1));
             }
         } else{
-		    for (int t2 = max(t_min, t1 - k_robust); t2 <= min(last_timestep, t1 + k_robust); t2++)
+		    for (int t2 = max((int)t_min, t1 - k_robust); t2 <= min(last_timestep, t1 + k_robust); t2++)
             {
 		        int loc2 = getAgentLocation(a2, t2);
                 if (loc1 == loc2)// vertex conflict
