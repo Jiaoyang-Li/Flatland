@@ -55,7 +55,12 @@ const CAT& res_table)
 
     // generate start and add it to the OPEN list
     int start_id = G.start_ids[agent_id];
-    Node* start = new Node(start_id, 0, G.heuristics[agent_id][start_id], NULL, 0);
+	if (G.heuristics[agent_id][start_id] > G.map_size()) // start and goal locations are disconnected
+	{
+		cerr << "The start and goal locations of Agent " << agent_id << " are disconnected." << endl;
+		return false;
+	}
+    Node* start = new Node(start_id, 0, G.heuristics[agent_id][start_id], NULL, 0, false, true);
     num_generated++;
 
     start->open_handle = open_list.push(start);
@@ -89,7 +94,14 @@ const CAT& res_table)
             int next_timestep = curr->timestep + 1;
             if (next_timestep > max_makespan)
                 continue;
-            if (!isConstrained(G.get_location(curr->id), G.get_location(next_id), next_timestep, constraints))
+			bool next_wait_at_start = false;
+			if (curr->wait_at_start && next_id == curr->id)
+				next_wait_at_start = true;
+			if (G.heuristics[agent_id][next_id] > G.map_size()) //we cannot move from next_id to the goal location
+			{
+				continue;
+			}
+            if (next_wait_at_start || !isConstrained(G.get_location(curr->id), G.get_location(next_id), next_timestep, constraints))
             {
                 // compute cost to next_id via curr node
                 int next_g_val = curr->g_val + 1;
@@ -99,8 +111,7 @@ const CAT& res_table)
                         G.get_location(next_id), next_timestep, res_table, G.map_size());
                 // generate (maybe temporary) node
                 Node* next = new Node(next_id, next_g_val, next_h_val,
-                curr, next_timestep, next_internal_conflicts);
-
+                curr, next_timestep, next_internal_conflicts, false, next_wait_at_start);
                 // try to retrieve it from the hash table
                 it = allNodes_table.find(next);
 
@@ -142,7 +153,7 @@ const CAT& res_table)
                             existing_next->h_val = next_h_val;
                             existing_next->parent = curr;
                             existing_next->num_internal_conf = next_internal_conflicts;
-
+							existing_next->wait_at_start = next_wait_at_start;
 
                             if (update_open)
                             {

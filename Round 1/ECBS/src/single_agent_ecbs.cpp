@@ -30,9 +30,6 @@ void SingleAgentPlanner::updatePath(Node* goal)
 	reverse(path.begin(), path.end());
 	path_cost = goal->g_val;
 	num_of_conf = goal->num_internal_conf;
-	size_t i = 0;
-	while (i < path.size() - 1 && path[i].id == path[i + 1].id)
-	    path[i].id = -1 - i;
 }
 
 void SingleAgentPlanner::releaseClosedListNodes(hashtable_t& allNodes_table)

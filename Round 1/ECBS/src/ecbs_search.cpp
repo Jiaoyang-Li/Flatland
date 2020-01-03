@@ -285,7 +285,13 @@ void ECBSSearch<MyGraph>::findConflicts(list<std::shared_ptr<Conflict>>& set, in
     int a1 = paths[a1_]->size() > paths[a2_]->size() ? a1_ : a2_;
     int last_timestep = (int)paths[a1]->size() - 1;
     int a2 = paths[a1_]->size() > paths[a2_]->size() ? a2_ : a1_;
-	for (int t1  = 0; t1 <= last_timestep; t1++)
+	// find the earliest timestep t_min when both agents start to move.
+	size_t t_min = 0;
+	while(t_min + 1 < paths[a1]->size() && paths[a1]->at(t_min + 1).id == G.start_ids[a1])
+		t_min++;
+	while (t_min + 1 < paths[a2]->size() && paths[a2]->at(t_min + 1).id == G.start_ids[a2])
+		t_min++;
+	for (int t1  = t_min; t1 <= last_timestep; t1++)
 	{
 		int loc1 = getAgentLocation(a1, t1);
 		if (k_robust == 0)
@@ -302,7 +308,7 @@ void ECBSSearch<MyGraph>::findConflicts(list<std::shared_ptr<Conflict>>& set, in
                 set.push_back(std::make_shared<Conflict>(a1, a2, loc1, loc2, t1 + 1));
             }
         } else{
-		    for (int t2 = max(0, t1 - k_robust); t2 <= min(last_timestep, t1 + k_robust); t2++)
+		    for (int t2 = max(t_min, t1 - k_robust); t2 <= min(last_timestep, t1 + k_robust); t2++)
             {
 		        int loc2 = getAgentLocation(a2, t2);
                 if (loc1 == loc2)// vertex conflict
@@ -397,7 +403,7 @@ void ECBSSearch<MyGraph>::updateReservationTable(size_t max_path_len, int exclud
                     int loc = getAgentLocation(i, timestep);
                     cat[timestep].insert(loc);
                     int prev_loc = getAgentLocation(i, timestep - 1);
-                    if (prev_loc >= 0 && prev_loc != loc)
+                    if (prev_loc != loc)
                     {
                         cat[timestep].insert(loc + (1 + prev_loc) * (int)map_size);
                     }
@@ -520,16 +526,6 @@ bool ECBSSearch<MyGraph>::runECBSSearch()
 		{  // found a solution (and finish the while look)
 			solution_found = true;
 			solution_cost = curr->g_val;
-			for (int i = 0; i < num_of_agents; i++)
-            {
-			    for (int t = 0; t < (int)paths[i]->size(); t++)
-                {
-			        if (paths[i]->at(t).id < 0)
-                        paths[i]->at(t).id = G.start_ids[i];
-			        else
-			            break;
-                }
-            }
 			break;
 		}
 
