@@ -13,7 +13,6 @@ class Node
 	int timestep = 0;
 	int num_internal_conf = 0;  // used in ECBS
 	bool in_openlist = false;
-	bool wait_at_start;
 
 	///////////////////////////////////////////////////////////////////////////////
 	// NOTE -- Normally, compare_node (lhs,rhs) suppose to return true if lhs<rhs.
@@ -84,7 +83,7 @@ class Node
 	Node(const Node& other);
 	Node(int loc, int g_val, int h_val,
 		Node* parent, int timestep,
-		int num_internal_conf = 0, bool in_openlist = false, bool wait_at_start = false);
+		int num_internal_conf = 0, bool in_openlist = false);
 	inline int getFVal() const {return g_val + h_val;}
 
 	// The following is used for checking whether two nodes are equal
@@ -96,8 +95,7 @@ class Node
 		{
 			return (s1 == s2) || (s1 && s2 &&
 								s1->id == s2->id &&
-								s1->timestep == s2->timestep &&
-								s1->wait_at_start == s2->wait_at_start);
+								s1->timestep == s2->timestep);
 		}
 	};
 

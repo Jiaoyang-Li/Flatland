@@ -66,6 +66,7 @@ bool FlatlandMap::load_agents(string fname)
 		int num_of_agents = atoi((*beg).c_str());
 		start_ids.resize(num_of_agents);
 		goal_ids.resize(num_of_agents);
+		goal_locations.resize(num_of_agents);
 		r_velocities.resize(num_of_agents);
 		for (int i = 0; i<num_of_agents; i++)
 		{
@@ -75,8 +76,15 @@ bool FlatlandMap::load_agents(string fname)
 			// read start [row,col] for agent i
 			start_ids[i] = atoi((*c_beg).c_str());
 			c_beg++;
-			goal_ids[i] = atoi((*c_beg).c_str());
+			goal_locations[i] = atoi((*c_beg).c_str());
 			c_beg++;
+			int num_goal_ids = atoi((*c_beg).c_str()); // number of goal ids
+			c_beg++;
+			for (int j = 0; j < num_goal_ids; j++)
+			{
+				goal_ids[i].push_back(atoi((*c_beg).c_str()));
+				c_beg++;
+			}
 			r_velocities[i] = atoi((*c_beg).c_str());
 		}
 		myfile.close();
@@ -138,18 +146,18 @@ void FlatlandMap::preprocessing_heuristics()
 	heuristics.resize(num_of_agents);
 	for (size_t i = 0; i < num_of_agents; i++)
 	{
-		compute_heuristics(goal_ids[i], heuristics[i]);
+		compute_heuristics(i);
     // std::cout <<"H for agent " << i << " in its start position: " << heuristics[i][start_locations[i]] << std::endl;
 
 	}
 }
 
 // compute low-level heuristics
-void FlatlandMap::compute_heuristics(int goal_location, vector<int>& heuristics)
+void FlatlandMap::compute_heuristics(int agent_id)
 {
 	struct MyNode
 	{
-		int loc;
+		int id;
 		int g_val;
 		bool in_openlist;
 
@@ -170,7 +178,7 @@ void FlatlandMap::compute_heuristics(int goal_location, vector<int>& heuristics)
 		open_handle_t open_handle;
 
 		MyNode() {}
-		MyNode(int loc, int g_val, bool in_openlist = false) : loc(loc), g_val(g_val), in_openlist(in_openlist) {}
+		MyNode(int id, int g_val, bool in_openlist = false) : id(id), g_val(g_val), in_openlist(in_openlist) {}
 
 		// The following is used for checking whether two nodes are equal
 		// we say that two nodes, s1 and s2, are equal if
@@ -180,7 +188,7 @@ void FlatlandMap::compute_heuristics(int goal_location, vector<int>& heuristics)
 			bool operator()(const MyNode* s1, const MyNode* s2) const
 			{
 				return (s1 == s2) || (s1 && s2 &&
-					s1->loc == s2->loc);
+					s1->id == s2->id);
 			}
 		};
 
@@ -190,12 +198,12 @@ void FlatlandMap::compute_heuristics(int goal_location, vector<int>& heuristics)
 		{
 			std::size_t operator()(const MyNode* n) const
 			{
-				return std::hash<int>()(n->loc);
+				return std::hash<int>()(n->id);
 			}
 		};
 	};
 
-	int root_location = goal_location;
+
 	// generate a heap that can save nodes (and a open_handle)
 	fibonacci_heap< MyNode*, compare<MyNode::compare_node> > heap;
 	fibonacci_heap< MyNode*, compare<MyNode::compare_node> >::handle_type open_handle;
@@ -204,14 +212,18 @@ void FlatlandMap::compute_heuristics(int goal_location, vector<int>& heuristics)
 	//                    eqnode is used to break ties when hash values are equal)
 	unordered_set<MyNode*, MyNode::NodeHasher, MyNode::eqnode> nodes;
 
-	MyNode* root = new MyNode(root_location, 0);
-	root->open_handle = heap.push(root);  // add root to heap
-	nodes.insert(root);       // add root to hash_table (nodes)
+	for (auto id : goal_ids[agent_id])
+	{
+		auto root = new MyNode(id, 0);
+		root->open_handle = heap.push(root);  // add root to heap
+		nodes.insert(root);       // add root to hash_table (nodes)
+	}
+	
 	while (!heap.empty())
 	{
 		MyNode* curr = heap.top();
 		heap.pop();
-		auto neighbours = adjacent_vertices_r(curr->loc);
+		auto neighbours = adjacent_vertices_r(curr->id);
 		for (auto next_loc : neighbours)
 		{
 			int next_g_val = (int)curr->g_val + 1;
@@ -232,11 +244,11 @@ void FlatlandMap::compute_heuristics(int goal_location, vector<int>& heuristics)
 		}
 	}
 	// iterate over all nodes
-	heuristics.resize(map_size(), INT_MAX);
+	heuristics[agent_id].resize(map_size(), INT_MAX);
 	for (auto it = nodes.begin(); it != nodes.end(); it++)
 	{
 		MyNode* s = *it;
-		heuristics[s->loc] = (int)s->g_val;
+		heuristics[agent_id][s->id] = s->g_val;
 		delete (s);
 	}
 

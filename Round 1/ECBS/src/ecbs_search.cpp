@@ -280,38 +280,39 @@ bool ECBSSearch<MyGraph>::findConflicts(ECBSNode& curr)
 
 // find conflicts between paths of agents a1 and a2
 template<class MyGraph>
-void ECBSSearch<MyGraph>::findConflicts(list<std::shared_ptr<Conflict>>& set, int a1_, int a2_) const
+void ECBSSearch<MyGraph>::findConflicts(list<std::shared_ptr<Conflict>>& set, int a1, int a2) const
 {
-    int a1 = paths[a1_]->size() > paths[a2_]->size() ? a1_ : a2_;
-    int last_timestep = (int)paths[a1]->size() - 1;
-    int a2 = paths[a1_]->size() > paths[a2_]->size() ? a2_ : a1_;
-	// find the earliest timestep t_min when both agents start to move.
-	size_t t_min = 0;
-	while(t_min + 1 < paths[a1]->size() && paths[a1]->at(t_min + 1).id == G.start_ids[a1])
+	int t_max = (int)min(paths[a1]->size(), paths[a2]->size()) - 1;
+	// find the earliest timestep t_min when at least one of the agents start to move.
+	size_t t_min = 1;
+	while(t_min < paths[a1]->size() && paths[a1]->at(t_min).id == G.start_ids[a1] && 
+				t_min < paths[a2]->size() && paths[a2]->at(t_min).id == G.start_ids[a2])
 		t_min++;
-	while (t_min + 1 < paths[a2]->size() && paths[a2]->at(t_min + 1).id == G.start_ids[a2])
-		t_min++;
-	for (int t1  = t_min; t1 <= last_timestep; t1++)
+	for (int t1  = t_min; t1 < t_max; t1++)
 	{
 		int loc1 = getAgentLocation(a1, t1);
 		if (k_robust == 0)
         {
             int loc2 = getAgentLocation(a2, t1);
-            int next_loc1 = getAgentLocation(a1, t1 + 1);
-            int next_loc2 = getAgentLocation(a2, t1 + 1);
-            if (loc1 == loc2)// vertex conflict
+            int prev_loc1 = getAgentLocation(a1, t1 - 1);
+            int prev_loc2 = getAgentLocation(a2, t1 - 1);
+            if (loc1 == loc2 && loc1 != G.goal_locations[a1] && loc2 != G.goal_locations[a2])// vertex conflict
             {
                 set.push_back(std::make_shared<Conflict>(a1, a2, loc1, -1, t1));
             }
-            else if (loc1 != next_loc1 && loc1 == next_loc2 && loc2 == next_loc1)// edge conflict
+            else if (loc1 != prev_loc1 && loc1 == prev_loc2 && loc2 == prev_loc1)// edge conflict
             {
-                set.push_back(std::make_shared<Conflict>(a1, a2, loc1, loc2, t1 + 1));
+                set.push_back(std::make_shared<Conflict>(a1, a2, prev_loc1, loc1, t1));
             }
-        } else{
-		    for (int t2 = max((int)t_min, t1 - k_robust); t2 <= min(last_timestep, t1 + k_robust); t2++)
+        } 
+		else
+		{
+			if (loc1 == G.goal_locations[a1])
+				continue;
+		    for (int t2 = max((int)t_min, t1 - k_robust); t2 < min(t_max, t1 + k_robust + 1); t2++)
             {
 		        int loc2 = getAgentLocation(a2, t2);
-                if (loc1 == loc2)// vertex conflict
+                if (loc1 == loc2 && loc2 != G.goal_locations[a2])// vertex conflict
                     set.push_back(std::make_shared<Conflict>(a1, a2, loc1, -1, min(t1, t2)));
             }
 		}
@@ -386,9 +387,9 @@ void ECBSSearch<MyGraph>::updateReservationTable(size_t max_path_len, int exclud
             {
                 auto prev = 0;
                 auto curr = 1;
-                while (curr <= (int)paths[i]->size())
+                while (curr < (int)paths[i]->size())
                 {
-                    if (curr == (int)paths[i]->size() || paths[i]->at(prev).id != paths[i]->at(curr).id)
+                    if (paths[i]->at(prev).id != paths[i]->at(curr).id)
                     {
                         int loc = getAgentLocation(i, prev);
                         for (int t = max(0, prev - k_robust); t < curr + k_robust; t++)
@@ -452,21 +453,24 @@ bool ECBSSearch<MyGraph>::findPathForSingleAgent(ECBSNode*  node, int ag)
 template<class MyGraph>
 bool ECBSSearch<MyGraph>::generateChild(ECBSNode*  node)
 {
-	if (get<3>(node->constraint)) //positve constraint
+	int x, y, t1, t2;
+	bool positive;
+	std::tie(x, y, t1, t2, positive) = node->constraint;
+	if (positive) //positve constraint
 	{
 		for (int ag = 0; ag < num_of_agents; ag++)
 		{
 			if (ag == node->agent_id)
 				continue;
-			else if (get<1>(node->constraint) < 0 && // vertex constraint
-				getAgentLocation(ag, get<2>(node->constraint)) == get<0>(node->constraint))
+			else if (y < 0 && // vertex constraint
+				getAgentLocation(ag, t1) == x)
 			{
 				if (!findPathForSingleAgent(node, ag))
 					return false;
 			}
-			else if (get<1>(node->constraint) >= 0 && //edge constraint
-				getAgentLocation(ag, get<2>(node->constraint) - 1) == get<1>(node->constraint) &&
-				getAgentLocation(ag, get<2>(node->constraint)) == get<0>(node->constraint))
+			else if (y >= 0 && //edge constraint
+				(getAgentLocation(ag, t1 - 1) == y &&
+				getAgentLocation(ag, t1) == x)) // have bug here!!!!
 			{
 				if (!findPathForSingleAgent(node, ag))
 					return false;

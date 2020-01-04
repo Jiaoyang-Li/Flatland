@@ -5,9 +5,10 @@ class FlatlandMap
 {
  public:
   vector<int> start_ids;
-  vector<int> goal_ids;
+  vector<list<int>> goal_ids;
+  vector<int> goal_locations;
   vector<int> r_velocities; // reciprocals of velocities, how many timesteps for train to cross an edge
-  vector< vector<int> > heuristics; // [agent_id][loc]
+  vector< vector<int> > heuristics; // [agent_id][id]
 
   inline size_t map_size() const { return num_vertexes; }
 
@@ -41,7 +42,7 @@ class FlatlandMap
   /* inline int linearize_coordinate(int row, int col) const { return (this->cols * row + col); } */
   /* inline int row_coordinate(int id) const { return id / this->cols; } */
   /* inline int col_coordinate(int id) const { return id % this->cols; } */
-  void compute_heuristics(int goal_location, vector<int>& heuristics);
+  void compute_heuristics(int agent_id);
 
   list<int> adjacent_vertices_r(int vertex_id) const;
   list<int> adjacent_vertices(int vertex_id) const;
