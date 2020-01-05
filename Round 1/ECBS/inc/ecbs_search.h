@@ -12,7 +12,7 @@ public:
 	int max_makespan;
 	bool disjointSplitting;
     double time_limit;
-    int k_robust = 0;
+    // int k_robust = 0;
     int screen = 0;
 
     // statistics of efficiency
@@ -26,6 +26,7 @@ public:
     int min_sum_f_vals;
     bool solution_found = false;
     double solution_cost = -1;
+	int solution_makespan = -1;
 
 	vector < Path* > paths;  // agents paths
 
@@ -67,13 +68,10 @@ private:
     int num_of_agents;
 
 
-    inline bool switchedLocations(int agent1_id, int agent2_id, size_t timestep);
-    inline int getAgentLocation(int agent_id, size_t timestep) const;
     bool findConflicts(ECBSNode& curr);
-    void findConflicts(list<std::shared_ptr<Conflict>>& set, int a1, int a2) const;
+	std::shared_ptr<Conflict>  findConflicts(int a1, int a2) const;
     std::shared_ptr<Conflict>  chooseConflict(const list<std::shared_ptr<Conflict>>& conflicts);
-    int getPathsMaxLength();
-    vector < list< tuple<int, int, bool> > >* collectConstraints(ECBSNode* curr, int agent_id);
+    void collectConstraints(ECBSNode* curr, int agent_id, vector < list< int > >& constraints);
     bool generateChild(ECBSNode* child);
     void updateReservationTable(size_t max_plan_len, int exclude_agentconst);
     void updateFocalList(double old_lower_bound, double new_lower_bound, double f_weight);

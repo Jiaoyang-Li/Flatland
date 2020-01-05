@@ -13,6 +13,7 @@ public:
 	int g_val;  // (total cost)
 	int num_of_collisions;
 	int sum_min_f_vals;  // saves the overall sum of min f-vals.
+	int makespan;
 
 	uint64_t time_expanded;
 	uint64_t time_generated;

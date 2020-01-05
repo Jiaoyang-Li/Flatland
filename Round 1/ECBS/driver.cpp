@@ -25,7 +25,6 @@ int main(int argc, char** argv)
 		("cutoffTime,t", po::value<int>()->default_value(10), "cutoff time (seconds)")
 		("seed", po::value<int>()->default_value(0), "random seed")
 		("debug", po::value<bool>()->default_value(false), "debug")
-		("k_robust", po::value<int>()->default_value(1), "k-robust distance")
 	;
 
 	po::variables_map vm;
@@ -63,7 +62,6 @@ int main(int argc, char** argv)
 		ecbs.screen = 0;
 		if (vm["debug"].as<bool>())
 			ecbs.screen = 1;
-		ecbs.k_robust = vm["k_robust"].as<int>();
 		ecbs.runECBSSearch();
 		if (!ecbs.solution_found)
 		{

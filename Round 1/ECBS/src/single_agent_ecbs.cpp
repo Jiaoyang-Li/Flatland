@@ -17,13 +17,14 @@ void SingleAgentPlanner::clear()
 // Updates the path.
 void SingleAgentPlanner::updatePath(Node* goal)
 {
-	path.resize(goal->timestep + 1);
+	path.clear();
 	Node* curr = goal;
-	for (int t = goal->timestep; t >= 0; t--)
+	while ( curr != nullptr)
 	{
-		path[t].id = curr->id;
+		path.emplace_back(curr->id, curr->timestep);
 		curr = curr->parent;
 	}
+	reverse(path.begin(), path.end());
 	path_cost = goal->g_val;
 	num_of_conf = goal->num_internal_conf;
 }
@@ -61,29 +62,19 @@ int SingleAgentPlanner::extractLastGoalTimestep(int goal_location, const vector<
 // Checks if a vaild path found (wrt my_map and constraints)
 // input: curr_id (location at time next_timestep-1) ; next_id (location at time next_timestep); next_timestep
 // cons[timestep] is a list of <loc1,loc2, bool> of (vertex/edge) constraints for that timestep. (loc2=-1 for vertex constraint).
-bool SingleAgentPlanner::isConstrained(int curr_id, int next_id, int next_timestep,
-	const vector< list< tuple<int, int, bool> > >* cons)  const
+bool SingleAgentPlanner::isConstrained(int next_loc, int curr_timestesp, int next_timestep, const vector< list< int > >& cons)  const
 {
-	if (cons == NULL)
+	if (cons.empty())
 		return false;
-	if (curr_id < 0 && next_id < 0)
+	if (next_loc < 0)
 		return false;
 	// check vertex constraints (being in next_id at next_timestep is disallowed)
-	if ( next_timestep < static_cast<int>(cons->size()) ) 
+	for (int t = curr_timestesp; t <= min(next_timestep, (int)cons.size() - 1); t++)
 	{
-		for (const auto & it : cons->at(next_timestep))
+		for (auto loc : cons[t])
 		{
-			if (get<2>(it)) // positive constraint
-			{	
-				if(get<0>(it) != next_id)  //can only stay at constrained location
-						return true;
-			}
-			else //negative constraint
-			{
-				if ( (get<0>(it) == next_id && get<1>(it) < 0)//vertex constraint
-					|| (get<0>(it) == curr_id && get<1>(it) == next_id)) // edge constraint
-					return true;
-			}
+			if (loc == next_loc) // edge constraint
+				return true;
 		}
 	}
 	return false;

@@ -16,8 +16,7 @@ private:
 	void clear();
 	int extractLastGoalTimestep(int goal_location, const vector< list< tuple<int, int, bool> > >* cons);
 	void releaseClosedListNodes(hashtable_t& allNodes_table);
-	bool isConstrained(int curr_id, int next_id, int next_timestep,
-		const vector< list< tuple<int, int, bool> > >* cons) const;
+	bool isConstrained(int next_id, int curr_timestesp, int next_timestep, const vector< list< int > >& cons) const;
 	void updatePath(Node* goal);
 	int numOfConflictsForStep(int curr_id, int next_id, int next_timestep, const CAT& res_table, size_t map_size);
 	void updateFocalList(double old_lower_bound, double new_lower_bound, double f_weight);
@@ -41,7 +40,7 @@ public:
 	// minimizing the number of internal conflicts (that is conflicts with known_paths for other agents found so far).
 	template<class MyGraph>
 	bool runFocalSearch(const MyGraph& G, int agent_id, double f_weight,
-		const vector < list< tuple<int, int, bool> > >* constraints,
+		const vector < list< int > >& constraints,
 		const CAT& res_table)
 	{
 		clear();
@@ -49,13 +48,13 @@ public:
 
 								   // generate start and add it to the OPEN list
 		int start_id = G.start_ids[agent_id];
-		int initial_h = G.heuristics[agent_id][start_id];
-		if (initial_h >= min(max_makespan, (int)G.map_size())) // start and goal locations are disconnected
+		int initial_h = G.get_h_value(agent_id, start_id);
+		if (initial_h >= min(max_makespan, (int)G.map_size() * G.r_velocities[agent_id])) // start and goal locations are disconnected
 		{
 			cerr << "The start and goal locations of Agent " << agent_id << " are disconnected." << endl;
 			return false;
 		}
-		Node* start = new Node(-1, 0, initial_h + 1, NULL, 0, false);
+		Node* start = new Node(-1, 0, initial_h + 1, nullptr, 0, false);
 		num_generated++;
 
 		start->open_handle = open_list.push(start);
@@ -93,16 +92,24 @@ public:
 			}
 			for (auto next_id : neighbours)
 			{
-				int next_timestep = curr->timestep + 1;
-				int next_g_val = curr->g_val + 1;
-				int next_h_val;
+				int next_timestep, next_h_val;
 				if (next_id >= 0)
-					next_h_val = G.heuristics[agent_id][next_id];
+				{
+					if (curr->id == next_id)
+						next_timestep = curr->timestep + 1;
+					else
+						next_timestep = curr->timestep + G.r_velocities[agent_id];
+					next_h_val = G.get_h_value(agent_id, next_id);
+				}
 				else
+				{
+					next_timestep = curr->timestep + 1;
 					next_h_val = initial_h + 1;
+				}
+				int next_g_val = next_timestep;
 				if (next_h_val > max_makespan - next_g_val) //we cannot reach the goal location before the ddl
 					continue;
-				if (!isConstrained(G.get_location(curr->id), G.get_location(next_id), next_timestep, constraints))
+				if (!isConstrained(G.get_location(next_id), curr->timestep, next_timestep, constraints)) // TODO: this method does not work for edge constraints
 				{
 					int next_internal_conflicts = curr->num_internal_conf + numOfConflictsForStep(G.get_location(curr->id),
 						G.get_location(next_id), next_timestep, res_table, G.map_size());

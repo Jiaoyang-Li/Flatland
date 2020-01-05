@@ -79,6 +79,8 @@ typedef vector< unordered_set< int > > CAT;
 struct pathEntry
 {
     int id;
+	int timestep;
+	pathEntry(int id, int timestep) : id(id), timestep(timestep) {}
 };
 
 typedef vector<pathEntry> Path;

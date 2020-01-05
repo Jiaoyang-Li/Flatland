@@ -11,11 +11,13 @@ bool FlatlandMap::generate_instance(int num_of_agents)
 		return false;
 	start_ids.resize(id_max - id_min);
 	goal_locations.resize(id_max - id_min);
+	r_velocities.resize(id_max - id_min);
 	heuristics.resize(id_max - id_min);
 	for (size_t i = id_min; i < id_max; i++)
 	{
 		start_ids[i - id_min] = all_start_ids[i];
 		goal_locations[i - id_min] = all_goal_locations[i];
+		r_velocities[i - id_min] = all_r_velocities[i];
 		heuristics[i - id_min] = compute_heuristics(i);
 	}
 	return true;

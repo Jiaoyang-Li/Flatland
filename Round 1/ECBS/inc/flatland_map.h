@@ -8,8 +8,8 @@ class FlatlandMap
   // vector<list<int>> goal_ids;
   vector<int> goal_locations;
   vector<int> r_velocities; // reciprocals of velocities, how many timesteps for train to cross an edge
-  vector< vector<int> > heuristics; // [agent_id][id]
 
+  int get_h_value(int agent_id, int id) const { return heuristics[agent_id][id] * r_velocities[agent_id]; }
 
   vector<Path> paths;
 
@@ -46,6 +46,7 @@ class FlatlandMap
   vector<int> all_goal_locations;
   vector<int> all_r_velocities; // reciprocals of velocities, how many timesteps for train to cross an edge
 
+  vector< vector<int> > heuristics; // [agent_id][id]
 
   vector<int> node2loc;
 
