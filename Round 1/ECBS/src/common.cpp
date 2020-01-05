@@ -20,6 +20,11 @@ std::ostream& operator<<(std::ostream& os, const Conflict& conflict)
 
 std::ostream& operator<<(std::ostream& os, const Path& path)
 {
+	if (path.empty())
+	{
+		os << -1 << ",";
+		return os;
+	}
 	Path::const_iterator state = path.begin();
     for (int t = 0; t <= path.back().timestep; t++)
     {

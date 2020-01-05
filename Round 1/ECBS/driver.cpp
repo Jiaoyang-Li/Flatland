@@ -63,6 +63,8 @@ int main(int argc, char** argv)
 		if (vm["debug"].as<bool>())
 			ecbs.screen = 1;
 		ecbs.runECBSSearch();
+		if (vm["debug"].as<bool>())
+			ecbs.printResults();
 		if (!ecbs.solution_found)
 		{
 			groupSize = groupSize / 2;
@@ -96,7 +98,8 @@ int main(int argc, char** argv)
     for (const auto& path: G.paths)
     {
         stats << path << endl;
-		makespan = max(makespan, path.back().timestep);
+		if (!path.empty())
+			makespan = max(makespan, path.back().timestep);
     }
     stats.close();
 

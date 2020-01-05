@@ -39,20 +39,22 @@ public:
 	// Returns true if a collision free path found (with cost up to f_weight * f-min) while
 	// minimizing the number of internal conflicts (that is conflicts with known_paths for other agents found so far).
 	template<class MyGraph>
-	bool runFocalSearch(const MyGraph& G, int agent_id, double f_weight,
+	void runFocalSearch(const MyGraph& G, int agent_id, double f_weight,
 		const vector < list< int > >& constraints,
 		const CAT& res_table)
 	{
 		clear();
 		hashtable_t::iterator it;  // will be used for find()
 
-								   // generate start and add it to the OPEN list
+		// generate start and add it to the OPEN list
 		int start_id = G.start_ids[agent_id];
 		int initial_h = G.get_h_value(agent_id, start_id);
 		if (initial_h >= min(max_makespan, (int)G.map_size() * G.r_velocities[agent_id])) // start and goal locations are disconnected
 		{
-			cerr << "The start and goal locations of Agent " << agent_id << " are disconnected." << endl;
-			return false;
+			path.clear();
+			min_f_val = max_makespan + 1;
+			path_cost = max_makespan + 1;
+			return;
 		}
 		Node* start = new Node(-1, 0, initial_h + 1, nullptr, 0, false);
 		num_generated++;
@@ -78,7 +80,7 @@ public:
 			{
 				updatePath(curr);
 				releaseClosedListNodes(allNodes_table);
-				return true;
+				return;
 			}
 
 			// iterator over all possible actions
@@ -211,8 +213,10 @@ public:
 		}  // end while loop
 		   // no path found
 		path.clear();
+		min_f_val = max_makespan + 1;
+		path_cost = max_makespan + 1;
 		releaseClosedListNodes(allNodes_table);
-		return false;
+		return;
 	}
 };
 

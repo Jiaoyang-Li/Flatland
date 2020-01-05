@@ -5,8 +5,10 @@
 template<class MyGraph>
 bool ECBSSearch<MyGraph>::evaluateSolution() const
 {
-    for (int i = 0; i < num_of_agents; i++)
+    for (size_t i = 0; i < paths.size(); i++)
     {
+		if (paths[i]->empty())
+			continue;
         for (size_t timestep = 0; timestep < paths[i]->size() - 1; timestep++)
         {
             int id = paths[i]->at(timestep).id;
@@ -28,9 +30,9 @@ bool ECBSSearch<MyGraph>::evaluateSolution() const
                 return false;
         }
     }
-    for (int i = 0; i < num_of_agents; i++)
+    for (size_t i = 0; i <  paths.size(); i++)
     {
-        for (int j = i + 1; j < num_of_agents; j++)
+        for (size_t j = i + 1; j <  paths.size(); j++)
         {
             if (findConflicts(i, j)	!= nullptr)
                 return false;
@@ -75,6 +77,17 @@ void ECBSSearch<MyGraph>::printResults() const
         "; nodes:   " << HL_num_expanded << //"," << HL_num_generated << "," <<
 		//LL_num_expanded << "," << LL_num_generated << "," <<
 		endl;
+	if (solution_cost >= 0)
+	{
+		int count = 0;
+		for (auto const& path : paths)
+		{
+			if (path->empty())
+				count++;
+		}
+		if (count > 0)
+			cout << "Give up " << count << " agents!" << endl;
+	}
 }
 
 template<class MyGraph>
@@ -125,7 +138,8 @@ void ECBSSearch<MyGraph>::collectConstraints(ECBSNode* curr, int agent_id, vecto
 
 	for (const auto& path : G.paths)
 	{
-		max_timestep = max(max_timestep, path.back().timestep);
+		if (!path.empty())
+			max_timestep = max(max_timestep, path.back().timestep);
 	}
 
 	// initialize a constraint vector of length max_timestep+1. Each entry is an empty list< tuple<int,int, bool> > (loc1,loc2, positive)
@@ -162,6 +176,8 @@ void ECBSSearch<MyGraph>::collectConstraints(ECBSNode* curr, int agent_id, vecto
 
 	for (const auto& path : G.paths)
 	{
+		if (path.empty())
+			continue;
 		for (int step = 1; step < (int)path.size() - 1; step++)
 		{
 			if (path[step].id >= 0)
@@ -270,6 +286,8 @@ bool ECBSSearch<MyGraph>::findConflicts(ECBSNode& curr)
 template<class MyGraph>
 std::shared_ptr<Conflict> ECBSSearch<MyGraph>::findConflicts(int a1, int a2) const
 {
+	if (paths[a1]->empty() || paths[a2]->empty())
+		return nullptr;
 	Path::const_iterator state1 = paths[a1]->begin();
 	Path::const_iterator state2 = paths[a2]->begin();
 	while (state1 != paths[a1]->end() && state2 != paths[a2]->end())
@@ -284,25 +302,44 @@ std::shared_ptr<Conflict> ECBSSearch<MyGraph>::findConflicts(int a1, int a2) con
 			++state2;
 			continue;
 		}
+
 		int loc1 = G.get_location(state1->id);
 		int loc2 = G.get_location(state2->id);
-		if (loc1 == loc2) // this might be a conflict
+
+		auto next1 = state1;
+		++next1;
+		if (loc1 == loc2 && next1 != paths[a1]->end() && 
+			state1->timestep <= state2->timestep && state2->timestep <= next1->timestep)
 		{
-			auto next1 = state1;
-			++next1;
-			if (next1 != paths[a1]->end()  && 
-				state1->timestep <= state2->timestep && state2->timestep <= next1->timestep)
-			{
-				return std::make_shared<Conflict>(a1, a2, loc1, -1, state2->timestep);
-			}
-			auto next2 = state2;
-			++next2;
-			if (next2 != paths[a2]->end() && 
-				state2->timestep <= state1->timestep && state1->timestep <= next2->timestep)
-			{
-				return std::make_shared<Conflict>(a1, a2, loc1, -1, state1->timestep);
-			}
+			return std::make_shared<Conflict>(a1, a2, loc1, -1, state2->timestep);
 		}
+
+		auto next2 = state2;
+		++next2;
+		if (loc1 == loc2 && next2 != paths[a2]->end() &&
+			state2->timestep <= state1->timestep && state1->timestep <= next2->timestep)
+		{
+			return std::make_shared<Conflict>(a1, a2, loc1, -1, state1->timestep);
+		}
+
+		int next_loc1 = -1; 
+		if (next1 != paths[a1]->end())
+			next_loc1 = G.get_location(next1->id);
+		if (loc2 == next_loc1 &&
+			state1->timestep <= state2->timestep && state2->timestep <= next1->timestep)
+		{
+			return std::make_shared<Conflict>(a1, a2, loc2, -1, state2->timestep);
+		}
+		
+		int next_loc2 = -1;
+		if (next2 != paths[a2]->end())
+			next_loc2 = G.get_location(next2->id);
+		if (loc1 == next_loc2 && 
+			state2->timestep <= state1->timestep && state1->timestep <= next2->timestep)
+		{
+			return std::make_shared<Conflict>(a1, a2, loc1, -1, state1->timestep);
+		}
+		
 		if (state1->timestep < state2->timestep)
 		{
 			++state1;
@@ -379,7 +416,7 @@ void ECBSSearch<MyGraph>::updateReservationTable(size_t max_path_len, int exclud
 	cat.resize(max_path_len);
 	for (int i = 0; i < num_of_agents; i++)
 	{
-		if (i != exclude_agent && paths[i] != nullptr)
+		if (i != exclude_agent && paths[i] != nullptr && !paths[i]->empty())
 		{
 			for (int step = 1; step < (int)paths[i]->size() - 1; step++)
 			{
@@ -401,7 +438,7 @@ void ECBSSearch<MyGraph>::updateReservationTable(size_t max_path_len, int exclud
 //////////////////// GENERATE A NODE ///////////////////////////
 // plan a path for an agent in a child node
 template<class MyGraph>
-bool ECBSSearch<MyGraph>::findPathForSingleAgent(ECBSNode*  node, int ag)
+void ECBSSearch<MyGraph>::findPathForSingleAgent(ECBSNode*  node, int ag)
 {
 	// extract all constraints on agent ag
 	ECBSNode* curr = node;
@@ -410,34 +447,34 @@ bool ECBSSearch<MyGraph>::findPathForSingleAgent(ECBSNode*  node, int ag)
 	// build reservation table
 	updateReservationTable(node->makespan + 1, ag);
 	// find a path w.r.t cons_vec (and prioretize by res_table).
-	bool foundSol = single_planner.runFocalSearch(G, ag, focal_w, cons_vec, cat);
+	single_planner.runFocalSearch(G, ag, focal_w, cons_vec, cat);
 	LL_num_expanded += single_planner.num_expanded;
 	LL_num_generated += single_planner.num_generated;
 
-	if (foundSol)
+	node->paths_updated.emplace_back(ag, vector<pathEntry>(single_planner.path),
+		single_planner.path_cost, single_planner.min_f_val);
+	if (paths[ag]->empty())
 	{
-		node->paths_updated.emplace_back(ag, vector<pathEntry>(single_planner.path),
-			single_planner.path_cost, single_planner.min_f_val);
-		node->g_val = node->g_val - paths[ag]->back().timestep + single_planner.path.back().timestep;
-		node->makespan = max(node->makespan, single_planner.path.back().timestep);
-		node->sum_min_f_vals = node->sum_min_f_vals - ll_min_f_vals[ag] + single_planner.min_f_val;
-		paths[ag] = &get<1>(node->paths_updated.back());
-		ll_min_f_vals[ag] = single_planner.min_f_val;
-		return true;
+		node->g_val = node->g_val - (max_makespan + 1) + single_planner.path_cost;
 	}
 	else
 	{
-		delete node;
-		return false;
+		node->g_val = node->g_val - paths[ag]->back().timestep + single_planner.path_cost;
 	}
+	if (!single_planner.path.empty())
+	{
+		node->makespan = max(node->makespan, single_planner.path.back().timestep);
+	}
+	node->sum_min_f_vals = node->sum_min_f_vals - ll_min_f_vals[ag] + single_planner.min_f_val;
+	paths[ag] = &get<1>(node->paths_updated.back());
+	ll_min_f_vals[ag] = single_planner.min_f_val;
 }
 
 // plan paths for a child node
 template<class MyGraph>
-bool ECBSSearch<MyGraph>::generateChild(ECBSNode*  node)
+void ECBSSearch<MyGraph>::generateChild(ECBSNode*  node)
 {
-	if (!findPathForSingleAgent(node, node->agent_id))
-		return false;
+	findPathForSingleAgent(node, node->agent_id);
 
 	findConflicts(*node);
 	node->num_of_collisions = (int)node->conflicts.size(); //computeNumOfCollidingAgents();
@@ -450,7 +487,6 @@ bool ECBSSearch<MyGraph>::generateChild(ECBSNode*  node)
 		node->focal_handle = focal_list.push(node);
 	//allNodes_table[n1] = n1;
 	allNodes_table.push_back(node);
-	return true;
 }
 
 
@@ -535,7 +571,6 @@ bool ECBSSearch<MyGraph>::runECBSSearch()
 
 
 	runtime = (double)(std::clock() - start) / CLOCKS_PER_SEC; //  get time
-	printResults();
 	return solution_found;
 }
 
@@ -555,14 +590,7 @@ void ECBSSearch<MyGraph>::generateRoot()
 		vector < list< int > > cons_vec;
 		collectConstraints(dummy_start, i, cons_vec);
         updateReservationTable(dummy_start->makespan + 1, i);
-		bool found = single_planner.runFocalSearch(G, i, focal_w, cons_vec, cat);
-
-        if (!found)
-        {
-            cout << "NO SOLUTION EXISTS FOR AGENT " << i;
-			delete dummy_start;
-            exit(-1);
-        }
+		single_planner.runFocalSearch(G, i, focal_w, cons_vec, cat);
         paths[i] = new vector<pathEntry>(single_planner.path);
 		ll_min_f_vals[i] = single_planner.min_f_val;
 		paths_costs[i] = single_planner.path_cost;
@@ -570,7 +598,8 @@ void ECBSSearch<MyGraph>::generateRoot()
         LL_num_generated += single_planner.num_generated;
 		dummy_start->g_val += paths_costs[i];
 		dummy_start->sum_min_f_vals += ll_min_f_vals[i];
-		dummy_start->makespan = max(dummy_start->makespan, single_planner.path.back().timestep);
+		if (!single_planner.path.empty())
+			dummy_start->makespan = max(dummy_start->makespan, single_planner.path.back().timestep);
     }
 
 	paths_found_initially = paths;

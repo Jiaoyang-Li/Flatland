@@ -19,7 +19,7 @@ class FlatlandMap
 
 	int get_location(int id) const 
 	{
-		if (id > 0)
+		if (id >= 0)
 			return node2loc[id]; 
 		else
 			return -1;

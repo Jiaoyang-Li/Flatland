@@ -72,11 +72,11 @@ private:
 	std::shared_ptr<Conflict>  findConflicts(int a1, int a2) const;
     std::shared_ptr<Conflict>  chooseConflict(const list<std::shared_ptr<Conflict>>& conflicts);
     void collectConstraints(ECBSNode* curr, int agent_id, vector < list< int > >& constraints);
-    bool generateChild(ECBSNode* child);
+    void generateChild(ECBSNode* child);
     void updateReservationTable(size_t max_plan_len, int exclude_agentconst);
     void updateFocalList(double old_lower_bound, double new_lower_bound, double f_weight);
     inline void updatePaths(ECBSNode* curr);
-    bool findPathForSingleAgent(ECBSNode*  node, int ag);
+    void findPathForSingleAgent(ECBSNode*  node, int ag);
 
 
 };
