@@ -50,6 +50,7 @@ int main(int argc, char** argv)
         return -1;
     }
 	// G.preprocessing_heuristics();
+	G.generate_agent_order();
 
 	srand(vm["seed"].as<int>());
 	int defaultGroupSize = vm["groupSize"].as<int>();

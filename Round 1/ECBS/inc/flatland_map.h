@@ -31,7 +31,7 @@ class FlatlandMap
   FlatlandMap() {}
   bool load_map(std::string fname); // load map from file
   bool load_agents(std::string fname); // load map from file
-
+  void generate_agent_order();
   void preprocessing_heuristics();
 
   bool generate_instance(int num_of_agents);
@@ -41,6 +41,7 @@ class FlatlandMap
   // vector<bool> my_map;
   bool allowed_wait = true;
 
+  list<int> agent_ids; // agents that need to be planned
   vector<int> all_start_ids;
   vector<list<int>> all_goal_ids;
   vector<int> all_goal_locations;

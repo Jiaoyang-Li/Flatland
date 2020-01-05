@@ -187,14 +187,14 @@ void ECBSSearch<MyGraph>::collectConstraints(ECBSNode* curr, int agent_id, vecto
 			if (path[step].id >= 0)
 			{
 				int loc = G.get_location(path[step].id);
-				for (int t = path[step].timestep; t < path[step + 1].timestep; t++)
+				for (int t = path[step].timestep; t <= path[step + 1].timestep; t++)
 				{
 					cons_vec[t].push_back(loc);
 				}
 				int next_loc = G.get_location(path[step + 1].id);
 				if (loc != next_loc)
 				{
-					for (int t = path[step].timestep + 1; t <= path[step + 1].timestep; t++)
+					for (int t = path[step].timestep; t <= path[step + 1].timestep; t++)
 					{
 						cons_vec[t].push_back(next_loc);
 					}

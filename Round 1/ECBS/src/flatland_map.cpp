@@ -5,22 +5,31 @@
 
 bool FlatlandMap::generate_instance(int num_of_agents)
 {
-	size_t id_min = paths.size();
-	size_t id_max = min(paths.size() + num_of_agents, all_goal_locations.size());
-	if (id_min >= id_max)
+	num_of_agents = min(num_of_agents, (int)agent_ids.size());
+	if (num_of_agents == 0)
 		return false;
-	start_ids.resize(id_max - id_min);
-	goal_locations.resize(id_max - id_min);
-	r_velocities.resize(id_max - id_min);
-	heuristics.resize(id_max - id_min);
-	for (size_t i = id_min; i < id_max; i++)
+	start_ids.resize(num_of_agents);
+	goal_locations.resize(num_of_agents);
+	r_velocities.resize(num_of_agents);
+	heuristics.resize(num_of_agents);
+	list<int>::const_iterator agent = agent_ids.begin();
+	for (int i = 0; i < num_of_agents; i++)
 	{
-		start_ids[i - id_min] = all_start_ids[i];
-		goal_locations[i - id_min] = all_goal_locations[i];
-		r_velocities[i - id_min] = all_r_velocities[i];
-		heuristics[i - id_min] = compute_heuristics(i);
+		start_ids[i] = all_start_ids[*agent];
+		goal_locations[i] = all_goal_locations[*agent];
+		r_velocities[i] = all_r_velocities[*agent];
+		heuristics[i] = compute_heuristics(*agent);
+		++agent;
 	}
 	return true;
+}
+
+
+void FlatlandMap::generate_agent_order()
+{
+	agent_ids.clear();
+	for (int i = 0; i < (int)all_start_ids.size(); i++)
+		agent_ids.push_back(i);
 }
 
 
@@ -28,7 +37,8 @@ void FlatlandMap::update_paths(const vector<Path*>& new_paths)
 {
 	for (const auto& path : new_paths)
 	{
-		paths.emplace_back(*path);
+		paths[agent_ids.front()] = *path;
+		agent_ids.pop_front();
 	}
 }
 
@@ -98,6 +108,7 @@ bool FlatlandMap::load_agents(string fname)
 		all_goal_ids.resize(num_of_agents);
 		all_goal_locations.resize(num_of_agents);
 		all_r_velocities.resize(num_of_agents);
+		paths.resize(num_of_agents);
 		for (int i = 0; i < num_of_agents; i++)
 		{
 			getline(myfile, line);
