@@ -14,7 +14,13 @@ class FlatlandMap
 
   list<int> children_vertices(int vertex_id) const;
 
-  int get_location(int id) const {return node2loc[id]; }
+	int get_location(int id) const 
+	{
+		if (id > 0)
+			return node2loc[id]; 
+		else
+			return -1;
+	}
   bool is_node_conflict(int id_0, int id_1) const;
   bool is_edge_conflict(int from_0, int to_0, int from_1, int to_1) const;
 

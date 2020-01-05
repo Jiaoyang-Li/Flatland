@@ -17,17 +17,13 @@ void SingleAgentPlanner::clear()
 // Updates the path.
 void SingleAgentPlanner::updatePath(Node* goal)
 {
-	path.clear();
+	path.resize(goal->timestep + 1);
 	Node* curr = goal;
-	while (curr->timestep != 0) 
+	for (int t = goal->timestep; t >= 0; t--)
 	{
-		path.resize(path.size() + 1);
-		path.back().id = curr->id;
+		path[t].id = curr->id;
 		curr = curr->parent;
 	}
-	path.resize(path.size() + 1);
-	path.back().id = curr->id;
-	reverse(path.begin(), path.end());
 	path_cost = goal->g_val;
 	num_of_conf = goal->num_internal_conf;
 }
@@ -70,6 +66,8 @@ bool SingleAgentPlanner::isConstrained(int curr_id, int next_id, int next_timest
 {
 	if (cons == NULL)
 		return false;
+	if (curr_id < 0 && next_id < 0)
+		return false;
 	// check vertex constraints (being in next_id at next_timestep is disallowed)
 	if ( next_timestep < static_cast<int>(cons->size()) ) 
 	{
@@ -95,26 +93,19 @@ bool SingleAgentPlanner::isConstrained(int curr_id, int next_id, int next_timest
 // Returns 0 if no conflict, 1 for vertex or edge conflict, 2 for both.
 int SingleAgentPlanner::numOfConflictsForStep(int curr_loc, int next_loc, int next_timestep, const CAT& res_table, size_t map_size)
 {
-	if (res_table.empty())
-	{
+	if (next_timestep >= (int)res_table.size())
 		return 0;
-	}
-  int retVal = 0;
-  if (next_timestep >= (int)res_table.size()) {
-    // check vertex constraints (being at an agent's goal when he stays there because he is done planning)
-    if ( res_table.back().find(next_loc) != res_table.back().end())
-      retVal++;
-    // Note -- there cannot be edge conflicts when other agents are done moving
-  } else {
-    // check vertex constraints (being in next_id at next_timestep is disallowed)
-    if ( res_table[next_timestep].find(next_loc) != res_table[next_timestep].end())
-      retVal++;
-    // check edge constraints (the move from curr_id to next_id at next_timestep-1 is disallowed)
-    // which means that res_table is occupied with another agent for [curr_id,next_timestep] and [next_id,next_timestep-1]
-    if ( res_table[next_timestep].find(curr_loc + (1 + next_loc) *(int)map_size) != res_table[next_timestep].end())
-      retVal++;
-  }
-  return retVal;
+
+	int retVal = 0;
+	// check vertex constraints (being in next_id at next_timestep is disallowed)
+	if (next_loc >= 0 &&  res_table[next_timestep].find(next_loc) != res_table[next_timestep].end())
+		retVal++;
+	// check edge constraints (the move from curr_id to next_id at next_timestep-1 is disallowed)
+	// which means that res_table is occupied with another agent for [curr_id,next_timestep] and [next_id,next_timestep-1]
+	if (curr_loc >= 0 && next_loc >= 0 && res_table[next_timestep].find(curr_loc + (1 + next_loc) *(int)map_size) != res_table[next_timestep].end())
+		retVal++;
+
+	return retVal;
 }
 
 // Iterate over OPEN and adds to FOCAL all nodes with: 

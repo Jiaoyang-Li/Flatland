@@ -49,12 +49,13 @@ public:
 
 								   // generate start and add it to the OPEN list
 		int start_id = G.start_ids[agent_id];
-		if (G.heuristics[agent_id][start_id] > (int)G.map_size()) // start and goal locations are disconnected
+		int initial_h = G.heuristics[agent_id][start_id];
+		if (initial_h >= min(max_makespan, (int)G.map_size())) // start and goal locations are disconnected
 		{
 			cerr << "The start and goal locations of Agent " << agent_id << " are disconnected." << endl;
 			return false;
 		}
-		Node* start = new Node(start_id, 0, G.heuristics[agent_id][start_id], NULL, 0, false);
+		Node* start = new Node(-1, 0, initial_h + 1, NULL, 0, false);
 		num_generated++;
 
 		start->open_handle = open_list.push(start);
@@ -82,23 +83,28 @@ public:
 			}
 
 			// iterator over all possible actions
-			auto neighbours = G.children_vertices(curr->id);
+			list<int> neighbours;
+			if (curr->id >= 0)
+				neighbours = G.children_vertices(curr->id);
+			else
+			{
+				neighbours.emplace_back(-1); // wait at the station
+				neighbours.emplace_back(start_id); // move to the start location
+			}
 			for (auto next_id : neighbours)
 			{
 				int next_timestep = curr->timestep + 1;
-				if (next_timestep > max_makespan)
+				int next_g_val = curr->g_val + 1;
+				int next_h_val;
+				if (next_id >= 0)
+					next_h_val = G.heuristics[agent_id][next_id];
+				else
+					next_h_val = initial_h + 1;
+				if (next_g_val + next_h_val > max_makespan) //we cannot reach the goal location before the ddl
 					continue;
-				if (G.heuristics[agent_id][next_id] > (int)G.map_size()) //we cannot move from next_id to the goal location
-				{
-					continue;
-				}
 				if (!isConstrained(G.get_location(curr->id), G.get_location(next_id), next_timestep, constraints))
 				{
-					// compute cost to next_id via curr node
-					int next_g_val = curr->g_val + 1;
-					int next_h_val = G.heuristics[agent_id][next_id];
-					int next_internal_conflicts = 0;
-					next_internal_conflicts = curr->num_internal_conf + numOfConflictsForStep(G.get_location(curr->id),
+					int next_internal_conflicts = curr->num_internal_conf + numOfConflictsForStep(G.get_location(curr->id),
 						G.get_location(next_id), next_timestep, res_table, G.map_size());
 					// generate (maybe temporary) node
 					Node* next = new Node(next_id, next_g_val, next_h_val,

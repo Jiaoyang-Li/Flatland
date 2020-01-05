@@ -12,6 +12,10 @@ bool ECBSSearch<MyGraph>::evaluateSolution() const
             int id = paths[i]->at(timestep).id;
             int next_id = paths[i]->at(timestep + 1).id;
             bool connected = false;
+			if (id < 0)
+			{
+				continue;
+			}
             for (auto children : G.children_vertices(id))
             {
                 if (children == next_id)
@@ -283,14 +287,12 @@ template<class MyGraph>
 void ECBSSearch<MyGraph>::findConflicts(list<std::shared_ptr<Conflict>>& set, int a1, int a2) const
 {
 	int t_max = (int)min(paths[a1]->size(), paths[a2]->size()) - 1;
-	// find the earliest timestep t_min when at least one of the agents start to move.
-	size_t t_min = 1;
-	while(t_min < paths[a1]->size() && paths[a1]->at(t_min).id == G.start_ids[a1] && 
-				t_min < paths[a2]->size() && paths[a2]->at(t_min).id == G.start_ids[a2])
-		t_min++;
+	int t_min = 1;
 	for (int t1  = t_min; t1 < t_max; t1++)
 	{
 		int loc1 = getAgentLocation(a1, t1);
+		if (loc1 < 0)
+			continue;
 		if (k_robust == 0)
         {
             int loc2 = getAgentLocation(a2, t1);
