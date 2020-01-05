@@ -13,7 +13,7 @@ std::ostream& operator<<(std::ostream& os, const Constraint& constraint)
 
 std::ostream& operator<<(std::ostream& os, const Conflict& conflict)
 {
-	os << "<" << get<0>(conflict) << ", " << get<1>(conflict) << ","
+	os << "<" << get<0>(conflict) << ", " << get<1>(conflict) << ", "
 		<< get<2>(conflict) << ", " << get<3>(conflict) << ", " << get<4>(conflict) << ">";
 	return os;
 }

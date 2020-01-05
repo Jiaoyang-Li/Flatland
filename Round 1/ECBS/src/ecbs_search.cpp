@@ -75,7 +75,7 @@ void ECBSSearch<MyGraph>::printResults() const
 	{
 		std::cout << "        Succeed ; ";
 	}
-	std::cout << "makespan: " << solution_makespan << " ;sum of cost: " << solution_cost << "," << " ;lowerbound: " << min_sum_f_vals << //"," <<
+	std::cout << "makespan: " << solution_makespan << " ;sum of cost: " << solution_cost << " ;lowerbound: " << min_sum_f_vals << //"," <<
 		// dummy_start->sum_min_f_vals << "," <<
         "; runtime: " << runtime <<
         "; nodes:   " << HL_num_expanded << //"," << HL_num_generated << "," <<
@@ -187,14 +187,22 @@ void ECBSSearch<MyGraph>::collectConstraints(ECBSNode* curr, int agent_id, vecto
 			if (path[step].id >= 0)
 			{
 				int loc = G.get_location(path[step].id);
-				for (int t = path[step].timestep; t <= path[step + 1].timestep; t++)
+				for (int t = path[step].timestep; t < path[step + 1].timestep; t++)
 				{
 					cons_vec[t].push_back(loc);
 				}
+				int next_loc = G.get_location(path[step + 1].id);
+				if (loc != next_loc)
+				{
+					for (int t = path[step].timestep + 1; t <= path[step + 1].timestep; t++)
+					{
+						cons_vec[t].push_back(next_loc);
+					}
+				}
 			}
 		}
-		int goal = G.get_location(path.back().id);
-		cons_vec[path.back().timestep].push_back(goal);
+		// int goal = G.get_location(path.back().id);
+		// cons_vec[path.back().timestep].push_back(goal);
 	}
 }
 
@@ -345,15 +353,17 @@ std::shared_ptr<Conflict> ECBSSearch<MyGraph>::findConflicts(int a1, int a2) con
 		}
 		
 		if (state1->timestep < state2->timestep)
-		{
 			++state1;
-			continue;
-		}
-		else
-		{
+		else if (state1->timestep < state2->timestep)
 			++state2;
-			continue;
-		}
+		else if (next1 == paths[a1]->end())
+			++state2;
+		else if (next2 == paths[a2]->end())
+			++state1;
+		else if (next1->timestep < next2->timestep)
+			++state1;
+		else
+			++state2;
 	}
 	return nullptr;
 }
@@ -424,15 +434,21 @@ void ECBSSearch<MyGraph>::updateReservationTable(size_t max_path_len, int exclud
 		{
 			for (int step = 1; step < (int)paths[i]->size() - 1; step++)
 			{
-				int loc = G.get_location(paths[i]->at(step).id);
-				if (loc >= 0)
+				if (paths[i]->at(step).id >= 0)
 				{
-					for (int t = paths[i]->at(step).timestep; t <= paths[i]->at(step + 1).timestep; t++)
+					int loc = G.get_location(paths[i]->at(step).id);
+					for (int t = paths[i]->at(step).timestep; t < paths[i]->at(step + 1).timestep; t++)
 						cat[t].insert(loc);
+					int next_loc = G.get_location(paths[i]->at(step + 1).id);
+					if (loc != next_loc)
+					{
+						for (int t = paths[i]->at(step).timestep + 1; t <= paths[i]->at(step + 1).timestep; t++)
+						{
+							cat[t].insert(next_loc);
+						}
+					}
 				}
 			}
-			int goal = G.get_location(paths[i]->back().id);
-			cat[paths[i]->back().timestep].insert(goal);
 		}
 	}
 }
@@ -479,14 +495,14 @@ template<class MyGraph>
 void ECBSSearch<MyGraph>::generateChild(ECBSNode*  node)
 {
 	findPathForSingleAgent(node, node->agent_id);
-
+	HL_num_generated++;
+	node->time_generated = HL_num_generated;
 	findConflicts(*node);
 	node->num_of_collisions = (int)node->conflicts.size(); //computeNumOfCollidingAgents();
 
 	// update handles
 	node->open_handle = open_list.push(node);
-	HL_num_generated++;
-	node->time_generated = HL_num_generated;
+
 	if (node->sum_min_f_vals <= focal_list_threshold)
 		node->focal_handle = focal_list.push(node);
 	//allNodes_table[n1] = n1;
