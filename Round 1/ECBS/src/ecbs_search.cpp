@@ -34,8 +34,12 @@ bool ECBSSearch<MyGraph>::evaluateSolution() const
     {
         for (size_t j = i + 1; j <  paths.size(); j++)
         {
-            if (findConflicts(i, j)	!= nullptr)
-                return false;
+            auto conflict = findConflicts(i, j);
+			if (conflict != nullptr)
+			{
+				cout << "Found a conflict " << *conflict << endl;
+				return false;
+			}
         }
     }
     return true;

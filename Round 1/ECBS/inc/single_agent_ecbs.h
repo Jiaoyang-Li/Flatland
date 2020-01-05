@@ -16,7 +16,7 @@ private:
 	void clear();
 	int extractLastGoalTimestep(int goal_location, const vector< list< tuple<int, int, bool> > >* cons);
 	void releaseClosedListNodes(hashtable_t& allNodes_table);
-	bool isConstrained(int next_id, int curr_timestesp, int next_timestep, const vector< list< int > >& cons) const;
+	bool isConstrained(int curr_loc, int next_id, int curr_timestesp, int next_timestep, const vector< list< int > >& cons) const;
 	void updatePath(Node* goal);
 	int numOfConflictsForStep(int curr_id, int next_id, int next_timestep, const CAT& res_table, size_t map_size);
 	void updateFocalList(double old_lower_bound, double new_lower_bound, double f_weight);
@@ -111,7 +111,7 @@ public:
 				int next_g_val = next_timestep;
 				if (next_h_val > max_makespan - next_g_val) //we cannot reach the goal location before the ddl
 					continue;
-				if (!isConstrained(G.get_location(next_id), curr->timestep, next_timestep, constraints)) // TODO: this method does not work for edge constraints
+				if (!isConstrained(G.get_location(curr->id), G.get_location(next_id), curr->timestep, next_timestep, constraints)) // TODO: this method does not work for edge constraints
 				{
 					int next_internal_conflicts = curr->num_internal_conf + numOfConflictsForStep(G.get_location(curr->id),
 						G.get_location(next_id), next_timestep, res_table, G.map_size());

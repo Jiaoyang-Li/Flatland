@@ -62,7 +62,7 @@ int SingleAgentPlanner::extractLastGoalTimestep(int goal_location, const vector<
 // Checks if a vaild path found (wrt my_map and constraints)
 // input: curr_id (location at time next_timestep-1) ; next_id (location at time next_timestep); next_timestep
 // cons[timestep] is a list of <loc1,loc2, bool> of (vertex/edge) constraints for that timestep. (loc2=-1 for vertex constraint).
-bool SingleAgentPlanner::isConstrained(int next_loc, int curr_timestesp, int next_timestep, const vector< list< int > >& cons)  const
+bool SingleAgentPlanner::isConstrained(int curr_loc, int next_loc, int curr_timestesp, int next_timestep, const vector< list< int > >& cons)  const
 {
 	if (cons.empty())
 		return false;
@@ -73,7 +73,7 @@ bool SingleAgentPlanner::isConstrained(int next_loc, int curr_timestesp, int nex
 	{
 		for (auto loc : cons[t])
 		{
-			if (loc == next_loc) // edge constraint
+			if (loc == curr_loc || loc == next_loc)
 				return true;
 		}
 	}
