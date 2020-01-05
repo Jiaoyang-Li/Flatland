@@ -20,9 +20,16 @@ std::ostream& operator<<(std::ostream& os, const Conflict& conflict)
 
 std::ostream& operator<<(std::ostream& os, const Path& path)
 {
-    for (const auto& p: path)
+	Path::const_iterator state = path.begin();
+    for (int t = 0; t <= path.back().timestep; t++)
     {
-        os << p.id << ",";
+		if (state->timestep == t)
+		{
+			os << state->id << ",";
+			++state;
+		}
+		else
+			os << -2 << ",";
     }
     return os;
 }

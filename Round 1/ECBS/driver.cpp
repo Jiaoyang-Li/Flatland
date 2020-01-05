@@ -92,11 +92,11 @@ int main(int argc, char** argv)
 	// ecbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>());
     ofstream stats;
     stats.open(vm["output"].as<string>(), std::ios::out);
-	size_t makespan = 0;
+	int makespan = 0;
     for (const auto& path: G.paths)
     {
         stats << path << endl;
-		makespan = max(makespan, path.size());
+		makespan = max(makespan, path.back().timestep);
     }
     stats.close();
 

@@ -95,7 +95,7 @@ public:
 				int next_timestep, next_h_val;
 				if (next_id >= 0)
 				{
-					if (curr->id == next_id)
+					if (curr->id == next_id || curr->id < 0)
 						next_timestep = curr->timestep + 1;
 					else
 						next_timestep = curr->timestep + G.r_velocities[agent_id];
