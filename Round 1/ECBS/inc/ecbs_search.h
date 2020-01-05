@@ -27,11 +27,12 @@ public:
     bool solution_found = false;
     double solution_cost = -1;
 
+	vector < Path* > paths;  // agents paths
+
     ECBSSearch(const MyGraph& G, double focal_w, int makespan, bool disjointSplitting, double cutoffTime);
     ~ECBSSearch();
     bool runECBSSearch();
 
-    const vector<Path*>& get_solution() const {return paths; }
     // print
     void printPaths() const;
     void printResults() const;
@@ -51,7 +52,6 @@ private:
     vector <int> paths_costs_found_initially;
     vector <int> ll_min_f_vals_found_initially;  // contains initial ll_min_f_vals found
     vector < Path* > paths_found_initially;  // contain initial paths found
-    vector < Path* > paths;  // agents paths
     vector <int> ll_min_f_vals;  // each entry [i] represent the lower bound found for agent[i]
     vector <int> paths_costs;
 

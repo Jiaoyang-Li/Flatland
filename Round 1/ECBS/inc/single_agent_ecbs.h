@@ -100,7 +100,7 @@ public:
 					next_h_val = G.heuristics[agent_id][next_id];
 				else
 					next_h_val = initial_h + 1;
-				if (next_g_val + next_h_val > max_makespan) //we cannot reach the goal location before the ddl
+				if (next_h_val > max_makespan - next_g_val) //we cannot reach the goal location before the ddl
 					continue;
 				if (!isConstrained(G.get_location(curr->id), G.get_location(next_id), next_timestep, constraints))
 				{

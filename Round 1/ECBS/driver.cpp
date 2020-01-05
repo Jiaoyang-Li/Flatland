@@ -19,9 +19,10 @@ int main(int argc, char** argv)
 		("agents,a", po::value<std::string>()->required(), "input file for agents")
 		("output,o", po::value<std::string>()->required(), "output file for schedule")
 		("weight,w", po::value<double>()->required(), "suboptimal bound for ECBS")
+		("groupSize,g", po::value<int>()->default_value(16), "number of agents in each sub group")
 		("makespan", po::value<int>()->default_value(INT_MAX), "Maximum makespan")
 		("disjoint,d", po::value<bool>()->default_value(false), "disjoint splitting")
-		("cutoffTime,t", po::value<int>()->default_value(300), "cutoff time (seconds)")
+		("cutoffTime,t", po::value<int>()->default_value(10), "cutoff time (seconds)")
 		("seed", po::value<int>()->default_value(0), "random seed")
 		("debug", po::value<bool>()->default_value(false), "debug")
 		("k_robust", po::value<int>()->default_value(1), "k-robust distance")
@@ -49,40 +50,62 @@ int main(int argc, char** argv)
         cerr << "Fail to load the agents" << endl;
         return -1;
     }
-	G.preprocessing_heuristics();
+	// G.preprocessing_heuristics();
 
 	srand(vm["seed"].as<int>());
-
-	ECBSSearch<FlatlandMap> ecbs(G, vm["weight"].as<double>(),
-        vm["makespan"].as<int>(), vm["disjoint"].as<bool>(), vm["cutoffTime"].as<int>());
-	// ECBSSearch<Grid2D> ecbs(G, vm["weight"].as<double>(), vm["disjoint"].as<bool>(), vm["cutoffTime"].as<int>());
-	ecbs.screen = 0;
-	if (vm["debug"].as<bool>())
-        ecbs.screen = 1;
-	ecbs.k_robust = vm["k_robust"].as<int>();
-	ecbs.runECBSSearch();
+	int defaultGroupSize = vm["groupSize"].as<int>();
+	int groupSize = defaultGroupSize;
+	while (G.generate_instance(groupSize))
+	{
+		ECBSSearch<FlatlandMap> ecbs(G, vm["weight"].as<double>(),
+			vm["makespan"].as<int>(), vm["disjoint"].as<bool>(), vm["cutoffTime"].as<int>());
+		// ECBSSearch<Grid2D> ecbs(G, vm["weight"].as<double>(), vm["disjoint"].as<bool>(), vm["cutoffTime"].as<int>());
+		ecbs.screen = 0;
+		if (vm["debug"].as<bool>())
+			ecbs.screen = 1;
+		ecbs.k_robust = vm["k_robust"].as<int>();
+		ecbs.runECBSSearch();
+		if (!ecbs.solution_found)
+		{
+			groupSize = groupSize / 2;
+			continue;
+		}
+		G.update_paths(ecbs.paths);
+		groupSize = defaultGroupSize;
+	}
 
 	// test the solution, only needed for debug
 	if (vm["debug"].as<bool>())
-    {
-        if (ecbs.evaluateSolution())
-            cout << "The solution is conflict-free!" << endl;
-        else
-        {
-            cout << "The solution is not feasible!" << endl;
-            return -1;
-        }
-    }
+	{
+		ECBSSearch<FlatlandMap> ecbs(G, vm["weight"].as<double>(),
+			vm["makespan"].as<int>(), vm["disjoint"].as<bool>(), vm["cutoffTime"].as<int>());
+		ecbs.paths.resize(G.paths.size());
+		for (size_t i = 0; i < G.paths.size(); i++)
+			ecbs.paths[i] = &G.paths[i];
+		if (ecbs.evaluateSolution())
+			cout << "The solution is conflict-free!" << endl;
+		else
+		{
+			cout << "The solution is not feasible!" << endl;
+			return -1;
+		}
+	}
 
 	// ecbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>());
     ofstream stats;
     stats.open(vm["output"].as<string>(), std::ios::out);
-    for (const auto& path: ecbs.get_solution())
+	size_t makespan = 0;
+    for (const auto& path: G.paths)
     {
-        stats << *path << endl;
+        stats << path << endl;
+		makespan = max(makespan, path.size());
     }
-
     stats.close();
+
+	if (vm["debug"].as<bool>())
+	{
+		cout << "Total makepsan is " << makespan << endl;
+	}
 	return 0;
 
 }

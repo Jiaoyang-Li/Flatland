@@ -58,6 +58,7 @@ void ECBSSearch<MyGraph>::printPaths() const
 template<class MyGraph>
 void ECBSSearch<MyGraph>::printResults() const
 {
+	cout << num_of_agents << " agents -- ";
 	if (runtime > time_limit)  // timeout
 	{
 		std::cout << "        Timeout  ; ";
@@ -124,6 +125,10 @@ vector < list< tuple<int, int, bool> > >* ECBSSearch<MyGraph>::collectConstraint
 		curr = curr->parent;
 	}
 
+	for (const auto& path : G.paths)
+	{
+		max_timestep = max(max_timestep, (int)path.size() - 1);
+	}
 
 	// initialize a constraint vector of length max_timestep+1. Each entry is an empty list< tuple<int,int, bool> > (loc1,loc2, positive)
 	auto cons_vec = new vector < list< tuple<int, int, bool> > >(max_timestep + k_robust + 1, list< tuple<int, int, bool> >());
@@ -155,6 +160,21 @@ vector < list< tuple<int, int, bool> > >* ECBSSearch<MyGraph>::collectConstraint
 			cons_vec->at(get<2>(*it) - 1).push_back(make_tuple(get<0>(*it), -1, false));
 			cons_vec->at(get<2>(*it)).push_back(make_tuple(get<1>(*it), -1, false));
 		}*/
+	}
+
+	for (const auto& path : G.paths)
+	{
+		for (int t = 1; t < (int)path.size(); t++)
+		{
+			if (path[t].id >= 0)
+			{
+				for (int i = max(0, t - k_robust); i < t + k_robust; i++)
+				{
+					cons_vec->at(t).emplace_back(path[t].id, -1, false);
+				}
+				// TODO: consider edge conflicts for k_robust == 0
+			}
+		}
 	}
 
 	return cons_vec;
@@ -610,14 +630,20 @@ bool ECBSSearch<MyGraph>::runECBSSearch()
 template<class MyGraph>
 void ECBSSearch<MyGraph>::generateRoot()
 {
+	// generate dummy start and update data structures
+	dummy_start = new ECBSNode();
+
     // initialize paths_found_initially
     paths_found_initially.resize(num_of_agents, nullptr);
     for (int i = 0; i < num_of_agents; i++)
     {
+		vector < list< tuple<int, int, bool> > >* cons_vec = collectConstraints(dummy_start, i);
         paths = paths_found_initially;
         int max_plan_len = getPathsMaxLength() + k_robust;
         updateReservationTable(max_plan_len, i);
-        if (single_planner.runFocalSearch(G, i, focal_w, nullptr, cat) == false)
+		bool found = single_planner.runFocalSearch(G, i, focal_w, nullptr, cat);
+		delete (cons_vec);
+        if (!found)
         {
             cout << "NO SOLUTION EXISTS FOR AGENT " << i;
             exit(-1);
@@ -634,7 +660,6 @@ void ECBSSearch<MyGraph>::generateRoot()
     paths_costs = paths_costs_found_initially;
 
     // generate dummy start and update data structures
-    dummy_start = new ECBSNode();
     dummy_start->agent_id = -1;
     dummy_start->g_val = 0;
     dummy_start->sum_min_f_vals = 0;

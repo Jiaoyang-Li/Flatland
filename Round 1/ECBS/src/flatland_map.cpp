@@ -3,6 +3,34 @@
 #include<iostream>
 
 
+bool FlatlandMap::generate_instance(int num_of_agents)
+{
+	size_t id_min = paths.size();
+	size_t id_max = min(paths.size() + num_of_agents, all_goal_locations.size());
+	if (id_min >= id_max)
+		return false;
+	start_ids.resize(id_max - id_min);
+	goal_locations.resize(id_max - id_min);
+	heuristics.resize(id_max - id_min);
+	for (size_t i = id_min; i < id_max; i++)
+	{
+		start_ids[i - id_min] = all_start_ids[i];
+		goal_locations[i - id_min] = all_goal_locations[i];
+		heuristics[i - id_min] = compute_heuristics(i);
+	}
+	return true;
+}
+
+
+void FlatlandMap::update_paths(const vector<Path*>& new_paths)
+{
+	for (const auto& path : new_paths)
+	{
+		paths.emplace_back(*path);
+	}
+}
+
+
 bool FlatlandMap::load_map(string fname)
 {
   string line;
@@ -64,28 +92,28 @@ bool FlatlandMap::load_agents(string fname)
 		boost::tokenizer< boost::char_separator<char> > tok(line, sep);
 		boost::tokenizer< boost::char_separator<char> >::iterator beg = tok.begin();
 		int num_of_agents = atoi((*beg).c_str());
-		start_ids.resize(num_of_agents);
-		goal_ids.resize(num_of_agents);
-		goal_locations.resize(num_of_agents);
-		r_velocities.resize(num_of_agents);
-		for (int i = 0; i<num_of_agents; i++)
+		all_start_ids.resize(num_of_agents);
+		all_goal_ids.resize(num_of_agents);
+		all_goal_locations.resize(num_of_agents);
+		all_r_velocities.resize(num_of_agents);
+		for (int i = 0; i < num_of_agents; i++)
 		{
 			getline(myfile, line);
 			boost::tokenizer< boost::char_separator<char> > col_tok(line, sep);
 			boost::tokenizer< boost::char_separator<char> >::iterator c_beg = col_tok.begin();
 			// read start [row,col] for agent i
-			start_ids[i] = atoi((*c_beg).c_str());
+			all_start_ids[i] = atoi((*c_beg).c_str());
 			c_beg++;
-			goal_locations[i] = atoi((*c_beg).c_str());
+			all_goal_locations[i] = atoi((*c_beg).c_str());
 			c_beg++;
 			int num_goal_ids = atoi((*c_beg).c_str()); // number of goal ids
 			c_beg++;
 			for (int j = 0; j < num_goal_ids; j++)
 			{
-				goal_ids[i].push_back(atoi((*c_beg).c_str()));
+				all_goal_ids[i].push_back(atoi((*c_beg).c_str()));
 				c_beg++;
 			}
-			r_velocities[i] = atoi((*c_beg).c_str());
+			all_r_velocities[i] = atoi((*c_beg).c_str());
 		}
 		myfile.close();
 		return true;
@@ -153,7 +181,7 @@ void FlatlandMap::preprocessing_heuristics()
 }
 
 // compute low-level heuristics
-void FlatlandMap::compute_heuristics(int agent_id)
+vector<int> FlatlandMap::compute_heuristics(int agent_id)
 {
 	struct MyNode
 	{
@@ -212,7 +240,7 @@ void FlatlandMap::compute_heuristics(int agent_id)
 	//                    eqnode is used to break ties when hash values are equal)
 	unordered_set<MyNode*, MyNode::NodeHasher, MyNode::eqnode> nodes;
 
-	for (auto id : goal_ids[agent_id])
+	for (auto id : all_goal_ids[agent_id])
 	{
 		auto root = new MyNode(id, 0);
 		root->open_handle = heap.push(root);  // add root to heap
@@ -244,11 +272,11 @@ void FlatlandMap::compute_heuristics(int agent_id)
 		}
 	}
 	// iterate over all nodes
-	heuristics[agent_id].resize(map_size(), INT_MAX);
+	vector<int> rst(map_size(), INT_MAX);
 	for (auto it = nodes.begin(); it != nodes.end(); it++)
 	{
 		MyNode* s = *it;
-		heuristics[agent_id][s->id] = s->g_val;
+		rst[s->id] = s->g_val;
 		delete (s);
 	}
 
@@ -258,4 +286,5 @@ void FlatlandMap::compute_heuristics(int agent_id)
 
 	nodes.clear();
 	heap.clear();
+	return rst;
 }
