@@ -28,8 +28,17 @@ bool FlatlandMap::generate_instance(int num_of_agents)
 void FlatlandMap::generate_agent_order()
 {
 	agent_ids.clear();
-	for (int i = 0; i < (int)all_start_ids.size(); i++)
-		agent_ids.push_back(i);
+	int v = 1;
+	while (agent_ids.size() < all_start_ids.size())
+	{
+		for (int i = 0; i < (int)all_start_ids.size(); i++)
+		{
+			if (all_r_velocities[i] == v)
+				agent_ids.push_back(i);
+		}
+		v++;
+	}
+
 }
 
 
