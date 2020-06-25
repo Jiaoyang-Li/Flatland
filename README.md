@@ -2,6 +2,16 @@
 
 ---
 
+## Known Flatland Library Bugs/Issues
+
+1. Local test environment does not work if the evaluation process was interrupted.
+
+Reason: redis-server recorded something about the evaluation data in the server cache. If the evalution was interrupted, the cache remains and causes issues when the user tries to rerun the evalution. 
+
+Solution:**redis-cli flushall** to empty cache and rerun the evaluation. Then it works.
+
+---
+
 ## Useful links: 
 
   ### - The challenge website: 
