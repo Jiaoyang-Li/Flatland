@@ -1,58 +1,52 @@
-# Flatland
+# Flatland 2
 
+---
 
+## Known Flatland Library Bugs/Issues
 
-## Important Note: They released a new version of Flatland Library on 6th Sept, 2019. 
+1. Local test environment does not work if the evaluation process was interrupted.
 
-### Update by: 
+Reason: redis-server recorded something about the evaluation data in the server cache. If the evalution was interrupted, the cache remains and causes issues when the user tries to rerun the evalution. 
 
-  * In terminal, enter
-
-  ``` conda activate flatland-rl ```
-
-  then 
-
-  ``` pip install -U flatland-rl ```
+Solution:**redis-cli flushall** to empty cache and rerun the evaluation. Then it works.
 
 ---
 
 ## Useful links: 
 
   ### - The challenge website: 
-  https://www.aicrowd.com/challenges/flatland-challenge
+  https://flatland.aicrowd.com/intro.html 
 
-  ### - Start kit (Flatland Library Page):
-  http://flatland-rl-docs.s3-website.eu-central-1.amazonaws.com/readme.html
+  ### - Flatland Library Page (2.1.10, latest lib is 2.2.x):
+   http://flatland-rl-docs.s3-website.eu-central-1.amazonaws.com/index.html 
 
   ### - Useful Discussions:
 
-  * planning vs re-scheduling
-    https://discourse.aicrowd.com/t/discussion-planning-vs-re-scheduling/1647
-  * Additional Programming language
-    https://discourse.aicrowd.com/t/additional-programming-language/1684
+---
+
+**Timeline:** 
+
+- **June 1st - June 30th:** Warm-Up Round
+- **July 1st - July 31st:** Round 1
+- **August 1st - October 19th:** Round 2
+- **October 20th - October 25th:** Post Challenge Analysis
+- **October 25th:** Final Results Announced
+- **October 16th - November 10th:** Post Challenge Wrap-Up
+
+---
+
+## Warm-Up Round Plan
+
+  ### 6/23 -6/24  pick up the old solution and clean up the code
+
+**6/24 - ...  ECBS, K-robust CBS, STN**
+
+
 
 ---
 
 ## Round 1 Plan
 
-  ### - To-Do:
-
-1. Move the working code from round 1 notebook to the run.py for round 1
-2. Write a multi-threading python code for running 4 solvers on 4 cpus. 
-   1. All Terminate when once one of solvers finds the solution? May need to confirm.
-3. Pack everything and try local evaluation
-4. Try submission.
-
-
-
-
-
----
-
-## Round 2 Plan
-
-  ### - To-Do:
-
-  * ...
+  ### ...
 
 
