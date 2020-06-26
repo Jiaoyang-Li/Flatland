@@ -48,7 +48,8 @@ Solution:**redis-cli flushall** to empty cache and rerun the evaluation. Then it
 ## Current Solution Structure
 
 https://app.lucidchart.com/invitations/accept/156887d6-7e9f-43ca-af22
-![Flatland Solution](./Flatland Solution.png)
+
+![image] (Structure.png?raw=true)
 
 ---
 
