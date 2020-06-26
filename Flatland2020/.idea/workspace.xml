@@ -1,23 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="470fbce0-ed73-49cc-a877-cf2a2e439567" name="Default Changelist" comment="" />
+    <list default="true" id="94ab8933-1a9b-44f1-9d88-ffc0826ccab8" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/../.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/agents.txt" beforeDir="false" afterPath="$PROJECT_DIR$/config/agents.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/run.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../test.py" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="Python Script" />
-      </list>
-    </option>
-  </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
-  <component name="ProjectId" id="1dpv8qd2PsTD72HKot2tfhMHkO1" />
+  <component name="ProjectId" id="1dqa6byGE3gP84jjMbjiMQcv225" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -31,18 +30,12 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="470fbce0-ed73-49cc-a877-cf2a2e439567" name="Default Changelist" comment="" />
-      <created>1593134692400</created>
+      <changelist id="94ab8933-1a9b-44f1-9d88-ffc0826ccab8" name="Default Changelist" comment="" />
+      <created>1593154902544</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1593134692400</updated>
+      <updated>1593154902544</updated>
     </task>
     <servers />
-  </component>
-  <component name="WindowStateProjectService">
-    <state x="825" y="130" width="2044" height="1168" key="dock-window-1" timestamp="1593154884180">
-      <screen x="0" y="0" width="3440" height="1400" />
-    </state>
-    <state x="825" y="130" width="2044" height="1168" key="dock-window-1/-1080.0.1080.1880/0.0.3440.1400@0.0.3440.1400" timestamp="1593154884180" />
   </component>
 </project>

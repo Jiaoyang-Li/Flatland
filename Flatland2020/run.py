@@ -49,11 +49,11 @@ given_max_rails_between_cities = 2 # not clear what this does
 given_max_rails_in_city = 3 # not clear what this does
 given_num_agents = 30
 
-# speed profile, 1 -> speed is 1, 1_2 -> speed 0.5, 1_3 -> speed 1/3, etc.
-given_1_speed_train_percentage = 1
-given_1_2_speed_train_percentage = 0
-given_1_3_speed_train_percentage = 0
-given_1_4_speed_train_percentage = 0
+# speed profile, 1 -> speed is 1, 1_2 -> speed 0.5, 1_3 -> speed 1/3, etc. sum has to be 1
+given_1_speed_train_percentage = 0.5
+given_1_2_speed_train_percentage = 0.2
+given_1_3_speed_train_percentage = 0.1
+given_1_4_speed_train_percentage = 0.2
 
 # malfunction parameters
 prop_malfunction = 0.01
@@ -137,7 +137,7 @@ while True:
                                                            ),
                       schedule_generator=sparse_schedule_generator(speed_ration_map),
                       number_of_agents=given_num_agents,
-                      #stochastic_data=stochastic_data,                     # something is wrong with the api... can't use the stochastic data for now.
+                      # stochastic_data=stochastic_data,                     # something is wrong with the api... can't use the stochastic data for now.
                       # Malfunction data generator
                       obs_builder_object=GlobalObsForRailEnv(),
                       remove_agents_at_target=True, # WOW this parameter!
@@ -236,7 +236,7 @@ while True:
     if debug_print:
         print("number of agents: ", num_agents)
         for i in range(0,number_of_agents):
-            print("Agent id: ", i, " agent start location: ", agent_start_locations[i], " goal_locaiton: ", agent_goal_locaiton[i], " number of goal nodes: ", agent_goal_numbers[i],
+            print("Agent id: ", i, " agent start location: ", agent_start_locations[i], " goal_locaiton: ", agent_goal_locaitons[i], " number of goal nodes: ", agent_goal_numbers[i],
                   " agent goals: ", goal_idx[i])
 
     # ------------------------------ old method that saves txt files---------------------------
