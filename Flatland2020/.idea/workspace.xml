@@ -2,10 +2,17 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="94ab8933-1a9b-44f1-9d88-ffc0826ccab8" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/agents.txt" beforeDir="false" afterPath="$PROJECT_DIR$/config/agents.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Flatland2019/solution/flatland-challenge-starter-kit-master/config/agents.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Flatland2019/solution/flatland-challenge-starter-kit-master/config/map.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Flatland2019/solution/flatland-challenge-starter-kit-master/config/paths.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Flatland2019/solution/flatland-challenge-starter-kit-master/config/stn.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Controllers.py" beforeDir="false" afterPath="$PROJECT_DIR$/Controllers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/agents.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/map.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/paths.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/stn.png" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/run.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../test.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

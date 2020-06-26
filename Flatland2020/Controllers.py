@@ -26,7 +26,7 @@ import numpy as np
 import time
 from flatland.utils.rendertools import RenderTool
 
-class Controller:
+class The_Controller:
     def __init__(self, in_env, idx2node, idx2pose, node2idx):
 
         print('Controller Initialization')
@@ -90,6 +90,7 @@ class Controller:
                 next_pos = self.idx2pose[self.path_list[agent][time_step + 1 + c]]
             else:
                 next_pos = self.idx2pose[self.path_list[agent][time_step + 1]]  # type: tuple
+
             print(agent, linearize_loc(self.env,curr_pos), linearize_loc(self.env,prev_pos))
 
             # Relative to global frame, type:np.array

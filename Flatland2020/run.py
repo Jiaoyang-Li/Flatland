@@ -1,6 +1,6 @@
 from MapDecoder import convert_flatland_map,linearize_loc
 from STN import FlatlandPost
-from Controllers import Controller, Controller_stn
+from Controllers import The_Controller, Controller_stn
 
 from flatland.evaluators.client import FlatlandRemoteClient
 from flatland.core.env_observation_builder import DummyObservationBuilder
@@ -39,15 +39,15 @@ debug_print = True
 #####################################################################
 # local testing parameters
 #####################################################################
-x_dim = 40
-y_dim = 40
+x_dim = 30
+y_dim = 30
 
 # parameters to sparse_rail_genertor
 max_num_stations = 30
 given_seed = 1
 given_max_rails_between_cities = 2 # not clear what this does
 given_max_rails_in_city = 3 # not clear what this does
-given_num_agents = 30
+given_num_agents = 10
 
 # speed profile, 1 -> speed is 1, 1_2 -> speed 0.5, 1_3 -> speed 1/3, etc. sum has to be 1
 given_1_speed_train_percentage = 0.5
@@ -61,6 +61,11 @@ malfunction_rate = 30
 min_duration = 3
 max_duration = 20
 
+# temp solution: C++ solver path file
+path_file ="./config/paths.txt"
+def parse_line_path(l):
+    return [int(node) for node in l.split(",")[:-1]]
+
 #####################################################################
 # Instantiate a Remote Client
 #####################################################################
@@ -68,11 +73,11 @@ if remote_test:
     remote_client = FlatlandRemoteClient()
 
 # random action controller
-def my_controller(obs, number_of_agents):
-    _action = {}
-    for _idx in range(number_of_agents):
-        _action[_idx] = np.random.randint(0, 5)
-    return _action
+# def my_controller(obs, number_of_agents):
+#     _action = {}
+#     for _idx in range(number_of_agents):
+#         _action[_idx] = np.random.randint(0, 5)
+#     return _action
 
 # default controller given by flatland starter kit
 # my_observation_builder = CustomObservationBuilder()
@@ -300,8 +305,8 @@ while True:
         speed_list_real.append(agent.speed_data['speed'])
     print('speed_list: ', speed_list)
 
-    my_post = FlatlandPost(in_env=local_env,in_path = "./config/paths.txt", in_speed_list = speed_list_real)
-    my_post.construct_stn()
+    # my_post = FlatlandPost(in_env=local_env,in_path = "./config/paths.txt", in_speed_list = speed_list_real)
+    # my_post.construct_stn()
 
     # if debug_print:
     #     my_post.draw_stn()
@@ -320,17 +325,35 @@ while True:
     # may need correction/improvement
     #####################################################################
 
-    # my_controller = Controller(local_env, idx2node, idx2pos, node2idx)
+    my_controller = The_Controller(local_env, idx2node, idx2pos, node2idx)
     # my_controller_stn = Controller_stn(local_env, idx2node, idx2pos, node2idx,my_post)
+
+    #####################################################################
+    # temp method to execute the result of the CBS solver
+    # reading from a path.txt file. (Change later for API communication)
+    #####################################################################
+
+    with open(path_file, "r") as f:
+        docs = f.readlines()
+
+    paths = [parse_line_path(l) for l in docs]
+
+    if debug_print:
+        print("paths: \n", paths)
+
+
+
 
     #####################################################################
     # Show the flatland visualization
     #####################################################################
-    env_renderer = RenderTool(local_env, screen_height=1000,
-                              screen_width=1000)
+    env_renderer = RenderTool(local_env, screen_height=3000,
+                              screen_width=3000)
     env_renderer.render_env(show=True, show_observations=False, show_predictions=False)
 
     # track = my_post.stn.start_nodes
+
+
 
     while True:
         #####################################################################
@@ -346,7 +369,12 @@ while True:
         time_start = time.time()
 
         # random action controller
-        action = my_controller(observation, number_of_agents)
+        # action = my_controller(observation, number_of_agents)
+
+        action = {}
+        for i in range(0,number_of_agents):
+            action[i]=my_controller.pos2action(steps, i)
+
 
         time_taken = time.time() - time_start
 
@@ -367,8 +395,12 @@ while True:
         env_renderer.render_env(show=True, show_observations=False, show_predictions=False)
 
         # hit enter to go next step
-        print("hit enter to execute the next step")
-        input()
+        # print("hit enter to execute the next step")
+        # input()
+
+        # or wait for a period of time
+
+        time.sleep(0.5)
 
         steps += 1
         time_taken = time.time() - time_start
@@ -403,3 +435,6 @@ print("Evaluation of all environments complete...")
 # and is necesaary to have your submission marked as successfully evaluated
 ########################################################################
 print(remote_client.submit())
+
+
+
