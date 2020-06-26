@@ -2,100 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="470fbce0-ed73-49cc-a877-cf2a2e439567" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/Round 1/.ipynb_checkpoints/Flatland_Library_Test-checkpoint.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/.ipynb_checkpoints/Round 1 Run py-checkpoint.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/.ipynb_checkpoints/Round 1-checkpoint.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/driver.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/inc/common.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/inc/ecbs_node.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/inc/ecbs_search.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/inc/flatland_map.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/inc/grid2D.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/inc/node.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/inc/single_agent_ecbs.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503d.jpg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503d.map" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-0.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-1.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-10.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-11.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-12.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-13.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-14.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-15.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-16.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-17.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-18.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-19.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-2.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-20.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-21.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-22.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-23.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-24.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-25.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-26.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-27.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-28.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-29.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-3.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-30.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-31.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-32.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-33.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-34.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-35.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-36.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-37.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-38.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-39.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-4.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-40.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-41.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-42.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-43.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-44.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-45.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-46.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-47.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-48.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-49.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-5.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-6.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-7.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-8.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/lak503dmap-100agents-9.agents" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/instances/test_case.zip" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/run-batch.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/src/common.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/src/ecbs_search.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/src/flatland_map.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/src/grid2D.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/src/node.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/ECBS/src/single_agent_ecbs.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/Flatland_Library_Test.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/Round 1 Run py.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/Round 1.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/agents.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/flatland-challenge-starter-kit-master/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/flatland-challenge-starter-kit-master/FAQ.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/flatland-challenge-starter-kit-master/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/flatland-challenge-starter-kit-master/aicrowd.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/flatland-challenge-starter-kit-master/apt.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/flatland-challenge-starter-kit-master/docker_run.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/flatland-challenge-starter-kit-master/environment.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/flatland-challenge-starter-kit-master/run.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/flatland-challenge-starter-kit-master/run.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/flatland-challenge-starter-kit-master/windows_submission.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/map.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/paths.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/round1.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Round 1/temp_render_path.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/sample-agent-input.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/sample-map-input.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/sample-paths-output.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Flatland2020/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/Flatland2020/run.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -135,9 +43,9 @@
     <servers />
   </component>
   <component name="WindowStateProjectService">
-    <state x="-1080" y="0" width="1096" height="1168" maximized="true" key="dock-window-1" timestamp="1593148590490">
+    <state x="-1080" y="0" width="1096" height="1168" key="dock-window-1" timestamp="1593151789508">
       <screen x="-1080" y="0" width="1080" height="1880" />
     </state>
-    <state x="-1080" y="0" width="1096" height="1168" maximized="true" key="dock-window-1/-1080.0.1080.1880/0.0.3440.1400@0.0.3440.1400" timestamp="1593148590490" />
+    <state x="-1080" y="0" width="1096" height="1168" key="dock-window-1/-1080.0.1080.1880/0.0.3440.1400@0.0.3440.1400" timestamp="1593151789508" />
   </component>
 </project>

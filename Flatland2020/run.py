@@ -229,7 +229,7 @@ while True:
     #                goal nodes  is agent_goals[0]
 
     agent_start_locations = start_idx
-    agent_goal_locaiton = goal_loc_linear      # just locaiton, not node
+    agent_goal_locaitons = goal_loc_linear      # just locaiton, not node
     agent_goal_numbers = num_goals              # how many goals each agent has, e.g. [2,1,2,1] agent 0 has 2 goal nodes, agent 1 has 1 goal node.
     agent_goals = goal_idx
 
