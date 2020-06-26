@@ -1,0 +1,6 @@
+curl
+git
+vim
+ssh
+gcc
+python-cairo-dev

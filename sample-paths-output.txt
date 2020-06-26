@@ -1,3 +1,0 @@
-(1,1)(1,2)(1,3)(2,3)  #(loc0_row,loc0_col)(loc1_row,loc1_col)(loc2_row,loc2_col) of 1st agent
-(1,1)(1,2)(1,3)(2,3)  #(loc0_row,loc0_col)(loc1_row,loc1_col)(loc2_row,loc2_col) of 2nd agent
-(1,1)(1,2)(1,3)(2,3)  #(loc0_row,loc0_col)(loc1_row,loc1_col)(loc2_row,loc2_col) of 3rd agent
