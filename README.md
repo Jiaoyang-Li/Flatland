@@ -10,6 +10,8 @@ Reason: redis-server recorded something about the evaluation data in the server 
 
 Solution:**redis-cli flushall** to empty cache and rerun the evaluation. Then it works.
 
+2. **Old Flatland Stochastic Data API does not work. Seems that they have changed the API.**
+
 ---
 
 ## Useful links: 
@@ -41,7 +43,13 @@ Solution:**redis-cli flushall** to empty cache and rerun the evaluation. Then it
 
 **6/24 - ...  ECBS, K-robust CBS, STN**
 
+----
 
+## Current Solution Structure
+
+https://app.lucidchart.com/invitations/accept/156887d6-7e9f-43ca-af22
+
+![image] (Structure.png?raw=true)
 
 ---
 

@@ -1,6 +1,0 @@
-5  # number of agents
-1,3,2,4,1.0  # start_row,start_col,goal_row,goal_col,speed
-1,3,2,4,1.0  # start_row,start_col,goal_row,goal_col,speed
-1,3,2,4,1.0  # start_row,start_col,goal_row,goal_col,speed
-1,3,2,4,1.0  # start_row,start_col,goal_row,goal_col,speed
-1,3,2,4,1.0  # start_row,start_col,goal_row,goal_col,speed
