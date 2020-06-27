@@ -26,3 +26,5 @@ plan = CBS.getResult()
 ```
 success is a boolean, which indicate does the search success.
 plan is a list of list, which stores paths of all agents. The format of a path is \[-1, -1,200,234,345\]. -1 indicate the train is not active.
+
+run_test2.2.py contains a test example.
