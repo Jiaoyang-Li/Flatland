@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #Compile codes in PythonCBS in folder CBS-corridor with cmake
 
 import numpy as np
