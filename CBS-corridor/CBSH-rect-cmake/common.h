@@ -2,12 +2,12 @@
 
 #include <tuple>
 #include <boost/heap/fibonacci_heap.hpp>
-#include <google/dense_hash_map>
 #include <iostream>
 #include <unordered_map>
 #include <list>
 #include <vector>
 #include <unordered_set>
+#include <memory>  // std::shared_ptr
 enum conflict_type { TARGET, CORRIDOR2, CORRIDOR4, RECTANGLE, STANDARD, TYPE_COUNT };
 enum conflict_priority { CARDINAL, SEMI, NON, UNKNOWN, PRIORITY_COUNT };
 

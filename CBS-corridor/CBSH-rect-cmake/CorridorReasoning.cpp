@@ -112,14 +112,14 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 	// generate hash_map (key is a node pointer, data is a node handler,
 	//                    NodeHasher is the hash function to be used,
 	//                    eqnode is used to break ties when hash values are equal)
-	google::dense_hash_map<LLNode*, fibonacci_heap<LLNode*, boost::heap::compare<LLNode::compare_node> >::handle_type, LLNode::NodeHasher, LLNode::eqnode> nodes;
-	nodes.set_empty_key(NULL);
-	google::dense_hash_map<LLNode*, fibonacci_heap<LLNode*, boost::heap::compare<LLNode::compare_node> >::handle_type, LLNode::NodeHasher, LLNode::eqnode>::iterator it; // will be used for find()
+    typedef boost::unordered_set<LLNode*, LLNode::NodeHasher, LLNode::eqnode> hashtable_t;
+    hashtable_t nodes;
+    hashtable_t::iterator it; // will be used for find()
 
 	LLNode* root = new LLNode(start, 0, getMahattanDistance(start, end, num_col), NULL, 0);
 	root->heading = start_heading;
 	root->open_handle = heap.push(root);  // add root to heap
-	nodes[root] = root->open_handle;       // add root to hash_table (nodes)
+	nodes.insert(root);       // add root to hash_table (nodes)
 	int moves_offset[4] = { 1, -1, num_col, -num_col };
 	LLNode* curr = NULL;
 	int time_generated = 0;
@@ -163,12 +163,11 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 			if (it == nodes.end())
 			{  // add the newly generated node to heap and hash table
 				next->open_handle = heap.push(next);
-				nodes[next] = next->open_handle;
+				nodes.insert(next);
 			}
 			else {  // update existing node's g_val if needed (only in the heap)
 				delete(next);  // not needed anymore -- we already generated it before
-				LLNode* existing_next = (*it).first;
-				open_handle = (*it).second;
+				LLNode* existing_next = (*it);
 				if (existing_next->g_val > next_g_val)
 				{
 					existing_next->g_val = next_g_val;
@@ -180,7 +179,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 	}
 	for (it = nodes.begin(); it != nodes.end(); it++)
 	{
-		delete (*it).first;
+		delete (*it);
 	}
 	return length;
 }
@@ -195,14 +194,14 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 	// generate hash_map (key is a node pointer, data is a node handler,
 	//                    NodeHasher is the hash function to be used,
 	//                    eqnode is used to break ties when hash values are equal)
-	google::dense_hash_map<LLNode*, fibonacci_heap<LLNode*, boost::heap::compare<LLNode::compare_node> >::handle_type, LLNode::NodeHasher, LLNode::eqnode> nodes;
-	nodes.set_empty_key(NULL);
-	google::dense_hash_map<LLNode*, fibonacci_heap<LLNode*, boost::heap::compare<LLNode::compare_node> >::handle_type, LLNode::NodeHasher, LLNode::eqnode>::iterator it; // will be used for find()
+    typedef boost::unordered_set<LLNode*, LLNode::NodeHasher, LLNode::eqnode> hashtable_t;
+    hashtable_t nodes;
+    hashtable_t::iterator it; // will be used for find()
 
 	LLNode* root = new LLNode(start, 0, getMahattanDistance(start, end, num_col), NULL, 0);
 	root->heading = start_heading;
 	root->open_handle = heap.push(root);  // add root to heap
-	nodes[root] = root->open_handle;       // add root to hash_table (nodes)
+	nodes.insert(root);       // add root to hash_table (nodes)
 	int moves_offset[5] = { 1, -1, num_col, -num_col, 0};
 	LLNode* curr = NULL;
 	int time_generated = 0;
@@ -264,12 +263,11 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 				if (it == nodes.end())
 				{  // add the newly generated node to heap and hash table
 					next->open_handle = heap.push(next);
-					nodes[next] = next->open_handle;
+					nodes.insert(next);
 				}
 				else {  // update existing node's g_val if needed (only in the heap)
 					delete(next);  // not needed anymore -- we already generated it before
-					LLNode* existing_next = (*it).first;
-					open_handle = (*it).second;
+					LLNode* existing_next = (*it);
 					if (existing_next->g_val > next_g_val)
 					{
 						existing_next->g_val = next_g_val;
@@ -282,7 +280,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 	}
 	for (it = nodes.begin(); it != nodes.end(); it++)
 	{
-		delete (*it).first;
+		delete (*it);
 	}
 	return length;
 }
@@ -298,9 +296,9 @@ int CorridorReasoning<Map>::getBypassLength(int end, std::pair<int, int> blocked
 	// generate hash_map (key is a node pointer, data is a node handler,
 	//                    NodeHasher is the hash function to be used,
 	//                    eqnode is used to break ties when hash values are equal)
-	google::dense_hash_map<LLNode*, fibonacci_heap<LLNode*, boost::heap::compare<LLNode::compare_node> >::handle_type, LLNode::NodeHasher, LLNode::eqnode> nodes;
-	nodes.set_empty_key(NULL);
-	google::dense_hash_map<LLNode*, fibonacci_heap<LLNode*, boost::heap::compare<LLNode::compare_node> >::handle_type, LLNode::NodeHasher, LLNode::eqnode>::iterator it; // will be used for find()
+    typedef boost::unordered_set<LLNode*, LLNode::NodeHasher, LLNode::eqnode> hashtable_t;
+    hashtable_t nodes;
+    hashtable_t::iterator it; // will be used for find()
 
 	LLNode* root = new LLNode(start_entry.location, 0, getMahattanDistance(start_entry.location, end, num_col), NULL, 0);
 	root->heading = start_entry.actionToHere;
@@ -324,7 +322,7 @@ int CorridorReasoning<Map>::getBypassLength(int end, std::pair<int, int> blocked
 	root->h_val = start_h_val;
 	
 
-	nodes[root] = root->open_handle;       // add root to hash_table (nodes)
+	nodes.insert(root);       // add root to hash_table (nodes)
 	int moves_offset[5] = { 1, -1, num_col, -num_col, 0 };
 	LLNode* curr = NULL;
 	int time_generated = 0;
@@ -472,12 +470,11 @@ int CorridorReasoning<Map>::getBypassLength(int end, std::pair<int, int> blocked
 				if (it == nodes.end())
 				{  // add the newly generated node to heap and hash table
 					next->open_handle = heap.push(next);
-					nodes[next] = next->open_handle;
+					nodes.insert(next);
 				}
 				else {  // update existing node's g_val if needed (only in the heap)
 					delete(next);  // not needed anymore -- we already generated it before
-					LLNode* existing_next = (*it).first;
-					open_handle = (*it).second;
+					LLNode* existing_next = (*it);
 					if (existing_next->g_val > next_g_val)
 					{
 						existing_next->g_val = next_g_val;
@@ -490,7 +487,7 @@ int CorridorReasoning<Map>::getBypassLength(int end, std::pair<int, int> blocked
 	}
 	for (it = nodes.begin(); it != nodes.end(); it++)
 	{
-		delete (*it).first;
+		delete (*it);
 	}
 	return length;
 }

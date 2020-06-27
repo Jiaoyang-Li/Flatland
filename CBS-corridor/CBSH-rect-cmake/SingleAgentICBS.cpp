@@ -187,7 +187,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 	start->h_val = start_h_val;
 
 
-	allNodes_table[start] = start;
+	allNodes_table.insert(start);
 	min_f_val = start->getFVal();
 
 	lowerbound = std::max(lowerbound, (double)constraint_table.length_min);
@@ -411,7 +411,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 					}
 
 					if (it == allNodes_table.end())
-						allNodes_table[next] = next;
+						allNodes_table.insert(next);
 					else
 						goal_nodes.push_back(next);
 					next->conflist = conflicts;
@@ -420,7 +420,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 				else
 				{  // update existing node's if needed (only in the open_list)
 					delete(next);  // not needed anymore -- we already generated it before
-					LLNode* existing_next = (*it).second;
+					LLNode* existing_next = (*it);
 
 					if (existing_next->in_openlist == true)
 					{  // if its in the open list
@@ -478,7 +478,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 		}  // end for loop that generates successors
 		//cout << "focal list size"<<focal_list.size() << endl;
 		// update FOCAL if min f-val increased
-		if (open_list.size() == 0)  // in case OPEN is empty, no path found
+		if (open_list.empty())  // in case OPEN is empty, no path found
 			break;
 		LLNode* open_head = open_list.top();
 		
@@ -523,7 +523,7 @@ inline void SingleAgentICBS<Map>::releaseClosedListNodes(hashtable_t* allNodes_t
 	hashtable_t::iterator it;
 	for (it = allNodes_table->begin(); it != allNodes_table->end(); ++it) {
 
-			delete ((*it).second);
+			delete (*it);
 	}
 	for (auto node : goal_nodes)
 		delete node;
@@ -552,21 +552,11 @@ SingleAgentICBS<Map>::SingleAgentICBS(int start_location, int goal_location,  Ma
 	this->num_col = ml->cols;
 
 	this->kRobust = kRobust;
-	// initialize allNodes_table (hash table)
-	empty_node = new LLNode();
-	empty_node->loc = -1;
-	deleted_node = new LLNode();
-	deleted_node->loc = -2;
-	allNodes_table.set_empty_key(empty_node);
-	allNodes_table.set_deleted_key(deleted_node);
-
 }
 
 template<class Map>
 SingleAgentICBS<Map>::~SingleAgentICBS()
 {
-	delete (empty_node);
-	delete (deleted_node);
 }
 
 template class SingleAgentICBS<MapLoader>;
