@@ -125,11 +125,11 @@ else()
 		set(boostPython python36)
 	endif()
 
-	find_path(SPARSEHASH_INCLUDE_DIRS sparsehash/dense_hash_map)
-	if (NOT SPARSEHASH_INCLUDE_DIRS)
-		message(FATAL_ERROR "Could not find <sparsehash/dense_hash_map>.")
-	endif ()
-	include_directories(SYSTEM ${SPARSEHASH_INCLUDE_DIRS} )
+	# find_path(SPARSEHASH_INCLUDE_DIRS sparsehash/dense_hash_map)
+	# if (NOT SPARSEHASH_INCLUDE_DIRS)
+	# 	message(FATAL_ERROR "Could not find <sparsehash/dense_hash_map>.")
+	# endif ()
+	# include_directories(SYSTEM ${SPARSEHASH_INCLUDE_DIRS} )
 
 	find_package(PythonInterp 3.6 REQUIRED)
 
