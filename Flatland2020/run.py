@@ -142,6 +142,7 @@ while True:
                                                            ),
                       schedule_generator=sparse_schedule_generator(speed_ration_map),
                       number_of_agents=given_num_agents,
+                      malfunction_generator_and_process_data=malfunction_from_params(malfunction_rate=malfunction_rate, min_duration=min_duration, max_duration= max_duration),
                       # stochastic_data=stochastic_data,                     # something is wrong with the api... can't use the stochastic data for now.
                       # Malfunction data generator
                       obs_builder_object=GlobalObsForRailEnv(),

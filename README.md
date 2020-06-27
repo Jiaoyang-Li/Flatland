@@ -36,7 +36,13 @@ Reason: redis-server recorded something about the evaluation data in the server 
 
 Solution:**redis-cli flushall** to empty cache and rerun the evaluation. Then it works.
 
-2. **Old Flatland Stochastic Data API does not work. Seems that they have changed the API.**
+2. Old Flatland Stochastic Data API does not work. Seems that they have changed the API. (Fixed)
+
+New flatland API changes: 
+
+```python
+malfunction_generator_and_process_data=malfunction_from_params(malfunction_rate=malfunction_rate, min_duration=min_duration, max_duration= max_duration)
+```
 
 ---
 
@@ -73,7 +79,7 @@ Solution:**redis-cli flushall** to empty cache and rerun the evaluation. Then it
 
 ## Current Solution Structure
 
-https://app.lucidchart.com/invitations/accept/156887d6-7e9f-43ca-af22
+https://app.lucidchart.com/invitations/accept/124716bf-f839-4383-9f15-0a578ddbcd8e
 
 ![image](Structure.png)
 
