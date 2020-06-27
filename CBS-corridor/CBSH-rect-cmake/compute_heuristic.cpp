@@ -1,13 +1,10 @@
 #include <boost/heap/fibonacci_heap.hpp>
 #include "ConstraintTable.h"
 #include "compute_heuristic.h"
-#include <google/dense_hash_map>
 #include <iostream>
 #include "LLNode.h"
 #include <limits.h>
 
-
-using google::dense_hash_map;      // namespace where class lives by default
 using std::cout;
 using std::endl;
 using boost::heap::fibonacci_heap;
@@ -55,22 +52,22 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 	// generate hash_map (key is a node pointer, data is a node handler,
 	//                    NodeHasher is the hash function to be used,
 	//                    eqnode is used to break ties when hash values are equal)
-	dense_hash_map<LLNode*, fibonacci_heap<LLNode*, boost::heap::compare<LLNode::compare_node> >::handle_type, LLNode::NodeHasher, LLNode::eqnode> nodes;
-	nodes.set_empty_key(NULL);
-	dense_hash_map<LLNode*, fibonacci_heap<LLNode*, boost::heap::compare<LLNode::compare_node> >::handle_type, LLNode::NodeHasher, LLNode::eqnode>::iterator it; // will be used for find()
+    typedef boost::unordered_set<LLNode*, LLNode::NodeHasher, LLNode::eqnode> hashtable_t;
+    hashtable_t nodes;
+    hashtable_t::iterator it; // will be used for find()
 
 	if (start_heading == -1) {
 		LLNode* root = new LLNode(root_location, 0, 0, NULL, 0);
 		root->heading = start_heading;
 		root->open_handle = heap.push(root);  // add root to heap
-		nodes[root] = root->open_handle;       // add root to hash_table (nodes)
+		nodes.insert(root);       // add root to hash_table (nodes)
 	}
 	else {
 		for (int heading = 0; heading < 4; heading++) {
 			LLNode* root = new LLNode(root_location, 0, 0, NULL, 0);
 			root->heading = heading;
 			root->open_handle = heap.push(root);  // add root to heap
-			nodes[root] = root->open_handle;
+			nodes.insert(root);       // add root to hash_table (nodes)
 		}
 	}
 	
@@ -104,12 +101,11 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 					continue;
 				}
 				next->open_handle = heap.push(next);
-				nodes[next] = next->open_handle;
+				nodes.insert(next);
 			}
 			else {  // update existing node's g_val if needed (only in the heap)
 				delete(next);  // not needed anymore -- we already generated it before
-				LLNode* existing_next = (*it).first;
-				open_handle = (*it).second;
+				LLNode* existing_next = (*it);
 				if (existing_next->g_val > next_g_val) 
 				{
 					existing_next->g_val = next_g_val;
@@ -119,9 +115,9 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 		}
 	}
 	// iterate over all nodes and populate the distances
-	for (it = nodes.begin(); it != nodes.end(); it++) 
+	for (it = nodes.begin(); it != nodes.end(); it++)
 	{
-		LLNode* s = (*it).first;
+		LLNode* s = (*it);
 		if (s->heading == -1) {
 
 			if (!res[s->loc].heading.count(-1)) {
@@ -136,18 +132,18 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 
 		}
 		else {
-			
+
 			if (s->possible_next_heading.size() > 0) {
 				for (int& next_heading : s->possible_next_heading) {
 					int heading = (next_heading + 2) % 4;
 
 					if (!res[s->loc].heading.count(heading)) {
 						res[s->loc].heading[heading] = s->g_val;
-						
+
 					}
 					else if (s->g_val < res[s->loc].heading[heading]) {
 						res[s->loc].heading[heading] = s->g_val;
-						
+
 
 					}
 
@@ -157,15 +153,15 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 			int heading = (s->heading + 2) % 4;
 			if (!res[s->loc].heading.count(heading)) {
 				res[s->loc].heading[heading] = s->g_val;
-				
+
 			}
 			else if (s->g_val < res[s->loc].heading[heading]) {
 				res[s->loc].heading[heading] = s->g_val;
 
-				
+
 			}
 
-			
+
 
 		}
 

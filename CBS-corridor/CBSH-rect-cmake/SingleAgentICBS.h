@@ -15,8 +15,7 @@
 #include "ConstraintTable.h"
 #include "compute_heuristic.h"
 #include <boost/heap/fibonacci_heap.hpp>
-#include <google/dense_hash_map>
-
+#include <boost/unordered_set.hpp>
 
 template<class Map>
 class SingleAgentICBS
@@ -25,13 +24,11 @@ public:
 	// define typedefs and handles for heap and hash_map
 	typedef boost::heap::fibonacci_heap< LLNode*, boost::heap::compare<LLNode::compare_node> > heap_open_t;
 	typedef boost::heap::fibonacci_heap< LLNode*, boost::heap::compare<LLNode::secondary_compare_node> > heap_focal_t;
-	typedef google::dense_hash_map<LLNode*, LLNode*, LLNode::NodeHasher, LLNode::eqnode> hashtable_t;
+    typedef boost::unordered_set<LLNode*, LLNode::NodeHasher, LLNode::eqnode> hashtable_t;
 	heap_open_t open_list;
 	heap_focal_t focal_list;
 	hashtable_t allNodes_table;
 	list<LLNode*> goal_nodes;
-	LLNode* empty_node;
-	LLNode* deleted_node;
 
 	int agent_id;
 	int start_location;
@@ -69,10 +66,10 @@ public:
 		// check vertex constraints (being in next_id at next_timestep is disallowed)
 		if (next_timestep < static_cast<int>(cons->size()))
 		{
-			for (std::list< std::pair<int, int> >::const_iterator it = cons->at(next_timestep).begin(); it != cons->at(next_timestep).end(); ++it)
+			for (const auto & it : cons->at(next_timestep))
 			{
-				if ((std::get<0>(*it) == next_id && std::get<1>(*it) < 0)//vertex constraint
-					|| (std::get<0>(*it) == curr_id && std::get<1>(*it) == next_id)) // edge constraint
+				if ((std::get<0>(it) == next_id && std::get<1>(it) < 0)//vertex constraint
+					|| (std::get<0>(it) == curr_id && std::get<1>(it) == next_id)) // edge constraint
 					return true;
 			}
 		}

@@ -7,7 +7,7 @@
 #include "flat_map_loader.h"
 
 #include <boost/unordered_map.hpp>
-
+#include <boost/unordered_set.hpp>
 
 using namespace std;
 
