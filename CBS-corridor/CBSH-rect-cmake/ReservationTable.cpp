@@ -88,7 +88,7 @@ void ReservationTable::deletePath(int agent_id, std::vector<PathEntry>* path) {
 OldConfList* ReservationTable::findConflict(int agent, int currLoc, int nextLoc, int currT,int kDelay) {
 	OldConfList* confs =  new OldConfList;
 	int nextT = currT + 1;
-    if(currLoc == -1)
+    if(nextLoc == -1)
         return confs;
 	//cout << "currloc " << currLoc << " nextloc " << nextLoc << endl;
 	if (res_table.count(nextLoc)) {

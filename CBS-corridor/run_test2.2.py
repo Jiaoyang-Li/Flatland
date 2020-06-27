@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #Compile codes in PythonCBS in folder CBS-corridor with cmake
 
 import numpy as np
@@ -83,6 +85,7 @@ debug = True
 k = 1
 timelimit = 10
 CBS = PythonCBS(env,"ICBS",k,timelimit,debug,f_w,"trainCorridor1")
-result = CBS.search()
+success = CBS.search()
+plan = CBS.getResult()
 
-print(result)
+print(plan)
