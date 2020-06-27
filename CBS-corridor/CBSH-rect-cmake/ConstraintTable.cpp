@@ -26,6 +26,8 @@ void ConstraintTable::insert(int loc, int t_min, int t_max)
 
 bool ConstraintTable::is_constrained(int loc, int t)
 {
+    if (loc < 0)
+        return false;
 	if (CT_Single.count(loc)) {
 		if (CT_Single[loc].count(t)) {
 			return true;
@@ -46,6 +48,8 @@ bool ConstraintTable::is_constrained(int loc, int t)
 
 bool ConstraintTable::is_good_malfunction_location(int loc, int t)
 {
+    if (loc <0)
+        return true;
 	if (CT_Single.count(loc)) {
 		for (auto conT : CT_Single[loc]) {
 			if (conT >= t) {

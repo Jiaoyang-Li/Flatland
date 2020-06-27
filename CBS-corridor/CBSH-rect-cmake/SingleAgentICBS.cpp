@@ -149,7 +149,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 
 	 // generate start and add it to the OPEN list
-	LLNode* start = new LLNode(start_location, 0, my_heuristic[start_location].heading[start_heading], NULL, 0, 0, false);
+	LLNode* start = new LLNode(-1, 0, my_heuristic[start_location].heading[start_heading], NULL, 0, 0, false);
 	start->heading = start_heading;
 	num_generated++;
 	start->open_handle = open_list.push(start);
@@ -163,11 +163,12 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 	start->malfunction_left = al->agents[agent_id].malfunction_left;
 	start->next_malfunction = al->agents[agent_id].next_malfuntion;
 
+    
 	start->position_fraction = al->agents[agent_id].position_fraction;
 	start->exit_heading = al->agents[agent_id].exit_heading;
 	if (start->exit_heading >= 0) {
 		vector<Transition> temp;
-		temp = ml->get_transitions(start->loc, start->heading, true);
+		temp = ml->get_transitions(start_location, start->heading, true);
 		if (temp.size() == 1) {
 			start->exit_loc = temp.front().first;
 			start->exit_heading = temp.front().second;
@@ -211,11 +212,10 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 				return false;
 			}
 		}
-		//cout << "focal size " << focal_list.size() << endl;
 
 		LLNode* curr = focal_list.top(); focal_list.pop();
 		open_list.erase(curr->open_handle);
-		//cout <<"f: "<< curr->getFVal() <<" g: "<<curr->g_val<<" h: "<<curr->h_val<< endl;
+// 		cout <<"f: "<< curr->getFVal() <<" g: "<<curr->g_val<<" h: "<<curr->h_val<< endl;
 		curr->in_openlist = false;
 		num_expanded++;
 		//cout << "focal size " << focal_list.size() << endl;
@@ -253,20 +253,9 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 		}
 		
 
-		//if (curr->timestep >= constraint_table.length_max) {
-		//	continue;
-
-		//}
-		/*if(curr->parent != NULL)
-			cout << "Parent loc: " << curr->parent->loc << " heading: " << curr->parent->heading << " f: " << curr->parent->getFVal() << " g: " << curr->parent->g_val << " h: "<< curr->parent->h_val<<" num_internal_conf: " << curr->parent->num_internal_conf << " current lower boundary: "<< lower_bound << endl;
-
-		cout << "current loc: " << curr->loc << " heading: " << curr->heading<<" f: "<<curr->getFVal() << " g: " << curr->g_val << " h: " << curr->h_val << " num_internal_conf: " <<curr->num_internal_conf << " current lower boundary: " << lower_bound << endl;
-		*/
-		//assert(curr->loc <= map_size && "loc out of map size");
-		//cout << "focal size " << focal_list.size() << endl;
-
 		vector<Transition> transitions;
 		if (curr->malfunction_left > 0) {
+            //agent is malfunction. useless in flatland 2.2
 			Transition move;
 			move.first = curr->loc;
 			move.second = 4;
@@ -275,7 +264,24 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			move.exit_heading = curr->exit_heading;
 			transitions.push_back(move);
 		}
-
+        else if(curr->loc == -1){
+            Transition move;
+			move.first = -1;
+			move.second = 4;
+			move.position_fraction = curr->position_fraction;
+			move.exit_loc = curr->exit_loc;
+			move.exit_heading = curr->exit_heading;
+			transitions.push_back(move);
+            
+            Transition move2;
+			move2.first = start_location;
+			move2.second = 4;
+			move2.position_fraction = curr->position_fraction;
+			move2.exit_loc = curr->exit_loc;
+			move2.exit_heading = curr->exit_heading;
+			transitions.push_back(move2);
+            
+        }
 		else if (curr->position_fraction + al->agents[agent_id].speed >= 0.97) {
 			if (curr->position_fraction == 0)
 				transitions = ml->get_transitions(curr->loc, curr->heading, false);
@@ -304,17 +310,13 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 
 		}
-
-		//cout << "transitions : " ;
-		//for (int i = 0; i < transitions.size(); i++) {
-		//	cout << "(" << transitions[i].first << "," << transitions[i].second << ") ";
-		//	//cout << "moves_offset ";
-		//	//for (int m = 0; m < 4; m++) {
-		//	//	cout << moves_offset[m]<<" ";
-		//	//}
-		//	//cout << endl;
-		//}
-		//cout << endl;
+        
+//         cout<<"current location" << curr->loc<<endl;
+// 		cout << "transitions : " ;
+// 		for (int i = 0; i < transitions.size(); i++) {
+// 			cout << "(" << transitions[i].first << "," << transitions[i].second << ") ";
+// 		}
+// 		cout << endl;
 
 		for (const auto move : transitions)
 		{
@@ -335,8 +337,8 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 				}
 			}*/
 			//if (next_id == 761) {
-			//	cout << next_id << " " << next_timestep << endl;
-			//	cout << constraint_table.is_constrained(next_id, next_timestep) << endl;
+// 				cout << next_id << " " << next_timestep << endl;
+// 				cout << constraint_table.is_constrained(next_id, next_timestep) << endl;
 			//}
 			if (!constraint_table.is_constrained(next_id, next_timestep) &&
 				!constraint_table.is_constrained(curr->loc * map_size + next_id, next_timestep))
@@ -355,9 +357,16 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 					else
 						next_heading = move.second;
 				float next_position_fraction = move.position_fraction;
-				//cout<<"next_id "<< next_id <<" curr heading "<< curr->heading<<" next heading "<<next_heading<<" h: "<< my_heuristic[next_id].heading[next_heading]<<" next_position_fraction "<< next_position_fraction <<endl;
-				int next_h_val = my_heuristic[next_id].get_hval(next_heading)/al->agents[agent_id].speed;
-				if (move.exit_loc >= 0 && al->agents[agent_id].speed<1) {
+
+				
+                int next_h_val;
+                if (next_id!=-1)
+                    next_h_val = my_heuristic[next_id].get_hval(next_heading)/al->agents[agent_id].speed;
+                else
+                    next_h_val = curr->h_val;
+//                 cout<<"next_id "<< next_id <<" curr heading "<< curr->heading<<" next heading "<<next_heading<<" h: "<<next_h_val<<" next_position_fraction "<< next_position_fraction <<endl;
+                    
+				if (next_id!=-1 && move.exit_loc >= 0 && al->agents[agent_id].speed<1) {
 					int h1 = my_heuristic[next_id].get_hval(next_heading);
 					int h2 = my_heuristic[move.exit_loc].get_hval(move.exit_heading);
 					next_h_val = h1 / al->agents[agent_id].speed

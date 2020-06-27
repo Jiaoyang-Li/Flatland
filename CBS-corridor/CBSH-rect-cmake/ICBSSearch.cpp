@@ -1594,8 +1594,8 @@ MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader* al0, double f
 	if (debug_mode)
 		cout << "Initializing search engines" << endl;
 	for (int i = 0; i < num_of_agents; i++) {
-		if (!al.agents[i].activate)
-			continue;
+// 		if (!al.agents[i].activate)
+// 			continue;
 		if (debug_mode)
 			cout << "initializing agent "<< i << endl;
 		int init_loc = ml->linearize_coordinate(al.agents[i].position.first, al.agents[i].position.second);
@@ -1638,14 +1638,14 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 	for (int i = 0; i < num_of_agents; i++) {
 		//cout << "******************************" << endl;
 		if (screen >= 2) {
-			cout << "Initialize Agent: " << i << endl;
+			cout << "Find initial path Agent: " << i << endl;
 		}
-		if (!al.agents[i].activate) {
-			if (debug_mode)
-				cout << "agent " << i << " not active" << endl;
-			paths[i] = new vector<PathEntry>;
-			continue;
-		}
+// 		if (!al.agents[i].activate) {
+// 			if (debug_mode)
+// 				cout << "agent " << i << " not active" << endl;
+// 			paths[i] = new vector<PathEntry>;
+// 			continue;
+// 		}
 		if (search_engines[i]->findPath(paths_found_initially[i], focal_w, constraintTable, res_table, dummy_start->makespan + 1, 0) == false)
 			cout << "NO SOLUTION EXISTS";
 		

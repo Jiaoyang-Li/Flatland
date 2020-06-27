@@ -38,6 +38,7 @@ public:
 	float position_fraction = 0.0;
 	int exit_loc=-1;
 	int exit_heading=-1;
+    bool active = 0;
 
 
 	// the following is used to comapre nodes in the OPEN list
@@ -57,70 +58,18 @@ public:
 	{
 		bool operator()(const LLNode* n1, const LLNode* n2) const // returns true if n1 > n2
 		{
-			//if (n1->g_val == n2->g_val)
-			//{
-			//	if (n1->num_internal_conf == n2->num_internal_conf) {
-
-			//		if (n1->timestep == n2->timestep) {
-			//			return n1->time_generated > n2->time_generated; // break ties towards earlier generated nodes - 
-			//															//explore the tree more broadly (despite preferring depth)
-			//	 														 //(time_generated can't be equal)
-			//		}
-			//		return n1->timestep < n2->timestep;  // break ties towards *more* depth - more work was done, even if it didn't reduce the number of conflicts or increase the cost yet
-
-			//	}
-			//	return n1->num_internal_conf > n2->num_internal_conf;  // break ties towards fewer conflicts
-			//}
-			//return n1->g_val < n2->g_val;// break ties towards *larger* g_val 
-
-			//
-			//if (n1->num_internal_conf == n2->num_internal_conf) {
-			//	if (n1->g_val == n2->g_val)
-			//	{
-
-			//		return n1->time_generated > n2->time_generated; // break ties towards earlier generated nodes -
-			//														// explore the tree more broadly (despite preferring depth)
-			//														// (time_generated can't be equal)
-			//	}
-			//	return n1->g_val < n2->g_val;// break ties towards *larger* g_val 
-			//}
-			//return n1->num_internal_conf > n2->num_internal_conf;  // break ties towards fewer conflicts
-			////
-			//
-			//if (n1->num_internal_conf == n2->num_internal_conf) {
-			//	if (n1->g_val == n2->g_val)
-			//	{
-			//		if (n1->h_val == n2->h_val) {
-			//		
-
-			//				return n1->timestep <= n2->timestep;  // break ties towards *more* depth - more work was done, even if it didn't reduce the number of conflicts or increase the cost yet
-
-			//		
-
-			//		}
-			//		return n1->h_val >= n2->h_val;
-			//	}
-			//	return n1->g_val < n2->g_val;// break ties towards *larger* g_val 
-			//}
-			//return n1->num_internal_conf > n2->num_internal_conf;  // break ties towards fewer conflicts
-			
 
 		
 			if (n1->num_internal_conf == n2->num_internal_conf)
 			{
 				if (n1->g_val == n2->g_val)
 				{
-				/*if (rand() % 2 == 0)
-					return true;
-				else
-					return false;*/
-					//if (round(n1->position_fraction*100) == round(n2->position_fraction*100)) {
-						if (rand() % 2 == 0)
-							return true;
-						else
-							return false;
-					//}
-					//return n1->position_fraction <= n2->position_fraction;
+				
+                    if (rand() % 2 == 0)
+                        return true;
+                    else
+                        return false;
+
 				}
 				return n1->g_val <= n2->g_val;
 					
@@ -161,7 +110,8 @@ public:
 				s1->next_malfunction == s2->next_malfunction &&
 				s1->malfunction_left == s2->malfunction_left &&
 				round(s1->position_fraction*1000) == round(s2->position_fraction*1000) &&
-				s1->exit_loc == s2->exit_loc);
+                    s1->exit_loc == s2->exit_loc)
+                ;
 		}
 	};
 

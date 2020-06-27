@@ -55,6 +55,7 @@ struct Transition {
 	float position_fraction=0.0;
 	int exit_loc=-1;
 	int exit_heading = -1;
+    bool turn_active = false;
 };
 
 struct MDDPath {

@@ -26,7 +26,7 @@ struct Agent {
 	float malfunction_rate = 0;
 	float speed = 1.0;
 	float position_fraction = 0.0;
-	int exit_heading;
+	int exit_heading = -1;
 };
 
 class AgentsLoader {
