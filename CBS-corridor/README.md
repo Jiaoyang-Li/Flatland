@@ -1,8 +1,10 @@
 # Dependency
 
-**Boost 1.61.0**
-**Boost.python36**
-**Python 3.6**
+1. Downgrade your python to 3.6 and make sure python-dev is also installed.
+
+2. Install boost 1.61.0 (must include libboost-python3)
+
+3. If you are using windows, configure paths of dependencies manually.
 
 # Usage
 
@@ -21,4 +23,4 @@ success = CBS.search()
 plan = CBS.getResult()
 ```
 success is a boolean, which indicate does the search success.
-plan is a list of list, which stores paths of all agents.
+plan is a list of list, which stores paths of all agents. The format of a path is \[-1, -1,200,234,345\]. -1 indicate the train is not active.
