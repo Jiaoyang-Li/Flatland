@@ -182,8 +182,8 @@ public:
 
 
 			for (int t = 0; t < paths[i]->size(); t++) {
-				boost::python::tuple location = boost::python::make_tuple(paths[i]->at(t).location / num_col, paths[i]->at(t).location % num_col, paths[i]->at(t).actionToHere, paths[i]->at(t).position_fraction);
-				agentPath.append(location);
+// 				boost::python::tuple location = boost::python::make_tuple(paths[i]->at(t).location / num_col, paths[i]->at(t).location % num_col, paths[i]->at(t).actionToHere, paths[i]->at(t).position_fraction);
+				agentPath.append(paths[i]->at(t).location);
 			}
 			result.append(agentPath);
 		}

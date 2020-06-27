@@ -83,6 +83,7 @@ debug = True
 k = 1
 timelimit = 10
 CBS = PythonCBS(env,"ICBS",k,timelimit,debug,f_w,"trainCorridor1")
-result = CBS.search()
+success = CBS.search()
+plan = CBS.getResult()
 
-print(result)
+print(plan)
