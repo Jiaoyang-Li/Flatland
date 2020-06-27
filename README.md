@@ -1,6 +1,10 @@
 # Flatland 2
 
 ---
+## How to install the CBS solver
+
+The CBS solver is in the CBS-corridor folder. Go to the folder and follow the instruction there to compile the code. 
+Make sure the generated libPythonCBS.xx is compiled at the folder where your python codes are.
 
 ## How to use for CBS solver development
 
