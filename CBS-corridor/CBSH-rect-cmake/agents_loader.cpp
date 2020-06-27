@@ -22,13 +22,13 @@ int RANDOM_WALK_STEPS = 100000;
 
 std::ostream& operator<<(std::ostream& os, const Agent& agent) {
 	os << "Initial: (" << agent.initial_location.first << "," << agent.initial_location.second << "),"
-		<< "Position: (" << agent.position.first << "," << agent.position.second << "),"
 		<< "Goal_location: (" << agent.goal_location.first << "," << agent.goal_location.second << "),"
 		<< "Activate: " << agent.activate << ", Heading: " << agent.heading
 		<< ", malfunction_left: " << agent.malfunction_left
 		<< ", next_malfuntion: " << agent.next_malfuntion
 		<< ", speed: " << agent.speed
-		<< ", position_fraction: " << agent.position_fraction;
+		<< ", position_fraction: " << agent.position_fraction
+        ;
 
 
 }
@@ -40,27 +40,26 @@ AgentsLoader::AgentsLoader(p::object agents) {
 		pair<int, int> initial;
 		pair<int, int> goal;
 		bool activate = p::extract<int>(agents[i].attr("status")) == 1;
-		if (activate) {
-			p::tuple iniTuple(agents[i].attr("position"));
+			p::tuple iniTuple(agents[i].attr("initial_position"));
 			initial.first = p::extract<int>(p::long_(iniTuple[0]));
 			initial.second = p::extract<int>(p::long_(iniTuple[1]));
-		}
+		
 		
 		p::tuple goalTuple(agents[i].attr("target"));
 		goal.first = p::extract<int>(p::long_(goalTuple[0]));
 		goal.second = p::extract<int>(p::long_(goalTuple[1]));
-		int heading = p::extract<int>(p::long_(agents[i].attr("direction")));
+		int heading = p::extract<int>(p::long_(agents[i].attr("initial_direction")));
 		this->initial_locations.push_back(initial);
 		this->goal_locations.push_back(goal);
 		this->headings.push_back(heading);
 
-		int malfunction = p::extract<int>(p::long_(agents[i].attr("malfunction_data")["malfunction"]));
-		int next_malfunction = p::extract<int>(p::long_(agents[i].attr("malfunction_data")["next_malfunction"]));
-		float malfunction_rate = p::extract<float>(p::long_(agents[i].attr("malfunction_data")["malfunction_rate"]));
+		int malfunction = 0;
+		int next_malfunction = 0;
+		float malfunction_rate = 0;
 		
 		float speed = p::extract<float>(agents[i].attr("speed_data")["speed"]);
 		float position_fraction = p::extract<float>(agents[i].attr("speed_data")["position_fraction"]);
-		int exit_action = p::extract<int>(agents[i].attr("speed_data")["transition_action_on_cellexit"]);
+		int exit_action = p::extract<float>(agents[i].attr("speed_data")["transition_action_on_cellexit"]);
 		pair<int, int> exit_loc = initial;
 		int exit_heading;
 		if (exit_action == 1) {
@@ -85,6 +84,7 @@ AgentsLoader::AgentsLoader(p::object agents) {
 		Agent a;
 		a.initial_location = initial;
 		a.goal_location = goal;
+        a.position = initial;
 		a.heading = heading;
 		a.activate = activate;
 		a.malfunction_left = malfunction;
@@ -106,7 +106,7 @@ void AgentsLoader::updateAgents(p::object agents) {
 		pair<int, int> goal;
 		bool activate = p::extract<int>(agents[i].attr("status")) == 1;
 		if (activate) {
-			p::tuple iniTuple(agents[i].attr("position"));
+			p::tuple iniTuple(agents[i].attr("initial_position"));
 			initial.first = p::extract<int>(p::long_(iniTuple[0]));
 			initial.second = p::extract<int>(p::long_(iniTuple[1]));
 		}
@@ -114,7 +114,7 @@ void AgentsLoader::updateAgents(p::object agents) {
 		p::tuple goalTuple(agents[i].attr("target"));
 		goal.first = p::extract<int>(p::long_(goalTuple[0]));
 		goal.second = p::extract<int>(p::long_(goalTuple[1]));
-		int heading = p::extract<int>(p::long_(agents[i].attr("direction")));
+		int heading = p::extract<int>(p::long_(agents[i].attr("initial_direction")));
 		this->initial_locations[i]=initial;
 		this->goal_locations[i]=goal;
 		this->headings[i]=heading;
@@ -297,9 +297,17 @@ AgentsLoader::AgentsLoader(string fname, const MapLoader &ml, int agentsNum = 0)
 }
 
 void AgentsLoader::printAgentsInitGoal () {
-  cout << "AGENTS:" << endl;;
+  cout << "AGENTS:" << endl;
+    cout<<"number of agents: "<<num_of_agents<<endl;
   for (int i=0; i<num_of_agents; i++) {
-    cout << "Agent" << i << " : " <<agents[i] << endl;
+    cout << "Agent" << i << " : " ;
+      cout << "Initial: (" << agents[i].initial_location.first << "," << agents[i].initial_location.second << "),"
+		<< "Goal_location: (" << agents[i].goal_location.first << "," << agents[i].goal_location.second << "),"
+		<< "Activate: " << agents[i].activate << ", Heading: " << agents[i].heading
+		<< ", malfunction_left: " << agents[i].malfunction_left
+		<< ", next_malfuntion: " << agents[i].next_malfuntion
+		<< ", speed: " << agents[i].speed
+		<< ", position_fraction: " << agents[i].position_fraction<<endl;
   }
   cout << endl;
 }

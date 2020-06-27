@@ -23,6 +23,8 @@ void ReservationTable::addPath(int agent_id, std::vector<PathEntry>* path) {
 	AgentStep* preStep = NULL;
 	for (int t = 0; t < path->size(); t++) {
 		int loc = path->at(t).location;
+        if (loc == -1)
+            continue;
 		if (!res_table.count(loc)) {
 			res_table[loc] = timeline();
 		}
@@ -86,6 +88,8 @@ void ReservationTable::deletePath(int agent_id, std::vector<PathEntry>* path) {
 OldConfList* ReservationTable::findConflict(int agent, int currLoc, int nextLoc, int currT,int kDelay) {
 	OldConfList* confs =  new OldConfList;
 	int nextT = currT + 1;
+    if(currLoc == -1)
+        return confs;
 	//cout << "currloc " << currLoc << " nextloc " << nextLoc << endl;
 	if (res_table.count(nextLoc)) {
 		//detect vertex conflict and k delay vertex conflict
