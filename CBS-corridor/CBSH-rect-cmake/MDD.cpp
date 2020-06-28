@@ -131,9 +131,9 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints,
 	root->heading = start_heading;
 	root->row = solver.start_location / solver.num_col;
 	root->col = solver.start_location % solver.num_col;
-	root->position_fraction = solver.al->agents[solver.agent_id].position_fraction;
-	root->malfunction_left = solver.al->agents[solver.agent_id].malfunction_left;
-	root->next_malfunction = solver.al->agents[solver.agent_id].next_malfuntion;
+	root->position_fraction = solver.al->agents[solver.agent_id]->position_fraction;
+	root->malfunction_left = solver.al->agents[solver.agent_id]->malfunction_left;
+	root->next_malfunction = solver.al->agents[solver.agent_id]->next_malfuntion;
 	std::queue<MDDNode*> open;
 	std::list<MDDNode*> closed;
 	open.push(root);
@@ -176,7 +176,7 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints,
 			move.position_fraction = node->position_fraction;
 			transitions.push_back(move);
 		}
-		else if (node->position_fraction + solver.al->agents[solver.agent_id].speed >= 0.97) {
+		else if (node->position_fraction + solver.al->agents[solver.agent_id]->speed >= 0.97) {
 			if (node->position_fraction == 0)
 				transitions = solver.ml->get_transitions(node->location, node->heading, false);
 			else
@@ -193,7 +193,7 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints,
 			Transition move2;
 			move2.first = node->location;
 			move2.second = 4;
-			move2.position_fraction = node->position_fraction + solver.al->agents[solver.agent_id].speed;
+			move2.position_fraction = node->position_fraction + solver.al->agents[solver.agent_id]->speed;
 
 			transitions.push_back(move2);
 		}
@@ -203,7 +203,7 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints,
 			Transition move2;
 			move2.first = node->location;
 			move2.second = 4;
-			move2.position_fraction = node->position_fraction + solver.al->agents[solver.agent_id].speed;
+			move2.position_fraction = node->position_fraction + solver.al->agents[solver.agent_id]->speed;
 
 			transitions.push_back(move2);
 
@@ -347,7 +347,7 @@ bool MDD<Map>::buildMDD(ConstraintTable& constraints,
 			move.position_fraction = node->position_fraction;
 			transitions.push_back(move);
 		}
-		else if (node->position_fraction + solver.al->agents[solver.agent_id].speed >= 0.97) {
+		else if (node->position_fraction + solver.al->agents[solver.agent_id]->speed >= 0.97) {
 			if (node->position_fraction == 0)
 				transitions = solver.ml->get_transitions(node->location, node->heading, false);
 			else
@@ -364,7 +364,7 @@ bool MDD<Map>::buildMDD(ConstraintTable& constraints,
 			Transition move2;
 			move2.first = node->location;
 			move2.second = 4;
-			move2.position_fraction = node->position_fraction +solver.al->agents[solver.agent_id].speed;
+			move2.position_fraction = node->position_fraction +solver.al->agents[solver.agent_id]->speed;
 
 			transitions.push_back(move2);
 		}
@@ -374,7 +374,7 @@ bool MDD<Map>::buildMDD(ConstraintTable& constraints,
 			Transition move2;
 			move2.first = node->location;
 			move2.second = 4;
-			move2.position_fraction = node->position_fraction +solver.al->agents[solver.agent_id].speed;
+			move2.position_fraction = node->position_fraction +solver.al->agents[solver.agent_id]->speed;
 
 			transitions.push_back(move2);
 

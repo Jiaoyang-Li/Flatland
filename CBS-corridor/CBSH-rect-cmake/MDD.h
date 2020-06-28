@@ -60,15 +60,15 @@ public:
 		return std::abs(loc1_x - loc2_x) + std::abs(loc1_y - loc2_y);
 	}
 	virtual bool buildMDD( ConstraintTable& constraint_table,
-		int numOfLevels, SingleAgentICBS<MapLoader>& solver) {};
+		int numOfLevels, SingleAgentICBS<MapLoader>& solver) { return false; };
 	virtual bool buildMDD( ConstraintTable& constraint_table,
-		int numOfLevels, SingleAgentICBS<FlatlandLoader>& solver) {};
+		int numOfLevels, SingleAgentICBS<FlatlandLoader>& solver) { return false; };
 	virtual bool buildMDD( ConstraintTable& constraint_table, int numOfLevels,
-		SingleAgentICBS<MapLoader>& solver, int start, int start_time, int start_heading = -1) {};
+		SingleAgentICBS<MapLoader>& solver, int start, int start_time, int start_heading = -1) { return false; };
 	virtual bool buildMDD( ConstraintTable& constraint_table, int numOfLevels,
-		SingleAgentICBS<FlatlandLoader>& solver, int start, int start_time, int start_heading = -1) {};
+		SingleAgentICBS<FlatlandLoader>& solver, int start, int start_time, int start_heading = -1) { return false; };
 
-	virtual MDDNode* find(int location, int level) {};
+	virtual MDDNode* find(int location, int level) { return nullptr; };
 	virtual void deleteNode(MDDNode* node) {};
 	virtual void clear() {};
 	virtual void print() {};

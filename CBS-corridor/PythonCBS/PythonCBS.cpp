@@ -110,6 +110,10 @@ bool PythonCBS<Map>::search() {
 
 	if (options1.debug)
 		cout << "initialize cbs search engine" << endl;
+
+	al->generateAgentOrder();
+    al->updateToBePlannedAgents();
+
 	icbs = new MultiMapICBSSearch <Map> (ml, al, f_w, s, timeLimit * CLOCKS_PER_SEC,screen, kRobust, options1);
 	if(s == constraint_strategy::CBSH_RM)
 		icbs->rectangleMDD = true;

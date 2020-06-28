@@ -108,7 +108,7 @@ protected:
 	vector<vector<PathEntry>*> paths;
 	vector<vector<PathEntry>> paths_found_initially;  // contain initial paths found
 	
-	virtual bool findPathForSingleAgent(ICBSNode*  node, int ag, double lowerbound = 0) {};
+	virtual bool findPathForSingleAgent(ICBSNode*  node, int ag, double lowerbound = 0) { return false; };
 	virtual void  classifyConflicts(ICBSNode &parent) {};
 	void findTargetConflicts(int a1, int a2, ICBSNode& curr);
 
@@ -169,7 +169,7 @@ public:
 	// Runs the algorithm until the problem is solved or time is exhausted 
 	bool runICBSSearch();
 
-	bool updateAndReplan();
+	// bool updateAndReplan();
 	void cleanAll();
 
 	~MultiMapICBSSearch();

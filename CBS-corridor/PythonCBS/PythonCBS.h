@@ -37,10 +37,6 @@ private:
 	bool corridor4=false;
 	bool trainCorridor1 = false;
 	bool trainCorridor2 = false;
-	
-
-
-	
 };
 
 
