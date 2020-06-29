@@ -149,7 +149,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 
 	 // generate start and add it to the OPEN list
-	LLNode* start = new LLNode(-1, 0, my_heuristic[start_location].heading[start_heading], NULL, 0, 0, false);
+	LLNode* start = new LLNode(-1, 0, my_heuristic[start_location].get_hval(start_heading), NULL, 0, 0, false);
 	start->heading = start_heading;
 	num_generated++;
 	start->open_handle = open_list.push(start);
@@ -177,9 +177,9 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			start->exit_loc = start_location + ml->moves_offset[start->exit_heading];
 	}
 
-	int start_h_val = my_heuristic[start_location].heading[start_heading] / al->agents[agent_id]->speed;
+	int start_h_val = my_heuristic[start_location].get_hval(start_heading) / al->agents[agent_id]->speed;
 	if (start->exit_loc >= 0 && al->agents[agent_id]->speed < 1) {
-		int h1 = my_heuristic[start_location].heading[start_heading];
+		int h1 = my_heuristic[start_location].get_hval(start_heading);
 		int h2 = my_heuristic[start->exit_loc].get_hval(start->exit_heading);
 		start_h_val = h1 / al->agents[agent_id]->speed
 			- (h2 - h1)*al->agents[agent_id]->speed;
@@ -540,7 +540,8 @@ inline void SingleAgentICBS<Map>::releaseClosedListNodes(hashtable_t* allNodes_t
 }
 
 template<class Map>
-SingleAgentICBS<Map>::SingleAgentICBS(int start_location, int goal_location,  Map* ml1, AgentsLoader* al,int agent_id, int start_heading, int kRobust):ml(ml1)
+SingleAgentICBS<Map>::SingleAgentICBS(int start_location, int goal_location,  Map* ml1, AgentsLoader* al,int agent_id, int start_heading, int kRobust):
+    ml(ml1), my_heuristic(al->agents[agent_id]->heuristics)
 {
 	this->al = al;
 	this->agent_id = agent_id;

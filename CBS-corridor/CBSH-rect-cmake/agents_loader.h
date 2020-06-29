@@ -33,7 +33,7 @@ class AgentsLoader {
 public:
     int num_of_agents;
     vector<Agent*> agents;
-    vector<Path> paths_all; // already planned paths are viewed as obstacles for future iterations
+    vector<Path> blocked_paths; // store already planned paths, which are viewed as obstacles for future iterations
     //vector< pair<int, int> > initial_locations;
     //vector< pair<int, int> > goal_locations;
     //vector<int> headings;

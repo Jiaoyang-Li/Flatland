@@ -424,3 +424,13 @@ void AgentsLoader::updateToBePlannedAgents(int _num_of_agents)
         agents[i] = &agents_all[num_of_agents_finished + i];
     }
 }
+
+void AgentsLoader::addPaths(const vector<Path*>& new_paths)
+{
+    assert((int)new_paths.size() == num_of_agents);
+    for (int i = 0; i < num_of_agents; i++)
+    {
+        blocked_paths[agent_order[i]] = *new_paths[i];
+    }
+    num_of_agents_finished += num_of_agents;
+}

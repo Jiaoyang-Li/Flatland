@@ -59,7 +59,7 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints, int numOfLevels, SingleAg
 			int newLoc = move.first;
 			//cout << "newLoc " << newLoc << " heading " << new_heading<<" h "<< solver.my_heuristic[newLoc].heading[new_heading] << endl;
 
-			if (solver.my_heuristic[newLoc].heading.count(new_heading) && solver.my_heuristic[newLoc].heading[new_heading] < heuristicBound &&
+			if (solver.my_heuristic[newLoc].heading.count(new_heading) && solver.my_heuristic[newLoc].get_hval(new_heading) < heuristicBound &&
 				!constraints.is_constrained(newLoc, node->level + 1) &&
 				!constraints.is_constrained(node->location * solver.map_size + newLoc, node->level + 1)) // valid move
 			{
@@ -231,7 +231,7 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints,
 			int newLoc = move.first;
 			//cout << "newLoc " << newLoc << " heading " << new_heading<<" h "<< solver.my_heuristic[newLoc].heading[new_heading] << endl;
 
-			if (solver.my_heuristic[newLoc].heading.count(new_heading) && solver.my_heuristic[newLoc].heading[new_heading] < heuristicBound &&
+			if (solver.my_heuristic[newLoc].heading.count(new_heading) && solver.my_heuristic[newLoc].get_hval(new_heading) < heuristicBound &&
 				!constraints.is_constrained(newLoc, start_time+node->level + 1) &&
 				!constraints.is_constrained(node->location * solver.map_size + newLoc, start_time+node->level + 1)) // valid move
 			{

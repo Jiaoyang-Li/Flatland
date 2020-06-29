@@ -13,9 +13,9 @@ using namespace std;
 
 struct hvals {
 	boost::unordered_map<int, int> heading;
-	int get_hval(int direction) {
+	int get_hval(int direction) const {
 		if (heading.count(direction)) {
-			return heading[direction];
+			return heading.at(direction);
 		}
 		else {
 			return INT_MAX;
