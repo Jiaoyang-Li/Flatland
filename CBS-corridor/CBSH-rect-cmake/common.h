@@ -45,7 +45,7 @@ struct PathEntry
 	int exit_heading;
 	int exit_loc;
 	PathEntry(int loc = -1) { location = loc; single = false; }
-	std::list<int> locations; // all possible locations at the same time step
+	std::list<int> locations; // all possible locations at the same time step (i.e., mdd nodes at the same time step)
 	OldConfList* conflist=NULL;
 };
 

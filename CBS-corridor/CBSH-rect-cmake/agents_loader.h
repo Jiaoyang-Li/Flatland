@@ -45,7 +45,8 @@ public:
     AgentsLoader(boost::python::object agents);
     void updateAgents(boost::python::object agents);
     // void addAgent ( int start_row, int start_col, int goal_row, int goal_col );
-    void printAgentsInitGoal ();
+    void printAllAgentsInitGoal () const;
+    void printCurrentAgentsInitGoal () const;
     void saveToFile(const std::string& fname);
     // pair<int, int> agentStartOrGoalAt(int row, int col);
     // void clearLocationFromAgents(int row, int col);
@@ -55,6 +56,18 @@ public:
     void updateToBePlannedAgents() { updateToBePlannedAgents(num_of_agents_all); };
     void updateToBePlannedAgents(int num_of_agents);
     void addPaths(const vector<Path*>& paths);
+    int getNumOfUnplannedAgents() const { return num_of_agents_all - num_of_agents_finished; }
+    int getNumOfAllAgents() const { return num_of_agents_all; }
+    boost::python::list outputPaths()   {
+        boost::python::list result;
+        for (const auto& path : blocked_paths)  {
+            boost::python::list agentPath;
+            for (const auto& state : path)
+                agentPath.append(state.location);
+            result.append(agentPath);
+        }
+        return result;
+    }
 
 private:
     int num_of_agents_finished = 0;

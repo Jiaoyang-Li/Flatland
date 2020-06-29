@@ -37,6 +37,7 @@ AgentsLoader::AgentsLoader(p::object agents) {
 	this->num_of_agents_all = agentsNum;
 	///this->heuristics.resize(num_of_agents_all);
     this->agents_all.resize(num_of_agents_all);
+    this->blocked_paths.resize(num_of_agents_all);
     //this->initial_locations_all.resize(num_of_agents_all);
     //this->goal_locations_all.resize(num_of_agents_all);
     //this->headings_all.resize(num_of_agents_all);
@@ -179,6 +180,7 @@ AgentsLoader::AgentsLoader(const string& fname, const MapLoader &ml, int agentsN
     this->num_of_agents_all = atoi ( (*beg).c_str() );
     //this->heuristics.resize(num_of_agents_all);
       this->agents_all.resize(num_of_agents_all);
+      this->blocked_paths.resize(num_of_agents_all);
       //this->initial_locations_all.resize(num_of_agents_all);
       //this->goal_locations_all.resize(num_of_agents_all);
       //this->headings_all.resize(num_of_agents_all);
@@ -218,6 +220,7 @@ AgentsLoader::AgentsLoader(const string& fname, const MapLoader &ml, int agentsN
 	  this->num_of_agents_all = agentsNum;
 	  //this->heuristics.resize(num_of_agents_all);
       this->agents_all.resize(num_of_agents_all);
+      this->blocked_paths.resize(num_of_agents_all);
       //this->initial_locations_all.resize(num_of_agents_all);
       //this->goal_locations_all.resize(num_of_agents_all);
       //this->headings_all.resize(num_of_agents_all);
@@ -307,7 +310,7 @@ AgentsLoader::AgentsLoader(const string& fname, const MapLoader &ml, int agentsN
   }
 }
 
-void AgentsLoader::printAgentsInitGoal () {
+void AgentsLoader::printAllAgentsInitGoal () const {
   cout << "AGENTS:" << endl;
     cout<<"number of agents: "<<num_of_agents_all<<endl;
   for (int i=0; i<num_of_agents_all; i++) {
@@ -321,6 +324,22 @@ void AgentsLoader::printAgentsInitGoal () {
 		<< ", position_fraction: " << agents_all[i].position_fraction<<endl;
   }
   cout << endl;
+}
+
+void AgentsLoader::printCurrentAgentsInitGoal () const {
+    cout << "AGENTS:" << endl;
+    cout<<"number of agents: "<<num_of_agents<<endl;
+    for (int i=0; i<num_of_agents; i++) {
+        cout << "Agent" << i << " : " ;
+        cout << "Initial: (" << agents[i]->initial_location.first << "," << agents[i]->initial_location.second << "),"
+             << "Goal_location: (" << agents[i]->goal_location.first << "," << agents[i]->goal_location.second << "),"
+             << "Activate: " << agents[i]->activate << ", Heading: " << agents[i]->heading
+             << ", malfunction_left: " << agents[i]->malfunction_left
+             << ", next_malfuntion: " << agents[i]->next_malfuntion
+             << ", speed: " << agents[i]->speed
+             << ", position_fraction: " << agents[i]->position_fraction<<endl;
+    }
+    cout << endl;
 }
 
 AgentsLoader::~AgentsLoader() {
@@ -409,8 +428,8 @@ void AgentsLoader::quickSort(int low, int high)
     }
     std::swap(agent_order[i], agent_order[high]);
 
-    quickSort(low, i - 1);  // Before pi
-    quickSort(i + 1, high); // After pi
+    quickSort(low, i - 1);  // Before i
+    quickSort(i + 1, high); // After i
 }
 
 void AgentsLoader::updateToBePlannedAgents(int _num_of_agents)
@@ -421,7 +440,7 @@ void AgentsLoader::updateToBePlannedAgents(int _num_of_agents)
     agents.resize(num_of_agents);
     for (int i = 0; i < num_of_agents; i++)
     {
-        agents[i] = &agents_all[num_of_agents_finished + i];
+        agents[i] = &agents_all[agent_order[num_of_agents_finished + i]];
     }
 }
 
@@ -430,7 +449,9 @@ void AgentsLoader::addPaths(const vector<Path*>& new_paths)
     assert((int)new_paths.size() == num_of_agents);
     for (int i = 0; i < num_of_agents; i++)
     {
-        blocked_paths[agent_order[i]] = *new_paths[i];
+        assert(blocked_paths[agent_order[num_of_agents_finished + i]].empty());
+        assert(new_paths[i]->size() > 0);
+        blocked_paths[agent_order[num_of_agents_finished + i]] = *new_paths[i];
     }
     num_of_agents_finished += num_of_agents;
 }

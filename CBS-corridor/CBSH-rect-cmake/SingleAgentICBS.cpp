@@ -110,8 +110,6 @@ template<class Map>
 bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weight, ConstraintTable& constraint_table,
 	ReservationTable* res_table, size_t max_plan_len, double lowerbound, std::clock_t start_clock ,int time_limit)
 {
-	if (constraint_table.is_constrained(start_location, 0))
-		return false;
 	if (al->agents[agent_id]->malfunction_left > 0) {
 		for (int i = 0;i < al->agents[agent_id]->malfunction_left; i++) {
 			if (constraint_table.is_constrained(start_location, i))
@@ -341,7 +339,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 // 				cout << constraint_table.is_constrained(next_id, next_timestep) << endl;
 			//}
 			if (!constraint_table.is_constrained(next_id, next_timestep) &&
-				!constraint_table.is_constrained(curr->loc * map_size + next_id, next_timestep))
+				!constraint_table.is_constrained(curr->loc * map_size + next_id, next_timestep)) // TODO:: for k-robust cases, we do not need to check edge constraint?
 			{
 				if ((next_next_malfuntion == 0 && curr->malfunction_left == 1) && !constraint_table.is_good_malfunction_location(next_id,next_timestep))
 					continue;//if next location not suitable for malfunction, do not generate new node.

@@ -7,9 +7,18 @@ class ConstraintTable
 public:
 	int length_min = 0;
 	int length_max = INT_MAX;
-	int goal_location;
+	int goal_location = -1;
 	int latest_timestep = 0; // No negative constraints after this timestep.
 
+	void copy(const ConstraintTable& other)
+    {
+        length_min = other.length_min;
+        length_max = other.length_max;
+        goal_location = other.goal_location;
+        latest_timestep = other.latest_timestep;
+        CT_Single = other.CT_Single;
+        CT = other.CT;
+    }
 	void clear(){
 		CT.clear(); 
 		length_min = 0, 

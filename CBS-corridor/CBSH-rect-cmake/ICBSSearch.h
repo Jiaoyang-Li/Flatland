@@ -72,6 +72,7 @@ public:
 	bool ignoreFinishedAgent = false;
 	int max_malfunction = 5;
 
+    vector<vector<PathEntry>*> paths;
 
 	void printBT(const std::string& prefix, const ICBSNode* node, bool isLeft);
 	void printHLTree();
@@ -105,7 +106,6 @@ protected:
 	const int* moves_offset;
 	int num_col;
 	
-	vector<vector<PathEntry>*> paths;
 	vector<vector<PathEntry>> paths_found_initially;  // contain initial paths found
 	
 	virtual bool findPathForSingleAgent(ICBSNode*  node, int ag, double lowerbound = 0) { return false; };
@@ -204,8 +204,9 @@ protected:
 	AgentsLoader& al;
 
 
+    ConstraintTable initialConstraintTable; // store the blocked paths
 
-	
+    void addPathsToInitialCT(const vector<Path>& paths);
 };
 
 

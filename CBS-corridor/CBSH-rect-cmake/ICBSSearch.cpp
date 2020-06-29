@@ -1162,7 +1162,7 @@ void MultiMapICBSSearch<Map>::collectConstraints(ICBSNode* curr) {
 
 
 template<class Map>
-bool MultiMapICBSSearch<Map>::runICBSSearch() 
+bool MultiMapICBSSearch<Map>::runICBSSearch()
 {
 	
 	printStrategy();
@@ -1182,7 +1182,7 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 	if (debug_mode)
 		cout << "Start searching:" << endl;
 	if (screen >= 3)
-		al.printAgentsInitGoal();
+		al.printCurrentAgentsInitGoal();
 	while (!focal_list.empty() && !solution_found) 
 	{
 		runtime = (std::clock() - start);
@@ -1506,7 +1506,7 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 			num_corridor2 << ";" << num_corridor4 << ";" << num_target << "," << num_0FlipRectangle << "," <<
 			num_1FlipRectangle << "," << num_2FlipRectangle << 
 			"|Open|=" << open_list.size() << endl;
-		timeout = true;
+		// timeout = true;
 		solution_found = false;
 		if (debug_mode)
 			printHLTree();
@@ -1593,6 +1593,9 @@ MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader* al0, double f
 	search_engines = std::vector<SingleAgentICBS<Map>* >(num_of_agents);
 	if (debug_mode)
 		cout << "Initializing search engines" << endl;
+
+    addPathsToInitialCT(al.blocked_paths); // these paths are obstacles for all agents
+
 	for (int i = 0; i < num_of_agents; i++) {
 // 		if (!al.agents[i].activate)
 // 			continue;
@@ -1632,7 +1635,7 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 
 	if (debug_mode) {
 		cout << "Initializing first solutions" << endl;
-		al.printAgentsInitGoal();
+		al.printCurrentAgentsInitGoal();
 	}
 	// initialize paths_found_initially
 	paths.resize(num_of_agents, NULL);
@@ -1649,7 +1652,7 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 // 			paths[i] = new vector<PathEntry>;
 // 			continue;
 // 		}
-		if (search_engines[i]->findPath(paths_found_initially[i], focal_w, constraintTable, res_table, dummy_start->makespan + 1, 0) == false)
+		if (search_engines[i]->findPath(paths_found_initially[i], focal_w, initialConstraintTable, res_table, dummy_start->makespan + 1, 0) == false)
 			cout << "NO SOLUTION EXISTS";
 		
 		paths[i] = &paths_found_initially[i];
@@ -1839,7 +1842,7 @@ bool MultiMapICBSSearch<Map>::findPathForSingleAgent(ICBSNode*  node, int ag, do
 template<class Map>
 void MultiMapICBSSearch<Map>::updateConstraintTable(ICBSNode* curr, int agent_id)
 {
-	constraintTable.clear();
+	constraintTable.copy(initialConstraintTable);
 	constraintTable.goal_location = search_engines[agent_id]->goal_location;
 	while (curr != dummy_start)
 	{
@@ -2517,6 +2520,18 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
 
 	// remove conflicts that cannot be chosen, to save some memory
 	removeLowPriorityConflicts(parent.conflicts);
+}
+
+template<class Map>
+void MultiMapICBSSearch<Map>::addPathsToInitialCT(const vector<Path>& paths) {
+    assert(kDelay > 0); // TODO: consider kDelay==0 in the future (in which case, we also need to add edge constraints)
+    for (const auto& path : paths) {
+        for (int t = 0; t < path.size(); t++) {
+            if (path[t].location == -1)
+                continue;
+            initialConstraintTable.insert(path[t].location, max(0, t - kDelay), t + kDelay + 1);
+        }
+    }
 }
 
 
