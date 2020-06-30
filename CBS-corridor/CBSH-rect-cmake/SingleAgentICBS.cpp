@@ -14,6 +14,7 @@ void SingleAgentICBS<Map>::updatePath(LLNode* goal, std::vector<PathEntry> &path
 
 		path[t].location = curr->loc;
 		path[t].actionToHere = curr->heading;
+		path[t].heading = curr->heading;
 		path[t].position_fraction = curr->position_fraction;
 		path[t].malfunction_left = curr->malfunction_left;
 		path[t].next_malfunction = curr->next_malfunction;
@@ -182,7 +183,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 		int h1 = my_heuristic[start_location].heading[start_heading];
 		int h2 = my_heuristic[start->exit_loc].get_hval(start->exit_heading);
 		start_h_val = h1 / al->agents[agent_id]->speed
-			- (h2 - h1)*al->agents[agent_id]->speed;
+			- (h2 - h1)*al->agents[agent_id]->position_fraction;
 
 	}
 	start->h_val = start_h_val;
@@ -370,7 +371,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 					int h1 = my_heuristic[next_id].get_hval(next_heading);
 					int h2 = my_heuristic[move.exit_loc].get_hval(move.exit_heading);
 					next_h_val = h1 / al->agents[agent_id]->speed
-						- (h2-h1)*al->agents[agent_id]->speed;
+						- (h2-h1)*move.position_fraction;
 
 				}
 				//cout << "next_h_val " << next_h_val << endl;

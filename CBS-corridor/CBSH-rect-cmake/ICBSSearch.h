@@ -51,8 +51,12 @@ public:
 	uint64_t num_2FlipRectangle = 0;
 	uint64_t num_target = 0;
 	uint64_t num_standard = 0;
+    uint64_t num_chasing = 0;
+    uint64_t num_activeConflict = 0;
 
-	bool solution_found;
+
+
+    bool solution_found;
 	int solution_cost;
 	double min_f_val;
 	double focal_list_threshold;

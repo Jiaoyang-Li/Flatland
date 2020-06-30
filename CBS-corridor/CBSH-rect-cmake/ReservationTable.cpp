@@ -91,6 +91,8 @@ OldConfList* ReservationTable::findConflict(int agent, int currLoc, int nextLoc,
     if(nextLoc == -1)
         return confs;
 	//cout << "currloc " << currLoc << " nextloc " << nextLoc << endl;
+	if (currLoc == -1)
+	    kDelay = 0;
 	if (res_table.count(nextLoc)) {
 		//detect vertex conflict and k delay vertex conflict
 		for (int k = -kDelay;  k <= kDelay; k++) {

@@ -8,7 +8,7 @@
 #include <vector>
 #include <unordered_set>
 #include <memory>  // std::shared_ptr
-enum conflict_type { TARGET, CORRIDOR2, CORRIDOR4, RECTANGLE, STANDARD, TYPE_COUNT };
+enum conflict_type { TARGET, CORRIDOR2, CORRIDOR4, RECTANGLE, STANDARD,CHASING, TYPE_COUNT };
 enum conflict_priority { CARDINAL, SEMI, NON, UNKNOWN, PRIORITY_COUNT };
 
 enum constraint_type { LENGTH, RANGE, BARRIER, VERTEX, EDGE, CONSTRAINT_COUNT };

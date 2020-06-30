@@ -91,7 +91,6 @@ void PythonCBS<Map>::updateFw(float fw) {
 template <class Map>
 p::list PythonCBS<Map>::getResult() {
 	//output current paths
-
 	return icbs->outputPaths();
 }
 
@@ -153,7 +152,10 @@ p::dict PythonCBS<Map>::getResultDetail() {
 	result["No_f_rectangle"] = icbs->num_rectangle;
 	result["num_corridor2"] = icbs->num_corridor2;
 	result["num_corridor4"] = icbs->num_corridor4;
-	return result;
+	result["num_activeConflict"] = icbs->num_activeConflict;
+    result["num_chasing"] = icbs->num_chasing;
+
+    return result;
 
 }
 
