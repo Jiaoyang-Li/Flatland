@@ -84,7 +84,8 @@ f_w = 1
 debug = True
 k = 1
 timelimit = 10
-CBS = PythonCBS(env,"ICBS",k,timelimit,debug,f_w,"trainCorridor1")
+corridor_method = "trainCorridor1" # or "corridor2" or ""
+CBS = PythonCBS(env,"ICBS",k,timelimit,debug,f_w,corridor_method)
 success = CBS.search()
 plan = CBS.getResult()
 

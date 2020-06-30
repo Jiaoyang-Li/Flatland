@@ -197,8 +197,13 @@ bool PythonCBS<Map>::hasConflicts(const vector<Path>& paths) const
         for (int j = i + 1; j < (int)paths.size(); j++)
         {
             for (int t = 0; t < (int)paths[j].size(); t++) {
-                if (constraintTable.is_constrained(paths[j][t].location, t))
-                    return true;
+                if (constraintTable.is_constrained(paths[j][t].location, t)) {
+                	if(options1.debug){
+                		cout<<"Agent: "<<i <<","<<j<<endl;
+                		cout<<"t: "<<t<<" location:" << paths[j][t].location<<endl;
+                	}
+					return true;
+				}
             }
         }
     }

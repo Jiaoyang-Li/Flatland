@@ -20,11 +20,21 @@ f_w = 1
 debug = True
 k = 1
 timelimit = 10
-CBS = PythonCBS(env,"ICBS",k,timelimit,debug,f_w,"trainCorridor1")
+corridor_method = "trainCorridor1" # or "corridor2" or ""
+CBS = PythonCBS(env,"ICBS",k,timelimit,debug,f_w, corridor_method)
 success = CBS.search()
 plan = CBS.getResult()
 ```
-success is a boolean, which indicate does the search success.
-plan is a list of list, which stores paths of all agents. The format of a path is \[-1, -1,200,234,345\]. -1 indicate the train is not active.
+
+corridor_method can be "trainCorridor1" or "corridor2" or "". 
+"trainCorridor1" is more greedy which don't consider bypass paths of a corridor.
+"corridor2" considerd bypass paths.
+"" turn off corridor reasoning.
+
+Success is a boolean, which indicate does the search success.
+
+plan is a list of list, which stores paths of all agents. 
+
+The format of a path is \[-1, -1,200,234,345\]. -1 indicate the train is not active.
 
 run_test2.2.py contains a test example.

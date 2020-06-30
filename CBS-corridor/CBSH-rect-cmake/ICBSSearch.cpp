@@ -547,9 +547,11 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 
 	bool chasing = false;
 	int u[2];//get entering location
-	int inerU[2];
+	int inerU[2];//get first location inside corridor
 
     for (int i = 0; i < 2; i++) {
+        if(t[i]+1 >=paths[a[i]]->size())
+            return false;
         u[i] = paths[a[i]]->at(t[i]).location;
         inerU[i] = paths[a[i]]->at(t[i]+1).location;
     }
@@ -573,7 +575,6 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 
 	std::pair<int, int> edge; // one edge in the corridor
 	int k = getCorridorLength(*paths[a[0]], t[0], u[1], edge);
-	//cout << "iscorridor4" << endl;
 
 	if (chasing) {
         if (al.agents[a[0]]->speed == al.agents[a[1]]->speed)
@@ -650,42 +651,36 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 		corridor->trainCorridorConflict(a[0], a[1], inerU[0], inerU[1], t[0]+1, t[1]+1, e[0], e[1], kDelay);
 		if (blocked(*(paths[corridor->a1]), corridor->constraint1) && blocked(*(paths[corridor->a2]), corridor->constraint2))
 			return true;
-		//cout << "traincorridor2 not blocked" << endl;
 	}
 	if (corridor2)
 	{
+        if(debug_mode){
+            cout<<"corridor2"<<endl;
+        }
         int e[2];
         e[0] = cp.getExitTime(*paths[a[0]], *paths[a[1]], t[0] + 1, ml);
         e[1] = cp.getExitTime(*paths[a[1]], *paths[a[0]], t[1] + 1, ml);
 
 	    if(debug_mode){
-	        cout<<"corridor2"<<endl;
-	        cout << a[0] <<"," <<a[1] <<endl;
+	        cout  <<"Agents:" << a[0] <<"," <<a[1] <<endl;
             cout << t[0] << "," << t[1] << ",(" << u[0]/num_col<<","<<u[0]%num_col << ")," << "(" << u[1]/num_col<<","<<u[1]%num_col << "),"<< k << endl;
-
-            cout << e[0] << "," << e[1] << endl;
-
-
+            cout << e[0] << "," << e[1] << ""<<endl;
         }
 
 		std::pair<int, int> edge_empty = make_pair(-2, -2);
 		updateConstraintTable(node, a[0]);
 		int t3 = cp.getBypassLength(search_engines[a[0]]->start_location, u[1], search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge_empty, ml, num_col, map_size, constraintTable, INT_MAX,paths[a[0]]->front(),al.agents[a[0]]->speed);
         int t3_ = cp.getBypassLength(search_engines[a[0]]->start_location, u[1], search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge, ml, num_col, map_size, constraintTable, t3 + 2 * k + 1, paths[a[0]]->front(), al.agents[a[0]]->speed);
-		
 
 		updateConstraintTable(node, a[1]);
 		int t4 = cp.getBypassLength(search_engines[a[1]]->start_location, u[0],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge_empty, ml, num_col, map_size, constraintTable, INT_MAX, paths[a[1]]->front(), al.agents[a[1]]->speed);
 		int t4_ = cp.getBypassLength(search_engines[a[1]]->start_location, u[0],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge, ml, num_col, map_size, constraintTable, t4 + 2 * k + 1, paths[a[1]]->front(), al.agents[a[1]]->speed);
-		cout << t3 << "," << t3_ << "," << t4 << "," << t4_ <<","<< k << endl;
-		cout << "t3 end heading: "<<(*paths[a[0]])[e[0]].heading<<endl;
 		assert(t3<INT_MAX);
         assert(t4<INT_MAX);
 
 
         if (abs(t3 - t4) <= k+kDelay && t3_ >= t3 && t4_ >= t4)
 		{
-			//cout << "iscorridor5.5" << endl;
 
 			corridor = std::shared_ptr<Conflict>(new Conflict());
 			corridor->corridorConflict(a[0], a[1], u[1], u[0], t3, t4, t3_, t4_, k,kDelay);
@@ -699,7 +694,6 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 			}
 
 			if (block) {
-				//cout << "is corridor: " << *corridor << endl;
                 if(debug_mode){
                     cout<<"is corridor"<<endl;
                 }
@@ -708,11 +702,8 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
             if(debug_mode){
                 cout<<"not blocked"<<endl;
             }
-			//else {
-			//	cout << "not blocked: "<< *corridor << endl;
-			//}
+
 		}
-		//cout << "iscorridor6" << endl;
 
 	}
 	
