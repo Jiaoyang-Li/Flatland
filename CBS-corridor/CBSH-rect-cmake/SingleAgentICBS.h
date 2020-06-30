@@ -40,7 +40,7 @@ public:
 	Map* ml;
 	int map_size;
 	int num_col;
-	std::vector<hvals> my_heuristic;  // this is the precomputed heuristic for this agent
+	const std::vector<hvals>& my_heuristic;  // this is the precomputed heuristic for this agent
 
 	int kRobust;
 

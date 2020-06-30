@@ -111,8 +111,6 @@ template<class Map>
 bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weight, ConstraintTable& constraint_table,
 	ReservationTable* res_table, size_t max_plan_len, double lowerbound, std::clock_t start_clock ,int time_limit)
 {
-	if (constraint_table.is_constrained(start_location, 0))
-		return false;
 	if (al->agents[agent_id]->malfunction_left > 0) {
 		for (int i = 0;i < al->agents[agent_id]->malfunction_left; i++) {
 			if (constraint_table.is_constrained(start_location, i))
@@ -150,7 +148,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 
 	 // generate start and add it to the OPEN list
-	LLNode* start = new LLNode(-1, 0, my_heuristic[start_location].heading[start_heading], NULL, 0, 0, false);
+	LLNode* start = new LLNode(-1, 0, my_heuristic[start_location].get_hval(start_heading), NULL, 0, 0, false);
 	start->heading = start_heading;
 	num_generated++;
 	start->open_handle = open_list.push(start);
@@ -178,9 +176,9 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			start->exit_loc = start_location + ml->moves_offset[start->exit_heading];
 	}
 
-	int start_h_val = my_heuristic[start_location].heading[start_heading] / al->agents[agent_id]->speed;
+	int start_h_val = my_heuristic[start_location].get_hval(start_heading) / al->agents[agent_id]->speed;
 	if (start->exit_loc >= 0 && al->agents[agent_id]->speed < 1) {
-		int h1 = my_heuristic[start_location].heading[start_heading];
+		int h1 = my_heuristic[start_location].get_hval(start_heading);
 		int h2 = my_heuristic[start->exit_loc].get_hval(start->exit_heading);
 		start_h_val = h1 / al->agents[agent_id]->speed
 			- (h2 - h1)*al->agents[agent_id]->position_fraction;
@@ -342,7 +340,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 // 				cout << constraint_table.is_constrained(next_id, next_timestep) << endl;
 			//}
 			if (!constraint_table.is_constrained(next_id, next_timestep) &&
-				!constraint_table.is_constrained(curr->loc * map_size + next_id, next_timestep))
+				!constraint_table.is_constrained(curr->loc * map_size + next_id, next_timestep)) // TODO:: for k-robust cases, we do not need to check edge constraint?
 			{
 				if ((next_next_malfuntion == 0 && curr->malfunction_left == 1) && !constraint_table.is_good_malfunction_location(next_id,next_timestep))
 					continue;//if next location not suitable for malfunction, do not generate new node.
@@ -541,7 +539,8 @@ inline void SingleAgentICBS<Map>::releaseClosedListNodes(hashtable_t* allNodes_t
 }
 
 template<class Map>
-SingleAgentICBS<Map>::SingleAgentICBS(int start_location, int goal_location,  Map* ml1, AgentsLoader* al,int agent_id, int start_heading, int kRobust):ml(ml1)
+SingleAgentICBS<Map>::SingleAgentICBS(int start_location, int goal_location,  Map* ml1, AgentsLoader* al,int agent_id, int start_heading, int kRobust):
+    ml(ml1), my_heuristic(al->agents[agent_id]->heuristics)
 {
 	this->al = al;
 	this->agent_id = agent_id;
