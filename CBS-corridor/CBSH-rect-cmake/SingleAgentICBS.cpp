@@ -148,7 +148,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 
 	 // generate start and add it to the OPEN list
-	LLNode* start = new LLNode(-1, 0, my_heuristic[start_location].get_hval(start_heading), NULL, 0, 0, false);
+	LLNode* start = new LLNode(-1, 0, my_heuristic[start_location].get_hval(start_heading), NULL, 0, 0, false); // TODO::Shouldn't the h value be divided by its speed?
 	start->heading = start_heading;
 	num_generated++;
 	start->open_handle = open_list.push(start);

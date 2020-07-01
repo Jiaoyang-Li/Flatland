@@ -8,7 +8,9 @@ namespace p = boost::python;
 
 
 template <class Map>
-PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int t, bool debug, float f_w,string corridor) :railEnv(railEnv1) {
+PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int t,
+                          int default_group_size, bool debug, float f_w,string corridor) :
+                          railEnv(railEnv1), defaultGroupSize(default_group_size) {
 	//Initialize PythonCBS. Load map and agent info into memory
 	std::cout << "algo: " << algo << std::endl;
 	options1.debug = debug;
@@ -118,9 +120,11 @@ bool PythonCBS<Map>::search() {
         if (al->num_of_agents == 0) // all agents have paths
             break;
         runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
-        double time_limit = (timeLimit - runtime) * al->num_of_agents / al->getNumOfUnplannedAgents() / 4;
+        double time_limit = (timeLimit - runtime) * al->num_of_agents / al->getNumOfUnplannedAgents() / 2;
         cout << endl << "Group size = " << al->num_of_agents <<
-                ", time limit = " << time_limit << " seconds." << endl;
+                ", time limit = " << time_limit << " seconds. " <<
+                "(Remaining agents = " << al->getNumOfUnplannedAgents() <<
+                ", remaining time = " << timeLimit - runtime << " seconds.) " << endl;
         if (options1.debug)
             cout << "initialize cbs search engine" << endl;
 
@@ -138,10 +142,10 @@ bool PythonCBS<Map>::search() {
         if (options1.debug)
             cout << "start search engine" << endl;
         bool res = icbs.runICBSSearch();
-        updateResults(icbs);
+        updateCBSResults(icbs);
         if (res) {
             al->addPaths(icbs.paths);
-            groupSize = defaultGroupSize;
+            groupSize = min(defaultGroupSize, al->num_of_agents * 2);
         }
         else if (icbs.isTimeout()) // run out of time
         {
@@ -152,12 +156,23 @@ bool PythonCBS<Map>::search() {
                     cout << "Decreasing the group size to " << groupSize << endl;
             }
             else
+            {
+                iteration_stats.emplace_back(al->num_of_agents, time_limit,
+                                             runtime, icbs.solution_cost,
+                                             icbs.getSumOfHeuristicsAtStarts(),
+                                             icbs.HL_num_expanded, icbs.LL_num_expanded);
                 break;
+            }
         }
         else // no solutions, which should not happen
         {
             return false;
         }
+        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        iteration_stats.emplace_back(al->num_of_agents, time_limit,
+                                     runtime, icbs.solution_cost,
+                                     icbs.getSumOfHeuristicsAtStarts(),
+                                     icbs.HL_num_expanded, icbs.LL_num_expanded);
     }
 
     runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
@@ -238,10 +253,11 @@ p::dict PythonCBS<Map>::getResultDetail() {
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
 {
 	using namespace boost::python;
-	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, int, int, bool,float,string>())
+	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, int, int, int, bool,float,string>())
 		.def("getResult", &PythonCBS<FlatlandLoader>::getResult)
 		.def("search", &PythonCBS<FlatlandLoader>::search)
 		.def("getResultDetail", &PythonCBS<FlatlandLoader>::getResultDetail)
+		.def("writeResultsToFile", &PythonCBS<FlatlandLoader>::writeResultsToFile)
 		.def("updateAgents",&PythonCBS<FlatlandLoader>::updateAgents)
 		.def("updateFw", &PythonCBS<FlatlandLoader>::updateFw);
 

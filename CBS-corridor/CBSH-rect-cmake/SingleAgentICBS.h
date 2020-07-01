@@ -96,6 +96,8 @@ public:
 
 	inline void releaseClosedListNodes(hashtable_t* allNodes_table);
 
+	int getHeuristicAtStart() const {return (int)(my_heuristic[start_location].get_hval(start_heading) / al->agents[agent_id]->speed); }
+
 	SingleAgentICBS(int start_location, int goal_location, Map* ml, AgentsLoader* al, int agent_id, int start_heading = -1, int kRobust = 0);
 	~SingleAgentICBS();
 

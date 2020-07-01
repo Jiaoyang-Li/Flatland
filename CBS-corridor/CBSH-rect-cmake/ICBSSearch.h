@@ -198,6 +198,13 @@ public:
 	bool trainCorridor1 = false;
 	bool trainCorridor2 = false;
 
+    int getSumOfHeuristicsAtStarts() const {
+        int h = 0;
+        for (const auto& agent : search_engines) {
+            h += agent->getHeuristicAtStart();
+        }
+        return h;
+    }
 
 protected:
 	std::vector<std::unordered_map<ConstraintsHasher, MDD<Map>*>> mddTable;
