@@ -19,9 +19,10 @@ from libPythonCBS import PythonCBS
 f_w = 1
 debug = True
 k = 1
-timelimit = 10
+timelimit = 240  # unit: seconds
+default_group_size = 16 # max number of agents in a group
 corridor_method = "trainCorridor1" # or "corridor2" or ""
-CBS = PythonCBS(env,"ICBS",k,timelimit,debug,f_w, corridor_method)
+CBS = PythonCBS(env,"ICBS",k,timelimit,default_group_size,debug,f_w,corridor_method)
 success = CBS.search()
 plan = CBS.getResult()
 ```
