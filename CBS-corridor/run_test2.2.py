@@ -83,9 +83,17 @@ env.reset()
 f_w = 1
 debug = True
 k = 1
-timelimit = 10
-CBS = PythonCBS(env,"ICBS",k,timelimit,debug,f_w,"trainCorridor1")
+timelimit = 240  # unit: seconds
+default_group_size = 16 # max number of agents in a group
+corridor_method = "trainCorridor1" # or "corridor2" or ""
+CBS = PythonCBS(env,"ICBS",k,timelimit,default_group_size,debug,f_w,corridor_method)
 success = CBS.search()
 plan = CBS.getResult()
 
 print(plan)
+
+# write results to files for performance analysis
+fileName = str(width) + "x" + str(height) + "map_" + str(cities_in_map) + "stations_" + str(nr_trains) + "trains" \
+           + "_groupsize=" + str(default_group_size) \
+           + "_seed=" + str(seed) + ".csv"
+CBS.writeResultsToFile(fileName)

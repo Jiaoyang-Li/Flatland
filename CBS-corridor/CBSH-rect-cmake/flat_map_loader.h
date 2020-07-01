@@ -21,6 +21,7 @@ public:
 	railCell get_full_cell(int location);
 	FlatlandLoader();
 	int getDegree(int loc);
+    int getDegree(int loc,int heading);
 
 	boost::python::object rail;
 	railCell* railMap;

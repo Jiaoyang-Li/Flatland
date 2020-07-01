@@ -19,12 +19,29 @@ from libPythonCBS import PythonCBS
 f_w = 1
 debug = True
 k = 1
-timelimit = 10
-CBS = PythonCBS(env,"ICBS",k,timelimit,debug,f_w,"trainCorridor1")
+timelimit = 240  # unit: seconds
+default_group_size = 16 # max number of agents in a group
+corridor_method = "trainCorridor1" # or "corridor2" or ""
+CBS = PythonCBS(env,"ICBS",k,timelimit,default_group_size,debug,f_w,corridor_method)
 success = CBS.search()
 plan = CBS.getResult()
 ```
-success is a boolean, which indicate does the search success.
-plan is a list of list, which stores paths of all agents. The format of a path is \[-1, -1,200,234,345\]. -1 indicate the train is not active.
+
+corridor_method can be "trainCorridor1" or "corridor2" or "". 
+"trainCorridor1" is more greedy which don't consider bypass paths of a corridor.
+"corridor2" considerd bypass paths.
+"" turn off corridor reasoning.
+
+Success is a boolean, which indicate does the search success.
+
+plan is a list of list, which stores paths of all agents. 
+
+The format of a path is \[-1, -1,200,234,345\]. -1 indicate the train is not active.
 
 run_test2.2.py contains a test example.
+
+Currently, this cbs handles both speed = 1 or agents have different speed. However, when agents have different speed, 
+the performance will drop down dramatically without corridor reasoning. Corridor reasoning contains a method that reasoning
+chasing conflicts between agents with different speed. But this method may contain bugs and pending testing at this stage.
+
+The suboptimal parameter f_w is available. But may have problems when f_w != 1 and working with corridor reasoning, at this stage.

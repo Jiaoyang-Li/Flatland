@@ -132,6 +132,8 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
+	al->generateAgentOrder();
+	al->updateToBePlannedAgents();
 	MultiMapICBSSearch<MapLoader> icbs(ml, al, 1.0, s, vm["cutoffTime"].as<float>() * CLOCKS_PER_SEC, vm["screen"].as<int>(), vm["kDelay"].as<int>(), options1);
 	if (vm["solver"].as<string>() == "CBSH-RM")
 	{

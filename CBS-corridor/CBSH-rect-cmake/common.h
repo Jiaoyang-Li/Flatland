@@ -8,7 +8,7 @@
 #include <vector>
 #include <unordered_set>
 #include <memory>  // std::shared_ptr
-enum conflict_type { TARGET, CORRIDOR2, CORRIDOR4, RECTANGLE, STANDARD, TYPE_COUNT };
+enum conflict_type { TARGET, CORRIDOR2, CORRIDOR4, RECTANGLE, STANDARD,CHASING, TYPE_COUNT };
 enum conflict_priority { CARDINAL, SEMI, NON, UNKNOWN, PRIORITY_COUNT };
 
 enum constraint_type { LENGTH, RANGE, BARRIER, VERTEX, EDGE, CONSTRAINT_COUNT };
@@ -45,7 +45,7 @@ struct PathEntry
 	int exit_heading;
 	int exit_loc;
 	PathEntry(int loc = -1) { location = loc; single = false; }
-	std::list<int> locations; // all possible locations at the same time step
+	std::list<int> locations; // all possible locations at the same time step (i.e., mdd nodes at the same time step)
 	OldConfList* conflist=NULL;
 };
 

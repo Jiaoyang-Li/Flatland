@@ -51,8 +51,12 @@ public:
 	uint64_t num_2FlipRectangle = 0;
 	uint64_t num_target = 0;
 	uint64_t num_standard = 0;
+    uint64_t num_chasing = 0;
+    uint64_t num_activeConflict = 0;
 
-	bool solution_found;
+
+
+    bool solution_found;
 	int solution_cost;
 	double min_f_val;
 	double focal_list_threshold;
@@ -72,6 +76,7 @@ public:
 	bool ignoreFinishedAgent = false;
 	int max_malfunction = 5;
 
+    vector<vector<PathEntry>*> paths;
 
 	void printBT(const std::string& prefix, const ICBSNode* node, bool isLeft);
 	void printHLTree();
@@ -105,10 +110,9 @@ protected:
 	const int* moves_offset;
 	int num_col;
 	
-	vector<vector<PathEntry>*> paths;
 	vector<vector<PathEntry>> paths_found_initially;  // contain initial paths found
 	
-	virtual bool findPathForSingleAgent(ICBSNode*  node, int ag, double lowerbound = 0) {};
+	virtual bool findPathForSingleAgent(ICBSNode*  node, int ag, double lowerbound = 0) { return false; };
 	virtual void  classifyConflicts(ICBSNode &parent) {};
 	void findTargetConflicts(int a1, int a2, ICBSNode& curr);
 
@@ -169,7 +173,7 @@ public:
 	// Runs the algorithm until the problem is solved or time is exhausted 
 	bool runICBSSearch();
 
-	bool updateAndReplan();
+	// bool updateAndReplan();
 	void cleanAll();
 
 	~MultiMapICBSSearch();
@@ -194,6 +198,13 @@ public:
 	bool trainCorridor1 = false;
 	bool trainCorridor2 = false;
 
+    int getSumOfHeuristicsAtStarts() const {
+        int h = 0;
+        for (const auto& agent : search_engines) {
+            h += agent->getHeuristicAtStart();
+        }
+        return h;
+    }
 
 protected:
 	std::vector<std::unordered_map<ConstraintsHasher, MDD<Map>*>> mddTable;
@@ -204,8 +215,9 @@ protected:
 	AgentsLoader& al;
 
 
+    ConstraintTable initialConstraintTable; // store the blocked paths
 
-	
+    void addPathsToInitialCT(const vector<Path>& paths);
 };
 
 

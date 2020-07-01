@@ -40,7 +40,7 @@ public:
 	Map* ml;
 	int map_size;
 	int num_col;
-	std::vector<hvals> my_heuristic;  // this is the precomputed heuristic for this agent
+	const std::vector<hvals>& my_heuristic;  // this is the precomputed heuristic for this agent
 
 	int kRobust;
 
@@ -95,6 +95,8 @@ public:
 	bool validMove(int curr, int next) const; // whetehr curr->next is a valid move
 
 	inline void releaseClosedListNodes(hashtable_t* allNodes_table);
+
+	int getHeuristicAtStart() const {return (int)(my_heuristic[start_location].get_hval(start_heading) / al->agents[agent_id]->speed); }
 
 	SingleAgentICBS(int start_location, int goal_location, Map* ml, AgentsLoader* al, int agent_id, int start_heading = -1, int kRobust = 0);
 	~SingleAgentICBS();

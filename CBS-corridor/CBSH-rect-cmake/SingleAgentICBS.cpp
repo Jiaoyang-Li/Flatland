@@ -14,6 +14,7 @@ void SingleAgentICBS<Map>::updatePath(LLNode* goal, std::vector<PathEntry> &path
 
 		path[t].location = curr->loc;
 		path[t].actionToHere = curr->heading;
+		path[t].heading = curr->heading;
 		path[t].position_fraction = curr->position_fraction;
 		path[t].malfunction_left = curr->malfunction_left;
 		path[t].next_malfunction = curr->next_malfunction;
@@ -110,25 +111,23 @@ template<class Map>
 bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weight, ConstraintTable& constraint_table,
 	ReservationTable* res_table, size_t max_plan_len, double lowerbound, std::clock_t start_clock ,int time_limit)
 {
-	if (constraint_table.is_constrained(start_location, 0))
-		return false;
-	if (al->agents[agent_id].malfunction_left > 0) {
-		for (int i = 0;i < al->agents[agent_id].malfunction_left; i++) {
+	if (al->agents[agent_id]->malfunction_left > 0) {
+		for (int i = 0;i < al->agents[agent_id]->malfunction_left; i++) {
 			if (constraint_table.is_constrained(start_location, i))
 				return false;
 		}
-		if (al->agents[agent_id].position_fraction + al->agents[agent_id].speed < 0.97) {
+		if (al->agents[agent_id]->position_fraction + al->agents[agent_id]->speed < 0.97) {
 			int count = 0;
-			for (float i = al->agents[agent_id].position_fraction; i < 0.97; i = i + al->agents[agent_id].speed) {
-				if (constraint_table.is_constrained(start_location, al->agents[agent_id].malfunction_left+count))
+			for (float i = al->agents[agent_id]->position_fraction; i < 0.97; i = i + al->agents[agent_id]->speed) {
+				if (constraint_table.is_constrained(start_location, al->agents[agent_id]->malfunction_left+count))
 					return false;
 				count++;
 			}
 		}
 	}
-	else if (al->agents[agent_id].position_fraction + al->agents[agent_id].speed < 0.97) {
+	else if (al->agents[agent_id]->position_fraction + al->agents[agent_id]->speed < 0.97) {
 		int count = 0;
-		for (float i = al->agents[agent_id].position_fraction; i < 0.97; i = i + al->agents[agent_id].speed) {
+		for (float i = al->agents[agent_id]->position_fraction; i < 0.97; i = i + al->agents[agent_id]->speed) {
 			if (constraint_table.is_constrained(start_location, count))
 				return false;
 			count++;
@@ -136,8 +135,8 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 	}
 
 	//is malfunction agent constrained during malfunction state, if yes, return false
-	if (al->agents[agent_id].malfunction_left != 0) {
-		for (int i = 0; i <= al->agents[agent_id].malfunction_left; i++) {
+	if (al->agents[agent_id]->malfunction_left != 0) {
+		for (int i = 0; i <= al->agents[agent_id]->malfunction_left; i++) {
 			if (constraint_table.is_constrained(start_location, i))
 				return false;
 		}
@@ -149,7 +148,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 
 	 // generate start and add it to the OPEN list
-	LLNode* start = new LLNode(-1, 0, my_heuristic[start_location].heading[start_heading], NULL, 0, 0, false);
+	LLNode* start = new LLNode(-1, 0, my_heuristic[start_location].get_hval(start_heading), NULL, 0, 0, false); // TODO::Shouldn't the h value be divided by its speed?
 	start->heading = start_heading;
 	num_generated++;
 	start->open_handle = open_list.push(start);
@@ -160,12 +159,12 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 	start->conflist = conflicts;
 	start->num_internal_conf= conflicts->size();
 
-	start->malfunction_left = al->agents[agent_id].malfunction_left;
-	start->next_malfunction = al->agents[agent_id].next_malfuntion;
+	start->malfunction_left = al->agents[agent_id]->malfunction_left;
+	start->next_malfunction = al->agents[agent_id]->next_malfuntion;
 
     
-	start->position_fraction = al->agents[agent_id].position_fraction;
-	start->exit_heading = al->agents[agent_id].exit_heading;
+	start->position_fraction = al->agents[agent_id]->position_fraction;
+	start->exit_heading = al->agents[agent_id]->exit_heading;
 	if (start->exit_heading >= 0) {
 		vector<Transition> temp;
 		temp = ml->get_transitions(start_location, start->heading, true);
@@ -177,12 +176,12 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			start->exit_loc = start_location + ml->moves_offset[start->exit_heading];
 	}
 
-	int start_h_val = my_heuristic[start_location].heading[start_heading] / al->agents[agent_id].speed;
-	if (start->exit_loc >= 0 && al->agents[agent_id].speed < 1) {
-		int h1 = my_heuristic[start_location].heading[start_heading];
+	int start_h_val = my_heuristic[start_location].get_hval(start_heading) / al->agents[agent_id]->speed;
+	if (start->exit_loc >= 0 && al->agents[agent_id]->speed < 1) {
+		int h1 = my_heuristic[start_location].get_hval(start_heading);
 		int h2 = my_heuristic[start->exit_loc].get_hval(start->exit_heading);
-		start_h_val = h1 / al->agents[agent_id].speed
-			- (h2 - h1)*al->agents[agent_id].speed;
+		start_h_val = h1 / al->agents[agent_id]->speed
+			- (h2 - h1)*al->agents[agent_id]->position_fraction;
 
 	}
 	start->h_val = start_h_val;
@@ -282,7 +281,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			transitions.push_back(move2);
             
         }
-		else if (curr->position_fraction + al->agents[agent_id].speed >= 0.97) {
+		else if (curr->position_fraction + al->agents[agent_id]->speed >= 0.97) {
 			if (curr->position_fraction == 0)
 				transitions = ml->get_transitions(curr->loc, curr->heading, false);
 			else {
@@ -294,7 +293,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			}
 		}
 		else if (curr->position_fraction == 0) {
-			transitions = ml->get_exits(curr->loc, curr->heading, al->agents[agent_id].speed, false);
+			transitions = ml->get_exits(curr->loc, curr->heading, al->agents[agent_id]->speed, false);
 
 		}
 		else { //<0.97 and po_frac not 0
@@ -303,7 +302,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			Transition move2;
 			move2.first = curr->loc;
 			move2.second = curr->heading;
-			move2.position_fraction = curr->position_fraction + al->agents[agent_id].speed;
+			move2.position_fraction = curr->position_fraction + al->agents[agent_id]->speed;
 			move2.exit_loc = curr->exit_loc;
 			move2.exit_heading = curr->exit_heading;
 			transitions.push_back(move2);
@@ -341,7 +340,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 // 				cout << constraint_table.is_constrained(next_id, next_timestep) << endl;
 			//}
 			if (!constraint_table.is_constrained(next_id, next_timestep) &&
-				!constraint_table.is_constrained(curr->loc * map_size + next_id, next_timestep))
+				!constraint_table.is_constrained(curr->loc * map_size + next_id, next_timestep)) // TODO:: for k-robust cases, we do not need to check edge constraint?
 			{
 				if ((next_next_malfuntion == 0 && curr->malfunction_left == 1) && !constraint_table.is_good_malfunction_location(next_id,next_timestep))
 					continue;//if next location not suitable for malfunction, do not generate new node.
@@ -361,16 +360,16 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 				
                 int next_h_val;
                 if (next_id!=-1)
-                    next_h_val = my_heuristic[next_id].get_hval(next_heading)/al->agents[agent_id].speed;
+                    next_h_val = my_heuristic[next_id].get_hval(next_heading)/al->agents[agent_id]->speed;
                 else
                     next_h_val = curr->h_val;
 //                 cout<<"next_id "<< next_id <<" curr heading "<< curr->heading<<" next heading "<<next_heading<<" h: "<<next_h_val<<" next_position_fraction "<< next_position_fraction <<endl;
                     
-				if (next_id!=-1 && move.exit_loc >= 0 && al->agents[agent_id].speed<1) {
+				if (next_id!=-1 && move.exit_loc >= 0 && al->agents[agent_id]->speed<1) {
 					int h1 = my_heuristic[next_id].get_hval(next_heading);
 					int h2 = my_heuristic[move.exit_loc].get_hval(move.exit_heading);
-					next_h_val = h1 / al->agents[agent_id].speed
-						- (h2-h1)*al->agents[agent_id].speed;
+					next_h_val = h1 / al->agents[agent_id]->speed
+						- (h2-h1)*move.position_fraction;
 
 				}
 				//cout << "next_h_val " << next_h_val << endl;
@@ -540,7 +539,8 @@ inline void SingleAgentICBS<Map>::releaseClosedListNodes(hashtable_t* allNodes_t
 }
 
 template<class Map>
-SingleAgentICBS<Map>::SingleAgentICBS(int start_location, int goal_location,  Map* ml1, AgentsLoader* al,int agent_id, int start_heading, int kRobust):ml(ml1)
+SingleAgentICBS<Map>::SingleAgentICBS(int start_location, int goal_location,  Map* ml1, AgentsLoader* al,int agent_id, int start_heading, int kRobust):
+    ml(ml1), my_heuristic(al->agents[agent_id]->heuristics)
 {
 	this->al = al;
 	this->agent_id = agent_id;

@@ -247,8 +247,10 @@ void ICBSSearch::findConflicts(ICBSNode& curr)
 		copyConflicts(curr.parent->conflicts, curr.conflicts, new_agents);
 		copyConflicts(curr.parent->unknownConf, curr.unknownConf, new_agents);
 
-		if (debug_mode)
-			cout << "Find Conflicts" << endl;
+		if (debug_mode) {
+            cout << "Find Conflicts" << endl;
+            cout << "Number of existing unknown: "<<curr.unknownConf.size()<<endl;
+        }
 		// detect new conflicts
 		for (list<int>::iterator it = new_agents.begin(); it != new_agents.end(); ++it)
 		{
@@ -500,7 +502,9 @@ void ICBSSearch::findTargetConflicts(int a1, int a2, ICBSNode& curr) {
 template<class Map>
 bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corridor, const std::shared_ptr<Conflict>& con, bool cardinal, ICBSNode* node)
 {
-	//cout << "iscorridor1" << endl;
+    if(debug_mode){
+        cout<<"Check is corridor conflict"<<endl;
+    }
 	CorridorReasoning<Map> cp;
 	int a[2] = {con->a1, con->a2};
 	int  loc1, loc2, timestep;
@@ -509,6 +513,9 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 	std::tie(loc1, loc2, timestep, type) = con->constraint1.back();
 	if (kDelay > 0)
 		timestep = con->t;
+    if(loc1 == search_engines[con->a1]->start_location || loc1 == search_engines[con->a2]->start_location){
+        return false;
+    }
 	//cout << "loc1 " << con->originalConf1<< " loc2 "<< con->originalConf2 << " timestep " << con->t << " k " << kConflict << endl;
 	//cout << "loc1 " << loc1 << " loc2 " << loc2 << " timestep " << timestep << " k " << kConflict << endl;
 
@@ -521,9 +528,12 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 	}
 	else if (ml->getDegree(loc2) == 2)
 		curr = loc2;
-	if (curr <= 0)
-		return false;
-	//cout << "iscorridor2" << endl;
+	if (curr <= 0) {
+        if(debug_mode){
+            cout<<"degree not 2"<<endl;
+        }
+        return false;
+    }
 
 	int t[2];
 	t[0] = cp.getEnteringTime(*paths[a[0]], *paths[a[1-0]], timestep, ml);
@@ -537,12 +547,17 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 
 	bool chasing = false;
 	int u[2];//get entering location
-	for (int i = 0; i < 2; i++)
-		u[i] = paths[a[i]]->at(t[i]).location;
+	int inerU[2];//get first location inside corridor
+
+    for (int i = 0; i < 2; i++) {
+        if(t[i]+1 >=paths[a[i]]->size())
+            return false;
+        u[i] = paths[a[i]]->at(t[i]).location;
+        inerU[i] = paths[a[i]]->at(t[i]+1).location;
+    }
 	if (u[0] == u[1]) {
 		chasing = true;
 	}
-	//cout << "iscorridor3" << endl;
 	if (!chasing) {
 		for (int i = 0; i < 2; i++)//check does one entering location lead to another's entering location
 		{
@@ -556,135 +571,116 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 				return false;
 		}
 	}
+
+
 	std::pair<int, int> edge; // one edge in the corridor
 	int k = getCorridorLength(*paths[a[0]], t[0], u[1], edge);
-	//cout << "iscorridor4" << endl;
 
 	if (chasing) {
-		int t3 = cp.getExitTime(*paths[a[0]], *paths[a[1]], t[0] + 1, ml);
-		int t4 = cp.getExitTime(*paths[a[1]], *paths[a[0]], t[1] + 1, ml);
-		int earlyAgent;
-		int early;
-		int lateAgent;
-		int late;
-		if (t3 <= t4) {
-			earlyAgent = a[0];
-			lateAgent = a[1];
-			early = t3;
-			late = t4;
-		}
-		else {
-			earlyAgent = a[1];
-			lateAgent = a[0];
-			early = t4;
-			late = t3;
-		}
-		int loc = (*paths[earlyAgent])[early].location;
-		
-		corridor = std::shared_ptr<Conflict>(new Conflict());
-		corridor->chasingConflict(earlyAgent,lateAgent, loc1, loc2,loc, early, late, kDelay);
-		return true;
+        if (al.agents[a[0]]->speed == al.agents[a[1]]->speed)
+            return false;
 
+	    //get exit location
+        int e[2];
+        e[0] = cp.getExitTime(*paths[a[0]], *paths[a[1 - 0]], t[0] + 1, ml);
+        e[1] = cp.getExitTime(*paths[a[1]], *paths[a[1 - 1]], t[1] + 1, ml);
+        int el[2];
+        el[0] = paths[a[0]]->at(e[0]).location;
+        el[1] = paths[a[1]]->at(e[1]).location;
+
+        if(el[0]==el[1]) {
+
+            std::pair<int, int> edge_empty = make_pair(-2, -2);
+            updateConstraintTable(node, a[0]);
+            //get exit time for a1
+            int a1exit = cp.getBypassLength(search_engines[a[0]]->start_location, el[0], search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge_empty, ml, num_col, map_size, constraintTable, INT_MAX,
+                                        paths[a[0]]->front(), al.agents[a[0]]->speed);
+            int a1exit_ = cp.getBypassLength(search_engines[a[0]]->start_location, el[0],search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge, ml, num_col, map_size, constraintTable, a1exit,
+                                            paths[a[0]]->front(), al.agents[a[0]]->speed);
+            int a1entrance = cp.getBypassLength(search_engines[a[0]]->start_location, inerU[0],search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge_empty, ml, num_col, map_size, constraintTable, INT_MAX,
+                                        paths[a[0]]->front(), al.agents[a[0]]->speed);
+
+            updateConstraintTable(node, a[1]);
+            //get exit time for a2
+            int a2exit = cp.getBypassLength(search_engines[a[1]]->start_location, el[1],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge_empty, ml, num_col, map_size, constraintTable, INT_MAX,
+                                        paths[a[1]]->front(), al.agents[a[1]]->speed);
+            int a2exit_ = cp.getBypassLength(search_engines[a[1]]->start_location,el[1],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge, ml, num_col, map_size, constraintTable, a2exit,
+                                            paths[a[1]]->front(), al.agents[a[1]]->speed);
+            int a2entrance = cp.getBypassLength(search_engines[a[1]]->start_location,inerU[1],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge_empty, ml, num_col, map_size, constraintTable, INT_MAX,
+                                        paths[a[1]]->front(), al.agents[a[1]]->speed);
+            int earlyAgent;
+            int early_exit;
+            int early_entrance;
+            int lateAgent;
+            int late_entrance;
+            int late_exit;
+            if (a1exit <= a2exit) {
+                earlyAgent = a[0];
+                lateAgent = a[1];
+                early_entrance = a2entrance;
+                late_entrance = a1entrance;
+                late_exit = min(a2exit,a1exit_);
+                early_exit = a1exit;
+            } else {
+                earlyAgent = a[1];
+                lateAgent = a[0];
+                early_entrance = a1entrance;
+                late_entrance = a2entrance;
+                late_exit = min(a1exit,a2exit_);
+                early_exit = a2exit;
+            }
+            assert("late >= early " && late_entrance>=early_entrance);
+
+            corridor = std::shared_ptr<Conflict>(new Conflict());
+            corridor->chasingConflict(earlyAgent, lateAgent, loc1, loc2,inerU[0], el[0],
+                    late_entrance,late_entrance,early_exit, late_exit, kDelay);
+            return true;
+        }
 
 	}
 
-
+    if(chasing)
+        return false;
 	if (trainCorridor1) {
-		//cout << "iscorridor41" << endl;
-
-		
-		std::pair<int, int> edge_empty = make_pair(-1, -1);
-		updateConstraintTable(node, a[0]);
-		//cout << "start: " << paths[a[0]]->front().location << " end:" << u[1] << " heading:" << paths[a[0]]->front().actionToHere << endl;
-		int t3 = cp.getExitTime(*paths[a[0]], *paths[a[1]], t[0] + 1, ml);
-		int t3_ = cp.getBypassLength(u[1], edge, ml, num_col, map_size, constraintTable, t3 + 2 * k + 1, paths[a[0]]->front(), al.agents[a[0]].speed, max_malfunction);
-
-		
-		updateConstraintTable(node, a[1]);
-		//cout << "start: " << paths[a[1]]->front().location << " end:" << u[0] << " heading:" << paths[a[1]]->front().actionToHere << endl;
-		int t4 = cp.getExitTime(*paths[a[1]], *paths[a[0]], t[1] + 1, ml);
-		int t4_ = cp.getBypassLength(u[0], edge, ml, num_col, map_size, constraintTable, t4 + 2 * k + 1, paths[a[1]]->front(), al.agents[a[1]].speed, max_malfunction);
-		//cout << t3 << "," << t3_ << "," << t4 << "," << t4_ << endl;
-		//cout << k << endl;
-		if (/*abs(t3 - t4) <= k &&*/ t3_ > t3 && t4_ > t4)
-		{
-			//cout << "iscorridor4.5" << endl;
-
-			corridor = std::shared_ptr<Conflict>(new Conflict());
-			corridor->corridorConflict(a[0], a[1], u[1], u[0], t3, t4, t3_, t4_, k, kDelay);
-			bool block = true;
-
-			if (corridor->constraint1.size() != 0 && !blocked(*(paths[corridor->a1]), corridor->constraint1)) {
-				block = false;
-			}
-			if (corridor->constraint2.size() != 0 && !blocked(*(paths[corridor->a2]), corridor->constraint2)) {
-				block = false;
-			}
-
-			if (block) {
-				//cout << "is corridor: " << *corridor << endl;
-
-				return true;
-			}
-			//else {
-			//	//cout << "not blocked: " << *corridor << endl;
-			//}
-		
-		}
-		//cout << "iscorridor4.6" << endl;
-
-
-	}
-	if (trainCorridor2) {
 		int e[2];
 		e[0] = cp.getExitTime(*paths[a[0]], *paths[a[1 - 0]], t[0] + 1, ml);
 		e[1] = cp.getExitTime(*paths[a[1]], *paths[a[1 - 1]], t[1] + 1, ml);
-		int el[2];
-		el[0] = paths[a[0]]->at(t[0] + 1).location;
-		el[1] = paths[a[1]]->at(t[1] + 1).location;
+
+
 		corridor = std::shared_ptr<Conflict>(new Conflict());
-		corridor->trainCorridorConflict(a[0], a[1], el[0], el[1], t[0], t[1], e[0], e[1], k, kDelay);
+		corridor->trainCorridorConflict(a[0], a[1], inerU[0], inerU[1], t[0]+1, t[1]+1, e[0], e[1], kDelay);
 		if (blocked(*(paths[corridor->a1]), corridor->constraint1) && blocked(*(paths[corridor->a2]), corridor->constraint2))
 			return true;
-		//cout << "traincorridor2 not blocked" << endl;
 	}
 	if (corridor2)
 	{
+        if(debug_mode){
+            cout<<"corridor2"<<endl;
+        }
+        int e[2];
+        e[0] = cp.getExitTime(*paths[a[0]], *paths[a[1]], t[0] + 1, ml);
+        e[1] = cp.getExitTime(*paths[a[1]], *paths[a[0]], t[1] + 1, ml);
 
-		std::pair<int, int> edge_empty = make_pair(-1, -1);
+	    if(debug_mode){
+	        cout  <<"Agents:" << a[0] <<"," <<a[1] <<endl;
+            cout << t[0] << "," << t[1] << ",(" << u[0]/num_col<<","<<u[0]%num_col << ")," << "(" << u[1]/num_col<<","<<u[1]%num_col << "),"<< k << endl;
+            cout << e[0] << "," << e[1] << ""<<endl;
+        }
+
+		std::pair<int, int> edge_empty = make_pair(-2, -2);
 		updateConstraintTable(node, a[0]);
-		//cout << "start: " << paths[a[0]]->front().location << " end:" << u[1] << " heading:" << paths[a[0]]->front().actionToHere
-		/*	<< " position fraction: " << paths[a[0]]->front().position_fraction
-			<< " speed: " << al.agents[a[0]].speed
-			<< " malfunction_left: " << paths[a[0]]->front().malfunction_left
-			<< " next_mal: " << paths[a[0]]->front().next_malfunction 
-			<< endl;*/
-		//PathEntry a1;
-		//a1.malfunction_left = al.agents[a[0]].malfunction_left;
-		//a1.next_malfunction = al.agents[a[0]].next_malfuntion;
-		//a1.location = al.agents[a[0]].position;
-		//a1.position_fraction = al.agents[a[0]].position_fraction;
-		//a1.actionToHere = al.agents[a[0]].heading;
-		//a1.exit_heading = al.agents[a[0]].exit_heading;
-
-		int t3 = cp.getBypassLength( u[1], edge_empty, ml, num_col, map_size, constraintTable, INT_MAX,paths[a[0]]->front(),al.agents[a[0]].speed,max_malfunction);
-		int t3_ = cp.getBypassLength( u[1], edge, ml, num_col, map_size, constraintTable, t3 + 2 * k + 1, paths[a[0]]->front(), al.agents[a[0]].speed, max_malfunction);
-		
+		int t3 = cp.getBypassLength(search_engines[a[0]]->start_location, u[1], search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge_empty, ml, num_col, map_size, constraintTable, INT_MAX,paths[a[0]]->front(),al.agents[a[0]]->speed);
+        int t3_ = cp.getBypassLength(search_engines[a[0]]->start_location, u[1], search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge, ml, num_col, map_size, constraintTable, t3 + 2 * k + 1, paths[a[0]]->front(), al.agents[a[0]]->speed);
 
 		updateConstraintTable(node, a[1]);
-		/*cout << "start: " << paths[a[1]]->front().location << " end:" << u[0] << " heading:" << paths[a[1]]->front().actionToHere 
-			<<" position fraction: "<< paths[a[1]]->front().position_fraction
-			<< " speed: " << al.agents[a[1]].speed 
-			<< " malfunction_left: " << paths[a[1]]->front().malfunction_left
-			<< " next_mal: " << paths[a[1]]->front().next_malfunction
-			<< endl;*/
-		int t4 = cp.getBypassLength( u[0], edge_empty, ml, num_col, map_size, constraintTable, INT_MAX, paths[a[1]]->front(), al.agents[a[1]].speed, max_malfunction);
-		int t4_ = cp.getBypassLength( u[0], edge, ml, num_col, map_size, constraintTable, t4 + 2 * k + 1, paths[a[1]]->front(), al.agents[a[1]].speed, max_malfunction);
-		//cout << t3 << "," << t3_ << "," << t4 << "," << t4_ <<","<< k << endl;
+		int t4 = cp.getBypassLength(search_engines[a[1]]->start_location, u[0],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge_empty, ml, num_col, map_size, constraintTable, INT_MAX, paths[a[1]]->front(), al.agents[a[1]]->speed);
+		int t4_ = cp.getBypassLength(search_engines[a[1]]->start_location, u[0],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge, ml, num_col, map_size, constraintTable, t4 + 2 * k + 1, paths[a[1]]->front(), al.agents[a[1]]->speed);
+		assert(t3<INT_MAX);
+        assert(t4<INT_MAX);
 
-		if (/*abs(t3 - t4) <= k &&*/ t3_ > t3 && t4_ > t4)
+
+        if (abs(t3 - t4) <= k+kDelay && t3_ >= t3 && t4_ >= t4)
 		{
-			//cout << "iscorridor5.5" << endl;
 
 			corridor = std::shared_ptr<Conflict>(new Conflict());
 			corridor->corridorConflict(a[0], a[1], u[1], u[0], t3, t4, t3_, t4_, k,kDelay);
@@ -698,15 +694,16 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 			}
 
 			if (block) {
-				//cout << "is corridor: " << *corridor << endl;
-
+                if(debug_mode){
+                    cout<<"is corridor"<<endl;
+                }
 				return true;
 			}
-			//else {
-			//	cout << "not blocked: "<< *corridor << endl;
-			//}
+            if(debug_mode){
+                cout<<"not blocked"<<endl;
+            }
+
 		}
-		//cout << "iscorridor6" << endl;
 
 	}
 	
@@ -1162,7 +1159,7 @@ void MultiMapICBSSearch<Map>::collectConstraints(ICBSNode* curr) {
 
 
 template<class Map>
-bool MultiMapICBSSearch<Map>::runICBSSearch() 
+bool MultiMapICBSSearch<Map>::runICBSSearch()
 {
 	
 	printStrategy();
@@ -1182,7 +1179,7 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 	if (debug_mode)
 		cout << "Start searching:" << endl;
 	if (screen >= 3)
-		al.printAgentsInitGoal();
+		al.printCurrentAgentsInitGoal();
 	while (!focal_list.empty() && !solution_found) 
 	{
 		runtime = (std::clock() - start);
@@ -1214,6 +1211,10 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 		t1 = std::clock();
 		updatePaths(curr);
 		runtime_updatepaths += std::clock() - t1;
+		if(debug_mode){
+            cout << "Child #" << curr->time_generated<<endl;
+
+        }
 
 		if (cons_strategy == constraint_strategy::CBS)
 		{
@@ -1291,13 +1292,15 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 				<< curr->conflict->originalConf2 / num_col << ","
 				<< curr->conflict->originalConf2 % num_col << ")"
 				<< curr->conflict->t << "," << curr->conflict->k << "," << curr->conflict->type << ">" << std::endl;
-			
-			if (screen>=3)
+            cout << "Child #" << curr->time_generated<<endl;
+
+
+            if (screen>=3)
 				printPaths();
 
 		}
 
-		if (screen >= 1) {
+		if (screen >= 7) {
 			if(debug_mode)
 			cout << "check conflict repeatance" << endl;
 			stringstream con;
@@ -1402,8 +1405,14 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 			children[1]->constraints = curr->conflict->constraint2;
 			if (curr->conflict->type == conflict_type::CORRIDOR2)
 				num_corridor2++;
-			else if (curr->conflict->type == conflict_type::STANDARD)
-				num_standard++;
+			else if (curr->conflict->type == conflict_type::STANDARD) {
+                num_standard++;
+                if(get<0>(curr->conflict->constraint1.front()) == search_engines[curr->conflict->a1]->start_location
+                || get<0>(curr->conflict->constraint2.front()) == search_engines[curr->conflict->a2]->start_location)
+                    num_activeConflict++;
+            }
+            else if (curr->conflict->type == conflict_type::CHASING)
+                num_chasing++;
 			else if (curr->conflict->type == conflict_type::RECTANGLE) {
 				if (curr->conflict->flipType == 1) {
 					num_1FlipRectangle++;
@@ -1506,7 +1515,7 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 			num_corridor2 << ";" << num_corridor4 << ";" << num_target << "," << num_0FlipRectangle << "," <<
 			num_1FlipRectangle << "," << num_2FlipRectangle << 
 			"|Open|=" << open_list.size() << endl;
-		timeout = true;
+		// timeout = true;
 		solution_found = false;
 		if (debug_mode)
 			printHLTree();
@@ -1593,16 +1602,22 @@ MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader* al0, double f
 	search_engines = std::vector<SingleAgentICBS<Map>* >(num_of_agents);
 	if (debug_mode)
 		cout << "Initializing search engines" << endl;
+
+    addPathsToInitialCT(al.blocked_paths); // these paths are obstacles for all agents
+
 	for (int i = 0; i < num_of_agents; i++) {
 // 		if (!al.agents[i].activate)
 // 			continue;
 		if (debug_mode)
 			cout << "initializing agent "<< i << endl;
-		int init_loc = ml->linearize_coordinate(al.agents[i].position.first, al.agents[i].position.second);
-		int goal_loc = ml->linearize_coordinate(al.agents[i].goal_location.first, al.agents[i].goal_location.second);
-		ComputeHeuristic<Map> ch(init_loc, goal_loc, ml, al.agents[i].heading);
-		search_engines[i] = new SingleAgentICBS<Map>(init_loc, goal_loc, ml,al0,i, al.headings[i],kDelay);
-		ch.getHVals(search_engines[i]->my_heuristic);
+		int init_loc = ml->linearize_coordinate(al.agents[i]->position.first, al.agents[i]->position.second);
+		int goal_loc = ml->linearize_coordinate(al.agents[i]->goal_location.first, al.agents[i]->goal_location.second);
+		if (al.agents[i]->heuristics.empty())
+        {
+            ComputeHeuristic<Map> ch(init_loc, goal_loc, ml, al.agents[i]->heading);
+            ch.getHVals(al.agents[i]->heuristics);
+        }
+		search_engines[i] = new SingleAgentICBS<Map>(init_loc, goal_loc, ml, al0, i, al.agents[i]->heading, kDelay);
 		search_engines[i]->max_malfunction = this->max_malfunction;
 		/*if (debug_mode) {
 			std::cout << "Heuristic table for " << i << ": ";
@@ -1629,7 +1644,7 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 
 	if (debug_mode) {
 		cout << "Initializing first solutions" << endl;
-		al.printAgentsInitGoal();
+		al.printCurrentAgentsInitGoal();
 	}
 	// initialize paths_found_initially
 	paths.resize(num_of_agents, NULL);
@@ -1646,7 +1661,7 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 // 			paths[i] = new vector<PathEntry>;
 // 			continue;
 // 		}
-		if (search_engines[i]->findPath(paths_found_initially[i], focal_w, constraintTable, res_table, dummy_start->makespan + 1, 0) == false)
+		if (search_engines[i]->findPath(paths_found_initially[i], focal_w, initialConstraintTable, res_table, dummy_start->makespan + 1, 0) == false)
 			cout << "NO SOLUTION EXISTS";
 		
 		paths[i] = &paths_found_initially[i];
@@ -1713,9 +1728,9 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 		cout << "Initializing done" << endl;
 
 }
-bool updateAndReplan() {
+/*bool updateAndReplan() {
 
-};
+};*/
 
 
 //template<class Map>
@@ -1836,7 +1851,7 @@ bool MultiMapICBSSearch<Map>::findPathForSingleAgent(ICBSNode*  node, int ag, do
 template<class Map>
 void MultiMapICBSSearch<Map>::updateConstraintTable(ICBSNode* curr, int agent_id)
 {
-	constraintTable.clear();
+	constraintTable.copy(initialConstraintTable);
 	constraintTable.goal_location = search_engines[agent_id]->goal_location;
 	while (curr != dummy_start)
 	{
@@ -1936,15 +1951,20 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
 	while (!parent.unknownConf.empty())
 	{
 		std::shared_ptr<Conflict> con = parent.unknownConf.front();
+
 		int a1 = con->a1, a2 = con->a2;
 		int loc1, loc2, timestep,timestep2;
-		constraint_type type;
+		conflict_type type = con->type;
 		loc1 = con->originalConf1;
 		loc2 = con->originalConf2;
+
 		timestep = con->t;
 		timestep2 = timestep + con->k;
 		//std::tie(loc1, loc2, timestep, type) = con->constraint1.front();
 		parent.unknownConf.pop_front();
+        if(debug_mode){
+            cout<<"Classify: "<<"<"<<a1<<","<<a2<<","<<loc1 <<","<<loc2<<","<<timestep<<","<<con->k<<","<<type<<">"<<endl;
+        }
 		
 		bool cardinal1 = false, cardinal2 = false;
 		if (timestep >= paths[a1]->size())
@@ -2042,22 +2062,24 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
 		//Rectangle reasoning for semi and non cardinal vertex conflicts
 		if (cons_strategy == constraint_strategy::CBSH_CR)//Identify cardinal rectangle by start and goals
 		{
-			if (isRectangleConflict(al.initial_locations[a1], al.initial_locations[a2], al.goal_locations[a1], al.goal_locations[a2],
+			if (isRectangleConflict(al.agents[a1]->initial_location, al.agents[a2]->initial_location,
+			        al.agents[a1]->goal_location, al.agents[a2]->goal_location,
 				paths[a1]->size() - 1, paths[a2]->size() - 1) &&
-				classifyRectangleConflict(al.initial_locations[a1], al.initial_locations[a2], al.goal_locations[a1], al.goal_locations[a2]) == 2)
+				classifyRectangleConflict(al.agents[a1]->initial_location, al.agents[a2]->initial_location,
+				        al.agents[a1]->goal_location, al.agents[a2]->goal_location) == 2)
 			{
-				std::pair<int, int> Rg = getRg(al.initial_locations[a1], al.goal_locations[a1], al.goal_locations[a2]);
-				std::pair<int, int> Rs = getRs(al.initial_locations[a1], al.initial_locations[a2], al.goal_locations[a1]);
+				std::pair<int, int> Rg = getRg(al.agents[a1]->initial_location, al.agents[a1]->goal_location, al.agents[a2]->goal_location);
+				std::pair<int, int> Rs = getRs(al.agents[a1]->initial_location, al.agents[a2]->initial_location, al.agents[a1]->goal_location);
 				int Rg_t = con->t + abs(Rg.first - loc1 / num_col) + abs(Rg.second - loc1 % num_col);
 
 				auto new_rectangle = std::shared_ptr<Conflict>(new Conflict(loc1,timestep));
 
 				new_rectangle->kRectangleConflict(a1, a2,
-					al.initial_locations[a1].first*num_col + al.initial_locations[a1].second,
-					al.initial_locations[a2].first*num_col+ al.initial_locations[a2].second, 
+					al.agents[a1]->initial_location.first*num_col + al.agents[a1]->initial_location.second,
+					al.agents[a2]->initial_location.first*num_col+ al.agents[a2]->initial_location.second,
 					0, 0, Rs, Rg, Rg_t, 
-					al.goal_locations[a1].first*num_col + al.goal_locations[a1].second,
-					al.goal_locations[a2].first*num_col + al.goal_locations[a2].second,
+					al.agents[a1]->goal_location.first*num_col + al.agents[a1]->goal_location.second,
+					al.agents[a2]->goal_location.first*num_col + al.agents[a2]->goal_location.second,
 					num_col, kDelay, asymmetry_constraint);
 
 				if (blocked(*paths[new_rectangle->a1], new_rectangle->constraint1) && blocked(*paths[new_rectangle->a2], new_rectangle->constraint2))
@@ -2072,22 +2094,23 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
 		{
 			//cout << "identify rectangle by start and goals" << endl;
 			//Identify rectangles by start and goals
-			if (isRectangleConflict(al.initial_locations[a1], al.initial_locations[a2], al.goal_locations[a1], al.goal_locations[a2],
+			if (isRectangleConflict(al.agents[a1]->initial_location, al.agents[a2]->initial_location,
+			        al.agents[a1]->goal_location, al.agents[a2]->goal_location,
 				paths[a1]->size() - 1, paths[a2]->size() - 1))
 			{
-				int type = classifyRectangleConflict(al.initial_locations[a1], al.initial_locations[a2], al.goal_locations[a1], al.goal_locations[a2]);
-				std::pair<int, int> Rg = getRg(al.initial_locations[a1], al.goal_locations[a1], al.goal_locations[a2]);
-				std::pair<int, int> Rs = getRs(al.initial_locations[a1], al.initial_locations[a2], al.goal_locations[a1]);
+				int type = classifyRectangleConflict(al.agents[a1]->initial_location, al.agents[a2]->initial_location, al.agents[a1]->goal_location, al.agents[a2]->goal_location);
+				std::pair<int, int> Rg = getRg(al.agents[a1]->initial_location, al.agents[a1]->goal_location, al.agents[a2]->goal_location);
+				std::pair<int, int> Rs = getRs(al.agents[a1]->initial_location, al.agents[a2]->initial_location, al.agents[a1]->goal_location);
 				int Rg_t = con->t + abs(Rg.first - loc1 / num_col) + abs(Rg.second - loc1 % num_col);
 
 				auto new_rectangle = std::shared_ptr<Conflict>(new Conflict(loc1,timestep));
 
 				new_rectangle->kRectangleConflict(a1, a2,
-					al.initial_locations[a1].first*num_col + al.initial_locations[a1].second, 
-					al.initial_locations[a2].first*num_col + al.initial_locations[a2].second,
+					al.agents[a1]->initial_location.first*num_col + al.agents[a1]->initial_location.second,
+					al.agents[a2]->initial_location.first*num_col + al.agents[a2]->initial_location.second,
 					 0, 0, Rs, Rg, Rg_t, 
-					al.goal_locations[a1].first*num_col + al.goal_locations[a1].second,
-					al.goal_locations[a2].first*num_col + al.goal_locations[a2].second,
+					al.agents[a1]->goal_location.first*num_col + al.agents[a1]->goal_location.second,
+					al.agents[a2]->goal_location.first*num_col + al.agents[a2]->goal_location.second,
 					num_col, kDelay, asymmetry_constraint);
 				if (blocked(*paths[new_rectangle->a1], new_rectangle->constraint1) && blocked(*paths[new_rectangle->a2], new_rectangle->constraint2))
 				{
@@ -2511,6 +2534,18 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
 
 	// remove conflicts that cannot be chosen, to save some memory
 	removeLowPriorityConflicts(parent.conflicts);
+}
+
+template<class Map>
+void MultiMapICBSSearch<Map>::addPathsToInitialCT(const vector<Path>& paths) {
+    assert(kDelay > 0); // TODO: consider kDelay==0 in the future (in which case, we also need to add edge constraints)
+    for (const auto& path : paths) {
+        for (int t = 0; t < path.size(); t++) {
+            if (path[t].location == -1)
+                continue;
+            initialConstraintTable.insert(path[t].location, max(0, t - kDelay), t + kDelay + 1);
+        }
+    }
 }
 
 

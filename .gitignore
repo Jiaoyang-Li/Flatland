@@ -1,3 +1,6 @@
-
-.DS_Store
+.DS-Store
+CBS-corridor/cmake-build-debug
+CBS-corridor/cmake-build-release
+CBS-corridor/.idea
+Flatland2019
 /.idea/
