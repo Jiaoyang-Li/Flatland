@@ -1,6 +1,7 @@
 #include "ConstraintTable.h"
 void ConstraintTable::insert(int loc, int t_min, int t_max)
 {
+    assert(loc >= 0);
 	if (t_max == 0) {
 		//if (t_min <= length_min) {
 			CT_Single[loc].emplace(t_min);

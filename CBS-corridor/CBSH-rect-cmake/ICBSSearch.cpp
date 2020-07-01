@@ -1185,22 +1185,8 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 		runtime = (std::clock() - start);
 		if (runtime > time_limit)
 		{  // timeout
-			cout << "TIMEOUT  ; " << solution_cost << " ; " << min_f_val - dummy_start->g_val << " ; " <<
-				HL_num_expanded << " ; " << HL_num_generated << " ; " <<
-				LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime / CLOCKS_PER_SEC << " ; "
-				<< RMTime/CLOCKS_PER_SEC<<";"<<
-				num_standard << ";" << num_rectangle << "," <<
-				num_corridor2 << ";" << num_corridor4 << "," << num_target << "," << num_0FlipRectangle << "," <<
-				num_1FlipRectangle << "," << num_2FlipRectangle << endl;
-			if(debug_mode)
-			printHLTree();
-			if (screen >= 1)
-				printPaths();
-			timeout = true;
 			break;
 		}
-
-		
 
 		t1 = std::clock();
 		ICBSNode* curr = focal_list.top();
@@ -1504,21 +1490,31 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 	}  // end of while loop
 
 
-	if (focal_list.empty() && solution_cost < 0)
+	if (solution_cost < 0)
 	{
-		solution_cost = -2;
-		cout << "No solutions  ; " << solution_cost << " ; " << min_f_val - dummy_start->g_val << " ; " <<
-			HL_num_expanded << " ; " << HL_num_generated << " ; " <<
-			LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime / CLOCKS_PER_SEC << " ; " 
-			<< RMTime / CLOCKS_PER_SEC << ";" <<
-			num_standard << ";" << num_rectangle << ";" <<
-			num_corridor2 << ";" << num_corridor4 << ";" << num_target << "," << num_0FlipRectangle << "," <<
-			num_1FlipRectangle << "," << num_2FlipRectangle << 
-			"|Open|=" << open_list.size() << endl;
-		// timeout = true;
-		solution_found = false;
-		if (debug_mode)
-			printHLTree();
+        runtime = (std::clock() - start);
+	    if (runtime > time_limit)
+        {
+            cout << "TIMEOUT  ; ";
+            solution_cost = -1;
+            timeout = true;
+        }
+	    else
+        {
+            cout << "No solutions  ; ";
+            solution_cost = -2;
+            timeout = false;
+        }
+        cout << solution_cost << " ; " << min_f_val - dummy_start->g_val << " ; " <<
+             HL_num_expanded << " ; " << HL_num_generated << " ; " <<
+             LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime / CLOCKS_PER_SEC << " ; "
+             << RMTime/CLOCKS_PER_SEC<<";"<<
+             num_standard << ";" << num_rectangle << "," <<
+             num_corridor2 << ";" << num_corridor4 << "," << num_target << "," << num_0FlipRectangle << "," <<
+             num_1FlipRectangle << "," << num_2FlipRectangle <<
+             "|Open|=" << open_list.size() << endl;
+        if(debug_mode)
+            printHLTree();
 	}
 	return solution_found;
 }
