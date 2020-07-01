@@ -18,7 +18,7 @@ struct hvals {
 			return heading.at(direction);
 		}
 		else {
-			return INT_MAX;
+			return MAX_COST;
 		}
 	}
 };

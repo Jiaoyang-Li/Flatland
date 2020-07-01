@@ -112,7 +112,6 @@ if (WIN32)
 		add_definitions(${Boost_LIB_DIAGNOSTIC_DEFINITIONS})
 		TARGET_LINK_LIBRARIES(CBS-K ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
 
-
 	ELSEIF(NOT Boost_FOUND)
 	  MESSAGE(FATAL_ERROR "Unable to find all boost libs")
 	ENDIF()
