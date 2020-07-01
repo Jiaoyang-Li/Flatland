@@ -646,7 +646,7 @@ bool ExtractBarriers(const MDD<Map>& mdd, int dir1, int dir2, int start, int goa
 		num_barrier = abs(start / num_col - goal / num_col) + 1;
 		barrierZeroTime = - start % num_col * sign2 + start_time;
 	}
-	std::vector<int> extent_L(num_barrier, INT_MAX);
+	std::vector<int> extent_L(num_barrier, MAX_COST);
 	std::vector<int> extent_U(num_barrier, -1);
 	
 	std::unordered_map<MDDNode*, std::vector<bool>> blocking;
@@ -690,7 +690,7 @@ bool ExtractBarriers(const MDD<Map>& mdd, int dir1, int dir2, int start, int goa
 			}
 			if (barrier_id < num_barrier && !block[barrier_id] && barrier_time == n->level)
 			{
-				if (n->children.size() == 1 && extent_L[barrier_id] == INT_MAX &&
+				if (n->children.size() == 1 && extent_L[barrier_id] == MAX_COST &&
 					abs(dir1) * abs(n->location - n->children.front()->location) == num_col);// the only child node is on the same barrier
 				else
 				{

@@ -593,20 +593,20 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
             std::pair<int, int> edge_empty = make_pair(-2, -2);
             updateConstraintTable(node, a[0]);
             //get exit time for a1
-            int a1exit = cp.getBypassLength(search_engines[a[0]]->start_location, el[0], search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge_empty, ml, num_col, map_size, constraintTable, INT_MAX,
+            int a1exit = cp.getBypassLength(search_engines[a[0]]->start_location, el[0], search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge_empty, ml, num_col, map_size, constraintTable, MAX_COST,
                                         paths[a[0]]->front(), al.agents[a[0]]->speed);
             int a1exit_ = cp.getBypassLength(search_engines[a[0]]->start_location, el[0],search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge, ml, num_col, map_size, constraintTable, a1exit,
                                             paths[a[0]]->front(), al.agents[a[0]]->speed);
-            int a1entrance = cp.getBypassLength(search_engines[a[0]]->start_location, inerU[0],search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge_empty, ml, num_col, map_size, constraintTable, INT_MAX,
+            int a1entrance = cp.getBypassLength(search_engines[a[0]]->start_location, inerU[0],search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge_empty, ml, num_col, map_size, constraintTable, MAX_COST,
                                         paths[a[0]]->front(), al.agents[a[0]]->speed);
 
             updateConstraintTable(node, a[1]);
             //get exit time for a2
-            int a2exit = cp.getBypassLength(search_engines[a[1]]->start_location, el[1],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge_empty, ml, num_col, map_size, constraintTable, INT_MAX,
+            int a2exit = cp.getBypassLength(search_engines[a[1]]->start_location, el[1],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge_empty, ml, num_col, map_size, constraintTable, MAX_COST,
                                         paths[a[1]]->front(), al.agents[a[1]]->speed);
             int a2exit_ = cp.getBypassLength(search_engines[a[1]]->start_location,el[1],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge, ml, num_col, map_size, constraintTable, a2exit,
                                             paths[a[1]]->front(), al.agents[a[1]]->speed);
-            int a2entrance = cp.getBypassLength(search_engines[a[1]]->start_location,inerU[1],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge_empty, ml, num_col, map_size, constraintTable, INT_MAX,
+            int a2entrance = cp.getBypassLength(search_engines[a[1]]->start_location,inerU[1],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge_empty, ml, num_col, map_size, constraintTable, MAX_COST,
                                         paths[a[1]]->front(), al.agents[a[1]]->speed);
             int earlyAgent;
             int early_exit;
@@ -669,14 +669,14 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 
 		std::pair<int, int> edge_empty = make_pair(-2, -2);
 		updateConstraintTable(node, a[0]);
-		int t3 = cp.getBypassLength(search_engines[a[0]]->start_location, u[1], search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge_empty, ml, num_col, map_size, constraintTable, INT_MAX,paths[a[0]]->front(),al.agents[a[0]]->speed);
+		int t3 = cp.getBypassLength(search_engines[a[0]]->start_location, u[1], search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge_empty, ml, num_col, map_size, constraintTable, MAX_COST,paths[a[0]]->front(),al.agents[a[0]]->speed);
         int t3_ = cp.getBypassLength(search_engines[a[0]]->start_location, u[1], search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge, ml, num_col, map_size, constraintTable, t3 + 2 * k + 1, paths[a[0]]->front(), al.agents[a[0]]->speed);
 
 		updateConstraintTable(node, a[1]);
-		int t4 = cp.getBypassLength(search_engines[a[1]]->start_location, u[0],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge_empty, ml, num_col, map_size, constraintTable, INT_MAX, paths[a[1]]->front(), al.agents[a[1]]->speed);
+		int t4 = cp.getBypassLength(search_engines[a[1]]->start_location, u[0],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge_empty, ml, num_col, map_size, constraintTable, MAX_COST, paths[a[1]]->front(), al.agents[a[1]]->speed);
 		int t4_ = cp.getBypassLength(search_engines[a[1]]->start_location, u[0],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge, ml, num_col, map_size, constraintTable, t4 + 2 * k + 1, paths[a[1]]->front(), al.agents[a[1]]->speed);
-		assert(t3<INT_MAX);
-        assert(t4<INT_MAX);
+		assert(t3<MAX_COST);
+        assert(t4<MAX_COST);
 
 
         if (abs(t3 - t4) <= k+kDelay && t3_ >= t3 && t4_ >= t4)
@@ -1623,7 +1623,7 @@ MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader* al0, double f
 			std::cout << "Heuristic table for " << i << ": ";
 			for (int h = 0; h < search_engines[i]->my_heuristic.size(); h++) {
 				for (int heading = 0; heading < 5; heading++)
-					if (search_engines[i]->my_heuristic[h].heading[heading]<INT_MAX)
+					if (search_engines[i]->my_heuristic[h].heading[heading]<MAX_COST)
 					std::cout << "(" << h << ": "<<heading<<": " << search_engines[i]->my_heuristic[h].heading[heading] << ")";
 			}
 			std::cout << std::endl;
@@ -1914,7 +1914,7 @@ void MultiMapICBSSearch<Map>::updateConstraintTable(ICBSNode* curr, int agent_id
 					}
 					else if (x >= 0 && y != agent_id)
 					{ // <loc, agent_id, t>: any other agent cannot be at loc at or after timestep t
-						constraintTable.insert(x, z, INT_MAX);
+						constraintTable.insert(x, z, MAX_COST);
 					}
 				}
 				else if (type == constraint_type::VERTEX)
@@ -1934,7 +1934,7 @@ void MultiMapICBSSearch<Map>::updateConstraintTable(ICBSNode* curr, int agent_id
 			tie(x, y, z, type) = curr->constraints.front();
 			if (type == constraint_type::LENGTH && x >= 0 && y != agent_id)
 			{
-				constraintTable.insert(x, z, INT_MAX);
+				constraintTable.insert(x, z, MAX_COST);
 			}
 		}
 		curr = curr->parent;

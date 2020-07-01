@@ -214,7 +214,9 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 		LLNode* curr = focal_list.top(); focal_list.pop();
 		open_list.erase(curr->open_handle);
-// 		cout <<"f: "<< curr->getFVal() <<" g: "<<curr->g_val<<" h: "<<curr->h_val<< endl;
+
+// 		assert(curr->h_val >=0);
+
 		curr->in_openlist = false;
 		num_expanded++;
 		//cout << "focal size " << focal_list.size() << endl;
@@ -363,8 +365,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
                     next_h_val = my_heuristic[next_id].get_hval(next_heading)/al->agents[agent_id]->speed;
                 else
                     next_h_val = curr->h_val;
-//                 cout<<"next_id "<< next_id <<" curr heading "<< curr->heading<<" next heading "<<next_heading<<" h: "<<next_h_val<<" next_position_fraction "<< next_position_fraction <<endl;
-                    
+
 				if (next_id!=-1 && move.exit_loc >= 0 && al->agents[agent_id]->speed<1) {
 					int h1 = my_heuristic[next_id].get_hval(next_heading);
 					int h2 = my_heuristic[move.exit_loc].get_hval(move.exit_heading);
@@ -380,9 +381,14 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 				OldConfList* conflicts = res_table->findConflict(agent_id, curr->loc, next_id, curr->timestep, kRobust);
 				int next_internal_conflicts = curr->num_internal_conf + conflicts->size();
 
-				
 
-				// generate (maybe temporary) node
+
+//                cout<<"next_id "<< next_id <<" curr heading "<< curr->heading<<" next heading "<<next_heading<<" h: "<<next_h_val<<" next_position_fraction "<< next_position_fraction <<endl;
+//                assert(next_h_val >=0);
+
+
+
+                // generate (maybe temporary) node
 				LLNode* next = new LLNode(next_id, next_g_val, next_h_val,	curr, next_timestep, next_internal_conflicts, false);
 				next->heading = next_heading;
 				next->actionToHere = move.second;
