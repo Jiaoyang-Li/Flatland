@@ -12,7 +12,7 @@
 #include <boost/python.hpp>
 #include "compute_heuristic.h"
 #include "flat_map_loader.h"
-
+#include "ConstraintTable.h"
 using namespace std;
 
 struct Agent {
@@ -35,7 +35,9 @@ class AgentsLoader {
 public:
     int num_of_agents;
     vector<Agent*> agents;
-    vector<Path> blocked_paths; // store already planned paths, which are viewed as obstacles for future iterations
+    ConstraintTable constraintTable; // store already planned paths, which are viewed as obstacles for future iterations
+    vector<Path> paths_all;
+
     //vector< pair<int, int> > initial_locations;
     //vector< pair<int, int> > goal_locations;
     //vector<int> headings;
@@ -57,13 +59,13 @@ public:
     void generateAgentOrder();
     void updateToBePlannedAgents() { updateToBePlannedAgents(num_of_agents_all); };
     void updateToBePlannedAgents(int num_of_agents);
-    void addPaths(const vector<Path*>& paths);
+    void addPaths(const vector<Path*>& paths, int kDelay);
     int getNumOfUnplannedAgents() const { return (int)unplanned_agents.size(); }
     int getNumOfAllAgents() const { return num_of_agents_all; }
     int getNumOfDeadAgents() const { return num_of_dead_agents; }
     boost::python::list outputPaths()   {
         boost::python::list result;
-        for (const auto& path : blocked_paths)  {
+        for (const auto& path : paths_all)  {
             boost::python::list agentPath;
             for (const auto& state : path)
                 agentPath.append(state.location);
@@ -73,7 +75,16 @@ public:
     }
 
     void computeHeuristics(const FlatlandLoader* ml);
-
+    void printPaths() const
+    {
+        for (int i = 0; i < (int)paths_all.size(); i++)
+        {
+            std::cout << "Agent " << i << ": ";
+            for (int t = 0; t < (int)paths_all[i].size(); t++)
+                std::cout << t <<"(" << paths_all[i][t].location << ")->";
+            std::cout << std::endl;
+        }
+    }
 private:
     int num_of_dead_agents = 0;
     list<int> unplanned_agents;

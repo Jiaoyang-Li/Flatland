@@ -37,7 +37,7 @@ AgentsLoader::AgentsLoader(p::object agents) {
 	this->num_of_agents_all = agentsNum;
 	///this->heuristics.resize(num_of_agents_all);
     this->agents_all.resize(num_of_agents_all);
-    this->blocked_paths.resize(num_of_agents_all);
+    this->paths_all.resize(num_of_agents_all);
     //this->initial_locations_all.resize(num_of_agents_all);
     //this->goal_locations_all.resize(num_of_agents_all);
     //this->headings_all.resize(num_of_agents_all);
@@ -180,7 +180,7 @@ AgentsLoader::AgentsLoader(const string& fname, const MapLoader &ml, int agentsN
     this->num_of_agents_all = atoi ( (*beg).c_str() );
     //this->heuristics.resize(num_of_agents_all);
       this->agents_all.resize(num_of_agents_all);
-      this->blocked_paths.resize(num_of_agents_all);
+      this->paths_all.resize(num_of_agents_all);
       //this->initial_locations_all.resize(num_of_agents_all);
       //this->goal_locations_all.resize(num_of_agents_all);
       //this->headings_all.resize(num_of_agents_all);
@@ -220,7 +220,7 @@ AgentsLoader::AgentsLoader(const string& fname, const MapLoader &ml, int agentsN
 	  this->num_of_agents_all = agentsNum;
 	  //this->heuristics.resize(num_of_agents_all);
       this->agents_all.resize(num_of_agents_all);
-      this->blocked_paths.resize(num_of_agents_all);
+      this->paths_all.resize(num_of_agents_all);
       //this->initial_locations_all.resize(num_of_agents_all);
       //this->goal_locations_all.resize(num_of_agents_all);
       //this->headings_all.resize(num_of_agents_all);
@@ -423,7 +423,7 @@ void AgentsLoader::quickSort(vector<int>& agent_order, int low, int high)
         // If current element is larger than or equal to pivot
         if (agents_all[agent_order[j]].speed > pivot.speed ||
             (agents_all[agent_order[j]].speed == pivot.speed &&
-            agents_all[agent_order[j]].distance_to_goal < pivot.distance_to_goal))
+            agents_all[agent_order[j]].distance_to_goal > pivot.distance_to_goal))
         {
             std::swap(agent_order[i], agent_order[j]);
             i++;    // increment index of smaller element
@@ -445,17 +445,20 @@ void AgentsLoader::updateToBePlannedAgents(int _num_of_agents)
     this->num_of_agents = min(_num_of_agents, (int)unplanned_agents.size());
     agents.resize(num_of_agents);
     auto p = unplanned_agents.begin();
+    cout << "Agents ids: ";
     for (int i = 0; i < num_of_agents; i++)
     {
+        cout << *p << ",";
         agents[i] = &agents_all[*p];
         ++p;
     }
+    cout << endl;
 }
 
-void AgentsLoader::addPaths(const vector<Path*>& new_paths)
+void AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)
 {
     assert((int)new_paths.size() == num_of_agents);
-    list<int> dead_agents;
+    list<int> giveup_agents;
     for (int i = 0; i < num_of_agents; i++)
     {
         auto a = unplanned_agents.front();
@@ -463,15 +466,23 @@ void AgentsLoader::addPaths(const vector<Path*>& new_paths)
 
         if (new_paths[i] == nullptr)
         {
-            unplanned_agents.push_back(i);
+            giveup_agents.push_back(a);
             continue;
         }
-        assert(blocked_paths[a].empty());
+        assert(paths_all[a].empty());
         if(new_paths[i]->empty())
             num_of_dead_agents++;
-        blocked_paths[a] = *new_paths[i];
+        paths_all[a] = *new_paths[i];
+        assert(kDelay > 0); // TODO: consider kDelay==0 in the future (in which case, we also need to add edge constraints)
+        // add the path to the constraint table
+        for (int t = 0; t < paths_all[a].size(); t++)
+        {
+            if (paths_all[a][t].location == -1)
+                continue;
+            constraintTable.insert(paths_all[a][t].location, max(0, t - kDelay), t + kDelay + 1);
+        }
     }
-    unplanned_agents.splice(unplanned_agents.begin(), dead_agents);
+    unplanned_agents.splice(unplanned_agents.begin(), giveup_agents);
 }
 
 void AgentsLoader::computeHeuristics(const FlatlandLoader* ml)

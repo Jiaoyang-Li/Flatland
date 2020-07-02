@@ -33,16 +33,16 @@ public:
 		{
 			if (n1->num_of_collisions == n2->num_of_collisions)
 			{
-				if (n1->g_val == n2->g_val) {
+				if (n1->f_val == n2->f_val) {
 					if (n1->h_val == n2->h_val) {
 						if (rand() % 2 == 0)
 							return true;
 						else
 							return false;
 					}
-					return n1->h_val <= n2->h_val;
+					return n1->h_val >= n2->h_val;
 				}
-				return n1->g_val <= n2->g_val;
+				return n1->f_val >= n2->f_val;
 
 			}
 			return n1->num_of_collisions >= n2->num_of_collisions;

@@ -12,7 +12,9 @@ void ConstraintTable::insert(int loc, int t_min, int t_max)
 		//}
 	}
 	else {
-		CT[loc].emplace_back(t_min, t_max);
+	    for (int t = t_min; t < t_max; t++)
+            CT_Single[loc].emplace(t);
+		//CT[loc].emplace_back(t_min, t_max);
 	}
 	
 	if (loc == goal_location && t_max > length_min)
