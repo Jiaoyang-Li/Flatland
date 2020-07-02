@@ -19,8 +19,10 @@ import os
 from logging import warning
 import time
 import numpy as np
+import pickle
 
-class FlatlandPost():
+
+class FlatlandPost:
     def __init__(self, in_env: RailEnv, in_path: str, in_speed_list: List):
         self.env = in_env
         self.path_list = self.read_file(in_path)
@@ -28,6 +30,8 @@ class FlatlandPost():
         self.stn = STN()
         self.n_agent = len(self.path_list)
         self.max_step = int(4 * 2 * (self.env.width + self.env.height + 20))
+        self.start_nodes = list()
+        self.goal_nodes = list()
 
     @staticmethod
     def read_file(file_name=None):
@@ -61,15 +65,15 @@ class FlatlandPost():
         self._speed_list = in_speed
         return
 
-    # used when agent stop accidentially for a period of time
+    # used when agent stop accidentally for a period of time
     # stop at location (node), add how_long to the lb of the outgoing edges of this node
     def update_edge_replan(self, agent_idx_list, delay_steps, current_time):
-        for i,idx in enumerate(agent_idx_list):
+        for i, idx in enumerate(agent_idx_list):
             node_name = self.encode_stn_node(idx, current_time, self.path_list[idx][current_time])
             # print(node_name)
 
-            for e in self.stn.constraint_graph.out_edges(node_name,data=True):
-                e[2]['lb'] += delay_steps[i]
+            for _edge in self.stn.constraint_graph.out_edges(node_name, data=True):
+                _edge[2]['lb'] += delay_steps[i]
         self.stn.solve()
 
     @staticmethod
@@ -97,8 +101,9 @@ class FlatlandPost():
 
         # Create nodes and type1 edges
         for j in range(self.n_agent):
-            v_j_0 = self.encode_stn_node(j, 0, self.path_list[j][0])
+            v_j_0: str = self.encode_stn_node(j, 0, self.path_list[j][0])
             mapf_node.append(v_j_0)
+            self.start_nodes.append(v_j_0)
             isin_mapf_node[j][0] = True
             v = v_j_0
 
@@ -109,6 +114,8 @@ class FlatlandPost():
                     mapf_edge.append((v, v_j_t, {'lb': 1.0/self._speed_list[j], 'ub': np.inf}))
                     isin_mapf_node[j][t] = True
                     v = v_j_t
+
+            self.goal_nodes.append(v)
 
         # Create type2 edges
         for j in range(self.n_agent):
@@ -156,14 +163,6 @@ class FlatlandPost():
         temp_fig.savefig('./stn.png')
         # temp_fig.show()
         return
-    #
-    # def replan(self):
-    #
-    #
-    #
-    #     self.stn.solve()
-    #
-    #     return
 
 
 class STN:
@@ -174,7 +173,8 @@ class STN:
         self.start_nodes = []
         # self.num_agents = num_agents
 
-    def decode_stn_node(self,in_stn_node: str):
+    @staticmethod
+    def decode_stn_node(in_stn_node: str):
         """
         Decode the string to integers
         :param in_stn_node: string label of a mapf node
@@ -182,7 +182,6 @@ class STN:
         """
         temp_seg = in_stn_node.split('_')
         return int(temp_seg[0]), int(temp_seg[1]), int(temp_seg[2])
-
 
     def build(self, in_nodes: List[str], in_edges: List[Tuple]):
         print('Build STN ...')
@@ -277,3 +276,53 @@ class STN:
         # for d in self.constraint_graph.nodes.data():
         #     print (d)
         return
+
+    def graph_opt(self):
+        print(self.constraint_graph.nodes.data())
+        print('----')
+
+        # build distance graph
+        dist_graph = nx.DiGraph()
+        dist_graph.add_nodes_from(self.constraint_graph.nodes, value=np.inf)
+
+        for _edge in self.constraint_graph.edges.data():
+            dist_graph.add_edge(_edge[0], _edge[1], weight=_edge[2]['ub'])
+            dist_graph.add_edge(_edge[1], _edge[0], weight=-_edge[2]['lb'])
+
+        # add source node
+        dist_graph.add_node('x_s', value=0)
+        for _node in self.start_nodes:
+            dist_graph.add_edge('x_s', _node, weight=0)
+            dist_graph.add_edge(_node, 'x_s', weight=0)
+
+        plan_exec_schedule = dict()
+        for _node in dist_graph.nodes:
+            plan_exec_schedule[_node] = -nx.bellman_ford_path_length(dist_graph, _node, 'x_s')
+
+        print(plan_exec_schedule)
+        for _node in dist_graph:
+            print('{0}: {1}'.format(_node, plan_exec_schedule[_node]))
+
+        return
+
+
+if __name__ == '__main__':
+    a = STN()
+    a.start_nodes.append('a_1_0')
+    a.start_nodes.append('b_2_0')
+    a.build(in_nodes=['a_1_0', 'b_1_1', 'c_1_2', 'd_1_3', 'e_1_4', 'b_2_0', 'c_2_1', 'f_2_2', 'c_2_3', 'd_2_4'],
+            in_edges=[('a_1_0', 'b_1_1', {'lb': 4, 'ub': np.inf}),
+                      ('b_1_1', 'c_1_2', {'lb': 4, 'ub': np.inf}),
+                      ('c_1_2', 'd_1_3', {'lb': 4, 'ub': np.inf}),
+                      ('d_1_3', 'e_1_4', {'lb': 4, 'ub': np.inf}),
+                      ('b_2_0', 'c_2_1', {'lb': 16, 'ub': np.inf}),
+                      ('c_2_1', 'f_2_2', {'lb': 16, 'ub': np.inf}),
+                      ('f_2_2', 'c_2_3', {'lb': 16, 'ub': np.inf}),
+                      ('c_2_3', 'd_2_4', {'lb': 16, 'ub': np.inf}),
+
+                      ('b_2_0', 'b_1_1', {'lb': 0, 'ub': np.inf}),
+                      ('c_2_1', 'c_1_2', {'lb': 0, 'ub': np.inf}),
+                      ('c_1_2', 'c_2_3', {'lb': 0, 'ub': np.inf}),
+                      ('d_1_3', 'd_2_4', {'lb': 0, 'ub': np.inf})])
+
+    a.graph_opt()

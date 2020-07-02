@@ -1,2 +1,7 @@
-
+.idea/*
+.idea/Flatland.iml
+.idea/workspace.xml
+Flatland2020/.idea/*
+Flatland2020/.idea/Flatland2020.iml
+Flatland2020/.idea/workspace.xml
 .DS_Store
