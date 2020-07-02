@@ -21,7 +21,7 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int
 	this->f_w = f_w;
 	this->algo = algo;
 	this->kRobust = kRobust;
-	if (corridor == "trainCorridor1") {
+    if (corridor == "trainCorridor1") {
 		this->trainCorridor1 = true;
 		this->corridor2 = true;
 	}
@@ -58,6 +58,8 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int
 	p::long_ cols(railEnv.attr("width"));
 
 	std::cout << "load map " << p::extract<int>(rows)<<" x "<< p::extract<int>(cols) << std::endl;
+    this->deadline = p::extract<int>(railEnv.attr("_max_episode_steps"));
+    std::cout << "Max timestep = " << deadline << endl;
 	//ml =  new MapLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
 	ml = new FlatlandLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
 	std::cout << "load agents " << std::endl;
@@ -130,7 +132,7 @@ bool PythonCBS<Map>::search() {
 
         if (options1.debug)
             cout << "Time limit = " << time_limit << "second." << endl;
-        MultiMapICBSSearch <Map> icbs(ml, al, f_w, s, time_limit * CLOCKS_PER_SEC, screen, kRobust, options1);
+        MultiMapICBSSearch <Map> icbs(ml, al, f_w, s, time_limit * CLOCKS_PER_SEC, screen, kRobust, deadline, options1);
         if(s == constraint_strategy::CBSH_RM)
             icbs.rectangleMDD = true;
         icbs.trainCorridor1 = trainCorridor1;

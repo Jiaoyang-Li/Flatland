@@ -61,6 +61,7 @@ private:
 	int timeLimit;
 	int kRobust;
 	int max_malfunction;
+	int deadline;
 	float f_w;
 	// MultiMapICBSSearch<Map>* icbs = NULL;
 	bool corridor2=false;

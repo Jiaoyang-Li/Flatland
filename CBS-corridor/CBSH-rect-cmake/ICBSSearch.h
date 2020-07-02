@@ -56,10 +56,11 @@ public:
 
 
 
-    bool solution_found;
+    bool solution_found = false;
 	int solution_cost;
-	double min_f_val;
-	double focal_list_threshold;
+	pair<int, int> min_f_val;  // <#dead agents, sum of costs>
+    pair<int, int> focal_list_threshold;  // <#dead agents, sum of costs>
+    ICBSNode* goal_node = nullptr;
 	bool cardinalRect = false;
 	bool rectangleMDD = false;
 	bool corridor2 = false;
@@ -140,7 +141,7 @@ protected:
 	// vector < list< pair<int, int> > >* collectConstraints(ICBSNode* curr, int agent_id);
 	virtual void updateConstraintTable(ICBSNode* curr, int agent_id) {};
 	inline void updatePaths(ICBSNode* curr);
-	void updateFocalList(double old_lower_bound, double new_lower_bound, double f_weight);
+	void updateFocalList();
 	void updateReservationTable(bool* res_table, int exclude_agent, const ICBSNode &node);
 	inline void releaseClosedListNodes();
 	inline void releaseOpenListNodes();
@@ -157,14 +158,16 @@ template<class Map>
 class MultiMapICBSSearch :public ICBSSearch
 {
 public:
+    int deadline;
 	boost::unordered_map<int, std::list<Constraint>> allConstraints; //Store all constraints for goal Node in online flatland
 	void collectConstraints(ICBSNode* curr);
 
 
-	MultiMapICBSSearch(Map * ml, AgentsLoader* al, double f_w, constraint_strategy c, int time_limit, int screen,int kDlay, options options1);	
+	MultiMapICBSSearch(Map * ml, AgentsLoader* al, double f_w, constraint_strategy c, int time_limit, int screen,
+	        int kDlay, int deadline, options options1);
 	// build MDD
 	MDD<Map>* buildMDD(ICBSNode& node, int id);
-	void updateConstraintTable(ICBSNode* cTurr, int agent_id);
+	void updateConstraintTable(ICBSNode* curr, int agent_id);
 	void classifyConflicts(ICBSNode &parent);
 	void initializeDummyStart();
 	bool isCorridorConflict(std::shared_ptr<Conflict>& corridor, const std::shared_ptr<Conflict>& con, bool cardinal, ICBSNode* node);

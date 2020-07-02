@@ -1010,7 +1010,7 @@ bool ICBSSearch::generateChild(ICBSNode*  node, ICBSNode* curr)
 	node->open_handle = open_list.push(node);
 	HL_num_generated++;
 	node->time_generated = HL_num_generated;
-	if (node->f_val <= focal_list_threshold)
+	if (make_pair(node->num_of_dead_agents, node->f_val) <= focal_list_threshold)
 		node->focal_handle = focal_list.push(node);
 	allNodes_table.push_back(node);
 
@@ -1085,13 +1085,20 @@ void ICBSSearch::printHLTree()
 
 
 // adding new nodes to FOCAL (those with min-f-val*f_weight between the old and new LB)
-void ICBSSearch::updateFocalList(double old_lower_bound, double new_lower_bound, double f_weight) 
+void ICBSSearch::updateFocalList()
 {
+    ICBSNode* open_head = open_list.top();
+    assert(make_pair(open_head->num_of_dead_agents, open_head->f_val) >= min_f_val);
+    if (make_pair(open_head->num_of_dead_agents, open_head->f_val) == min_f_val)
+        return;
+    min_f_val = make_pair(open_head->num_of_dead_agents, open_head->f_val);
+    auto new_focal_list_threshold = make_pair(open_head->num_of_dead_agents, (int)(open_head->f_val * focal_w));
 	for (ICBSNode* n : open_list) {
-		if (n->f_val > old_lower_bound &&
-			n->f_val <= new_lower_bound)
+	    auto cost = make_pair(n->num_of_dead_agents, n->f_val);
+		if (cost > focal_list_threshold && cost <= new_focal_list_threshold)
 			n->focal_handle = focal_list.push(n);
 	}
+    focal_list_threshold = new_focal_list_threshold;
 }
 
 void ICBSSearch::updateReservationTable(bool* res_table, int exclude_agent, const ICBSNode &node) {
@@ -1180,14 +1187,16 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 		cout << "Start searching:" << endl;
 	if (screen >= 3)
 		al.printCurrentAgentsInitGoal();
-	while (!focal_list.empty() && !solution_found) 
+	while (!open_list.empty() && !solution_found)
 	{
 		runtime = (std::clock() - start);
 		if (runtime > time_limit)
 		{  // timeout
 			break;
 		}
-
+        t1 = std::clock();
+        updateFocalList();
+        runtime_listoperation += std::clock() - t1;
 		t1 = std::clock();
 		ICBSNode* curr = focal_list.top();
 		focal_list.pop();
@@ -1227,18 +1236,10 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 			runtime_computeh += std::clock() - t1;
 			curr->f_val = curr->g_val + curr->h_val;
 
-			if (curr->f_val > focal_list_threshold)
-			{	
+			if (make_pair(curr->num_of_dead_agents, curr->f_val) > focal_list_threshold)
+			{
 				t1 = std::clock();
 				curr->open_handle = open_list.push(curr);
-				ICBSNode* open_head = open_list.top();
-				if (open_head->f_val > min_f_val) 
-				{
-					min_f_val = open_head->f_val;
-					double new_focal_list_threshold = min_f_val * focal_w;
-					updateFocalList(focal_list_threshold, new_focal_list_threshold, focal_w);
-					focal_list_threshold = new_focal_list_threshold;
-				}
 				runtime_listoperation += std::clock() - t1;
 				continue;
 			}
@@ -1252,13 +1253,14 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 			runtime = (std::clock() - start);
 			solution_found = true;
 			solution_cost = curr->g_val;
+            goal_node = curr;
 			collectConstraints(curr);
 
 			if (debug_mode)
 				printHLTree();
 			if (screen >= 1)
 				printPaths();
-			cout << solution_cost << " ; " << solution_cost - dummy_start->g_val << " ; " <<
+			cout << solution_cost << " (" << goal_node->num_of_dead_agents << ") ; " << solution_cost - dummy_start->g_val << " ; " <<
 				HL_num_expanded << " ; " << HL_num_generated << " ; " <<
 				LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime / CLOCKS_PER_SEC << " ; " 
 				<< RMTime / CLOCKS_PER_SEC << ";"<<
@@ -1472,25 +1474,10 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 
 
 		curr->clear();
-		t1 = std::clock();
-		if (open_list.size() == 0) {
-			solution_found = false;
-			break;
-		}
-		ICBSNode* open_head = open_list.top();
-		if (open_head->f_val > min_f_val) 
-		{
-			min_f_val = open_head->f_val;
-			double new_focal_list_threshold = min_f_val * focal_w;
-			updateFocalList(focal_list_threshold, new_focal_list_threshold, focal_w);
-			focal_list_threshold = new_focal_list_threshold;
-		}
-		runtime_listoperation += std::clock() - t1;
-
 	}  // end of while loop
 
 
-	if (solution_cost < 0)
+	if (!solution_found)
 	{
         runtime = (std::clock() - start);
 	    if (runtime > time_limit)
@@ -1505,7 +1492,7 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
             solution_cost = -2;
             timeout = false;
         }
-        cout << solution_cost << " ; " << min_f_val - dummy_start->g_val << " ; " <<
+        cout << solution_cost << " ; " << min_f_val.second - dummy_start->g_val << " ; " <<
              HL_num_expanded << " ; " << HL_num_generated << " ; " <<
              LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime / CLOCKS_PER_SEC << " ; "
              << RMTime/CLOCKS_PER_SEC<<";"<<
@@ -1567,7 +1554,8 @@ MultiMapICBSSearch<Map>::~MultiMapICBSSearch()
 }
 
 template<class Map>
-MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader* al0, double f_w, constraint_strategy c, int time_limit, int screen, int kDlay, options options1):al(*al0)
+MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader* al0, double f_w, constraint_strategy c,
+        int time_limit, int screen, int kDlay, int deadline, options options1): al(*al0), deadline(deadline)
 {
 	this->option = options1;
 	this->focal_w = f_w;
@@ -1600,6 +1588,7 @@ MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader* al0, double f
 		cout << "Initializing search engines" << endl;
 
     addPathsToInitialCT(al.blocked_paths); // these paths are obstacles for all agents
+    initialConstraintTable.length_max = deadline; // all paths should be equal to or shorter than the deadline
 
 	for (int i = 0; i < num_of_agents; i++) {
 // 		if (!al.agents[i].activate)
@@ -1652,9 +1641,9 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 // 			paths[i] = new vector<PathEntry>;
 // 			continue;
 // 		}
-		if (search_engines[i]->findPath(paths_found_initially[i], focal_w, initialConstraintTable, res_table, dummy_start->makespan + 1, 0) == false)
-			cout << "NO SOLUTION EXISTS";
-		
+		bool found = search_engines[i]->findPath(paths_found_initially[i], focal_w, initialConstraintTable, res_table, dummy_start->makespan + 1, 0);
+        if (!found)
+            dummy_start->num_of_dead_agents++;
 		paths[i] = &paths_found_initially[i];
 		/*if (paths[i]->at(2).conflist == NULL) {
 			cout << "x" << endl;
@@ -1697,8 +1686,8 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 	findConflicts(*dummy_start);
 	if (debug_mode)
 		cout << "Find initial conflict done" << endl;
-	min_f_val = dummy_start->f_val;
-	focal_list_threshold = min_f_val * focal_w;
+	min_f_val = make_pair(dummy_start->num_of_dead_agents, dummy_start->f_val);
+	focal_list_threshold = make_pair(dummy_start->num_of_dead_agents, (int)(dummy_start->f_val * focal_w));
 	if (debug_mode)
 	{
 
@@ -1818,24 +1807,14 @@ bool MultiMapICBSSearch<Map>::findPathForSingleAgent(ICBSNode*  node, int ag, do
 
 	delete (res_table);
 
+    node->paths.emplace_back(ag, newPath);
+    node->g_val = node->g_val - paths[ag]->size() + newPath.size();
+    paths[ag] = &node->paths.back().second;
+    node->makespan = std::max(node->makespan, newPath.size() - 1);
+	if (!foundSol)
+        node->num_of_dead_agents++;
 
-	if (foundSol)
-	{
-		node->paths.emplace_back(ag, newPath);
-
-		node->g_val = node->g_val - paths[ag]->size() + newPath.size();
-
-		paths[ag] = &node->paths.back().second;
-
-		node->makespan = std::max(node->makespan, newPath.size() - 1);
-
-		return true;
-	}
-	else
-	{
-
-		return false;
-	}
+	return true;
 }
 
 

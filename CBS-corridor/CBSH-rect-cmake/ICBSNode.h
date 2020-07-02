@@ -16,7 +16,9 @@ public:
 	{
 		bool operator()(const ICBSNode* n1, const ICBSNode* n2) const 
 		{
-			return n1->f_val >= n2->f_val;
+		    if (n1->num_of_dead_agents == n2->num_of_dead_agents)
+			    return n1->f_val >= n2->f_val;
+            return n1->num_of_dead_agents >= n2->num_of_dead_agents;
 		}
 	};  // used by OPEN to compare nodes by sum_min_f_vals (top of the heap has min sum_min_f_vals)
 
@@ -50,14 +52,14 @@ public:
 
 	// The following is used by googledensehash for generating the hash value of a nodes
 	// this is needed because otherwise we'll have to define the specilized template inside std namespace
-	struct ICBSNodeHasher 
+	/*struct ICBSNodeHasher
 	{
 		std::size_t operator()(const ICBSNode* n) const {
 			size_t agent_id_hash = std::hash<int>()(n->agent_id);
 			size_t time_generated_hash = std::hash<int>()(n->time_generated);
 			return (agent_id_hash ^ (time_generated_hash << 1));
 		}
-	};
+	};*/
 
 	// conflicts in the current paths
 	std::list<std::shared_ptr<Conflict>> conflicts;
@@ -82,6 +84,7 @@ public:
 	size_t depth; // depath of this CT node
 	size_t makespan; // makespan over all paths
 	int num_of_collisions; // number of conflicts in the current paths
+    int num_of_dead_agents = 0; // number of agents that cannot reach goals before the deadline
 
 	uint64_t time_expanded;
 	uint64_t time_generated;
