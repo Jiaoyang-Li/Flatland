@@ -13,11 +13,11 @@
 #include <boost/python.hpp>
 
 struct options {
-	bool asymmetry_constraint;
+	bool asymmetry_constraint=false;
 	bool debug;
-	bool ignore_t0;
-	bool shortBarrier;
-	bool flippedRec;
+	bool ignore_t0=false;
+	bool shortBarrier=false;
+	bool flippedRec=false;
 };
 
 

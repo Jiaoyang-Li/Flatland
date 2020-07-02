@@ -49,7 +49,7 @@ public:
 	void addPaths(vector<vector<PathEntry>*>* paths, int exclude = -1);
 	void deletePath(int agent_id, std::vector<PathEntry>* path);
 	OldConfList* findConflict(int agent, int currLoc, int nextLoc, int currT, int kDelay =0);
-	
+    int countConflict(int agent, int currLoc, int nextLoc, int currT, int kDelay =0);
 	bool ignoreFinishedAgent;
 	int max_malfunction=5;
 

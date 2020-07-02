@@ -77,7 +77,7 @@ public:
 	}
 
 	// Updates the path datamember
-	void updatePath(LLNode* goal, std::vector<PathEntry> &path);
+	void updatePath(LLNode* goal, std::vector<PathEntry> &path,ReservationTable* res_table);
 
 	// Return the number of conflicts between the known_paths' (by looking at the reservation table) for the move [curr_id,next_id].
 	// Returns 0 if no conflict, 1 for vertex or edge conflict, 2 for both.

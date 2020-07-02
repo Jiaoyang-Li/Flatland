@@ -37,11 +37,7 @@ int main(int argc, char** argv)
 		("corridor2", po::value<bool>(), "reason about 2-way branching corridor conflicts")
 		("corridor4", po::value<bool>(), "reason about 4-way branching corridor conflicts")
 		("cardinalCorridor", po::value<bool>(), "only reason about cardinal corridor conflicts")
-		("target", po::value<bool>(), "reason about target conflict")
 		("kDelay", po::value<int>()->default_value(0), "generate k-robust plan")
-		("ignore-t0","Ignore t==0 k-delay conflict resolving")
-		("asyConstraint","Using asymmetry range constraint to resolve k-delay conflict. Else use symmetry range constraint ")
-		("short", "do not use long barrier constraint to resolve k delay rectangle conflict")
 		("only_generate_instance", po::value<std::string>()->default_value(""),"no searching")
 		("debug", "debug mode")
 		("flipped_rectangle", "resolving flipped rectangle symmetry conflict for RM")
@@ -73,12 +69,7 @@ int main(int argc, char** argv)
 	srand(vm["seed"].as<int>());
 
 	options options1;
-	if (vm.count("asyConstraint")) {
-		options1.asymmetry_constraint = true;
-	}
-	else {
-		options1.asymmetry_constraint = false;
-	}
+
 
 	if (vm.count("debug")) {
 		options1.debug = true;
@@ -87,25 +78,6 @@ int main(int argc, char** argv)
 		options1.debug = false;
 	}
 
-	if (vm.count("flipped_rectangle")) {
-		options1.flippedRec = true;
-	}
-	else {
-		options1.flippedRec = false;
-	}
-
-	if (vm.count("ignore-t0")) {
-		options1.ignore_t0 = true;
-	}
-	else {
-		options1.ignore_t0 = false;
-	}
-	if (vm.count("short")) {
-		options1.shortBarrier = true;
-	}
-	else {
-		options1.shortBarrier = false;
-	}
 	if (vm["only_generate_instance"].as<string>()!="") {
 		al->saveToFile(vm["only_generate_instance"].as<string>());
 		return 0;
@@ -118,14 +90,6 @@ int main(int argc, char** argv)
 		s = constraint_strategy::CBS;
 	else if (vm["solver"].as<string>() == "CBSH")
 		s = constraint_strategy::CBSH;
-	else if (vm["solver"].as<string>() == "CBSH-CR")
-		s = constraint_strategy::CBSH_CR;
-	else if (vm["solver"].as<string>() == "CBSH-R")
-		s = constraint_strategy::CBSH_R;
-	else if (vm["solver"].as<string>() == "CBSH-RM")
-		s = constraint_strategy::CBSH_RM;
-	else if (vm["solver"].as<string>() == "CBSH-GR")
-		s = constraint_strategy::CBSH_GR;
 	else
 	{
 		std::cout <<"WRONG SOLVER NAME!" << std::endl;
@@ -135,10 +99,7 @@ int main(int argc, char** argv)
 	al->generateAgentOrder();
 	al->updateToBePlannedAgents();
 	MultiMapICBSSearch<MapLoader> icbs(ml, al, 1.0, s, vm["cutoffTime"].as<float>() * CLOCKS_PER_SEC, vm["screen"].as<int>(), vm["kDelay"].as<int>(), options1);
-	if (vm["solver"].as<string>() == "CBSH-RM")
-	{
-		icbs.rectangleMDD = true;
-	}
+
 	if (vm.count("cardinalRect"))
 	{
 		icbs.cardinalRect = vm["cardinalRect"].as<bool>();
@@ -154,11 +115,6 @@ int main(int argc, char** argv)
 	if (vm.count("cardinalCorridor"))
 	{
 		icbs.cardinalCorridorReasoning = vm["cardinalCorridor"].as<bool>();
-	}
-	if (vm.count("target"))
-	{
-		icbs.targetReasoning = vm["target"].as<bool>();
-
 	}
 	
 	bool res;
