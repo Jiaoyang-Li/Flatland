@@ -91,9 +91,6 @@ public:
 	LLNode(int loc, int g_val, int h_val, LLNode* parent, int timestep,
 		int num_internal_conf = 0, bool in_openlist = false);
 	inline double getFVal() const { return g_val + h_val; }
-	~LLNode(){
-		delete (conflist);
-	}
 
 	// The following is used by googledensehash for checking whether two nodes are equal
 	// we say that two nodes, s1 and s2, are equal if

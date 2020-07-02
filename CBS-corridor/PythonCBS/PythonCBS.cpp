@@ -15,9 +15,6 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int
 	//Initialize PythonCBS. Load map and agent info into memory
 	std::cout << "algo: " << algo << std::endl;
 	options1.debug = debug;
-	options1.ignore_t0 = false;
-	options1.shortBarrier = false;
-	options1.asymmetry_constraint = false;
 	timeLimit = t;
 	this->f_w = f_w;
 	this->algo = algo;
@@ -26,28 +23,14 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int
 		this->trainCorridor1 = true;
 		this->corridor2 = true;
 	}
-	if (corridor == "trainCorridor2") {
-		this->trainCorridor2 = true;
-		this->corridor2 = true;
-	}
 	if (corridor == "corridor2")
 		this->corridor2 = true;
-	if (corridor == "corridor4")
-		this->corridor4 = true;
 	if (algo == "ICBS")
 		s = constraint_strategy::ICBS;
 	else if (algo == "CBS")
 		s = constraint_strategy::CBS;
 	else if (algo == "CBSH")
 		s = constraint_strategy::CBSH;
-	else if (algo == "CBSH-CR")
-		s = constraint_strategy::CBSH_CR;
-	else if (algo == "CBSH-R")
-		s = constraint_strategy::CBSH_R;
-	else if (algo == "CBSH-RM")
-		s = constraint_strategy::CBSH_RM;
-	else if (algo == "CBSH-GR")
-		s = constraint_strategy::CBSH_GR;
 	else
 	{
 		std::cout << "WRONG SOLVER NAME! Use CBSH as default" << std::endl;

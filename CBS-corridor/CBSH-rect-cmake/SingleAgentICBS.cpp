@@ -4,7 +4,7 @@
 #include <ctime>
 
 template<class Map>
-void SingleAgentICBS<Map>::updatePath(LLNode* goal, std::vector<PathEntry> &path)
+void SingleAgentICBS<Map>::updatePath(LLNode* goal, std::vector<PathEntry> &path,ReservationTable* res_table)
 {
 	path.resize(goal->timestep + 1);
 	LLNode* curr = goal;
@@ -21,8 +21,11 @@ void SingleAgentICBS<Map>::updatePath(LLNode* goal, std::vector<PathEntry> &path
 		path[t].exit_heading = curr->exit_heading;
 		path[t].exit_loc = curr->exit_loc;
 		delete path[t].conflist;
-		path[t].conflist = curr->conflist;
-		if (t == goal->timestep && curr->loc != goal_location) {
+		if (t!=0)
+		    path[t].conflist =  res_table->findConflict(agent_id, curr->parent->loc, curr->loc, t-1, kRobust);
+        else
+            path[t].conflist = NULL;
+        if (t == goal->timestep && curr->loc != goal_location) {
 			path[t].malfunction = true;
 		}
 
@@ -51,25 +54,6 @@ int SingleAgentICBS<Map>::extractLastGoalTimestep(int goal_location, const std::
 	return -1;
 }
 
-
-// input: curr_id (location at time next_timestep-1) ; next_id (location at time next_timestep); next_timestep
-//        cons[timestep] is a list of <loc1,loc2> of (vertex/edge) constraints for that timestep.
-//inline bool SingleAgentICBS::isConstrained(int curr_id, int next_id, int next_timestep, const std::vector< std::list< std::pair<int, int> > >* cons)  const
-//{
-//	if (cons == NULL)
-//		return false;
-//	// check vertex constraints (being in next_id at next_timestep is disallowed)
-//	if (next_timestep < static_cast<int>(cons->size()))
-//	{
-//		for (std::list< std::pair<int, int> >::const_iterator it = cons->at(next_timestep).begin(); it != cons->at(next_timestep).end(); ++it)
-//		{
-//			if ((std::get<0>(*it) == next_id && std::get<1>(*it) < 0)//vertex constraint
-//				|| (std::get<0>(*it) == curr_id && std::get<1>(*it) == next_id)) // edge constraint
-//				return true;
-//		}
-//	}
-//	return false;
-//}
 
 
 template<class Map>
@@ -111,36 +95,7 @@ template<class Map>
 bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weight, ConstraintTable& constraint_table,
 	ReservationTable* res_table, size_t max_plan_len, double lowerbound, std::clock_t start_clock ,int time_limit)
 {
-	if (al->agents[agent_id]->malfunction_left > 0) {
-		for (int i = 0;i < al->agents[agent_id]->malfunction_left; i++) {
-			if (constraint_table.is_constrained(start_location, i))
-				return false;
-		}
-		if (al->agents[agent_id]->position_fraction + al->agents[agent_id]->speed < 0.97) {
-			int count = 0;
-			for (float i = al->agents[agent_id]->position_fraction; i < 0.97; i = i + al->agents[agent_id]->speed) {
-				if (constraint_table.is_constrained(start_location, al->agents[agent_id]->malfunction_left+count))
-					return false;
-				count++;
-			}
-		}
-	}
-	else if (al->agents[agent_id]->position_fraction + al->agents[agent_id]->speed < 0.97) {
-		int count = 0;
-		for (float i = al->agents[agent_id]->position_fraction; i < 0.97; i = i + al->agents[agent_id]->speed) {
-			if (constraint_table.is_constrained(start_location, count))
-				return false;
-			count++;
-		}
-	}
 
-	//is malfunction agent constrained during malfunction state, if yes, return false
-	if (al->agents[agent_id]->malfunction_left != 0) {
-		for (int i = 0; i <= al->agents[agent_id]->malfunction_left; i++) {
-			if (constraint_table.is_constrained(start_location, i))
-				return false;
-		}
-	}
 	num_expanded = 0;
 	num_generated = 0;
 
@@ -158,9 +113,6 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 	OldConfList* conflicts = res_table->findConflict(agent_id, start->loc, start->loc, -1, kRobust);
 	start->conflist = conflicts;
 	start->num_internal_conf= conflicts->size();
-
-	start->malfunction_left = al->agents[agent_id]->malfunction_left;
-	start->next_malfunction = al->agents[agent_id]->next_malfuntion;
 
     
 	start->position_fraction = al->agents[agent_id]->position_fraction;
@@ -224,22 +176,8 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 		// check if the popped node is a goal
 		if ((curr->loc == goal_location ) /*|| (curr->parent!= NULL && curr->next_malfunction==0 && curr->parent->next_malfunction ==1)*/)
 		{
-			//bool parentAtGoal = false;
-			//LLNode* temp = curr;
-			//for (int x = 0; x <= kRobust; x++) {
-			//	if (temp->parent == NULL) {
-			//		break;
-			//	}
-			//	if (temp->parent->loc == goal_location) {
-			//		parentAtGoal = true;
-			//	}
-			//	temp = temp->parent;
-			//}
-			//if (curr->parent == NULL /*|| !parentAtGoal*/)
-			//{
-				//cout << num_generated << endl;
 
-			updatePath(curr, path);
+			updatePath(curr, path, res_table);
 
 			releaseClosedListNodes(&allNodes_table);
 
@@ -255,17 +193,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 		
 
 		vector<Transition> transitions;
-		if (curr->malfunction_left > 0) {
-            //agent is malfunction. useless in flatland 2.2
-			Transition move;
-			move.first = curr->loc;
-			move.second = 4;
-			move.position_fraction = curr->position_fraction;
-			move.exit_loc = curr->exit_loc;
-			move.exit_heading = curr->exit_heading;
-			transitions.push_back(move);
-		}
-        else if(curr->loc == -1){
+		if(curr->loc == -1){
             Transition move;
 			move.first = -1;
 			move.second = 4;
@@ -311,42 +239,19 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 
 		}
-        
-//         cout<<"current location" << curr->loc<<endl;
-// 		cout << "transitions : " ;
-// 		for (int i = 0; i < transitions.size(); i++) {
-// 			cout << "(" << transitions[i].first << "," << transitions[i].second << ") ";
-// 		}
-// 		cout << endl;
 
-		for (const auto move : transitions)
+
+		for (const auto& move : transitions)
 		{
 			int next_id = move.first;
 			time_generated += 1;
 			int next_timestep = curr->timestep + 1;
 
-			int next_malfunction_left = curr->malfunction_left > 0? curr->malfunction_left - 1 : curr->malfunction_left;
-			int next_next_malfuntion = (curr->next_malfunction > 0 && curr->malfunction_left == 0) ? curr->next_malfunction -1 : curr->next_malfunction;
-			if (curr->parent != NULL && next_next_malfuntion == 0 && curr->next_malfunction == 1) {
-				next_malfunction_left = this->max_malfunction;
-			}
-			/*if (max_plan_len <= curr->timestep)
-			{
-				if (next_id == curr->loc)
-				{
-					continue;
-				}
-			}*/
-			//if (next_id == 761) {
-// 				cout << next_id << " " << next_timestep << endl;
-// 				cout << constraint_table.is_constrained(next_id, next_timestep) << endl;
-			//}
+
 			if (!constraint_table.is_constrained(next_id, next_timestep) &&
 				!constraint_table.is_constrained(curr->loc * map_size + next_id, next_timestep)) // TODO:: for k-robust cases, we do not need to check edge constraint?
 			{
-				if ((next_next_malfuntion == 0 && curr->malfunction_left == 1) && !constraint_table.is_good_malfunction_location(next_id,next_timestep))
-					continue;//if next location not suitable for malfunction, do not generate new node.
-				// compute cost to next_id via curr node
+
 				int next_g_val = curr->g_val + 1;
 				int next_heading;
 
@@ -373,18 +278,11 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 						- (h2-h1)*move.position_fraction;
 
 				}
-				//cout << "next_h_val " << next_h_val << endl;
 				if (next_g_val + next_h_val > constraint_table.length_max)
 					continue;
 
 
-				OldConfList* conflicts = res_table->findConflict(agent_id, curr->loc, next_id, curr->timestep, kRobust);
-				int next_internal_conflicts = curr->num_internal_conf + conflicts->size();
-
-
-
-//                cout<<"next_id "<< next_id <<" curr heading "<< curr->heading<<" next heading "<<next_heading<<" h: "<<next_h_val<<" next_position_fraction "<< next_position_fraction <<endl;
-//                assert(next_h_val >=0);
+				int next_internal_conflicts = res_table->countConflict(agent_id, curr->loc, next_id, curr->timestep, kRobust);
 
 
 
@@ -393,35 +291,21 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 				next->heading = next_heading;
 				next->actionToHere = move.second;
 				next->time_generated = time_generated;
-				next->next_malfunction = next_next_malfuntion;
-				next->malfunction_left = next_malfunction_left;
 				next->position_fraction = next_position_fraction;
 				next->exit_heading = move.exit_heading;
 				next->exit_loc = move.exit_loc;
-				//std::cout << "current: (" << curr->loc << "," << curr->heading << "," << curr->getFVal() <<","<<curr->g_val<<","<<curr->h_val<<","<<curr->position_fraction << ") "
-				//	<< "next: (" << next->loc << "," << next->heading << "," << next->getFVal() << "," << next->g_val << "," << next->h_val <<","<<next->position_fraction<< ")"
-				//	<< " goal: "<< goal_location<< std::endl;
 
 				// try to retrieve it from the hash table
 				it = allNodes_table.find(next);
 				if (it == allNodes_table.end() || (next_id == goal_location && constraint_table.length_min > 0) )
 				{
 
-					//cout << "Possible child loc: " << next->loc << " heading: " << next->heading << " f: " << next->getFVal() << " g: " << next->g_val << " h: " << next->h_val<< " num_internal_conf: " << next->num_internal_conf << endl;
-					//cout << "h: " << my_heuristic[next_id].get_hval(next_heading) << endl;
-					
-
 					next->open_handle = open_list.push(next);
 					next->in_openlist = true;
 					num_generated++;
 					if (next->getFVal() <= lower_bound) {
-						//cout << "focal size " << focal_list.size() << endl;
-						//cout << "put in focal list" << endl;
 						next->focal_handle = focal_list.push(next);
 						next->in_focallist = true;
-						//cout << "focal size " << focal_list.size() << endl;
-
-
 					}
 
 					if (it == allNodes_table.end())
