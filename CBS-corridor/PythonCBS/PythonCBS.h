@@ -54,7 +54,7 @@ public:
 private:
 	std::string algo;
 	p::object railEnv;
-	FlatlandLoader* ml;
+	FlatlandLoader* ml;  // TODO:: Shouldn't it be Map* ml?
 	AgentsLoader* al;
 	constraint_strategy s;
 	options options1;

@@ -109,7 +109,7 @@ bool PythonCBS<Map>::search() {
 	else {
 		screen = 0;
 	}
-
+    al->computeHeuristics(ml);
 	if (options1.debug)
 		cout << "Sort the agents" << endl;
 	al->generateAgentOrder();

@@ -415,12 +415,14 @@ void AgentsLoader::quickSort(int low, int high)
 {
     if (low >= high)
         return;
-    auto pivot = agents_all[agent_order[high]].speed;    // pivot
+    auto& pivot = agents_all[agent_order[high]];    // pivot
     int i = low;  // Index of smaller element
     for (int j = low; j <= high - 1; j++)
     {
         // If current element is larger than or equal to pivot
-        if (agents_all[agent_order[j]].speed >= pivot)
+        if (agents_all[agent_order[j]].speed > pivot.speed ||
+            (agents_all[agent_order[j]].speed == pivot.speed &&
+            agents_all[agent_order[j]].distance_to_goal < pivot.distance_to_goal))
         {
             std::swap(agent_order[i], agent_order[j]);
             i++;    // increment index of smaller element
@@ -454,4 +456,15 @@ void AgentsLoader::addPaths(const vector<Path*>& new_paths)
         blocked_paths[agent_order[num_of_agents_finished + i]] = *new_paths[i];
     }
     num_of_agents_finished += num_of_agents;
+}
+
+void AgentsLoader::computeHeuristics(const FlatlandLoader* ml)
+{
+    for (auto& agent : agents_all) {
+        int init_loc = ml->linearize_coordinate(agent.position.first, agent.position.second);
+        int goal_loc = ml->linearize_coordinate(agent.goal_location.first, agent.goal_location.second);
+        ComputeHeuristic<FlatlandLoader> ch(init_loc, goal_loc, ml, agent.heading);
+        ch.getHVals(agent.heuristics);
+        agent.distance_to_goal = agent.heuristics[init_loc].get_hval(agent.heading);
+    }
 }

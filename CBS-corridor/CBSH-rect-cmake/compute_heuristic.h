@@ -29,11 +29,11 @@ class ComputeHeuristic
   int start_location;
   int goal_location;
   int start_heading;
-  Map* ml;
+  const Map* ml;
   int map_rows;
   int map_cols;
   ComputeHeuristic();
-  ComputeHeuristic(int start_location, int goal_location, Map* ml0, int start_heading = 4);
+  ComputeHeuristic(int start_location, int goal_location, const Map* ml0, int start_heading = 4);
  
  bool validMove(int curr, int next) const;
 

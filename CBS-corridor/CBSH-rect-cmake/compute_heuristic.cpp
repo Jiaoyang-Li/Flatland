@@ -28,8 +28,8 @@ template<class Map>
 ComputeHeuristic<Map>::ComputeHeuristic() {}
 
 template<class Map>
-ComputeHeuristic<Map>::ComputeHeuristic(int start_location, int goal_location, Map* ml0, int start_heading) {
-	ml = ml0;
+ComputeHeuristic<Map>::ComputeHeuristic(int start_location, int goal_location, const Map* ml0, int start_heading):
+    ml(ml0) {
 	map_rows = ml->rows;
 	map_cols = ml->cols;
 	this->start_location = start_location;

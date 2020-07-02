@@ -11,6 +11,7 @@
 #include "map_loader.h"
 #include <boost/python.hpp>
 #include "compute_heuristic.h"
+#include "flat_map_loader.h"
 
 using namespace std;
 
@@ -27,6 +28,7 @@ struct Agent {
 	float speed = 1.0;
 	float position_fraction = 0.0;
 	int exit_heading = -1;
+	int distance_to_goal = MAX_COST;
 };
 
 class AgentsLoader {
@@ -68,6 +70,8 @@ public:
         }
         return result;
     }
+
+    void computeHeuristics(const FlatlandLoader* ml);
 
 private:
     int num_of_agents_finished = 0;
