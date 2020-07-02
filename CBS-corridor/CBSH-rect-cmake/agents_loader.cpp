@@ -404,14 +404,15 @@ void AgentsLoader::saveToFile(const std::string& fname) {
 
 void AgentsLoader::generateAgentOrder() // sort the agents by their speeds in decreasing order
 {
-    agent_order.resize(num_of_agents_all);
+    vector<int> agent_order(num_of_agents_all);
     for (int i = 0; i < num_of_agents_all; i++)
         agent_order[i] = i;
-    quickSort(0, num_of_agents_all - 1);
+    quickSort(agent_order, 0, num_of_agents_all - 1);
+    unplanned_agents = list<int>(agent_order.begin(), agent_order.end());
 }
 
 
-void AgentsLoader::quickSort(int low, int high)
+void AgentsLoader::quickSort(vector<int>& agent_order, int low, int high)
 {
     if (low >= high)
         return;
@@ -430,32 +431,47 @@ void AgentsLoader::quickSort(int low, int high)
     }
     std::swap(agent_order[i], agent_order[high]);
 
-    quickSort(low, i - 1);  // Before i
-    quickSort(i + 1, high); // After i
+    quickSort(agent_order, low, i - 1);  // Before i
+    quickSort(agent_order, i + 1, high); // After i
 }
 
 void AgentsLoader::updateToBePlannedAgents(int _num_of_agents)
 {
-    this->num_of_agents = min(_num_of_agents, num_of_agents_all - num_of_agents_finished);
-    if (num_of_agents <= 0)
+    if (unplanned_agents.empty())
+    {
+        this->num_of_agents = 0;
         return;
+    }
+    this->num_of_agents = min(_num_of_agents, (int)unplanned_agents.size());
     agents.resize(num_of_agents);
+    auto p = unplanned_agents.begin();
     for (int i = 0; i < num_of_agents; i++)
     {
-        agents[i] = &agents_all[agent_order[num_of_agents_finished + i]];
+        agents[i] = &agents_all[*p];
+        ++p;
     }
 }
 
 void AgentsLoader::addPaths(const vector<Path*>& new_paths)
 {
     assert((int)new_paths.size() == num_of_agents);
+    list<int> dead_agents;
     for (int i = 0; i < num_of_agents; i++)
     {
-        assert(blocked_paths[agent_order[num_of_agents_finished + i]].empty());
-        assert(new_paths[i]->size() > 0);
-        blocked_paths[agent_order[num_of_agents_finished + i]] = *new_paths[i];
+        auto a = unplanned_agents.front();
+        unplanned_agents.pop_front();
+
+        if (new_paths[i] == nullptr)
+        {
+            unplanned_agents.push_back(i);
+            continue;
+        }
+        assert(blocked_paths[a].empty());
+        if(new_paths[i]->empty())
+            num_of_dead_agents++;
+        blocked_paths[a] = *new_paths[i];
     }
-    num_of_agents_finished += num_of_agents;
+    unplanned_agents.splice(unplanned_agents.begin(), dead_agents);
 }
 
 void AgentsLoader::computeHeuristics(const FlatlandLoader* ml)

@@ -58,8 +58,8 @@ public:
 
     bool solution_found = false;
 	int solution_cost;
-	pair<int, int> min_f_val;  // <#dead agents, sum of costs>
-    pair<int, int> focal_list_threshold;  // <#dead agents, sum of costs>
+	tuple<int, int, int> min_f_val;  // <#dead agents, makespan, sum of costs>
+    tuple<int, int, int> focal_list_threshold;  // <#dead agents, w * makespan, w * sum of costs>
     ICBSNode* goal_node = nullptr;
 	bool cardinalRect = false;
 	bool rectangleMDD = false;
@@ -162,7 +162,7 @@ public:
 	boost::unordered_map<int, std::list<Constraint>> allConstraints; //Store all constraints for goal Node in online flatland
 	void collectConstraints(ICBSNode* curr);
 
-
+    int getBestSolutionSoFar(); // return the number of dead agents, and the paths are stored in paths
 	MultiMapICBSSearch(Map * ml, AgentsLoader* al, double f_w, constraint_strategy c, int time_limit, int screen,
 	        int kDlay, int deadline, options options1);
 	// build MDD

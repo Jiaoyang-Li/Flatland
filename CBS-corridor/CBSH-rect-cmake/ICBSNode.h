@@ -17,7 +17,11 @@ public:
 		bool operator()(const ICBSNode* n1, const ICBSNode* n2) const 
 		{
 		    if (n1->num_of_dead_agents == n2->num_of_dead_agents)
-			    return n1->f_val >= n2->f_val;
+            {
+		        if (n1->makespan == n2->makespan)
+		            return n1->f_val >= n2->f_val;
+                return n1->makespan >= n2->makespan;
+            }
             return n1->num_of_dead_agents >= n2->num_of_dead_agents;
 		}
 	};  // used by OPEN to compare nodes by sum_min_f_vals (top of the heap has min sum_min_f_vals)
@@ -81,8 +85,8 @@ public:
 	int g_val;
 	int h_val;
 	int f_val;
-	size_t depth; // depath of this CT node
-	size_t makespan; // makespan over all paths
+	int depth; // depath of this CT node
+	int makespan = 0; // makespan over all paths
 	int num_of_collisions; // number of conflicts in the current paths
     int num_of_dead_agents = 0; // number of agents that cannot reach goals before the deadline
 

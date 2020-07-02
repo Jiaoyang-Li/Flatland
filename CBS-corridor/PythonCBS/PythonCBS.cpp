@@ -9,8 +9,9 @@ namespace p = boost::python;
 
 template <class Map>
 PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int t,
-                          int default_group_size, bool debug, float f_w,string corridor) :
-                          railEnv(railEnv1), defaultGroupSize(default_group_size) {
+                          int default_group_size, bool debug, float f_w, string corridor, bool accept_partial_solution) :
+                          railEnv(railEnv1), defaultGroupSize(default_group_size),
+                          accept_partial_solution(accept_partial_solution) {
 	//Initialize PythonCBS. Load map and agent info into memory
 	std::cout << "algo: " << algo << std::endl;
 	options1.debug = debug;
@@ -58,7 +59,7 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int
 	p::long_ cols(railEnv.attr("width"));
 
 	std::cout << "load map " << p::extract<int>(rows)<<" x "<< p::extract<int>(cols) << std::endl;
-    this->deadline = p::extract<int>(railEnv.attr("_max_episode_steps"));
+    this->deadline = p::extract<int>(railEnv.attr("_max_episode_steps")) / 4;
     std::cout << "Max timestep = " << deadline << endl;
 	//ml =  new MapLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
 	ml = new FlatlandLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
@@ -149,8 +150,14 @@ bool PythonCBS<Map>::search() {
             al->addPaths(icbs.paths);
             groupSize = min(defaultGroupSize, al->num_of_agents * 2);
         }
-        else if (icbs.isTimeout()) // run out of time
+        else
         {
+            if (accept_partial_solution)
+            {
+                int giveup_agents = icbs.getBestSolutionSoFar();
+                al->addPaths(icbs.paths);
+                cout << "Accept paths for " << al->num_of_agents - giveup_agents << " agents" << endl;
+            }
             runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
             if (runtime  < timeLimit){
                 groupSize = al->num_of_agents / 2;
@@ -166,10 +173,8 @@ bool PythonCBS<Map>::search() {
                 break;
             }
         }
-        else // no solutions, which should not happen
-        {
-            return false;
-        }
+        if (options1.debug && hasConflicts(al->blocked_paths))
+            return false; // The solution has conflicts! There should be some bugs in the code
         runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
         iteration_stats.emplace_back(al->num_of_agents, time_limit,
                                      runtime, icbs.solution_cost,
@@ -179,15 +184,10 @@ bool PythonCBS<Map>::search() {
 
     runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
     cout << endl << endl << "Find a solution for " << al->getNumOfAllAgents() - al->getNumOfUnplannedAgents()
-            << " agents in " << runtime << " seconds!" << endl;
+            << " agents (including " << al->getNumOfDeadAgents() << " dead agents) in " << runtime << " seconds!" << endl;
 
 	if (options1.debug)
     {
-	    if (hasConflicts(al->blocked_paths))
-        {
-            cout << "The final solution has conflicts!!!" << endl;
-            return false;
-        }
         for (int i = 0; i < (int)al->blocked_paths.size(); i++)
         {
             std::cout << "Agent " << i << ": ";
@@ -255,7 +255,7 @@ p::dict PythonCBS<Map>::getResultDetail() {
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
 {
 	using namespace boost::python;
-	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, int, int, int, bool,float,string>())
+	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, int, int, int, bool,float,string,bool>())
 		.def("getResult", &PythonCBS<FlatlandLoader>::getResult)
 		.def("search", &PythonCBS<FlatlandLoader>::search)
 		.def("getResultDetail", &PythonCBS<FlatlandLoader>::getResultDetail)

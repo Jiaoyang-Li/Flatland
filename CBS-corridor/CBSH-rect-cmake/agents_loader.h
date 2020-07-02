@@ -58,8 +58,9 @@ public:
     void updateToBePlannedAgents() { updateToBePlannedAgents(num_of_agents_all); };
     void updateToBePlannedAgents(int num_of_agents);
     void addPaths(const vector<Path*>& paths);
-    int getNumOfUnplannedAgents() const { return num_of_agents_all - num_of_agents_finished; }
+    int getNumOfUnplannedAgents() const { return (int)unplanned_agents.size(); }
     int getNumOfAllAgents() const { return num_of_agents_all; }
+    int getNumOfDeadAgents() const { return num_of_dead_agents; }
     boost::python::list outputPaths()   {
         boost::python::list result;
         for (const auto& path : blocked_paths)  {
@@ -74,8 +75,8 @@ public:
     void computeHeuristics(const FlatlandLoader* ml);
 
 private:
-    int num_of_agents_finished = 0;
-    vector<int> agent_order;
+    int num_of_dead_agents = 0;
+    list<int> unplanned_agents;
     int num_of_agents_all;
     vector<Agent> agents_all;
     //vector< pair<int, int> > initial_locations_all;
@@ -83,7 +84,7 @@ private:
     //vector<int> headings_all;
     // vector< vector<hvals> > heuristics;  // [agent_id][loc]
 
-    void quickSort(int low, int high);
+    void quickSort(vector<int>& agent_order, int low, int high);
 };
 
 #endif
