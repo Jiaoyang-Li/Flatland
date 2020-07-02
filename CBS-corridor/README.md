@@ -22,7 +22,8 @@ k = 1
 timelimit = 240  # unit: seconds
 default_group_size = 16 # max number of agents in a group
 corridor_method = "trainCorridor1" # or "corridor2" or ""
-CBS = PythonCBS(env,"ICBS",k,timelimit,default_group_size,debug,f_w,corridor_method)
+accept_partial_solution = True
+CBS = PythonCBS(env,"ICBS",k,timelimit,default_group_size,debug,f_w,corridor_method,accept_partial_solution)
 success = CBS.search()
 plan = CBS.getResult()
 ```
@@ -32,12 +33,17 @@ corridor_method can be "trainCorridor1" or "corridor2" or "".
 "corridor2" considerd bypass paths.
 "" turn off corridor reasoning.
 
+If accept_partial_solution is True, when when timeout, we obtain a maximal subset of collision-free paths from one of the CBS nodes.
+
 Success is a boolean, which indicate does the search success.
 
 plan is a list of list, which stores paths of all agents. 
 
 The format of a path is \[-1, -1,200,234,345\]. -1 indicate the train is not active.
-
+If a path is an empty list \[\], 
+it is either we cannot find a path for the train to reach its goal location before the deadline 
+or we do not have time to plan its path. 
+    
 run_test2.2.py contains a test example.
 
 Currently, this cbs handles both speed = 1 or agents have different speed. However, when agents have different speed, 
@@ -45,3 +51,54 @@ the performance will drop down dramatically without corridor reasoning. Corridor
 chasing conflicts between agents with different speed. But this method may contain bugs and pending testing at this stage.
 
 The suboptimal parameter f_w is available. But may have problems when f_w != 1 and working with corridor reasoning, at this stage.
+
+
+# Algorithm Overview
+
+## MAPF Model
+Here is a summary of the changes to the standard MAPF model:
+* Agents do not appear on the map before they start to move and disappear from the map after reaching their goal locations.
+* Each agent is given a constant speed (but the traversal time of an edge is still an integer).
+* The orientations of the agents are considered. In most cases (unless hitting a deadend), the agents cannot move backwards.
+* Agents can only move to empty cells. That is, this is a k-robust MAPF with k=1.
+* Agents need to reach their goal locations before a given deadline (= 8 * (env.width + env.height + n_agents/n_cities)).
+
+For now, we do not consider the malfunction in this model.
+
+## Framework
+We use a hybrid framework of prioritized planning and CBS. Here is the pseudo-code:
+
+```c++
+A = [a1, a2, ...];  // unplanned agents
+P = {};  // planned paths
+A = sort(A);  // sort the agents by some heuristics (e.g., speed, distance to the goal location)
+m = M; // M is the default number of agents in a group
+while(A is not empty) {
+    a = first m agents in A;
+    T = remaining_runtime * m / (2 * |A|);
+    paths = CBS(a, T, P);  // try to find collision-free paths for agents in a that do not collide with any path in P by CBS with a time limit of T 
+    if(paths are found) {
+        m = min(2 * m, M);
+    } else {
+        m = m / 2;
+        N = the CBS node with the smallest number of collisions;
+        paths = a maximal subset of collision-free paths in N.paths;
+        a = the corresponding agents;
+    }
+    add paths to P;
+    Remove a from A;
+}
+```
+
+In particular, if M is the number of total agents, our framework is identical to CBS. If M is 1, our framework is identical to prioritized planning.
+
+## CBS
+For the CBS solver, we have the following major changes:
+* We use k-robust CBS with k = 1.
+* We use CBS-DL from [MAPF with deadlines](http://idm-lab.org/bib/abstracts/papers/ijcai18b.pdf), which changes the objective of CBS to the minimization of
+    1. the number of dead agents, i.e., agents that fail to reach their goal locations before the deadline; then
+    2. the makespan; and last
+    3. the sum of costs.
+* We use symmetry reasoning technique for:
+    * corridor conflicts, and
+    * chasing conflicts.
