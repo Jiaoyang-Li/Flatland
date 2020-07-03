@@ -214,6 +214,7 @@ p::dict PythonCBS<Map>::getResultDetail() {
 	result["algorithm"] = algo + "_groupsize=" + to_string(defaultGroupSize) +
 	        "_priority=" + to_string(agent_priority_strategy);
 	result["No_f_rectangle"] = num_rectangle;
+	result["num_chasing"] = num_chasing;
 	result["num_corridor2"] = num_corridor2;
 	result["num_corridor4"] = num_corridor4;
     size_t solution_cost = 0;

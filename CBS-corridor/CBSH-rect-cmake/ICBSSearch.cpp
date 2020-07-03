@@ -266,18 +266,18 @@ void ICBSSearch::findConflicts(ICBSNode& curr)
 							<< "(" << get<3>(*con) / num_col << "," << get<3>(*con) % num_col << ")" << ","
 							<< get<4>(*con) << "," << get<5>(*con) << ">; ";
 						//cout << "(" << abs(preciousConflit[2] - get<2>(*con)) << ")";
-						if (preciousConflit[0] == get<0>(*con) &&
-							preciousConflit[1] == get<1>(*con) &&
-							(abs(preciousConflit[2] - get<2>(*con)) == num_col || abs(preciousConflit[2] - get<2>(*con)) == 1 || preciousConflit[2] == get<2>(*con)) &&
-							abs(get<4>(*con) - preciousConflit[3]) == 1
-							) {
-							preciousConflit[0] = get<0>(*con);
-							preciousConflit[1] = get<1>(*con);
-							preciousConflit[2] = get<2>(*con);
-							preciousConflit[3] = get<4>(*con);
-							//cout << "continues conf, jump" << endl;
-							continue;
-						}
+//						if (preciousConflit[0] == get<0>(*con) &&
+//							preciousConflit[1] == get<1>(*con) &&
+//							(abs(preciousConflit[2] - get<2>(*con)) == num_col || abs(preciousConflit[2] - get<2>(*con)) == 1 || preciousConflit[2] == get<2>(*con)) &&
+//							abs(get<4>(*con) - preciousConflit[3]) == 1
+//							) {
+//							preciousConflit[0] = get<0>(*con);
+//							preciousConflit[1] = get<1>(*con);
+//							preciousConflit[2] = get<2>(*con);
+//							preciousConflit[3] = get<4>(*con);
+//							//cout << "continues conf, jump" << endl;
+//							continue;
+//						}
 						std::shared_ptr<Conflict> newConf(new Conflict());
 
 						if (targetReasoning && (get<3>(*con) < 0) && (get<4>(*con) >= paths[get<0>(*con)]->size() - 1)) {
@@ -297,10 +297,10 @@ void ICBSSearch::findConflicts(ICBSNode& curr)
 						}
 
 						curr.unknownConf.emplace_back(newConf);
-						preciousConflit[0] = get<0>(*con);
-						preciousConflit[1] = get<1>(*con);
-						preciousConflit[2] = get<2>(*con);
-						preciousConflit[3] = get<4>(*con);
+//						preciousConflit[0] = get<0>(*con);
+//						preciousConflit[1] = get<1>(*con);
+//						preciousConflit[2] = get<2>(*con);
+//						preciousConflit[3] = get<4>(*con);
 
 					}
 					delete paths[a1]->at(t).conflist;
@@ -345,20 +345,20 @@ void ICBSSearch::findConflicts(ICBSNode& curr)
 
 				int preciousConflit[4];
 				for (auto& con : *(paths[a1]->at(t).conflist)) {
-					if (preciousConflit[0]== get<0>(*con) &&
-						preciousConflit[1] == get<1>(*con)&&
-						(abs(preciousConflit[2] - get<2>(*con)) ==num_col|| abs(preciousConflit[2] - get<2>(*con)) == 1|| preciousConflit[2] == get<2>(*con))&&
-						abs(get<4>(*con)- preciousConflit[3]) == 1
-						) {
-
-						preciousConflit[0] = get<0>(*con);
-						preciousConflit[1] = get<1>(*con);
-						preciousConflit[2] = get<2>(*con);
-						preciousConflit[3] = get<4>(*con);
-						//cout << "continues conf, jump" << endl;
-
-						continue;
-					}
+//					if (preciousConflit[0]== get<0>(*con) &&
+//						preciousConflit[1] == get<1>(*con)&&
+//						(abs(preciousConflit[2] - get<2>(*con)) ==num_col|| abs(preciousConflit[2] - get<2>(*con)) == 1|| preciousConflit[2] == get<2>(*con))&&
+//						abs(get<4>(*con)- preciousConflit[3]) == 1
+//						) {
+//
+//						preciousConflit[0] = get<0>(*con);
+//						preciousConflit[1] = get<1>(*con);
+//						preciousConflit[2] = get<2>(*con);
+//						preciousConflit[3] = get<4>(*con);
+//						//cout << "continues conf, jump" << endl;
+//
+//						continue;
+//					}
 
 					std::shared_ptr<Conflict> newConf(new Conflict());
 					
@@ -383,10 +383,10 @@ void ICBSSearch::findConflicts(ICBSNode& curr)
 						<< "(" << get<3>(*con) / num_col << "," << get<3>(*con) % num_col << ")" << ","
 						<< get<4>(*con) << "," << get<5>(*con) << ">; ";
 					curr.unknownConf.emplace_back(newConf);
-					preciousConflit[0] = get<0>(*con);
-					preciousConflit[1] = get<1>(*con);
-					preciousConflit[2] = get<2>(*con);
-					preciousConflit[3] = get<4>(*con);
+//					preciousConflit[0] = get<0>(*con);
+//					preciousConflit[1] = get<1>(*con);
+//					preciousConflit[2] = get<2>(*con);
+//					preciousConflit[3] = get<4>(*con);
 
 
 
@@ -577,8 +577,11 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 	int k = getCorridorLength(*paths[a[0]], t[0], u[1], edge);
 
 	if (chasing) {
-        if (al.agents[a[0]]->speed == al.agents[a[1]]->speed)
-            return false;
+	    if (debug_mode)
+	        cout<<"chasing"<<endl;
+
+//        if (al.agents[a[0]]->speed == al.agents[a[1]]->speed)
+//            return false;
 
 	    //get exit location
         int e[2];
@@ -587,6 +590,11 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
         int el[2];
         el[0] = paths[a[0]]->at(e[0]).location;
         el[1] = paths[a[1]]->at(e[1]).location;
+        if( !((e[0]>e[1] && t[0]<t[1]) || (e[0]<e[1] && t[0]>t[1]))){
+            if(debug_mode)
+                cout<<"not crossing"<<endl;
+            return false;
+        }
 
         if(el[0]==el[1]) {
 
@@ -597,7 +605,7 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
                                         paths[a[0]]->front(), al.agents[a[0]]->speed);
             int a1exit_ = cp.getBypassLength(search_engines[a[0]]->start_location, el[0],search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge, ml, num_col, map_size, constraintTable, a1exit,
                                             paths[a[0]]->front(), al.agents[a[0]]->speed);
-            int a1entrance = cp.getBypassLength(search_engines[a[0]]->start_location, inerU[0],search_engines[a[0]]->start_heading,(*paths[a[0]])[e[0]].heading, edge_empty, ml, num_col, map_size, constraintTable, MAX_COST,
+            int a1entrance = cp.getBypassLength(search_engines[a[0]]->start_location, inerU[0],search_engines[a[0]]->start_heading,(*paths[a[0]])[t[0]+1].heading, edge_empty, ml, num_col, map_size, constraintTable, MAX_COST,
                                         paths[a[0]]->front(), al.agents[a[0]]->speed);
 
             updateConstraintTable(node, a[1]);
@@ -606,7 +614,7 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
                                         paths[a[1]]->front(), al.agents[a[1]]->speed);
             int a2exit_ = cp.getBypassLength(search_engines[a[1]]->start_location,el[1],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge, ml, num_col, map_size, constraintTable, a2exit,
                                             paths[a[1]]->front(), al.agents[a[1]]->speed);
-            int a2entrance = cp.getBypassLength(search_engines[a[1]]->start_location,inerU[1],search_engines[a[1]]->start_heading,(*paths[a[1]])[e[1]].heading, edge_empty, ml, num_col, map_size, constraintTable, MAX_COST,
+            int a2entrance = cp.getBypassLength(search_engines[a[1]]->start_location,inerU[1],search_engines[a[1]]->start_heading,(*paths[a[1]])[t[1]+1].heading, edge_empty, ml, num_col, map_size, constraintTable, MAX_COST,
                                         paths[a[1]]->front(), al.agents[a[1]]->speed);
             int earlyAgent;
             int early_exit;
@@ -629,12 +637,27 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
                 late_exit = min(a1exit,a2exit_);
                 early_exit = a2exit;
             }
-            assert("late >= early " && late_entrance>=early_entrance);
+            if(late_entrance>=early_entrance && late_exit>=early_exit){
+                corridor = std::shared_ptr<Conflict>(new Conflict());
+                corridor->chasingConflict(earlyAgent, lateAgent, loc1, loc2,inerU[0], el[0],
+                        late_entrance,late_entrance,early_exit, late_exit, kDelay);
 
-            corridor = std::shared_ptr<Conflict>(new Conflict());
-            corridor->chasingConflict(earlyAgent, lateAgent, loc1, loc2,inerU[0], el[0],
-                    late_entrance,late_entrance,early_exit, late_exit, kDelay);
-            return true;
+                if (blocked(*(paths[corridor->a1]), corridor->constraint1) && blocked(*(paths[corridor->a2]), corridor->constraint2)) {
+                    if (debug_mode)
+                        cout<<"blocked"<<endl;
+                    return true;
+                }
+                else {
+                    if (debug_mode)
+                        cout<<"not blocked"<<endl;
+                    return false;
+                }
+            }
+            else{
+                if(debug_mode)
+                    cout<<"not chasing"<<endl;
+                return false;
+            }
         }
 
 	}
@@ -653,10 +676,16 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 
         corridor = std::shared_ptr<Conflict>(new Conflict());
 		corridor->trainCorridorConflict(a[0], a[1], inerU[0], inerU[1], t[0]+1, t[1]+1, e[0], e[1], kDelay);
-		if (blocked(*(paths[corridor->a1]), corridor->constraint1) && blocked(*(paths[corridor->a2]), corridor->constraint2))
-			return true;
-        else
+		if (blocked(*(paths[corridor->a1]), corridor->constraint1) && blocked(*(paths[corridor->a2]), corridor->constraint2)) {
+		    if (debug_mode)
+		    cout<<"blocked"<<endl;
+            return true;
+        }
+        else {
+            if (debug_mode)
+            cout<<"not blocked"<<endl;
             return false;
+        }
 	}
 	if (corridor2)
 	{
@@ -1279,8 +1308,7 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 				LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime / CLOCKS_PER_SEC << " ; " 
 				<< RMTime / CLOCKS_PER_SEC << ";"<<
 				num_standard << ";" << num_rectangle << "," <<
-				num_corridor2 << ";" << num_corridor4 << "," << num_target << "," << num_0FlipRectangle << "," <<
-				num_1FlipRectangle << "," << num_2FlipRectangle << endl;
+				num_corridor2 << ";" << num_chasing << "," << num_target << endl;
 			
 			break;
 		}
@@ -1470,16 +1498,6 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 	//			}
 				cout << endl;
 
-				//cout << "n2 conflicts:";
-				//for (auto &conit : n2->unknownConf) {
-				//	cout << "<" << get<0>(*conit) << "," << get<1>(*conit) << ","
-				//		<< "(" << get<2>(*conit) / num_col << "," << get<2>(*conit) % num_col << "),"
-				//		<< "(" << get<3>(*conit) / num_col << "," << get<3>(*conit) % num_col << ")" << ","
-				//		<< get<4>(*conit) << ">; ";
-
-				//}
-				//cout << endl;
-				////exit(0);
 			}
 		}
 
@@ -1509,7 +1527,7 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
              LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime / CLOCKS_PER_SEC << " ; "
              << RMTime/CLOCKS_PER_SEC<<";"<<
              num_standard << ";" << num_rectangle << "," <<
-             num_corridor2 << ";" << num_corridor4 << "," << num_target << "," << num_0FlipRectangle << "," <<
+             num_corridor2 << ";" << num_chasing << "," << num_target << "," << num_0FlipRectangle << "," <<
              num_1FlipRectangle << "," << num_2FlipRectangle <<
              "|Open|=" << open_list.size() << endl;
         if(debug_mode)
