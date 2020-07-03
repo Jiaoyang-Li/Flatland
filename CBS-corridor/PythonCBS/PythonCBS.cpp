@@ -193,6 +193,10 @@ bool PythonCBS<Map>::hasConflicts(const vector<Path>& paths) const
             if (paths[i][t].location == -1)
                 continue;
             constraintTable.insert(paths[i][t].location, max(0, t - kRobust), t + kRobust + 1);
+            if(t == paths[i].size() -1 && paths[i][t].location != (al->agents[i]->goal_location.first * ml->cols + al->agents[i]->goal_location.second)){
+                cout<<"Agent: " << i << " didn't reach goal location"<<endl;
+                return false;
+            }
         }
         for (int j = i + 1; j < (int)paths.size(); j++)
         {
