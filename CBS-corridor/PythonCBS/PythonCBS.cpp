@@ -178,9 +178,9 @@ bool PythonCBS<Map>::hasConflicts(const vector<Path>& paths) const
             if (paths[i][t].location == -1)
                 continue;
             constraintTable.insert(paths[i][t].location, max(0, t - kRobust), t + kRobust + 1);
-            if(t == paths[i].size() -1 && paths[i][t].location != (al->agents[i]->goal_location.first * ml->cols + al->agents[i]->goal_location.second)){
+            if(t == paths[i].size() -1 && paths[i][t].location != (al->getAgent(i).goal_location.first * ml->cols + al->getAgent(i).goal_location.second)){
                 cout<<"Agent: " << i << " didn't reach goal location"<<endl;
-                return false;
+                return true;
             }
         }
         for (int j = i + 1; j < (int)paths.size(); j++)
@@ -188,8 +188,8 @@ bool PythonCBS<Map>::hasConflicts(const vector<Path>& paths) const
             for (int t = 0; t < (int)paths[j].size(); t++) {
                 if (constraintTable.is_constrained(paths[j][t].location, t)) {
                 	if(options1.debug){
-                		cout<<"Agent: "<<i <<","<<j<<endl;
-                		cout<<"t: "<<t<<" location:" << paths[j][t].location<<endl;
+                		cout<<"Agent: "<<i <<","<<j <<" have conflict"<<endl;
+                		cout<<"at t: "<<t<<" location:" << paths[j][t].location<<endl;
                 	}
 					return true;
 				}

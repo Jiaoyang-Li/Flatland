@@ -642,15 +642,21 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
     if(chasing)
         return false;
 	if (trainCorridor1) {
+	    if(debug_mode){
+	        cout<<"trainCorridor1"<<endl;
+	    }
+
 		int e[2];
 		e[0] = cp.getExitTime(*paths[a[0]], *paths[a[1 - 0]], t[0] + 1, ml);
 		e[1] = cp.getExitTime(*paths[a[1]], *paths[a[1 - 1]], t[1] + 1, ml);
 
 
-		corridor = std::shared_ptr<Conflict>(new Conflict());
+        corridor = std::shared_ptr<Conflict>(new Conflict());
 		corridor->trainCorridorConflict(a[0], a[1], inerU[0], inerU[1], t[0]+1, t[1]+1, e[0], e[1], kDelay);
 		if (blocked(*(paths[corridor->a1]), corridor->constraint1) && blocked(*(paths[corridor->a2]), corridor->constraint2))
 			return true;
+        else
+            return false;
 	}
 	if (corridor2)
 	{
@@ -1289,70 +1295,67 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 
 		}
 
-		if (screen >= 7) {
-			if(debug_mode)
-			cout << "check conflict repeatance" << endl;
-			stringstream con;
-			//con << *(curr->conflict);
-			if (curr->conflict->k == 0) {
-				con << min(curr->conflict->a1, curr->conflict->a2) << ",";
-				con << max(curr->conflict->a1, curr->conflict->a2);
-			}
-			else {
-				con << curr->conflict->a1 << ",";
-				con << curr->conflict->a2;
-			}
-			con << ",("
-			<< curr->conflict->originalConf1 / num_col << ","
-			<< curr->conflict->originalConf1 % num_col << ")" << ",("
-			<< curr->conflict->originalConf2 / num_col << ","
-			<< curr->conflict->originalConf2 % num_col << "),"
-			<< curr->conflict->t<<"," << curr->conflict->k<<","<<curr->conflict->type ;
+		if (debug_mode) {
+            cout << "check conflict repeatance" << endl;
+            stringstream con;
+            //con << *(curr->conflict);
+            if (curr->conflict->k == 0) {
+                con << min(curr->conflict->a1, curr->conflict->a2) << ",";
+                con << max(curr->conflict->a1, curr->conflict->a2);
+            } else {
+                con << curr->conflict->a1 << ",";
+                con << curr->conflict->a2;
+            }
+            con << ",("
+                << curr->conflict->originalConf1 / num_col << ","
+                << curr->conflict->originalConf1 % num_col << ")" << ",("
+                << curr->conflict->originalConf2 / num_col << ","
+                << curr->conflict->originalConf2 % num_col << "),"
+                << curr->conflict->t << "," << curr->conflict->k << "," << curr->conflict->type;
 
 
-			curr->resolvedConflicts.insert(con.str());
+            curr->resolvedConflicts.insert(con.str());
 
-			bool stop = false;
-			bool noRepeat = true;
-			ICBSNode* parent = curr->parent;
-			if (parent != NULL) {
-				if (debug_mode)
-				cout << "Try find " << con.str() << " in curr's parent nodes" << endl;
-				while (!stop) {
-					if (debug_mode)
-					cout << "1";
-					if (parent->parent == NULL) {
-						stop = true;
-						break;
-					}
-					std::unordered_set<std::string>::const_iterator it = parent->resolvedConflicts.find(con.str());
-					if (it != parent->resolvedConflicts.end()) {
-						noRepeat = false;
-						printHLTree();
-					}
-					if (!noRepeat) {
-						cout << "Repeatance detected!!!" << endl;
-						exit(1);
-					}
-					parent = parent->parent;
+            bool stop = false;
+            bool noRepeat = true;
+            ICBSNode *parent = curr->parent;
+            if (parent != NULL) {
+                if (debug_mode)
+                    cout << "Try find " << con.str() << " in curr's parent nodes" << endl;
+                while (!stop) {
+                    if (debug_mode)
+                        cout << "1";
+                    if (parent->parent == NULL) {
+                        stop = true;
+                        break;
+                    }
+                    std::unordered_set<std::string>::const_iterator it = parent->resolvedConflicts.find(con.str());
+                    if (it != parent->resolvedConflicts.end()) {
+                        noRepeat = false;
+                        printHLTree();
+                    }
+                    if (!noRepeat) {
+                        cout << "Repeatance detected!!!" << endl;
+                        exit(1);
+                    }
+                    parent = parent->parent;
 
-				}
-			}
-			else {
-				if (debug_mode)
-				cout << "no parent" << endl;
+                }
+            } else {
+                if (debug_mode)
+                    cout << "no parent" << endl;
 
-			}
-			if (noRepeat) {
-				if (debug_mode)
-				cout << "no repeatance" << endl;
-			}
-			else {
-				if (debug_mode)
-				cout << "repeatance detected" << endl;
-			}
+            }
+            if (noRepeat) {
+                if (debug_mode)
+                    cout << "no repeatance" << endl;
+            } else {
+                if (debug_mode)
+                    cout << "repeatance detected" << endl;
+            }
+        }
 
-		}
+
 
 		 //Expand the node
 		HL_num_expanded++;

@@ -135,11 +135,11 @@ public:
 		this->a1 = a1;
 		this->a2 = a2;
 		this->k = k;
-		this->t = std::min(e1, e2);
+		this->t = e1*1000+e2;
 		this->originalConf1 = v1;
 		this->originalConf2 = v2;
-		this->constraint1.emplace_back(v1, t1, e2-1 + kRobust, constraint_type::RANGE);
-		this->constraint2.emplace_back(v2, t2, e1-1 + kRobust, constraint_type::RANGE);
+		this->constraint1.emplace_back(v1, 0, e2-1 + kRobust, constraint_type::RANGE);
+		this->constraint2.emplace_back(v2, 0, e1-1 + kRobust, constraint_type::RANGE);
 		type = conflict_type::CORRIDOR2;
 	}
 
