@@ -9,9 +9,11 @@ namespace p = boost::python;
 
 template <class Map>
 PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int t,
-                          int default_group_size, bool debug, float f_w, string corridor, bool accept_partial_solution) :
+                          int default_group_size, bool debug, float f_w, string corridor, bool accept_partial_solution,
+                          int agent_priority_strategy) :
                           railEnv(railEnv1), defaultGroupSize(default_group_size),
-                          accept_partial_solution(accept_partial_solution) {
+                          accept_partial_solution(accept_partial_solution),
+                          agent_priority_strategy(agent_priority_strategy) {
 	//Initialize PythonCBS. Load map and agent info into memory
 	std::cout << "algo: " << algo << std::endl;
 	options1.debug = debug;
@@ -98,7 +100,7 @@ bool PythonCBS<Map>::search() {
     al->computeHeuristics(ml);
 	if (options1.debug)
 		cout << "Sort the agents" << endl;
-	al->generateAgentOrder();
+	al->generateAgentOrder(agent_priority_strategy);
 
 	int groupSize = defaultGroupSize;
     runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
@@ -209,16 +211,24 @@ p::dict PythonCBS<Map>::getResultDetail() {
 	result["HL_generated"] = HL_num_generated;
 	result["LL_expanded"] = LL_num_expanded;
 	result["LL_generated"] = LL_num_generated;
-	result["algorithm"] = algo;
+	result["algorithm"] = algo + "_groupsize=" + to_string(defaultGroupSize) +
+	        "_priority=" + to_string(agent_priority_strategy);
 	result["No_f_rectangle"] = num_rectangle;
 	result["num_corridor2"] = num_corridor2;
 	result["num_corridor4"] = num_corridor4;
     size_t solution_cost = 0;
+    int finished_agents = 0;
+    size_t makespan = 0;
     for (const auto& path : al->paths_all)
     {
         solution_cost += path.size();
+        makespan = max(path.size(), makespan);
+        if (!path.empty())
+            finished_agents++;
     }
     result["solution_cost"] = solution_cost;
+    result["finished_agents"] = finished_agents;
+    result["makespan"] = makespan;
 	return result;
 }
 
@@ -226,7 +236,7 @@ p::dict PythonCBS<Map>::getResultDetail() {
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
 {
 	using namespace boost::python;
-	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, int, int, int, bool,float,string,bool>())
+	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, int, int, int, bool,float,string,bool,int>())
 		.def("getResult", &PythonCBS<FlatlandLoader>::getResult)
 		.def("search", &PythonCBS<FlatlandLoader>::search)
 		.def("getResultDetail", &PythonCBS<FlatlandLoader>::getResultDetail)
