@@ -1808,17 +1808,18 @@ bool MultiMapICBSSearch<Map>::findPathForSingleAgent(ICBSNode*  node, int ag, do
 	LL_num_generated += search_engines[ag]->num_generated;
 
     node->paths.emplace_back(ag, newPath);
-    paths[ag] = &node->paths.back().second;
     if (foundSol)
     {
         assert(!newPath.empty());
         node->g_val = node->g_val - paths[ag]->size() + newPath.size();
+        paths[ag] = &node->paths.back().second;
         node->makespan = std::max(node->makespan, (int)newPath.size() - 1);
     }
     else
     {
         node->num_of_dead_agents++;
         node->g_val = node->g_val - paths[ag]->size() + 1;
+        paths[ag] = &node->paths.back().second;
         node->makespan = 0;
         for (const auto& path : paths)
             node->makespan = max(node->makespan, (int)path->size() - 1);
