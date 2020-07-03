@@ -266,7 +266,7 @@ void ICBSSearch::findConflicts(ICBSNode& curr)
 							<< "(" << get<3>(*con) / num_col << "," << get<3>(*con) % num_col << ")" << ","
 							<< get<4>(*con) << "," << get<5>(*con) << ">; ";
 						//cout << "(" << abs(preciousConflit[2] - get<2>(*con)) << ")";
-						if (preciousConflit[0] == get<0>(*con) &&
+						/*if (preciousConflit[0] == get<0>(*con) &&
 							preciousConflit[1] == get<1>(*con) &&
 							(abs(preciousConflit[2] - get<2>(*con)) == num_col || abs(preciousConflit[2] - get<2>(*con)) == 1 || preciousConflit[2] == get<2>(*con)) &&
 							abs(get<4>(*con) - preciousConflit[3]) == 1
@@ -277,7 +277,7 @@ void ICBSSearch::findConflicts(ICBSNode& curr)
 							preciousConflit[3] = get<4>(*con);
 							//cout << "continues conf, jump" << endl;
 							continue;
-						}
+						}*/ // TODO:: This step might skip a cardinal conflict, so I comment them for now.
 						std::shared_ptr<Conflict> newConf(new Conflict());
 
 						if (targetReasoning && (get<3>(*con) < 0) && (get<4>(*con) >= paths[get<0>(*con)]->size() - 1)) {
@@ -1000,7 +1000,7 @@ bool ICBSSearch::generateChild(ICBSNode*  node, ICBSNode* curr)
 	else
 		node->h_val = 0;
 	node->f_val = node->g_val + node->h_val;
-
+    assert(node->f_val >= curr->f_val);
 	t1 = std::clock();
 	findConflicts(*node);
 	runtime_conflictdetection += (std::clock() - t1)  * 1000.0 / CLOCKS_PER_SEC;
@@ -1232,7 +1232,9 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 			runtime_conflictdetection += std::clock() - t1;
 
 			t1 = std::clock();
-			curr->h_val = computeHeuristics(*curr);
+			int h = computeHeuristics(*curr);
+			assert(h >= curr->h_val);
+            curr->h_val = h;
 			runtime_computeh += std::clock() - t1;
 			curr->f_val = curr->g_val + curr->h_val;
 
@@ -1824,7 +1826,7 @@ bool MultiMapICBSSearch<Map>::findPathForSingleAgent(ICBSNode*  node, int ag, do
         for (const auto& path : paths)
             node->makespan = max(node->makespan, (int)path->size() - 1);
     }
-
+    
 
 	return true;
 }
@@ -1945,7 +1947,7 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
 		//std::tie(loc1, loc2, timestep, type) = con->constraint1.front();
 		parent.unknownConf.pop_front();
         if(debug_mode){
-            cout<<"Classify: "<<"<"<<a1<<","<<a2<<","<<loc1 <<","<<loc2<<","<<timestep<<","<<con->k<<","<<type<<">"<<endl;
+            cout<<"Classify: "<<"<"<<a1<<","<<a2<<","<<loc1 <<","<<loc2<<","<<timestep<<","<<con->k<<","<<type<<">";
         }
 		
 		bool cardinal1 = false, cardinal2 = false;
@@ -1986,14 +1988,20 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
 		if (cardinal1 && cardinal2)
 		{
 			con->p = conflict_priority::CARDINAL;
+			if (debug_mode)
+			    cout << " --- cardinal" << endl;
 		}
 		else if (cardinal1 || cardinal2)
 		{
 			con->p = conflict_priority::SEMI;
+            if (debug_mode)
+                cout << " --- semi-cardinal" << endl;
 		}
 		else
 		{
 			con->p = conflict_priority::NON;
+            if (debug_mode)
+                cout << " --- non-cardinal" << endl;
 		}
 		if (con->p == conflict_priority::CARDINAL && cons_strategy == constraint_strategy::ICBS)
 		{
