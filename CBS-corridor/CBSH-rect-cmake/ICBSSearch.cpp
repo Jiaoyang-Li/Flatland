@@ -1017,8 +1017,15 @@ bool ICBSSearch::generateChild(ICBSNode*  node, ICBSNode* curr)
 	node->open_handle = open_list.push(node);
 	HL_num_generated++;
 	node->time_generated = HL_num_generated;
-	if (make_tuple(node->num_of_dead_agents, node->makespan, node->f_val) <= focal_list_threshold)
-		node->focal_handle = focal_list.push(node);
+	if(debug_mode) {
+        cout << "child dead: " <<node->num_of_dead_agents << " makespan: "<<node->makespan << "f: " << node->f_val<< endl;
+        cout << "focal_list_threshold: " << get<0>(focal_list_threshold)<<","<< get<1>(focal_list_threshold) <<","<<get<2>(focal_list_threshold) << endl;
+    }
+	if (make_tuple(node->num_of_dead_agents, node->makespan, node->f_val) <= focal_list_threshold) {
+	    if(debug_mode)
+	        cout<<"add to focal"<<endl;
+        node->focal_handle = focal_list.push(node);
+    }
 	allNodes_table.push_back(node);
 
 
