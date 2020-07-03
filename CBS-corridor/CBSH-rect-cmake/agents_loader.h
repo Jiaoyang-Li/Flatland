@@ -29,6 +29,7 @@ struct Agent {
 	float position_fraction = 0.0;
 	int exit_heading = -1;
 	int distance_to_goal = MAX_COST;
+	int priority = 0;
 };
 
 class AgentsLoader {
@@ -56,7 +57,7 @@ public:
     // void clearLocationFromAgents(int row, int col);
     ~AgentsLoader();
 
-    void generateAgentOrder();
+    void generateAgentOrder(int agent_priority_strategy);
     void updateToBePlannedAgents() { updateToBePlannedAgents(num_of_agents_all); };
     void updateToBePlannedAgents(int num_of_agents);
     void addPaths(const vector<Path*>& paths, int kDelay);
@@ -95,7 +96,57 @@ private:
     //vector<int> headings_all;
     // vector< vector<hvals> > heuristics;  // [agent_id][loc]
 
-    void quickSort(vector<int>& agent_order, int low, int high);
+    void quickSort(vector<int>& agent_order, int low, int high, int agent_priority_strategy);
+
+    static inline bool compareAgent(const Agent& a1, const Agent& a2, int agent_priority_strategy)
+    {  // return true if a1 < a2
+        if (agent_priority_strategy == 1)    // 1: prefer max speed then max distance
+        {
+            if (a1.speed == a2.speed)
+            {
+                return a1.distance_to_goal >= a2.distance_to_goal;
+            }
+            return a1.speed >= a2.speed;
+        }
+        else if (agent_priority_strategy == 2)    // 2: prefer min speed then max distance
+        {
+            if (a1.speed == a2.speed)
+            {
+                return a1.distance_to_goal >= a2.distance_to_goal;
+            }
+            return a1.speed <= a2.speed;
+        }
+        else if (agent_priority_strategy == 3)    // 3: prefer max speed then min distance
+        {
+            if (a1.speed == a2.speed)
+            {
+                return a1.distance_to_goal <= a2.distance_to_goal;
+            }
+            return a1.speed >= a2.speed;
+        }
+        else if (agent_priority_strategy == 4)    // 4: prefer min speed then min distance
+        {
+            if (a1.speed == a2.speed)
+            {
+                return a1.distance_to_goal <= a2.distance_to_goal;
+            }
+            return a1.speed <= a2.speed;
+        }
+        else if (agent_priority_strategy == 5)    // 5: prefer different start locations then max speed then max distance
+        {
+            if (a1.priority == a2.priority)
+            {
+                if (a1.speed == a2.speed)
+                {
+                    return a1.distance_to_goal >= a2.distance_to_goal;
+                }
+                return a1.speed >= a2.speed;
+            }
+            return a1.priority < a2.priority;
+        }
+        else
+            return true;    // keep the original ordering
+    }
 };
 
 #endif

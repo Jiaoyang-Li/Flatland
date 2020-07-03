@@ -14,12 +14,14 @@ template <class Map>
 class PythonCBS {
 public:
 	PythonCBS(p::object railEnv1, std::string algo, int kRobust, int t,
-              int default_group_size, bool debug, float f_w, string corridor, bool accept_partial_solution);
+              int default_group_size, bool debug, float f_w, string corridor, bool accept_partial_solution,
+              int agent_priority_strategy);
 
 	p::list getResult();
 
 	int defaultGroupSize; // max number of agents in a group
     bool accept_partial_solution;
+    int agent_priority_strategy;
 	bool search();
 	p::dict getResultDetail();
 	void updateAgents(p::object railEnv1);

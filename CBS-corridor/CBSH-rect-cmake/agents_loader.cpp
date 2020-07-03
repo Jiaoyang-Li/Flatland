@@ -401,18 +401,42 @@ void AgentsLoader::saveToFile(const std::string& fname) {
   myfile.close();
 }
 
-
-void AgentsLoader::generateAgentOrder() // sort the agents by their speeds in decreasing order
+// agent_priority_strategy:
+// 0: keep the original ordering
+// 1: prefer max speed then max distance
+// 2: prefer min speed then max distance
+// 3: prefer max speed then min distance
+// 4: prefer min speed then min distance
+// 5: prefer different start locations then max speed then max distance
+void AgentsLoader::generateAgentOrder(int agent_priority_strategy)
 {
+    if (agent_priority_strategy == 5)
+    {
+        // decide the agent priority for agents at the same start location
+        boost::unordered_map<pair<int, int>, vector<int>, hash_pair> start_locations; // map the agents to their start locations
+        for (int i = 0; i < num_of_agents_all; i++)
+            start_locations[agents_all[i].position].push_back(i);
+        for (auto& agents : start_locations)
+        {
+            quickSort(agents.second, 0, agents.second.size() - 1, agent_priority_strategy);
+            for (int i = 0; i < (int)agents.second.size(); i++)
+            {
+                agents_all[agents.second[i]].priority = i;
+            }
+        }
+    }
+
+    // sort the agents
     vector<int> agent_order(num_of_agents_all);
     for (int i = 0; i < num_of_agents_all; i++)
         agent_order[i] = i;
-    quickSort(agent_order, 0, num_of_agents_all - 1);
+    if (agent_priority_strategy != 0)
+        quickSort(agent_order, 0, num_of_agents_all - 1, agent_priority_strategy);
     unplanned_agents = list<int>(agent_order.begin(), agent_order.end());
 }
 
 
-void AgentsLoader::quickSort(vector<int>& agent_order, int low, int high)
+void AgentsLoader::quickSort(vector<int>& agent_order, int low, int high, int agent_priority_strategy)
 {
     if (low >= high)
         return;
@@ -420,10 +444,8 @@ void AgentsLoader::quickSort(vector<int>& agent_order, int low, int high)
     int i = low;  // Index of smaller element
     for (int j = low; j <= high - 1; j++)
     {
-        // If current element is larger than or equal to pivot
-        if (agents_all[agent_order[j]].speed > pivot.speed ||
-            (agents_all[agent_order[j]].speed == pivot.speed &&
-            agents_all[agent_order[j]].distance_to_goal > pivot.distance_to_goal))
+        // If current element is smaller than or equal to pivot
+        if (compareAgent(agents_all[agent_order[j]], pivot, agent_priority_strategy))
         {
             std::swap(agent_order[i], agent_order[j]);
             i++;    // increment index of smaller element
@@ -431,8 +453,8 @@ void AgentsLoader::quickSort(vector<int>& agent_order, int low, int high)
     }
     std::swap(agent_order[i], agent_order[high]);
 
-    quickSort(agent_order, low, i - 1);  // Before i
-    quickSort(agent_order, i + 1, high); // After i
+    quickSort(agent_order, low, i - 1, agent_priority_strategy);  // Before i
+    quickSort(agent_order, i + 1, high, agent_priority_strategy); // After i
 }
 
 void AgentsLoader::updateToBePlannedAgents(int _num_of_agents)
