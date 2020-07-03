@@ -158,13 +158,12 @@ template<class Map>
 class MultiMapICBSSearch :public ICBSSearch
 {
 public:
-    int deadline;
 	boost::unordered_map<int, std::list<Constraint>> allConstraints; //Store all constraints for goal Node in online flatland
 	void collectConstraints(ICBSNode* curr);
 
     int getBestSolutionSoFar(); // return the number of dead agents, and the paths are stored in paths
 	MultiMapICBSSearch(Map * ml, AgentsLoader* al, double f_w, constraint_strategy c, int time_limit, int screen,
-	        int kDlay, int deadline, options options1);
+	        int kDlay, options options1);
 	// build MDD
 	MDD<Map>* buildMDD(ICBSNode& node, int id);
 	void updateConstraintTable(ICBSNode* curr, int agent_id);
@@ -216,9 +215,6 @@ protected:
 	Map* ml;
 	ICBSNode* goalNode;
 	AgentsLoader& al;
-
-
-    ConstraintTable initialConstraintTable; // store the blocked paths
 
     void addPathsToInitialCT(const vector<Path>& paths);
 };

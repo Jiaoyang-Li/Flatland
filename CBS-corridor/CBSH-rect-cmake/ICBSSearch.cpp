@@ -1169,20 +1169,19 @@ void MultiMapICBSSearch<Map>::collectConstraints(ICBSNode* curr) {
 template<class Map>
 bool MultiMapICBSSearch<Map>::runICBSSearch()
 {
-	
-	printStrategy();
-	initializeDummyStart();
-	start = std::clock();
-	std::clock_t t1;
-	// set timer
-	
+    printStrategy();
+    // set timer
+    start = std::clock();
+    std::clock_t t1;
+
 	runtime_computeh = 0;
 	runtime_lowlevel = 0;
 	runtime_listoperation = 0;
 	runtime_conflictdetection = 0;
 	runtime_updatepaths = 0;
 	runtime_updatecons = 0;
-	// start is already in the open_list
+
+    initializeDummyStart();
 
 	if (debug_mode)
 		cout << "Start searching:" << endl;
@@ -1494,7 +1493,8 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
             solution_cost = -2;
             timeout = false;
         }
-        cout << solution_cost << " ; " << get<1>(min_f_val) << " , " << get<2>(min_f_val) - dummy_start->g_val << " ; " <<
+        updateFocalList();
+        cout << solution_cost << " (" << get<0>(min_f_val) << ") ; " << get<1>(min_f_val) << " ; " << get<2>(min_f_val) - dummy_start->g_val << " ; " <<
              HL_num_expanded << " ; " << HL_num_generated << " ; " <<
              LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime / CLOCKS_PER_SEC << " ; "
              << RMTime/CLOCKS_PER_SEC<<";"<<
@@ -1557,7 +1557,7 @@ MultiMapICBSSearch<Map>::~MultiMapICBSSearch()
 
 template<class Map>
 MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader* al0, double f_w, constraint_strategy c,
-        int time_limit, int screen, int kDlay, int deadline, options options1): al(*al0), deadline(deadline)
+        int time_limit, int screen, int kDlay, options options1): al(*al0)
 {
 	this->option = options1;
 	this->focal_w = f_w;
@@ -1588,9 +1588,6 @@ MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader* al0, double f
 	search_engines = std::vector<SingleAgentICBS<Map>* >(num_of_agents);
 	if (debug_mode)
 		cout << "Initializing search engines" << endl;
-
-    addPathsToInitialCT(al.blocked_paths); // these paths are obstacles for all agents
-    initialConstraintTable.length_max = deadline; // all paths should be equal to or shorter than the deadline
 
 	for (int i = 0; i < num_of_agents; i++) {
 // 		if (!al.agents[i].activate)
@@ -1632,7 +1629,7 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 	// initialize paths_found_initially
 	paths.resize(num_of_agents, NULL);
 	paths_found_initially.resize(num_of_agents);
-	ReservationTable* res_table = new ReservationTable(map_size,this->max_malfunction,ignoreFinishedAgent);  // initialized to false
+	ReservationTable res_table(map_size,this->max_malfunction,ignoreFinishedAgent);  // initialized to false
 	for (int i = 0; i < num_of_agents; i++) {
 		//cout << "******************************" << endl;
 		if (screen >= 2) {
@@ -1644,13 +1641,14 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 // 			paths[i] = new vector<PathEntry>;
 // 			continue;
 // 		}
-		bool found = search_engines[i]->findPath(paths_found_initially[i], focal_w, initialConstraintTable, res_table, dummy_start->makespan + 1, 0);
+		bool found = search_engines[i]->findPath(paths_found_initially[i], focal_w, al.constraintTable,
+		        &res_table, dummy_start->makespan + 1, 0);
         LL_num_expanded += search_engines[i]->num_expanded;
         LL_num_generated += search_engines[i]->num_generated;
         paths[i] = &paths_found_initially[i];
         if (found)
         {
-            res_table->addPath(i, paths[i]);
+            res_table.addPath(i, paths[i]);
             dummy_start->makespan = max(dummy_start->makespan, (int)paths_found_initially[i].size() - 1);
             dummy_start->g_val += paths[i]->size() - 1;
         }
@@ -1669,7 +1667,6 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 
 
 	}
-	delete (res_table);
 
 	//printPaths();
 
@@ -1814,6 +1811,7 @@ bool MultiMapICBSSearch<Map>::findPathForSingleAgent(ICBSNode*  node, int ag, do
     paths[ag] = &node->paths.back().second;
     if (foundSol)
     {
+        assert(!newPath.empty());
         node->g_val = node->g_val - paths[ag]->size() + newPath.size();
         node->makespan = std::max(node->makespan, (int)newPath.size() - 1);
     }
@@ -1834,7 +1832,7 @@ bool MultiMapICBSSearch<Map>::findPathForSingleAgent(ICBSNode*  node, int ag, do
 template<class Map>
 void MultiMapICBSSearch<Map>::updateConstraintTable(ICBSNode* curr, int agent_id)
 {
-	constraintTable.copy(initialConstraintTable);
+	constraintTable.copy(al.constraintTable);
 	constraintTable.goal_location = search_engines[agent_id]->goal_location;
 	while (curr != dummy_start)
 	{
@@ -2034,18 +2032,6 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
 }
 
 template<class Map>
-void MultiMapICBSSearch<Map>::addPathsToInitialCT(const vector<Path>& paths) {
-    assert(kDelay > 0); // TODO: consider kDelay==0 in the future (in which case, we also need to add edge constraints)
-    for (const auto& path : paths) {
-        for (int t = 0; t < path.size(); t++) {
-            if (path[t].location == -1)
-                continue;
-            initialConstraintTable.insert(path[t].location, max(0, t - kDelay), t + kDelay + 1);
-        }
-    }
-}
-
-template<class Map>
 int MultiMapICBSSearch<Map>::getBestSolutionSoFar()
 {
     // find the best node
@@ -2059,37 +2045,20 @@ int MultiMapICBSSearch<Map>::getBestSolutionSoFar()
     }
 
     // Find a maximal independent set of paths (i.e., collision-free paths)
-    int num_of_dead_agents = best->num_of_dead_agents;
+    int num_of_giveup_agents = 0;
     updatePaths(best);
-    assert(kDelay > 0); // TODO: consider kDelay==0 in the future (in which case, we also need to consider edge conflicts)
-    constraintTable.clear();
-    for (int i = 0; i < (int)paths.size(); i++)
+    for (const auto& conflict : best->conflicts)
     {
-        bool has_conflict = false;
-        for (int t = 0; t < (int)paths[i]->size(); t++)
-        {
-            if (constraintTable.is_constrained(paths[i]->at(t).location, t))
-            {
-                has_conflict = true;
-                break;
-            }
-        }
-        if (has_conflict)
-        {
-            paths[i] = nullptr;
-            num_of_dead_agents++;
-        }
-        else
-        {
-            for (int t = 0; t < (int)paths[i]->size(); t++)
-            {
-                if (paths[i]->at(t).location == -1)
-                    continue;
-                constraintTable.insert(paths[i]->at(t).location, max(0, t - kDelay), t + kDelay + 1);
-            }
+        if (paths[conflict->a1] != nullptr && paths[conflict->a2] != nullptr)
+        { // give up the agent with shorter path
+            if (paths[conflict->a1]->size() < paths[conflict->a2]->size())
+                paths[conflict->a1] = nullptr;
+            else
+                paths[conflict->a2] = nullptr;
+            num_of_giveup_agents++;
         }
     }
-    return num_of_dead_agents;
+    return num_of_giveup_agents;
 }
 
 template class MultiMapICBSSearch<MapLoader>;

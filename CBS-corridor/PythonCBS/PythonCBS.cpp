@@ -42,8 +42,6 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int
 	p::long_ cols(railEnv.attr("width"));
 
 	std::cout << "load map " << p::extract<int>(rows)<<" x "<< p::extract<int>(cols) << std::endl;
-    this->deadline = p::extract<int>(railEnv.attr("_max_episode_steps")) / 4;
-    std::cout << "Max timestep = " << deadline << endl;
 	//ml =  new MapLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
 	ml = new FlatlandLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
 	std::cout << "load agents " << std::endl;
@@ -53,6 +51,8 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int
 	if (debug) {
 		al->printAllAgentsInitGoal();
 	}
+    al->constraintTable.length_max = p::extract<int>(railEnv.attr("_max_episode_steps"));
+    std::cout << "Max timestep = " << al->constraintTable.length_max << endl; // the deadline is stored in the constraint table in al, which will be used for all path finding.
 	this->max_malfunction = max_malfunction;
 
 }
@@ -101,13 +101,16 @@ bool PythonCBS<Map>::search() {
 	al->generateAgentOrder();
 
 	int groupSize = defaultGroupSize;
-	while (true) {
+    runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+
+	while (runtime < timeLimit) {
+        cout << endl;
         al->updateToBePlannedAgents(groupSize);
         if (al->num_of_agents == 0) // all agents have paths
             break;
         runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
         double time_limit = (timeLimit - runtime) * al->num_of_agents / al->getNumOfUnplannedAgents() / 2;
-        cout << endl << "Group size = " << al->num_of_agents <<
+        cout << "Group size = " << al->num_of_agents <<
                 ", time limit = " << time_limit << " seconds. " <<
                 "(Remaining agents = " << al->getNumOfUnplannedAgents() <<
                 ", remaining time = " << timeLimit - runtime << " seconds.) " << endl;
@@ -116,7 +119,7 @@ bool PythonCBS<Map>::search() {
 
         if (options1.debug)
             cout << "Time limit = " << time_limit << "second." << endl;
-        MultiMapICBSSearch <Map> icbs(ml, al, f_w, s, time_limit * CLOCKS_PER_SEC, screen, kRobust, deadline, options1);
+        MultiMapICBSSearch <Map> icbs(ml, al, f_w, s, time_limit * CLOCKS_PER_SEC, screen, kRobust, options1);
         if(s == constraint_strategy::CBSH_RM)
             icbs.rectangleMDD = true;
         icbs.trainCorridor1 = trainCorridor1;
@@ -130,7 +133,6 @@ bool PythonCBS<Map>::search() {
         bool res = icbs.runICBSSearch();
         updateCBSResults(icbs);
         if (res) {
-            al->addPaths(icbs.paths);
             groupSize = min(defaultGroupSize, al->num_of_agents * 2);
         }
         else
@@ -138,25 +140,14 @@ bool PythonCBS<Map>::search() {
             if (accept_partial_solution)
             {
                 int giveup_agents = icbs.getBestSolutionSoFar();
-                al->addPaths(icbs.paths);
                 cout << "Accept paths for " << al->num_of_agents - giveup_agents << " agents" << endl;
             }
-            runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
-            if (runtime  < timeLimit){
-                groupSize = al->num_of_agents / 2;
-                if (options1.debug)
-                    cout << "Decreasing the group size to " << groupSize << endl;
-            }
-            else
-            {
-                iteration_stats.emplace_back(al->num_of_agents, time_limit,
-                                             runtime, icbs.solution_cost,
-                                             icbs.getSumOfHeuristicsAtStarts(),
-                                             icbs.HL_num_expanded, icbs.LL_num_expanded);
-                break;
-            }
+            groupSize = max(1, al->num_of_agents / 2);
+            if (options1.debug)
+                cout << "Decreasing the group size to " << groupSize << endl;
         }
-        if (options1.debug && hasConflicts(al->blocked_paths))
+        al->addPaths(icbs.paths, kRobust);
+        if (options1.debug && hasConflicts(al->paths_all))
             return false; // The solution has conflicts! There should be some bugs in the code
         runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
         iteration_stats.emplace_back(al->num_of_agents, time_limit,
@@ -171,13 +162,7 @@ bool PythonCBS<Map>::search() {
 
 	if (options1.debug)
     {
-        for (int i = 0; i < (int)al->blocked_paths.size(); i++)
-        {
-            std::cout << "Agent " << i << ": ";
-            for (int t = 0; t < (int)al->blocked_paths[i].size(); t++)
-                std::cout << t <<"(" << al->blocked_paths[i][t].location << ")->";
-            std::cout << std::endl;
-        }
+        al->printPaths();
     }
 	return true;
 }
@@ -229,13 +214,12 @@ p::dict PythonCBS<Map>::getResultDetail() {
 	result["num_corridor2"] = num_corridor2;
 	result["num_corridor4"] = num_corridor4;
     size_t solution_cost = 0;
-    for (const auto& path : al->blocked_paths)
+    for (const auto& path : al->paths_all)
     {
         solution_cost += path.size();
     }
     result["solution_cost"] = solution_cost;
 	return result;
-
 }
 
 

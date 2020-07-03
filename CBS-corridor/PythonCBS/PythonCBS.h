@@ -61,7 +61,6 @@ private:
 	int timeLimit;
 	int kRobust;
 	int max_malfunction;
-	int deadline;
 	float f_w;
 	// MultiMapICBSSearch<Map>* icbs = NULL;
 	bool corridor2=false;
@@ -79,6 +78,8 @@ private:
     int num_rectangle = 0;
     int num_corridor2 = 0;
     int num_corridor4 = 0;
+
+    ConstraintTable constraintTable;
 
     //stats about each iteration
     typedef tuple<int, double, double, int, int, int, int> IterationStats;
