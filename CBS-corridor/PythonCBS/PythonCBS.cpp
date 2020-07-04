@@ -149,9 +149,12 @@ bool PythonCBS<Map>::search() {
             if (options1.debug)
                 cout << "Decreasing the group size to " << groupSize << endl;
         }
-        al->addPaths(icbs.paths, kRobust);
-        if (options1.debug && hasConflicts(al->paths_all))
-            return false; // The solution has conflicts! There should be some bugs in the code
+        if(!al->addPaths(icbs.paths, kRobust))
+        {
+            cout << "The solution so far has conflicts!" << endl;
+            hasConflicts(al->paths_all); // to print the conflict
+            return false;
+        }
         runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
         iteration_stats.emplace_back(al->num_of_agents, time_limit,
                                      runtime, icbs.solution_cost,
@@ -190,10 +193,8 @@ bool PythonCBS<Map>::hasConflicts(const vector<Path>& paths) const
         {
             for (int t = 0; t < (int)paths[j].size(); t++) {
                 if (constraintTable.is_constrained(paths[j][t].location, t)) {
-                	if(options1.debug){
                 		cout<<"Agent: "<<i <<","<<j <<" have conflict"<<endl;
                 		cout<<"at t: "<<t<<" location:" << paths[j][t].location<<endl;
-                	}
 					return true;
 				}
             }

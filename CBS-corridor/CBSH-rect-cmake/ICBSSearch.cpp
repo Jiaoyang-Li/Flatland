@@ -3,6 +3,7 @@
 #include <ctime>
 #include <iostream>
 
+#define MAX_K_VERTEX_COVER_EDGES 10
 
 // takes the paths_found_initially and UPDATE all (constrained) paths found for agents from curr to start
 // also, do the same for ll_min_f_vals and paths_costs (since its already "on the way").
@@ -99,24 +100,25 @@ inline void ICBSSearch::updatePaths(ICBSNode* curr)
 int ICBSSearch::computeHeuristics(const ICBSNode& curr)
 {
 	// Conflict graph
-
 	vector<vector<bool>> CG(num_of_agents);
 	int num_of_CGnodes = 0, num_of_CGedges = 0;
 	for (int i = 0; i < num_of_agents; i++)
 		CG[i].resize(num_of_agents, false);
+    if (debug_mode)
+        cout << "Conflict graph: ";
 	for (auto conflict : curr.conflicts)
 	{
-
-
-
 		if(conflict->p == conflict_priority::CARDINAL && !CG[conflict->a1][conflict->a2])
 		{
 			CG[conflict->a1][conflict->a2] = true;
 			CG[conflict->a2][conflict->a1] = true;
 			num_of_CGedges++;
+			if (debug_mode)
+			    cout << "(" << conflict->a1 << "," << conflict->a2 << "),";
 		}
 	}
-
+    if (debug_mode)
+        cout << endl;
 
 	if (num_of_CGedges < 2)
 		return num_of_CGedges;
@@ -136,11 +138,10 @@ int ICBSSearch::computeHeuristics(const ICBSNode& curr)
 
 
 	// Minimum Vertex Cover
-	if (curr.parent == NULL) // root node of CBS tree
+	if (curr.parent == NULL || // root node of CBS tree or
+        num_of_CGedges > MAX_K_VERTEX_COVER_EDGES) // too many edges for k vertex cover method
 	{
-		for (int i = 1; i < num_of_CGnodes; i++)
-			if (KVertexCover(CG, num_of_CGnodes, num_of_CGedges, i))
-				return i;
+		return minimumVertexCover(CG);
 	}
 	if (KVertexCover(CG, num_of_CGnodes, num_of_CGedges, curr.parent->h_val - 1))
 		return curr.parent->h_val - 1;
@@ -150,7 +151,96 @@ int ICBSSearch::computeHeuristics(const ICBSNode& curr)
 		return curr.parent->h_val + 1;
 }
 
+// Find disjoint components and apply k vertex cover or greedy matching on each component
+int ICBSSearch::minimumVertexCover(const vector<vector<bool>>& CG)
+{
+    int rst = 0;
+    std::vector<bool> done(num_of_agents, false);
+    for (int i = 0; i < num_of_agents; i++)
+    {
+        if (done[i])
+            continue;
+        std::vector<int> indices;
+        indices.reserve(num_of_agents);
+        std::queue<int> Q;
+        Q.push(i);
+        done[i] = true;
+        while (!Q.empty())
+        {
+            int j = Q.front(); Q.pop();
+            indices.push_back(j);
+            for (int k = 0; k < num_of_agents; k++)
+            {
+                if (CG[j][k] && !done[k])
+                {
+                    Q.push(k);
+                    done[k] = true;
+                }
+            }
+        }
+        if ((int) indices.size() == 1) //one node -> no edges -> mvc = 0
+            continue;
+        else if ((int)indices.size() == 2) // two nodes -> only one edge -> mvc = 1
+        {
+            rst += 1; // add edge weight
+            continue;
+        }
 
+        std::vector<vector<bool> > subgraph(indices.size(), vector<bool>(indices.size(), false));
+        int num_edges = 0;
+        for (int j = 0; j < (int) indices.size(); j++)
+        {
+            for (int k = j + 1; k < (int)indices.size(); k++)
+            {
+                subgraph[j][k] = CG[indices[j]][indices[k]];
+                subgraph[k][j] = CG[indices[k]][indices[j]];
+                if (subgraph[j][k])
+                    num_edges++;
+            }
+        }
+
+        if (num_edges < MAX_K_VERTEX_COVER_EDGES)
+        {
+            for (int i = 1; i < (int)indices.size(); i++)
+            {
+                if (KVertexCover(subgraph, (int)indices.size(), num_edges, i))
+                {
+                    rst += i;
+                    break;
+                }
+                runtime = (std::clock() - start);
+                if (runtime > time_limit)
+                    return -1; // run out of time
+            }
+        }
+        else
+        {
+            return greedyMatching(subgraph);
+        }
+    }
+    return rst;
+}
+
+int ICBSSearch::greedyMatching(const vector<vector<bool>>& CG) const
+{
+    int rst = 0;
+    std::vector<bool> selected(CG.size(), false);
+    for (int i = 0; i < (int)CG.size(); i++)
+    {
+        if (selected[i])
+            continue;
+        for (int j = i + 1; j < (int)CG.size(); j++)
+        {
+            if(CG[i][j] > 0 && !selected[j])
+            {
+                rst += 1; // select the edge between i and j
+                selected[i] = true;
+                selected[j] = true;
+            }
+        }
+    }
+    return rst;
+}
 
 // Whether there exists a k-vertex cover solution
 bool ICBSSearch::KVertexCover(const vector<vector<bool>>& CG, int num_of_CGnodes, int num_of_CGedges, int k)
@@ -160,11 +250,11 @@ bool ICBSSearch::KVertexCover(const vector<vector<bool>>& CG, int num_of_CGnodes
 	else if (num_of_CGedges > k * num_of_CGnodes - k) 
 		return false;
 
-	vector<int> node(2);
+	int node[2];
 	bool flag = true;
-	for (int i = 0; i < num_of_agents - 1 && flag; i++) // to find an edge
+	for (int i = 0; i < (int)CG.size() - 1 && flag; i++) // to find an edge
 	{
-		for (int j = i + 1; j < num_of_agents && flag; j++)
+		for (int j = i + 1; j < (int)CG.size() && flag; j++)
 		{
 			if (CG[i][j])
 			{
@@ -176,10 +266,10 @@ bool ICBSSearch::KVertexCover(const vector<vector<bool>>& CG, int num_of_CGnodes
 	}
 	for (int i = 0; i < 2; i++)
 	{
-		vector<vector<bool>> CG_copy(num_of_agents);
+		vector<vector<bool>> CG_copy(CG.size());
 		CG_copy.assign(CG.cbegin(), CG.cend());
 		int num_of_CGedges_copy = num_of_CGedges;
-		for (int j = 0; j < num_of_agents; j++)
+		for (int j = 0; j < (int)CG.size(); j++)
 		{
 			if (CG_copy[node[i]][j])
 			{
@@ -1035,7 +1125,7 @@ bool ICBSSearch::generateChild(ICBSNode*  node, ICBSNode* curr)
 	else
 		node->h_val = 0;
 	node->f_val = node->g_val + node->h_val;
-
+    assert(node->num_of_dead_agents > curr->num_of_dead_agents || node->f_val >= curr->f_val);
 	t1 = std::clock();
 	findConflicts(*node);
 	runtime_conflictdetection += (std::clock() - t1)  * 1000.0 / CLOCKS_PER_SEC;
@@ -1276,7 +1366,8 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 			runtime_conflictdetection += std::clock() - t1;
 
 			t1 = std::clock();
-			curr->h_val = computeHeuristics(*curr);
+			int h = computeHeuristics(*curr);
+            curr->h_val = max(curr->h_val, h);
 			runtime_computeh += std::clock() - t1;
 			curr->f_val = curr->g_val + curr->h_val;
 
@@ -1671,8 +1762,12 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 // 			paths[i] = new vector<PathEntry>;
 // 			continue;
 // 		}
-		bool found = search_engines[i]->findPath(paths_found_initially[i], focal_w, al.constraintTable,
-		        &res_table, dummy_start->makespan + 1, 0);
+		// bool found = search_engines[i]->findPath(paths_found_initially[i], focal_w, al.constraintTable,
+		//        &res_table, dummy_start->makespan + 1, 0);
+        // TODO: for now, I use w=1 for the low-level, because
+        //  if the low-level path is suboptimal, mdds, cardinal conflicts and many other parts need to be reconsidered.
+        bool found = search_engines[i]->findPath(paths_found_initially[i], 1, al.constraintTable,
+                                                 &res_table, dummy_start->makespan + 1, 0);
         LL_num_expanded += search_engines[i]->num_expanded;
         LL_num_generated += search_engines[i]->num_generated;
         paths[i] = &paths_found_initially[i];
@@ -1832,7 +1927,10 @@ bool MultiMapICBSSearch<Map>::findPathForSingleAgent(ICBSNode*  node, int ag, do
 	vector<PathEntry> newPath;
 	//cout << "**************" << endl;
 	//cout << "Single agent : " << curr->agent_id << endl;
-	bool foundSol = search_engines[ag]->findPath(newPath, focal_w, constraintTable, &res_table, max_plan_len, lowerbound, start, time_limit);
+	// bool foundSol = search_engines[ag]->findPath(newPath, focal_w, constraintTable, &res_table, max_plan_len, lowerbound, start, time_limit);
+	// TODO: for now, I use w=1 for the low-level, because
+	//  if the low-level path is suboptimal, mdds, cardinal conflicts and many other parts need to be reconsidered.
+    bool foundSol = search_engines[ag]->findPath(newPath, 1, constraintTable, &res_table, max_plan_len, lowerbound, start, time_limit);
 
 	LL_num_expanded += search_engines[ag]->num_expanded;
 	LL_num_generated += search_engines[ag]->num_generated;
@@ -1975,7 +2073,7 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
 		//std::tie(loc1, loc2, timestep, type) = con->constraint1.front();
 		parent.unknownConf.pop_front();
         if(debug_mode){
-            cout<<"Classify: "<<"<"<<a1<<","<<a2<<","<<loc1 <<","<<loc2<<","<<timestep<<","<<con->k<<","<<type<<">"<<endl;
+            cout<<"Classify: "<<"<"<<a1<<","<<a2<<","<<loc1 <<","<<loc2<<","<<timestep<<","<<con->k<<","<<type<<">";
         }
 		
 		bool cardinal1 = false, cardinal2 = false;
@@ -2016,14 +2114,20 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
 		if (cardinal1 && cardinal2)
 		{
 			con->p = conflict_priority::CARDINAL;
+			if (debug_mode)
+			    cout << " --- cardinal" << endl;
 		}
 		else if (cardinal1 || cardinal2)
 		{
 			con->p = conflict_priority::SEMI;
+            if (debug_mode)
+                cout << " --- semi-cardinal" << endl;
 		}
 		else
 		{
 			con->p = conflict_priority::NON;
+            if (debug_mode)
+                cout << " --- non-cardinal" << endl;
 		}
 		if (con->p == conflict_priority::CARDINAL && cons_strategy == constraint_strategy::ICBS)
 		{
@@ -2066,19 +2170,30 @@ template<class Map>
 int MultiMapICBSSearch<Map>::getBestSolutionSoFar()
 {
     // find the best node
-    auto best = open_list.top();
-    for (auto node : open_list)
+    auto best = focal_list.top();
+    /*for (auto node : open_list)
     {
         if (node->num_of_dead_agents < best->num_of_dead_agents ||
             (node->num_of_dead_agents == best->num_of_dead_agents &&
             node->num_of_collisions < best->num_of_collisions))
             best = node;
-    }
+    }*/
 
     // Find a maximal independent set of paths (i.e., collision-free paths)
     int num_of_giveup_agents = 0;
     updatePaths(best);
     for (const auto& conflict : best->conflicts)
+    {
+        if (paths[conflict->a1] != nullptr && paths[conflict->a2] != nullptr)
+        { // give up the agent with shorter path
+            if (paths[conflict->a1]->size() < paths[conflict->a2]->size())
+                paths[conflict->a1] = nullptr;
+            else
+                paths[conflict->a2] = nullptr;
+            num_of_giveup_agents++;
+        }
+    }
+    for (const auto& conflict : best->unknownConf)
     {
         if (paths[conflict->a1] != nullptr && paths[conflict->a2] != nullptr)
         { // give up the agent with shorter path

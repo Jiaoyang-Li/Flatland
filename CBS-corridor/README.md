@@ -23,7 +23,15 @@ timelimit = 240  # unit: seconds
 default_group_size = 16 # max number of agents in a group
 corridor_method = "trainCorridor1" # or "corridor2" or ""
 accept_partial_solution = True
-CBS = PythonCBS(env,"ICBS",k,timelimit,default_group_size,debug,f_w,corridor_method,accept_partial_solution)
+agent_priority_strategy = 0  #  the strategy for sorting agents, choosing a number between 0 and 5
+#                               0: keep the original ordering
+#                               1: prefer max speed then max distance
+#                               2: prefer min speed then max distance
+#                               3: prefer max speed then min distance
+#                               4: prefer min speed then min distance
+#                               5: prefer different start locations then max speed then max distance
+CBS = PythonCBS(env,"CBSH",k,timelimit,default_group_size,debug,f_w,
+                corridor_method,accept_partial_solution,agent_priority_strategy)
 success = CBS.search()
 plan = CBS.getResult()
 ```
@@ -81,7 +89,7 @@ while(A is not empty) {
         m = min(2 * m, M);
     } else {
         m = m / 2;
-        N = the CBS node with the smallest number of collisions;
+        N = the first node in the focal list of CBS;
         paths = a maximal subset of collision-free paths in N.paths;
         a = the corresponding agents;
     }
