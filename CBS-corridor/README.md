@@ -54,6 +54,9 @@ or we do not have time to plan its path.
     
 run_test2.2.py contains a test example.
 
+run_batch.py is a script to test algorithms on the official provided test cases. 
+data_analysis/data_analysis.py analyzes the results (success rate, solution cost, etc.) got from run_batch.py.
+
 Currently, this cbs handles both speed = 1 or agents have different speed. However, when agents have different speed, 
 the performance will drop down dramatically without corridor reasoning. Corridor reasoning contains a method that reasoning
 chasing conflicts between agents with different speed. But this method may contain bugs and pending testing at this stage.
@@ -102,7 +105,7 @@ In particular, if M is the number of total agents, our framework is identical to
 
 ## CBS
 For the CBS solver, we have the following major changes:
-* We use k-robust CBS with k = 1.
+* We use k-robust CBSH with k = 1.
 * We use CBS-DL from [MAPF with deadlines](http://idm-lab.org/bib/abstracts/papers/ijcai18b.pdf), which changes the objective of CBS to the minimization of
     1. the number of dead agents, i.e., agents that fail to reach their goal locations before the deadline; then
     2. the makespan; and last
