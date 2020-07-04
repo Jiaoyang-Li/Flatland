@@ -17,12 +17,11 @@ from libPythonCBS import PythonCBS
 
 
 path = '/mnt/d/Flatland/CBS-corridor/test-neurips2020-round1-v1/'
-
 f_w = 1
 debug = False
 k = 1
 timelimit = 240  # unit: seconds
-default_group_size = 16 # max number of agents in a group
+default_group_size = 8 # max number of agents in a group
 corridor_method = "trainCorridor1" # or "corridor2" or ""
 accept_partial_solution = True
 agent_priority_strategy = 0  #  choose a number between 0 and 5
