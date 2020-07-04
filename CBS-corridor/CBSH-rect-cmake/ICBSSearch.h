@@ -85,10 +85,10 @@ public:
 
 
 
-	ICBSSearch() {};
+	ICBSSearch(AgentsLoader& al): al(al) {};
 
 protected:
-	
+    AgentsLoader& al;
 	typedef boost::heap::fibonacci_heap< ICBSNode*, boost::heap::compare<ICBSNode::compare_node> > heap_open_t;
 	typedef boost::heap::fibonacci_heap< ICBSNode*, boost::heap::compare<ICBSNode::secondary_compare_node> > heap_focal_t;
 	heap_open_t open_list;
@@ -215,7 +215,6 @@ protected:
 	vector<SingleAgentICBS<Map> *> search_engines;  // used to find (single) agents' paths and mdd
 	Map* ml;
 	ICBSNode* goalNode;
-	AgentsLoader& al;
 
     void addPathsToInitialCT(const vector<Path>& paths);
 };

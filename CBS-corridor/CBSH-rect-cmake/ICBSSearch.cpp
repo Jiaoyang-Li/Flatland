@@ -1140,7 +1140,10 @@ bool ICBSSearch::generateChild(ICBSNode*  node, ICBSNode* curr)
         cout << "child dead: " <<node->num_of_dead_agents << " makespan: "<<node->makespan << "f: " << node->f_val<< endl;
         cout << "focal_list_threshold: " << get<0>(focal_list_threshold)<<","<< get<1>(focal_list_threshold) <<","<<get<2>(focal_list_threshold) << endl;
     }
-	if (make_tuple(node->num_of_dead_agents, node->makespan, node->f_val) <= focal_list_threshold) {
+	if (node->num_of_dead_agents == get<0>(focal_list_threshold) &&
+	    node->makespan <= get<1>(focal_list_threshold) &&
+	    node->f_val <= get<2>(focal_list_threshold))
+	{
 	    if(debug_mode)
 	        cout<<"add to focal"<<endl;
         node->focal_handle = focal_list.push(node);
@@ -1225,13 +1228,17 @@ void ICBSSearch::updateFocalList()
     if (make_tuple(open_head->num_of_dead_agents, open_head->makespan, open_head->f_val) == min_f_val)
         return;
     min_f_val = make_tuple(open_head->num_of_dead_agents, open_head->makespan, open_head->f_val);
-    auto new_focal_list_threshold = make_tuple(open_head->num_of_dead_agents, open_head->makespan, (int)(open_head->f_val * focal_w));
+    focal_list_threshold = make_tuple(open_head->num_of_dead_agents,
+            max(al.constraintTable.latest_timestep, open_head->makespan),  // latest_timestep is the makespan of the planned paths in previous iterations
+            (int)(open_head->f_val * focal_w));
+    focal_list.clear();
 	for (ICBSNode* n : open_list) {
-	    auto cost = make_tuple(n->num_of_dead_agents, n->makespan, n->f_val);
-		if (cost > focal_list_threshold && cost <= new_focal_list_threshold)
+        if (n->num_of_dead_agents == get<0>(focal_list_threshold) &&
+            n->makespan <= get<1>(focal_list_threshold) &&
+            n->f_val <= get<2>(focal_list_threshold))
 			n->focal_handle = focal_list.push(n);
 	}
-    focal_list_threshold = new_focal_list_threshold;
+
 }
 
 void ICBSSearch::updateReservationTable(bool* res_table, int exclude_agent, const ICBSNode &node) {
@@ -1369,7 +1376,9 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 			runtime_computeh += std::clock() - t1;
 			curr->f_val = curr->g_val + curr->h_val;
 
-			if (make_tuple(curr->num_of_dead_agents, curr->makespan, curr->f_val) > focal_list_threshold)
+            if (curr->num_of_dead_agents > get<0>(focal_list_threshold) ||
+                curr->makespan > get<1>(focal_list_threshold) ||
+                curr->f_val > get<2>(focal_list_threshold))
 			{
 				t1 = std::clock();
 				curr->open_handle = open_list.push(curr);
@@ -1676,7 +1685,7 @@ MultiMapICBSSearch<Map>::~MultiMapICBSSearch()
 
 template<class Map>
 MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader* al0, double f_w, constraint_strategy c,
-        int time_limit, int screen, int kDlay, options options1): al(*al0)
+        int time_limit, int screen, int kDlay, options options1): ICBSSearch(*al0)
 {
 	this->option = options1;
 	this->focal_w = f_w;
@@ -1813,7 +1822,9 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 	if (debug_mode)
 		cout << "Find initial conflict done" << endl;
 	min_f_val = make_tuple(dummy_start->num_of_dead_agents, dummy_start->makespan, dummy_start->f_val);
-	focal_list_threshold = make_tuple(dummy_start->num_of_dead_agents, dummy_start->makespan, (int)(dummy_start->f_val * focal_w));
+	focal_list_threshold = make_tuple(dummy_start->num_of_dead_agents,
+	        max(al.constraintTable.latest_timestep, dummy_start->makespan),  // latest_timestep is the makespan of the planned paths in previous iterations
+	        (int)(dummy_start->f_val * focal_w));
 	if (debug_mode)
 	{
 

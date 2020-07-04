@@ -110,3 +110,9 @@ For the CBS solver, we have the following major changes:
 * We use symmetry reasoning technique for:
     * corridor conflicts, and
     * chasing conflicts.
+* We use focal search at the high-level of CBS. CBS node n is in the focal list iff
+    * n.num_of_dead_agents == best.num_of_dead_agents,
+    * n.makespan <= max(best.makespan, makespan(P)), and
+    * n.sum_of_costs + n.h <= w * (best.sum_of_costs + best.h),
+   
+   where best is the first node in the open list, makespan(P) is the makespan of the planned paths, and w is the user-provided suboptimality bound.

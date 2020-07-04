@@ -1,6 +1,8 @@
 #include "PythonCBS.h"
 #include "flat_map_loader.h"
 #include "MDD.h"
+#include <iomanip>
+#include <sstream>
 
 namespace p = boost::python;
 
@@ -212,7 +214,10 @@ p::dict PythonCBS<Map>::getResultDetail() {
 	result["HL_generated"] = HL_num_generated;
 	result["LL_expanded"] = LL_num_expanded;
 	result["LL_generated"] = LL_num_generated;
-	result["algorithm"] = algo + "_groupsize=" + to_string(defaultGroupSize) +
+    std::stringstream stream;
+    stream << std::fixed << std::setprecision(1) << f_w;
+    std::string s = stream.str();
+	result["algorithm"] = algo + "(" + s + ")_groupsize=" + to_string(defaultGroupSize) +
 	        "_priority=" + to_string(agent_priority_strategy);
 	result["No_f_rectangle"] = num_rectangle;
 	result["num_chasing"] = num_chasing;
