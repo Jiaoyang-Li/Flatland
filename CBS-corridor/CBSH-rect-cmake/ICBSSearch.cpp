@@ -1671,8 +1671,12 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 // 			paths[i] = new vector<PathEntry>;
 // 			continue;
 // 		}
-		bool found = search_engines[i]->findPath(paths_found_initially[i], focal_w, al.constraintTable,
-		        &res_table, dummy_start->makespan + 1, 0);
+		// bool found = search_engines[i]->findPath(paths_found_initially[i], focal_w, al.constraintTable,
+		//        &res_table, dummy_start->makespan + 1, 0);
+        // TODO: for now, I use w=1 for the low-level, because
+        //  if the low-level path is suboptimal, mdds, cardinal conflicts and many other parts need to be reconsidered.
+        bool found = search_engines[i]->findPath(paths_found_initially[i], 1, al.constraintTable,
+                                                 &res_table, dummy_start->makespan + 1, 0);
         LL_num_expanded += search_engines[i]->num_expanded;
         LL_num_generated += search_engines[i]->num_generated;
         paths[i] = &paths_found_initially[i];
@@ -1832,7 +1836,10 @@ bool MultiMapICBSSearch<Map>::findPathForSingleAgent(ICBSNode*  node, int ag, do
 	vector<PathEntry> newPath;
 	//cout << "**************" << endl;
 	//cout << "Single agent : " << curr->agent_id << endl;
-	bool foundSol = search_engines[ag]->findPath(newPath, focal_w, constraintTable, &res_table, max_plan_len, lowerbound, start, time_limit);
+	// bool foundSol = search_engines[ag]->findPath(newPath, focal_w, constraintTable, &res_table, max_plan_len, lowerbound, start, time_limit);
+	// TODO: for now, I use w=1 for the low-level, because
+	//  if the low-level path is suboptimal, mdds, cardinal conflicts and many other parts need to be reconsidered.
+    bool foundSol = search_engines[ag]->findPath(newPath, 1, constraintTable, &res_table, max_plan_len, lowerbound, start, time_limit);
 
 	LL_num_expanded += search_engines[ag]->num_expanded;
 	LL_num_generated += search_engines[ag]->num_generated;
@@ -2072,14 +2079,14 @@ template<class Map>
 int MultiMapICBSSearch<Map>::getBestSolutionSoFar()
 {
     // find the best node
-    auto best = open_list.top();
-    for (auto node : open_list)
+    auto best = focal_list.top();
+    /*for (auto node : open_list)
     {
         if (node->num_of_dead_agents < best->num_of_dead_agents ||
             (node->num_of_dead_agents == best->num_of_dead_agents &&
             node->num_of_collisions < best->num_of_collisions))
             best = node;
-    }
+    }*/
 
     // Find a maximal independent set of paths (i.e., collision-free paths)
     int num_of_giveup_agents = 0;
