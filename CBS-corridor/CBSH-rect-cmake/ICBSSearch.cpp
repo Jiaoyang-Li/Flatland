@@ -1583,6 +1583,12 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 			if (i < children.size() - 1)
 				paths = copy;
 		}
+		if (std::clock() - start > time_limit)
+        {
+            curr->open_handle = open_list.push(curr); // to make sure that the open list has at least one node
+            focal_list.push(curr);
+            break;
+        }
 		if (debug_mode) {
 			for (int i = 0; i < curr->children.size(); i++)
 			{
@@ -1943,7 +1949,10 @@ bool MultiMapICBSSearch<Map>::findPathForSingleAgent(ICBSNode*  node, int ag, do
 
 	LL_num_expanded += search_engines[ag]->num_expanded;
 	LL_num_generated += search_engines[ag]->num_generated;
-
+    if ((std::clock() - start) > time_limit) // run out of time
+    {
+        return false;
+    }
     node->paths.emplace_back(ag, newPath);
     if (foundSol)
     {
