@@ -80,6 +80,7 @@ private:
     int num_rectangle = 0;
     int num_corridor2 = 0;
     int num_corridor4 = 0;
+    int num_chasing = 0;
 
     ConstraintTable constraintTable;
 
@@ -97,6 +98,7 @@ private:
         num_rectangle += cbs.num_rectangle;
         num_corridor2 += cbs.num_corridor2;
         num_corridor4 += cbs.num_corridor4;
+        num_chasing += cbs.num_chasing;
     }
 
     bool hasConflicts(const vector<Path>& paths) const;

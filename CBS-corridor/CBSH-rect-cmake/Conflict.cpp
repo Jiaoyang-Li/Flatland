@@ -71,6 +71,14 @@ bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return
 	{
 		return true;
 	}
+    if (conflict1.type == conflict_type::CHASING && conflict2.type != conflict_type::CHASING)
+    {
+        return false;
+    }
+    else if (conflict2.type == conflict_type::CHASING && conflict1.type != conflict_type::CHASING)
+    {
+        return true;
+    }
 
 	if (conflict1.type == conflict_type::RECTANGLE && conflict2.type == conflict_type::RECTANGLE && conflict2.flipType != conflict1.flipType)
 	{
@@ -90,6 +98,11 @@ bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return
 			if (conflict2.type != conflict_type::CORRIDOR2)
 				return false;
 		}
+        else if (conflict1.type == conflict_type::CHASING)
+        {
+            if (conflict2.type != conflict_type::CHASING)
+                return false;
+        }
 		else if (conflict1.type == conflict_type::CORRIDOR4)
 		{
 			if (conflict2.type == conflict_type::CORRIDOR2)
@@ -106,10 +119,15 @@ bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return
 	}
 	else // both are semi or both are non 
 	{
+
 		if (conflict2.type == conflict_type::CORRIDOR2 &&  conflict1.type != conflict_type::CORRIDOR2)
 		{
 			return true;
 		}
+        else if (conflict2.type == conflict_type::CHASING &&  conflict1.type != conflict_type::CHASING)
+        {
+            return true;
+        }
 		else	if (conflict2.type != conflict_type::CORRIDOR2 &&  conflict1.type == conflict_type::CORRIDOR2)
 		{
 			return false;

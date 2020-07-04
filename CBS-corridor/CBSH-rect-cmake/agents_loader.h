@@ -86,6 +86,9 @@ public:
             std::cout << std::endl;
         }
     }
+    Agent getAgent(int id){
+        return agents_all[id];
+    }
 private:
     int num_of_dead_agents = 0;
     list<int> unplanned_agents;

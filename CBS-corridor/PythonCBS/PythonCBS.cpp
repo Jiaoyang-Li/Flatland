@@ -183,13 +183,17 @@ bool PythonCBS<Map>::hasConflicts(const vector<Path>& paths) const
             if (paths[i][t].location == -1)
                 continue;
             constraintTable.insert(paths[i][t].location, max(0, t - kRobust), t + kRobust + 1);
+            if(t == paths[i].size() -1 && paths[i][t].location != (al->getAgent(i).goal_location.first * ml->cols + al->getAgent(i).goal_location.second)){
+                cout<<"Agent: " << i << " didn't reach goal location"<<endl;
+                return true;
+            }
         }
         for (int j = i + 1; j < (int)paths.size(); j++)
         {
             for (int t = 0; t < (int)paths[j].size(); t++) {
                 if (constraintTable.is_constrained(paths[j][t].location, t)) {
-                    cout<<"Agent: "<<i <<","<<j<<endl;
-                    cout<<"t: "<<t<<" location:" << paths[j][t].location<<endl;
+                		cout<<"Agent: "<<i <<","<<j <<" have conflict"<<endl;
+                		cout<<"at t: "<<t<<" location:" << paths[j][t].location<<endl;
 					return true;
 				}
             }
@@ -211,6 +215,7 @@ p::dict PythonCBS<Map>::getResultDetail() {
 	result["algorithm"] = algo + "_groupsize=" + to_string(defaultGroupSize) +
 	        "_priority=" + to_string(agent_priority_strategy);
 	result["No_f_rectangle"] = num_rectangle;
+	result["num_chasing"] = num_chasing;
 	result["num_corridor2"] = num_corridor2;
 	result["num_corridor4"] = num_corridor4;
     size_t solution_cost = 0;

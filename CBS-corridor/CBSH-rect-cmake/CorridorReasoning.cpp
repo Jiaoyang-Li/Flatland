@@ -429,7 +429,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
 
 				}
 
-                if (next_g_val + next_h_val >= upper_bound) // the cost of the path is larger than the upper bound
+                if (next_g_val + getMahattanDistance(next_loc, end, num_col) >= upper_bound) // the cost of the path is larger than the upper bound
 					continue;
 
                 LLNode* next = new LLNode(next_loc, next_g_val, next_h_val, NULL, next_timestep);
