@@ -3,6 +3,7 @@
 #include <ctime>
 #include <iostream>
 
+#define MAX_K_VERTEX_COVER_EDGES 10
 
 // takes the paths_found_initially and UPDATE all (constrained) paths found for agents from curr to start
 // also, do the same for ll_min_f_vals and paths_costs (since its already "on the way").
@@ -99,24 +100,25 @@ inline void ICBSSearch::updatePaths(ICBSNode* curr)
 int ICBSSearch::computeHeuristics(const ICBSNode& curr)
 {
 	// Conflict graph
-
 	vector<vector<bool>> CG(num_of_agents);
 	int num_of_CGnodes = 0, num_of_CGedges = 0;
 	for (int i = 0; i < num_of_agents; i++)
 		CG[i].resize(num_of_agents, false);
+    if (debug_mode)
+        cout << "Conflict graph: ";
 	for (auto conflict : curr.conflicts)
 	{
-
-
-
 		if(conflict->p == conflict_priority::CARDINAL && !CG[conflict->a1][conflict->a2])
 		{
 			CG[conflict->a1][conflict->a2] = true;
 			CG[conflict->a2][conflict->a1] = true;
 			num_of_CGedges++;
+			if (debug_mode)
+			    cout << "(" << conflict->a1 << "," << conflict->a2 << "),";
 		}
 	}
-
+    if (debug_mode)
+        cout << endl;
 
 	if (num_of_CGedges < 2)
 		return num_of_CGedges;
@@ -136,11 +138,10 @@ int ICBSSearch::computeHeuristics(const ICBSNode& curr)
 
 
 	// Minimum Vertex Cover
-	if (curr.parent == NULL) // root node of CBS tree
+	if (curr.parent == NULL || // root node of CBS tree or
+        num_of_CGedges > MAX_K_VERTEX_COVER_EDGES) // too many edges for k vertex cover method
 	{
-		for (int i = 1; i < num_of_CGnodes; i++)
-			if (KVertexCover(CG, num_of_CGnodes, num_of_CGedges, i))
-				return i;
+		return minimumVertexCover(CG);
 	}
 	if (KVertexCover(CG, num_of_CGnodes, num_of_CGedges, curr.parent->h_val - 1))
 		return curr.parent->h_val - 1;
@@ -150,7 +151,96 @@ int ICBSSearch::computeHeuristics(const ICBSNode& curr)
 		return curr.parent->h_val + 1;
 }
 
+// Find disjoint components and apply k vertex cover or greedy matching on each component
+int ICBSSearch::minimumVertexCover(const vector<vector<bool>>& CG)
+{
+    int rst = 0;
+    std::vector<bool> done(num_of_agents, false);
+    for (int i = 0; i < num_of_agents; i++)
+    {
+        if (done[i])
+            continue;
+        std::vector<int> indices;
+        indices.reserve(num_of_agents);
+        std::queue<int> Q;
+        Q.push(i);
+        done[i] = true;
+        while (!Q.empty())
+        {
+            int j = Q.front(); Q.pop();
+            indices.push_back(j);
+            for (int k = 0; k < num_of_agents; k++)
+            {
+                if (CG[j][k] && !done[k])
+                {
+                    Q.push(k);
+                    done[k] = true;
+                }
+            }
+        }
+        if ((int) indices.size() == 1) //one node -> no edges -> mvc = 0
+            continue;
+        else if ((int)indices.size() == 2) // two nodes -> only one edge -> mvc = 1
+        {
+            rst += 1; // add edge weight
+            continue;
+        }
 
+        std::vector<vector<bool> > subgraph(indices.size(), vector<bool>(indices.size(), false));
+        int num_edges = 0;
+        for (int j = 0; j < (int) indices.size(); j++)
+        {
+            for (int k = j + 1; k < (int)indices.size(); k++)
+            {
+                subgraph[j][k] = CG[indices[j]][indices[k]];
+                subgraph[k][j] = CG[indices[k]][indices[j]];
+                if (subgraph[j][k])
+                    num_edges++;
+            }
+        }
+
+        if (num_edges < MAX_K_VERTEX_COVER_EDGES)
+        {
+            for (int i = 1; i < (int)indices.size(); i++)
+            {
+                if (KVertexCover(subgraph, (int)indices.size(), num_edges, i))
+                {
+                    rst += i;
+                    break;
+                }
+                runtime = (std::clock() - start);
+                if (runtime > time_limit)
+                    return -1; // run out of time
+            }
+        }
+        else
+        {
+            return greedyMatching(subgraph);
+        }
+    }
+    return rst;
+}
+
+int ICBSSearch::greedyMatching(const vector<vector<bool>>& CG) const
+{
+    int rst = 0;
+    std::vector<bool> selected(CG.size(), false);
+    for (int i = 0; i < (int)CG.size(); i++)
+    {
+        if (selected[i])
+            continue;
+        for (int j = i + 1; j < (int)CG.size(); j++)
+        {
+            if(CG[i][j] > 0 && !selected[j])
+            {
+                rst += 1; // select the edge between i and j
+                selected[i] = true;
+                selected[j] = true;
+            }
+        }
+    }
+    return rst;
+}
 
 // Whether there exists a k-vertex cover solution
 bool ICBSSearch::KVertexCover(const vector<vector<bool>>& CG, int num_of_CGnodes, int num_of_CGedges, int k)
@@ -160,11 +250,11 @@ bool ICBSSearch::KVertexCover(const vector<vector<bool>>& CG, int num_of_CGnodes
 	else if (num_of_CGedges > k * num_of_CGnodes - k) 
 		return false;
 
-	vector<int> node(2);
+	int node[2];
 	bool flag = true;
-	for (int i = 0; i < num_of_agents - 1 && flag; i++) // to find an edge
+	for (int i = 0; i < (int)CG.size() - 1 && flag; i++) // to find an edge
 	{
-		for (int j = i + 1; j < num_of_agents && flag; j++)
+		for (int j = i + 1; j < (int)CG.size() && flag; j++)
 		{
 			if (CG[i][j])
 			{
@@ -176,10 +266,10 @@ bool ICBSSearch::KVertexCover(const vector<vector<bool>>& CG, int num_of_CGnodes
 	}
 	for (int i = 0; i < 2; i++)
 	{
-		vector<vector<bool>> CG_copy(num_of_agents);
+		vector<vector<bool>> CG_copy(CG.size());
 		CG_copy.assign(CG.cbegin(), CG.cend());
 		int num_of_CGedges_copy = num_of_CGedges;
-		for (int j = 0; j < num_of_agents; j++)
+		for (int j = 0; j < (int)CG.size(); j++)
 		{
 			if (CG_copy[node[i]][j])
 			{
@@ -1275,8 +1365,7 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 
 			t1 = std::clock();
 			int h = computeHeuristics(*curr);
-			assert(h >= curr->h_val);
-            curr->h_val = h;
+            curr->h_val = max(curr->h_val, h);
 			runtime_computeh += std::clock() - t1;
 			curr->f_val = curr->g_val + curr->h_val;
 

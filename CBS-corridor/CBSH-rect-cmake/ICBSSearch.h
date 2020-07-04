@@ -135,7 +135,8 @@ protected:
 	// add heuristics for the high-level search
 	int computeHeuristics(const ICBSNode& curr);
 	bool KVertexCover(const vector<vector<bool>>& CG, int num_of_CGnodes, int num_of_CGedges, int k);
-
+    int minimumVertexCover(const vector<vector<bool>>& CG);
+    int greedyMatching(const vector<vector<bool>>& CG) const;
 
 	//update information
 	// vector < list< pair<int, int> > >* collectConstraints(ICBSNode* curr, int agent_id);
