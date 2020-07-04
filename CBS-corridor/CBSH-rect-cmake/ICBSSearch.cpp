@@ -1135,6 +1135,8 @@ void ICBSSearch::updateFocalList()
     if (make_tuple(open_head->num_of_dead_agents, open_head->makespan, open_head->f_val) == min_f_val)
         return;
     min_f_val = make_tuple(open_head->num_of_dead_agents, open_head->makespan, open_head->f_val);
+    if(debug_mode)
+        cout<<"new f min: "<< get<0>(min_f_val)<<","<<get<1>(min_f_val)<<","<<get<2>(min_f_val)<<","<<endl;
     auto new_focal_list_threshold = make_tuple(open_head->num_of_dead_agents, open_head->makespan, (int)(open_head->f_val * focal_w));
 	for (ICBSNode* n : open_list) {
 	    auto cost = make_tuple(n->num_of_dead_agents, n->makespan, n->f_val);
@@ -1249,7 +1251,7 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 		updatePaths(curr);
 		runtime_updatepaths += std::clock() - t1;
 		if(debug_mode){
-            cout << "Child #" << curr->time_generated<<endl;
+            cout << "Child #" << curr->time_generated << " f:" <<curr->f_val <<endl;
 
         }
 

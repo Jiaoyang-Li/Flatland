@@ -18,7 +18,8 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int
 	std::cout << "algo: " << algo << std::endl;
 	options1.debug = debug;
 	timeLimit = t;
-	this->f_w = f_w;
+    srand(0);
+    this->f_w = f_w;
 	this->algo = algo;
 	this->kRobust = kRobust;
     if (corridor == "trainCorridor1") {
