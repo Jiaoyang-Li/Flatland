@@ -1000,7 +1000,7 @@ bool ICBSSearch::generateChild(ICBSNode*  node, ICBSNode* curr)
 	else
 		node->h_val = 0;
 	node->f_val = node->g_val + node->h_val;
-    assert(node->f_val >= curr->f_val);
+    assert(node->num_of_dead_agents > curr->num_of_dead_agents || node->f_val >= curr->f_val);
 	t1 = std::clock();
 	findConflicts(*node);
 	runtime_conflictdetection += (std::clock() - t1)  * 1000.0 / CLOCKS_PER_SEC;
@@ -1826,7 +1826,7 @@ bool MultiMapICBSSearch<Map>::findPathForSingleAgent(ICBSNode*  node, int ag, do
         for (const auto& path : paths)
             node->makespan = max(node->makespan, (int)path->size() - 1);
     }
-    
+
 
 	return true;
 }
@@ -2057,6 +2057,17 @@ int MultiMapICBSSearch<Map>::getBestSolutionSoFar()
     int num_of_giveup_agents = 0;
     updatePaths(best);
     for (const auto& conflict : best->conflicts)
+    {
+        if (paths[conflict->a1] != nullptr && paths[conflict->a2] != nullptr)
+        { // give up the agent with shorter path
+            if (paths[conflict->a1]->size() < paths[conflict->a2]->size())
+                paths[conflict->a1] = nullptr;
+            else
+                paths[conflict->a2] = nullptr;
+            num_of_giveup_agents++;
+        }
+    }
+    for (const auto& conflict : best->unknownConf)
     {
         if (paths[conflict->a1] != nullptr && paths[conflict->a2] != nullptr)
         { // give up the agent with shorter path

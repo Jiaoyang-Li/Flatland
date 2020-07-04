@@ -96,7 +96,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	al->generateAgentOrder();
+	al->generateAgentOrder(0);
 	al->updateToBePlannedAgents();
 	MultiMapICBSSearch<MapLoader> icbs(ml, al, 1.0, s, vm["cutoffTime"].as<float>() * CLOCKS_PER_SEC, vm["screen"].as<int>(), vm["kDelay"].as<int>(), options1);
 
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 		icbs.HL_num_expanded << "," << icbs.HL_num_generated << "," <<
 		icbs.LL_num_expanded << "," << icbs.LL_num_generated << "," <<
 		vm["agents"].as<string>() << "," << icbs.solution_cost << "," << 
-		icbs.min_f_val - icbs.dummy_start->g_val << "," <<
+		get<2>(icbs.min_f_val) - icbs.dummy_start->g_val << "," <<
 		vm["solver"].as<string>()  << "," <<
 		icbs.num_standard << "," << icbs.num_rectangle << "," <<
 		icbs.num_corridor2 << "," << icbs.num_corridor4 << "," << 

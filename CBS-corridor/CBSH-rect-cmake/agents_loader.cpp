@@ -477,7 +477,7 @@ void AgentsLoader::updateToBePlannedAgents(int _num_of_agents)
     cout << endl;
 }
 
-void AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)
+bool AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)
 {
     assert((int)new_paths.size() == num_of_agents);
     list<int> giveup_agents;
@@ -496,6 +496,16 @@ void AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)
             num_of_dead_agents++;
         paths_all[a] = *new_paths[i];
         assert(kDelay > 0); // TODO: consider kDelay==0 in the future (in which case, we also need to add edge constraints)
+        // check conflicts //TODO: this can be removed in our final solution
+        for (int t = 0; t < paths_all[a].size(); t++)
+        {
+            if (constraintTable.is_constrained(paths_all[a][t].location, t))
+            {
+                cout << "Agent "<< a <<"has a conflict at location " <<
+                        paths_all[a][t].location << " at timestep " << t << endl;
+                return false; // the path is conflicting with someone else
+            }
+        }
         // add the path to the constraint table
         for (int t = 0; t < paths_all[a].size(); t++)
         {
@@ -505,6 +515,7 @@ void AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)
         }
     }
     unplanned_agents.splice(unplanned_agents.begin(), giveup_agents);
+    return true;
 }
 
 void AgentsLoader::computeHeuristics(const FlatlandLoader* ml)

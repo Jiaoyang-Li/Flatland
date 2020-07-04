@@ -60,7 +60,7 @@ public:
     void generateAgentOrder(int agent_priority_strategy);
     void updateToBePlannedAgents() { updateToBePlannedAgents(num_of_agents_all); };
     void updateToBePlannedAgents(int num_of_agents);
-    void addPaths(const vector<Path*>& paths, int kDelay);
+    bool addPaths(const vector<Path*>& paths, int kDelay);
     int getNumOfUnplannedAgents() const { return (int)unplanned_agents.size(); }
     int getNumOfAllAgents() const { return num_of_agents_all; }
     int getNumOfDeadAgents() const { return num_of_dead_agents; }
