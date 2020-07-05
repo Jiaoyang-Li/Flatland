@@ -35,9 +35,13 @@ public:
         // header
         output << "group size," <<
                "time limit," <<
+               "total runtime," <<
                "runtime," <<
+               "total makespan," <<
                "solution cost," <<
                "sum of minimal time," <<
+               "planned agents," <<
+               "dead agents," <<
                "HL nodes," <<
                "LL nodes" << endl;
         for (const auto& data : iteration_stats)
@@ -48,7 +52,11 @@ public:
                    get<3>(data) << "," <<
                    get<4>(data) << "," <<
                    get<5>(data) << "," <<
-                   get<6>(data) << endl;
+                   get<6>(data) << "," <<
+                   get<7>(data) << "," <<
+                   get<8>(data) << "," <<
+                   get<9>(data) << "," <<
+                   get<10>(data) << endl;
         }
         output.close();
     }
@@ -88,7 +96,8 @@ private:
     ConstraintTable constraintTable;
 
     //stats about each iteration
-    typedef tuple<int, double, double, int, int, int, int> IterationStats;
+    typedef tuple<int, double, double, double, int,
+                    int, int, int, int, int, int> IterationStats;
     list<IterationStats> iteration_stats;
 
     void updateCBSResults(const MultiMapICBSSearch<Map>& cbs)

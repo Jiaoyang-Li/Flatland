@@ -1,6 +1,8 @@
 #include "PythonCBS.h"
 #include "flat_map_loader.h"
 #include "MDD.h"
+#include <iomanip>
+#include <sstream>
 
 namespace p = boost::python;
 
@@ -134,6 +136,7 @@ bool PythonCBS<Map>::search() {
             cout << "start search engine" << endl;
         bool res = icbs.runICBSSearch();
         updateCBSResults(icbs);
+        int giveup_agents = 0;
         if (res) {
             groupSize = min(defaultGroupSize, al->num_of_agents * 2);
         }
@@ -141,7 +144,7 @@ bool PythonCBS<Map>::search() {
         {
             if (accept_partial_solution)
             {
-                int giveup_agents = icbs.getBestSolutionSoFar();
+                giveup_agents = icbs.getBestSolutionSoFar();
                 cout << "Accept paths for " << al->num_of_agents - giveup_agents << " agents" << endl;
             }
             groupSize = max(1, al->num_of_agents / 2);
@@ -155,10 +158,18 @@ bool PythonCBS<Map>::search() {
             return false;
         }
         runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        int old_runtime = 0;
+        if (!iteration_stats.empty())
+            old_runtime = get<2>(iteration_stats.back());
         iteration_stats.emplace_back(al->num_of_agents, time_limit,
-                                     runtime, icbs.solution_cost,
+                                     runtime, runtime - old_runtime,
+                                     al->constraintTable.latest_timestep,
+                                     icbs.solution_cost,
                                      icbs.getSumOfHeuristicsAtStarts(),
-                                     icbs.HL_num_expanded, icbs.LL_num_expanded);
+                                     al->num_of_agents - giveup_agents,
+                                     al->getNumOfDeadAgents(),
+                                     icbs.HL_num_expanded,
+                                     icbs.LL_num_expanded);
     }
 
     runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
@@ -212,7 +223,10 @@ p::dict PythonCBS<Map>::getResultDetail() {
 	result["HL_generated"] = HL_num_generated;
 	result["LL_expanded"] = LL_num_expanded;
 	result["LL_generated"] = LL_num_generated;
-	result["algorithm"] = algo + "_groupsize=" + to_string(defaultGroupSize) +
+    std::stringstream stream;
+    stream << std::fixed << std::setprecision(1) << f_w;
+    std::string s = stream.str();
+	result["algorithm"] = algo + "(" + s + ")_groupsize=" + to_string(defaultGroupSize) +
 	        "_priority=" + to_string(agent_priority_strategy);
 	result["No_f_rectangle"] = num_rectangle;
 	result["num_chasing"] = num_chasing;

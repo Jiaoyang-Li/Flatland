@@ -55,6 +55,9 @@ or we do not have time to plan its path.
     
 run_test2.2.py contains a test example.
 
+run_batch.py is a script to test algorithms on the official provided test cases. 
+data_analysis/data_analysis.py analyzes the results (success rate, solution cost, etc.) got from run_batch.py.
+
 Currently, this cbs handles both speed = 1 or agents have different speed. However, when agents have different speed, 
 the performance will drop down dramatically without corridor reasoning. Corridor reasoning contains a method that reasoning
 chasing conflicts between agents with different speed. But this method may contain bugs and pending testing at this stage.
@@ -70,7 +73,7 @@ Here is a summary of the changes to the standard MAPF model:
 * Each agent is given a constant speed (but the traversal time of an edge is still an integer).
 * The orientations of the agents are considered. In most cases (unless hitting a deadend), the agents cannot move backwards.
 * Agents can only move to empty cells. That is, this is a k-robust MAPF with k=1.
-* Agents need to reach their goal locations before a given deadline (= 8 * (env.width + env.height + n_agents/n_cities)).
+* Agents need to reach their goal locations before a given deadline. Accoriding to their [document](http://flatland-rl-docs.s3-website.eu-central-1.amazonaws.com/04_specifications.html#maximum-number-of-allowed-time-steps-in-an-episode), deadline = timedelay_factor * alpha * (env.width + env.height + ratio_nr_agents_to_nr_cities), where the following default values are used: timedelay_factor=4, alpha=2 and ratio_nr_agents_to_nr_cities=20.
 
 For now, we do not consider the malfunction in this model.
 
@@ -103,11 +106,17 @@ In particular, if M is the number of total agents, our framework is identical to
 
 ## CBS
 For the CBS solver, we have the following major changes:
-* We use k-robust CBS with k = 1.
+* We use k-robust CBSH with k = 1.
 * We use CBS-DL from [MAPF with deadlines](http://idm-lab.org/bib/abstracts/papers/ijcai18b.pdf), which changes the objective of CBS to the minimization of
     1. the number of dead agents, i.e., agents that fail to reach their goal locations before the deadline; then
-    2. the makespan; and last
+    2. the overall makespan so far (including the planned paths in previous iterations); and last
     3. the sum of costs.
 * We use symmetry reasoning technique for:
     * corridor conflicts, and
     * chasing conflicts.
+* We use focal search at the high-level of CBS. CBS node n is in the focal list iff
+    * n.num_of_dead_agents == best.num_of_dead_agents,
+    * n.makespan <= max(best.makespan, makespan(P)), and
+    * n.sum_of_costs + n.h <= w * (best.sum_of_costs + best.h),
+   
+   where best is the first node in the open list, makespan(P) is the makespan of the planned paths, and w is the user-provided suboptimality bound.
