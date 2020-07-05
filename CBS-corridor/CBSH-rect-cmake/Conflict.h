@@ -89,6 +89,7 @@ public:
 	int originalConf2=-1;
 	int flipType = 0;
 	bool repeat = false;
+    conflict_priority corridor_p = conflict_priority::UNKNOWN;
 	std::list<Constraint> constraint1;
 	std::list<Constraint> constraint2;
 	conflict_type type;
@@ -130,18 +131,31 @@ public:
 		type = conflict_type::STANDARD;
 	}
 
-	void trainCorridorConflict(int a1, int a2, int v1, int v2, int t1, int t2, int e1, int e2, int kRobust)
+	void trainCorridorConflict(int a1, int a2, int e1, int e2, int et1, int et2, int kRobust)
 	{
 		this->a1 = a1;
 		this->a2 = a2;
 		this->k = k;
-		this->t = e1*1000+e2;
-		this->originalConf1 = v1;
-		this->originalConf2 = v2;
-		this->constraint1.emplace_back(v1, 0, e2-1 + kRobust, constraint_type::RANGE);
-		this->constraint2.emplace_back(v2, 0, e1-1 + kRobust, constraint_type::RANGE);
+		this->t = et1*1000+et2;
+		this->originalConf1 = e1;
+		this->originalConf2 = e2;
+		this->constraint1.emplace_back(e2, 0, et2 + 1 + kRobust, constraint_type::RANGE);
+		this->constraint2.emplace_back(e1, 0, et1 + 1 + kRobust, constraint_type::RANGE);
 		type = conflict_type::CORRIDOR2;
 	}
+
+    void trainCorridorConflict(int a1, int a2, int v1, int v2, int t1, int t2,int exit_1, int exit_2)
+    {
+        this->a1 = a1;
+        this->a2 = a2;
+        this->k = k;
+        this->t = t1*1000+t2;
+        this->originalConf1 = v1;
+        this->originalConf2 = v2;
+        this->constraint1.emplace_back(v1, t1, exit_2, constraint_type::RANGE);
+        this->constraint2.emplace_back(v2, t2, exit_1, constraint_type::RANGE);
+        type = conflict_type::SEMI_CORRIDOR;
+    }
 
 	// t3 
 	void corridorConflict(int a1, int a2, int v1, int v2, int t3, int t4, int t3_, int t4_, int k,int kRobust)
@@ -169,8 +183,8 @@ public:
 		this->originalConf1 = v1;
 		this->originalConf2 = v2;
 		
-		this->constraint1.emplace_back(exit, early_exit, late_exit+ kRobust, constraint_type::RANGE);
-        this->constraint2.emplace_back(entrance, early_entrance, late_entrance + kRobust, constraint_type::RANGE);
+		this->constraint1.emplace_back(exit, early_exit, late_exit+1+ kRobust, constraint_type::RANGE);
+        this->constraint2.emplace_back(entrance, early_entrance, late_entrance + 1 + kRobust, constraint_type::RANGE);
 
         type = conflict_type::CHASING;
 	}
@@ -795,6 +809,10 @@ public:
 		this->constraint1.emplace_back(-1, a1, t + kDelay/* kDelay>0? t + kDelay+1:t*/, constraint_type::LENGTH); // length of a1 should be larger than t
 		this->constraint2.emplace_back(v, a1, t, constraint_type::LENGTH); // length of a1 should be no larger than t, and other agents can not use v at and after timestep t
 		type = conflict_type::TARGET;
+	}
+	void clear(){
+	    this->constraint1.clear();
+	    this->constraint2.clear();
 	}
 
 

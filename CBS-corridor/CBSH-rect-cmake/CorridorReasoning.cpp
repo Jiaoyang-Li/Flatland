@@ -289,7 +289,8 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 
 //for corridor2, using for flatland
 template<class Map>
-int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading,int end_heading, std::pair<int, int> blocked, Map* my_map, int num_col, int map_size, ConstraintTable& constraint_table, int upper_bound, PathEntry& start_entry,float speed)
+int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading,int end_heading, std::pair<int, int> blocked, Map* my_map, int num_col, int map_size,
+        ConstraintTable& constraint_table, const std::vector<hvals>& goalHeuTable, int upper_bound, PathEntry& start_entry,float speed)
 {
     if(upper_bound < 0)
         upper_bound = -upper_bound;
@@ -313,12 +314,12 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
 
 	root->open_handle = heap.push(root);  // add root to heap
 
-	int start_h_val = getMahattanDistance(start, end, num_col) / speed;
-	if (root->exit_loc >= 0 && speed < 1) {
-		int h1 = getMahattanDistance(root->loc, end, num_col);
-		int h2 = getMahattanDistance(root->exit_loc, end, num_col);;
+	int start_h_val = abs(goalHeuTable[end].get_hval(end_heading) - goalHeuTable[start].get_hval(start_heading)) / speed;
+	if (root->exit_loc >= 0 && speed < 1 ) {
+		int h1 = abs(goalHeuTable[end].get_hval(end_heading) - goalHeuTable[start].get_hval(start_heading)) ;
+		int h2 = abs(goalHeuTable[end].get_hval(end_heading) - goalHeuTable[root->exit_loc].get_hval(root->exit_heading)) ;
 		start_h_val = h1 / speed
-			- (h2 - h1)*speed;
+			- (h2 - h1)*(root->position_fraction/speed);
 
 	}
 	root->h_val = start_h_val;
@@ -328,11 +329,14 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
 	int moves_offset[5] = { 1, -1, num_col, -num_col, 0 };
 	LLNode* curr = NULL;
 	int time_generated = 0;
+	int num_nodes=0;
 	while (!heap.empty())
 	{
+        num_nodes++;
 		curr = heap.top();
 		heap.pop();
-		if (curr->loc == end && curr->heading == end_heading)
+
+		if (curr->loc == end && goalHeuTable[end].get_hval(end_heading) >= goalHeuTable[curr->loc].get_hval(curr->heading))
 		{
 			length = curr->g_val;
 			break;
@@ -420,16 +424,16 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
 				if (next_loc == -1)
 				    next_h_val = curr->h_val;
                 else
-                    next_h_val = getMahattanDistance(next_loc, end, num_col)/speed;
+                    next_h_val = abs(goalHeuTable[end].get_hval(end_heading) - goalHeuTable[next_loc].get_hval(next_heading))/speed;
 				if (next_loc != -1 && move.exit_loc >= 0 && speed < 1) {
-					int h1 = getMahattanDistance(next_loc, end, num_col);
-					int h2 = getMahattanDistance(move.exit_loc, end, num_col);
+					int h1 = abs(goalHeuTable[end].get_hval(end_heading) - goalHeuTable[next_loc].get_hval(next_heading));
+					int h2 = abs(goalHeuTable[end].get_hval(end_heading) - goalHeuTable[move.exit_loc].get_hval(move.exit_heading));
 					next_h_val = h1 / speed
-						- (h2 - h1)*move.position_fraction;
+						- (h2 - h1)*(move.position_fraction/speed);
 
 				}
 
-                if (next_g_val + getMahattanDistance(next_loc, end, num_col) >= upper_bound) // the cost of the path is larger than the upper bound
+                if ((next_g_val + next_h_val*speed) >= upper_bound) // the cost of the path is larger than the upper bound
 					continue;
 
                 LLNode* next = new LLNode(next_loc, next_g_val, next_h_val, NULL, next_timestep);
@@ -467,7 +471,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
 	{
 		delete (*it);
 	}
-	return length;
+    return length;
 }
 
 

@@ -275,10 +275,10 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 					int h1 = my_heuristic[next_id].get_hval(next_heading);
 					int h2 = my_heuristic[move.exit_loc].get_hval(move.exit_heading);
 					next_h_val = h1 / al->agents[agent_id]->speed
-						- (h2-h1)*move.position_fraction;
+						- (h2-h1)*(move.position_fraction/al->agents[agent_id]->speed);
 
 				}
-				if (next_g_val + next_h_val > constraint_table.length_max)
+				if (next_g_val + next_h_val*al->agents[agent_id]->speed > constraint_table.length_max)
 					continue;
 
 

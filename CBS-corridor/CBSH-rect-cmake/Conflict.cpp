@@ -52,33 +52,43 @@ std::ostream& operator<<(std::ostream& os, const Conflict& conflict)
 
 bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return true if conflict2 has higher priority
 {
-	if (conflict1.type == conflict_type::TARGET && conflict2.type == conflict_type::TARGET)
-	{
-		if (conflict1.p < conflict2.p)
-			return false;
-		else
-			return true;
-	}
-	else if (conflict1.type == conflict_type::TARGET)
-		return false;
-	else if (conflict2.type == conflict_type::TARGET)
-		return true;
-	if (conflict1.type == conflict_type::CORRIDOR2 && conflict2.type != conflict_type::CORRIDOR2)
-	{
-		return false;
-	}
-	else if (conflict2.type == conflict_type::CORRIDOR2 && conflict1.type != conflict_type::CORRIDOR2)
-	{
-		return true;
-	}
-    if (conflict1.type == conflict_type::CHASING && conflict2.type != conflict_type::CHASING)
-    {
-        return false;
-    }
-    else if (conflict2.type == conflict_type::CHASING && conflict1.type != conflict_type::CHASING)
-    {
-        return true;
-    }
+//	if (conflict1.type == conflict_type::START && conflict2.type == conflict_type::START)
+//	{
+//		if (conflict1.p < conflict2.p)
+//			return false;
+//		else
+//			return true;
+//	}
+//	else if (conflict1.type == conflict_type::START)
+//		return false;
+//	else if (conflict2.type == conflict_type::START)
+//		return true;
+
+
+//	if (conflict1.type == conflict_type::CORRIDOR2 && conflict2.type != conflict_type::CORRIDOR2)
+//	{
+//		return false;
+//	}
+//	else if (conflict2.type == conflict_type::CORRIDOR2 && conflict1.type != conflict_type::CORRIDOR2)
+//	{
+//		return true;
+//	}
+//    if (conflict1.type == conflict_type::CHASING && conflict2.type != conflict_type::CHASING)
+//    {
+//        return false;
+//    }
+//    else if (conflict2.type == conflict_type::CHASING && conflict1.type != conflict_type::CHASING)
+//    {
+//        return true;
+//    }
+//    if (conflict1.type == conflict_type::SEMI_CORRIDOR && conflict2.type != conflict_type::SEMI_CORRIDOR)
+//    {
+//        return false;
+//    }
+//    else if (conflict2.type == conflict_type::SEMI_CORRIDOR && conflict1.type != conflict_type::SEMI_CORRIDOR)
+//    {
+//        return true;
+//    }
 
     if (conflict1.p < conflict2.p)
 		return false;
@@ -96,20 +106,20 @@ bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return
             if (conflict2.type != conflict_type::CHASING)
                 return false;
         }
-		else if (conflict1.type == conflict_type::CORRIDOR4)
-		{
-			if (conflict2.type == conflict_type::CORRIDOR2)
-			{
-				return true;
-			}
-			else if (conflict2.type != conflict_type::CORRIDOR4)
-				return false;
-		}
-		else if (conflict2.type == conflict_type::CORRIDOR4 || conflict2.type == conflict_type::CORRIDOR2 && conflict2.type != conflict_type::CHASING )
+        else if (conflict1.type == conflict_type::SEMI_CORRIDOR)
+        {
+            if (conflict2.type != conflict_type::SEMI_CORRIDOR)
+                return false;
+        }
+		else if (conflict2.type == conflict_type::CORRIDOR2 && conflict2.type != conflict_type::CHASING )
 		{
 			return true;
 		}
         else if (conflict2.type == conflict_type::CHASING )
+        {
+            return true;
+        }
+        else if (conflict2.type == conflict_type::SEMI_CORRIDOR )
         {
             return true;
         }
@@ -125,6 +135,10 @@ bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return
         {
             return true;
         }
+        else if (conflict2.type == conflict_type::SEMI_CORRIDOR &&  conflict1.type != conflict_type::SEMI_CORRIDOR)
+        {
+            return true;
+        }
 		else	if (conflict2.type != conflict_type::CORRIDOR2 &&  conflict1.type == conflict_type::CORRIDOR2)
 		{
 			return false;
@@ -132,6 +146,9 @@ bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return
 		else if(conflict2.type != conflict_type::CHASING && conflict1.type == conflict_type::CHASING){
 		    return false;
 		}
+        else if(conflict2.type != conflict_type::SEMI_CORRIDOR && conflict1.type == conflict_type::SEMI_CORRIDOR){
+            return false;
+        }
 		
 		/*if (conflict2.type == conflict_type::RECTANGLE &&  conflict1.type != conflict_type::RECTANGLE)
 		{

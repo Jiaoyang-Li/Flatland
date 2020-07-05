@@ -32,7 +32,9 @@ public:
 	double runtime_listoperation;
 	double runtime_updatepaths;
 	double runtime_updatecons;
-	double RMTime = 0;
+    double runtime_corridor;
+
+    double RMTime = 0;
 
 	
 
@@ -50,7 +52,11 @@ public:
 	uint64_t num_1FlipRectangle = 0;
 	uint64_t num_2FlipRectangle = 0;
 	uint64_t num_target = 0;
-	uint64_t num_standard = 0;
+    uint64_t num_start = 0;
+    uint64_t num_semi_corridor = 0;
+
+
+    uint64_t num_standard = 0;
     uint64_t num_chasing = 0;
     uint64_t num_activeConflict = 0;
 
@@ -64,7 +70,7 @@ public:
 	bool cardinalRect = false;
 	bool rectangleMDD = false;
 	bool corridor2 = false;
-	bool corridor4 = false;
+	bool chasing_reasoning = false;
 	bool cardinalCorridorReasoning = false;
 	bool targetReasoning=false;
 	int kDelay;
@@ -170,7 +176,17 @@ public:
 	void updateConstraintTable(ICBSNode* curr, int agent_id);
 	void classifyConflicts(ICBSNode &parent);
 	void initializeDummyStart();
-	bool isCorridorConflict(std::shared_ptr<Conflict>& corridor, const std::shared_ptr<Conflict>& con, bool cardinal, ICBSNode* node);
+	bool isCorridorConflict(std::shared_ptr<Conflict>& corridor, const std::shared_ptr<Conflict>& con, ICBSNode* node);
+//	bool markInCorridor(int a1, int a2, pair<int,int> a1_times, pair<int,int> a2_times,ICBSNode &parent,const std::shared_ptr<Conflict>& con){
+//	    for(auto& conf : parent.unknownConf){
+//	        if((a1 == conf->a1 && a2==conf->a2)||(a1 == conf->a2 && a2==conf->a1)){
+//	            if(conf->t >= a1_times.first && conf->t <= a1_times.second && conf->t >= a2_times.first && conf->t <= a2_times.second ) {
+//                    conf->in_corridor = true;
+//                    conf->corridor_p = con->p;
+//                }
+//	        }
+//	    }
+//	}
 
 	bool findPathForSingleAgent(ICBSNode*  node, int ag, double lowerbound = 0);
 	// Runs the algorithm until the problem is solved or time is exhausted 

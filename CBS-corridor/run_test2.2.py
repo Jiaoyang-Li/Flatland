@@ -85,7 +85,8 @@ debug = True
 k = 1
 timelimit = 240  # unit: seconds
 default_group_size = 16 # max number of agents in a group
-corridor_method = "trainCorridor1" # or "corridor2" or ""
+corridor_method = 1 # or 0/off or 2/reasonable corridor. Suggest 1
+chasing = True # helps when speed =1, however takes more time on corridor reasoning.
 accept_partial_solution = True
 agent_priority_strategy = 0  #  choose a number between 0 and 5
 #                               0: keep the original ordering
@@ -95,7 +96,7 @@ agent_priority_strategy = 0  #  choose a number between 0 and 5
 #                               4: prefer min speed then min distance
 #                               5: prefer different start locations then max speed then max distance
 CBS = PythonCBS(env,"CBSH",k,timelimit,default_group_size,debug,f_w,
-                corridor_method,accept_partial_solution,agent_priority_strategy)
+                corridor_method, chasing ,accept_partial_solution,agent_priority_strategy)
 success = CBS.search()
 plan = CBS.getResult()
 

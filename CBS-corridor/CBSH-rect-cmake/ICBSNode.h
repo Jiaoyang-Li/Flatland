@@ -68,7 +68,11 @@ public:
 	// conflicts in the current paths
 	std::list<std::shared_ptr<Conflict>> conflicts;
 	std::list<std::shared_ptr<Conflict>> unknownConf;
-	std::unordered_set<string> resolvedConflicts;
+    std::list<std::shared_ptr<Conflict>> cardinal_wating;
+    std::list<std::shared_ptr<Conflict>> non_cardinal_wating;
+
+
+    std::unordered_set<string> resolvedConflicts;
 
 	// The chosen conflict
 	//std::shared_ptr<RConflict> rConflict;

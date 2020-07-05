@@ -14,7 +14,7 @@ template <class Map>
 class PythonCBS {
 public:
 	PythonCBS(p::object railEnv1, std::string algo, int kRobust, int t,
-              int default_group_size, bool debug, float f_w, string corridor, bool accept_partial_solution,
+              int default_group_size, bool debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
               int agent_priority_strategy);
 
 	p::list getResult();
@@ -69,17 +69,20 @@ private:
 	bool corridor4=false;
 	bool trainCorridor1 = false;
 	bool trainCorridor2 = false;
+	bool chasing = false;
 
 	//stats about CBS
     std::clock_t start_time;
     double runtime;
+    double runtime_corridor;
     int HL_num_expanded = 0;
     int HL_num_generated = 0;
     int LL_num_expanded = 0;
     int LL_num_generated = 0;
     int num_rectangle = 0;
     int num_corridor2 = 0;
-    int num_corridor4 = 0;
+    int num_semi_corridor = 0;
+    int num_start = 0;
     int num_chasing = 0;
 
     ConstraintTable constraintTable;
@@ -91,13 +94,15 @@ private:
     void updateCBSResults(const MultiMapICBSSearch<Map>& cbs)
     {
         runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        runtime_corridor += cbs.runtime_corridor/CLOCKS_PER_SEC;
         HL_num_expanded += cbs.HL_num_expanded;
         HL_num_generated += cbs.HL_num_generated;
         LL_num_expanded += cbs.LL_num_expanded;
         LL_num_generated += cbs.LL_num_generated;
         num_rectangle += cbs.num_rectangle;
         num_corridor2 += cbs.num_corridor2;
-        num_corridor4 += cbs.num_corridor4;
+        num_semi_corridor += cbs.num_semi_corridor;
+        num_start+=cbs.num_start;
         num_chasing += cbs.num_chasing;
     }
 

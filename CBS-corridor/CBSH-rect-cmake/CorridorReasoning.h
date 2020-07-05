@@ -33,7 +33,7 @@ public:
 		Map* map);
 	int getBypassLength(int start, int end, std::pair<int, int> blocked,  Map* my_map, int num_col, int map_size, int start_heading = -1);
 	int getBypassLength(int start, int end, std::pair<int, int> blocked,  Map* my_map, int num_col, int map_size, ConstraintTable& constraint_table, int upper_bound, std::vector<hvals> restable, int start_heading = -1);
-	int getBypassLength(int start, int end, int start_heading, int end_heading, std::pair<int, int> blocked, Map* my_map, int num_col, int map_size, ConstraintTable& constraint_table, int upper_bound, PathEntry& start_entry, float speed =1.0);
+	int getBypassLength(int start, int end, int start_heading, int end_heading, std::pair<int, int> blocked, Map* my_map, int num_col, int map_size, ConstraintTable& constraint_table, const std::vector<hvals>& goalHeuTable, int upper_bound, PathEntry& start_entry, float speed =1.0);
 };
 
 

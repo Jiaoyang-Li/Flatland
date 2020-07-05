@@ -9,7 +9,7 @@ namespace p = boost::python;
 
 template <class Map>
 PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int t,
-                          int default_group_size, bool debug, float f_w, string corridor, bool accept_partial_solution,
+                          int default_group_size, bool debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
                           int agent_priority_strategy) :
                           railEnv(railEnv1), defaultGroupSize(default_group_size),
                           accept_partial_solution(accept_partial_solution),
@@ -22,12 +22,13 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int
     this->f_w = f_w;
 	this->algo = algo;
 	this->kRobust = kRobust;
-    if (corridor == "trainCorridor1") {
-		this->trainCorridor1 = true;
-		this->corridor2 = true;
+	this->chasing = chasing;
+	if(corridor > 0){
+	    this->corridor2 = true;
 	}
-	if (corridor == "corridor2")
-		this->corridor2 = true;
+	if(corridor = 1){
+	    this->trainCorridor1 = true;
+	}
 	if (algo == "ICBS")
 		s = constraint_strategy::ICBS;
 	else if (algo == "CBS")
@@ -126,11 +127,9 @@ bool PythonCBS<Map>::search() {
         if(s == constraint_strategy::CBSH_RM)
             icbs.rectangleMDD = true;
         icbs.trainCorridor1 = trainCorridor1;
-        icbs.trainCorridor2 = trainCorridor2;
         icbs.corridor2 = corridor2;
-        icbs.corridor4 = corridor4;
         icbs.ignoreFinishedAgent = true;
-        icbs.max_malfunction = this->max_malfunction;
+        icbs.chasing_reasoning = chasing;
         if (options1.debug)
             cout << "start search engine" << endl;
         bool res = icbs.runICBSSearch();
@@ -218,7 +217,10 @@ p::dict PythonCBS<Map>::getResultDetail() {
 	result["No_f_rectangle"] = num_rectangle;
 	result["num_chasing"] = num_chasing;
 	result["num_corridor2"] = num_corridor2;
-	result["num_corridor4"] = num_corridor4;
+    result["num_start"] = num_start;
+    result["num_semi_corridor"] = num_semi_corridor;
+	result["runtime_corridor"] = runtime_corridor;
+
     size_t solution_cost = 0;
     int finished_agents = 0;
     size_t makespan = 0;
@@ -239,7 +241,7 @@ p::dict PythonCBS<Map>::getResultDetail() {
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
 {
 	using namespace boost::python;
-	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, int, int, int, bool,float,string,bool,int>())
+	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, int, int, int, bool,float,int,bool,bool,int>())
 		.def("getResult", &PythonCBS<FlatlandLoader>::getResult)
 		.def("search", &PythonCBS<FlatlandLoader>::search)
 		.def("getResultDetail", &PythonCBS<FlatlandLoader>::getResultDetail)
