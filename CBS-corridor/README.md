@@ -72,7 +72,7 @@ Here is a summary of the changes to the standard MAPF model:
 * Each agent is given a constant speed (but the traversal time of an edge is still an integer).
 * The orientations of the agents are considered. In most cases (unless hitting a deadend), the agents cannot move backwards.
 * Agents can only move to empty cells. That is, this is a k-robust MAPF with k=1.
-* Agents need to reach their goal locations before a given deadline (= 8 * (env.width + env.height + n_agents/n_cities)).
+* Agents need to reach their goal locations before a given deadline. Accoriding to their [document](http://flatland-rl-docs.s3-website.eu-central-1.amazonaws.com/04_specifications.html#maximum-number-of-allowed-time-steps-in-an-episode), deadline = timedelay_factor * alpha * (env.width + env.height + ratio_nr_agents_to_nr_cities), where the following default values are used: timedelay_factor=4, alpha=2 and ratio_nr_agents_to_nr_cities=20.
 
 For now, we do not consider the malfunction in this model.
 
@@ -108,7 +108,7 @@ For the CBS solver, we have the following major changes:
 * We use k-robust CBSH with k = 1.
 * We use CBS-DL from [MAPF with deadlines](http://idm-lab.org/bib/abstracts/papers/ijcai18b.pdf), which changes the objective of CBS to the minimization of
     1. the number of dead agents, i.e., agents that fail to reach their goal locations before the deadline; then
-    2. the makespan; and last
+    2. the overall makespan so far (including the planned paths in previous iterations); and last
     3. the sum of costs.
 * We use symmetry reasoning technique for:
     * corridor conflicts, and
