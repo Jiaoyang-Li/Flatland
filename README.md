@@ -83,7 +83,7 @@ malfunction_generator_and_process_data=malfunction_from_params(malfunction_rate=
 
 ## Current Solution Structure
 
-https://app.lucidchart.com/invitations/accept/124716bf-f839-4383-9f15-0a578ddbcd8e
+https://app.lucidchart.com/invitations/accept/156887d6-7e9f-43ca-af22-f24000d166d1
 
 ![image](Structure.png)
 
