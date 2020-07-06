@@ -2095,7 +2095,7 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
 	}
     if (!corridor2)
         return;
-    auto corridorT = std::clock();
+    double corridorT = std::clock();
     bool found = false;
     while ( !parent.cardinal_wating.empty()){
         std::shared_ptr<Conflict> conflict  = parent.cardinal_wating.front();
