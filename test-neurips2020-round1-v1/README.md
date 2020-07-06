@@ -1,5 +1,6 @@
+# Test instances and paths for Round 1
 
-``test.py`` contains a template code to load the instances and the paths.
+``load.py`` contains a template code to load the instances and the paths.
 
 The format of a path is \[-1, -1,200,234,345\]. -1 indicate the train is not active.
 If a path is an empty list \[\], 
