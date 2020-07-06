@@ -32,7 +32,7 @@ public:
 	double runtime_listoperation;
 	double runtime_updatepaths;
 	double runtime_updatecons;
-    double runtime_corridor;
+    double runtime_corridor=0;
 
     double RMTime = 0;
 
