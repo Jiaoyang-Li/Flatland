@@ -87,7 +87,7 @@ A = sort(A);  // sort the agents by some heuristics (e.g., speed, distance to th
 m = M; // M is the default number of agents in a group
 while(A is not empty) {
     a = first m agents in A;
-    T = remaining_runtime * m / (2 * |A|);
+    T = remaining_runtime * m / |A| / (1 + 0.5log(m));
     paths = CBS(a, T, P);  // try to find collision-free paths for agents in a that do not collide with any path in P by CBS with a time limit of T 
     if(paths are found) {
         m = min(2 * m, M);
@@ -120,3 +120,53 @@ For the CBS solver, we have the following major changes:
     * n.sum_of_costs + n.h <= w * (best.sum_of_costs + best.h),
    
    where best is the first node in the open list, makespan(P) is the makespan of the planned paths, and w is the user-provided suboptimality bound.
+
+
+# Performance Summary
+
+We test version ``test#1`` on the given benchmark [test-neurips2020-round1-v1](https://www.aicrowd.com/challenges/neurips-2020-flatland-challenge/dataset_files). 
+
+The input perimeters are:
+```python
+f_w = 1
+debug = False
+k = 1
+timelimit = 240
+default_group_size = 1  # or 8 or 32
+corridor_method = 1
+chasing = True
+accept_partial_solution = True
+agent_priority_strategy = 0  # or 1 or 3
+```
+
+![Drag Racing](data_analysis/result.png)
+
+[Top left] Success rate is the percentage of agents that reach their goal locations before the max timestep.
+
+[Top right] The horizontal dashed line is the runtime limit (= 4 minutes).
+
+[Bottom left] Normalized cost is the sum of costs divided by the number of agents that reach their goal locations 
+and then divided by the sum of the width and height of the map.
+
+[Bottom right] The black X marks are the max timesteps.
+
+Here is a summary:
+
+| Priority | Group size | Success rate | Runtime (s) | Normalized cost | Makespan |
+|:---:|---:|---:|---:|---:|---:|
+| original (0)     |  1 | 1.000 |   6.39 | 1.216 | 349.00 |
+| original (0)     |  8 | 0.997 |  64.42 | 1.198 | 349.78 |
+| original (0)     | 32 | 0.994 | 144.51 | 1.216 | 345.96 |
+| max distance (1) |  1 | 1.000 |   5.31 | 1.226 | 281.79 |
+| max distance (1) |  8 | 1.000 |  75.33 | 1.254 | 280.75 |
+| max distance (1) | 32 | 1.000 | 128.27 | 1.243 | 297.82 |
+
+
+# Winner Solutions
+
+Here are some documents about winner solutions of last year.
+
+* First place: they don't have any documents. But by a glance at their code and their interview, they use heuristic search to find paths and a method similar to STN to address delays. 
+* [Second place](https://docs.google.com/presentation/d/12bbp7MwoB0S7FaTYI4QOAKMoijf_f4em64VkoUtdwts/edit#slide=id.g6dde6a5360_0_1)
+* [Third place](https://github.com/vetand/FlatlandChallenge2019/blob/master/Approach_description.pdf)
+* [Fourth place](https://eprints.hsr.ch/855/1/Masterarbeit_Waelter_Jonas.pdf)
