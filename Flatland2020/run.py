@@ -1,6 +1,6 @@
 from MapDecoder import convert_flatland_map,linearize_loc
 from STN import FlatlandPost
-from Controllers import The_Controller, Controller_stn
+from Controllers import The_Controller
 
 from flatland.evaluators.client import FlatlandRemoteClient
 from flatland.core.env_observation_builder import DummyObservationBuilder
@@ -18,6 +18,7 @@ from flatland.utils.rendertools import RenderTool, AgentRenderVariant
 
 import matplotlib.pyplot as plt
 
+from libPythonCBS import PythonCBS
 
 import networkx as nx
 from typing import List, Tuple
@@ -33,7 +34,7 @@ import time
 #####################################################################
 
 remote_test = False
-save_txt_file = True
+save_txt_file = False
 debug_print = True
 
 #####################################################################
@@ -42,18 +43,21 @@ debug_print = True
 x_dim = 30
 y_dim = 30
 
+stochastic_mode = False
+speed_mode = False
+
 # parameters to sparse_rail_genertor
-max_num_stations = 30
-given_seed = 1
+max_num_stations = 3
+given_seed = 12
 given_max_rails_between_cities = 2 # not clear what this does
 given_max_rails_in_city = 3 # not clear what this does
-given_num_agents = 10
+given_num_agents = 6
 
 # speed profile, 1 -> speed is 1, 1_2 -> speed 0.5, 1_3 -> speed 1/3, etc. sum has to be 1
-given_1_speed_train_percentage = 0.5
-given_1_2_speed_train_percentage = 0.2
-given_1_3_speed_train_percentage = 0.1
-given_1_4_speed_train_percentage = 0.2
+given_1_speed_train_percentage = 1
+given_1_2_speed_train_percentage = 0
+given_1_3_speed_train_percentage = 0
+given_1_4_speed_train_percentage = 0
 
 # malfunction parameters
 prop_malfunction = 0.01
@@ -62,9 +66,9 @@ min_duration = 3
 max_duration = 20
 
 # temp solution: C++ solver path file
-path_file ="./config/paths.txt"
-def parse_line_path(l):
-    return [int(node) for node in l.split(",")[:-1]]
+# path_file ="./config/paths.txt"
+# def parse_line_path(l):
+#     return [int(node) for node in l.split(",")[:-1]]
 
 #####################################################################
 # Instantiate a Remote Client
@@ -117,6 +121,7 @@ while True:
 
     else: # testing locally, change
 
+
         stochastic_data = {
             'prop_malfunction': prop_malfunction,  # Percentage of defective agents
             'malfunction_rate': malfunction_rate,  # Rate of malfunction occurence
@@ -142,7 +147,7 @@ while True:
                                                            ),
                       schedule_generator=sparse_schedule_generator(speed_ration_map),
                       number_of_agents=given_num_agents,
-                      malfunction_generator_and_process_data=malfunction_from_params(malfunction_rate=malfunction_rate, min_duration=min_duration, max_duration= max_duration),
+                      # malfunction_generator_and_process_data=malfunction_from_params(malfunction_rate=malfunction_rate, min_duration=min_duration, max_duration= max_duration),
                       # stochastic_data=stochastic_data,                     # something is wrong with the api... can't use the stochastic data for now.
                       # Malfunction data generator
                       obs_builder_object=GlobalObsForRailEnv(),
@@ -320,36 +325,53 @@ while True:
     time_taken_per_step = []
     steps = 0
 
-    #####################################################################
-    # stn to action controller
-    # this is an old stn to action controller for 2019 challenge
-    # may need correction/improvement
-    #####################################################################
 
-    my_controller = The_Controller(local_env, idx2node, idx2pos, node2idx)
-    # my_controller_stn = Controller_stn(local_env, idx2node, idx2pos, node2idx,my_post)
 
     #####################################################################
     # temp method to execute the result of the CBS solver
     # reading from a path.txt file. (Change later for API communication)
     #####################################################################
 
-    with open(path_file, "r") as f:
-        docs = f.readlines()
+    if(save_txt_file):
+        with open(path_file, "r") as f:
+            docs = f.readlines()
 
-    paths = [parse_line_path(l) for l in docs]
+        paths = [parse_line_path(l) for l in docs]
+    else:
+        f_w = 1
+        debug = True
+        k = 1
+        timelimit = 240  # unit: seconds
+        default_group_size = 16  # max number of agents in a group
+        corridor_method = 1  # or "corridor2" or ""
+        chasing = True
+        accept_partial_solution = True
+        agent_priority_strategy = 0
+        CBS = PythonCBS(local_env, "CBSH", k, timelimit, default_group_size, debug, f_w,
+                        corridor_method, chasing, accept_partial_solution, agent_priority_strategy)
+        success = CBS.search()
+        paths = CBS.getResult()
+
+
 
     if debug_print:
-        print("paths: \n", paths)
 
+        for i,p in enumerate(paths):
+            print(i, ": " , p)
 
+    #####################################################################
+    # stn to action controller
+    # this is an old stn to action controller for 2019 challenge
+    # may need correction/improvement
+    #####################################################################
 
+    my_controller = The_Controller(local_env, idx2node, idx2pos, node2idx, paths, max_time_steps, x_dim, y_dim)
 
     #####################################################################
     # Show the flatland visualization
     #####################################################################
-    env_renderer = RenderTool(local_env, screen_height=3000,
-                              screen_width=3000)
+    env_renderer = RenderTool(local_env, screen_height=4000,
+                              screen_width=4000)
     env_renderer.render_env(show=True, show_observations=False, show_predictions=False)
 
     # track = my_post.stn.start_nodes
@@ -372,10 +394,10 @@ while True:
         # random action controller
         # action = my_controller(observation, number_of_agents)
 
-        action = {}
-        for i in range(0,number_of_agents):
-            action[i]=my_controller.pos2action(steps, i)
-
+        action = my_controller.get_actions(steps)
+        # for i in range(0,number_of_agents):
+        #     action[i]=my_controller.pos2action(steps, i)
+        print("actions: ", action)
 
         time_taken = time.time() - time_start
 
@@ -388,6 +410,13 @@ while True:
         # are returned by the remote copy of the env
         time_start = time.time()
 
+        if debug_print:
+
+            print("before moving agent locations: ")
+            for i,a in enumerate(local_env.agents):
+                if(a.position != None):
+                    print(i, a.position, linearize_loc(local_env,a.position))
+
         if remote_test:
             observation, all_rewards, done, info = remote_client.env_step(action)
         else:
@@ -395,13 +424,19 @@ while True:
 
         env_renderer.render_env(show=True, show_observations=False, show_predictions=False)
 
+        if debug_print:
+            print("after moving agent locations: ")
+            for i,a in enumerate(local_env.agents):
+                if (a.position != None):
+                    print(i, a.position, linearize_loc(local_env, a.position))
         # hit enter to go next step
         # print("hit enter to execute the next step")
         # input()
 
         # or wait for a period of time
 
-        time.sleep(0.5)
+        # time.sleep(0.5)
+        input()
 
         steps += 1
         time_taken = time.time() - time_start
@@ -409,23 +444,24 @@ while True:
 
         if done['__all__']:
             print("Reward : ", sum(list(all_rewards.values())))
+            print("all arrived.")
             #
             # When done['__all__'] == True, then the evaluation of this 
             # particular Env instantiation is complete, and we can break out 
             # of this loop, and move onto the next Env evaluation
             break
-    
-    np_time_taken_by_controller = np.array(time_taken_by_controller)
-    np_time_taken_per_step = np.array(time_taken_per_step)
-    print("="*100)
-    print("="*100)
-    print("Evaluation Number : ", evaluation_number)
-    print("Current Env Path : ", remote_client.current_env_path)
-    print("Env Creation Time : ", env_creation_time)
-    print("Number of Steps : ", steps)
-    print("Mean/Std of Time taken by Controller : ", np_time_taken_by_controller.mean(), np_time_taken_by_controller.std())
-    print("Mean/Std of Time per Step : ", np_time_taken_per_step.mean(), np_time_taken_per_step.std())
-    print("="*100)
+    break
+    # np_time_taken_by_controller = np.array(time_taken_by_controller)
+    # np_time_taken_per_step = np.array(time_taken_per_step)
+    # print("="*100)
+    # print("="*100)
+    # print("Evaluation Number : ", evaluation_number)
+    # print("Current Env Path : ", remote_client.current_env_path)
+    # print("Env Creation Time : ", env_creation_time)
+    # print("Number of Steps : ", steps)
+    # print("Mean/Std of Time taken by Controller : ", np_time_taken_by_controller.mean(), np_time_taken_by_controller.std())
+    # print("Mean/Std of Time per Step : ", np_time_taken_per_step.mean(), np_time_taken_per_step.std())
+    # print("="*100)
 
 print("Evaluation of all environments complete...")
 ########################################################################
@@ -435,7 +471,7 @@ print("Evaluation of all environments complete...")
 # final computation of the score statistics, video generation, etc
 # and is necesaary to have your submission marked as successfully evaluated
 ########################################################################
-print(remote_client.submit())
+# print(remote_client.submit())
 
 
 
