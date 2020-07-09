@@ -73,7 +73,7 @@ Here is a summary of the changes to the standard MAPF model:
 * Each agent is given a constant speed (but the traversal time of an edge is still an integer).
 * The orientations of the agents are considered. In most cases (unless hitting a deadend), the agents cannot move backwards.
 * Agents can only move to empty cells. That is, this is a k-robust MAPF with k=1.
-* Agents need to reach their goal locations before a given deadline. Accoriding to their [document](http://flatland-rl-docs.s3-website.eu-central-1.amazonaws.com/04_specifications.html#maximum-number-of-allowed-time-steps-in-an-episode), deadline = timedelay_factor * alpha * (env.width + env.height + ratio_nr_agents_to_nr_cities), where the following default values are used: timedelay_factor=4, alpha=2 and ratio_nr_agents_to_nr_cities=20.
+* Agents need to reach their goal locations before a given max timestep. Accoriding to their [document](http://flatland-rl-docs.s3-website.eu-central-1.amazonaws.com/04_specifications.html#maximum-number-of-allowed-time-steps-in-an-episode), max_timestep = timedelay_factor * alpha * (env.width + env.height + ratio_nr_agents_to_nr_cities), where the following default values are used: timedelay_factor=4, alpha=2 and ratio_nr_agents_to_nr_cities=20.
 
 For now, we do not consider the malfunction in this model.
 
@@ -112,8 +112,9 @@ For the CBS solver, we have the following major changes:
     2. the overall makespan so far (including the planned paths in previous iterations); and last
     3. the sum of costs.
 * We use symmetry reasoning technique for:
-    * corridor conflicts, and
-    * chasing conflicts.
+    * corridor conflicts,
+    * chasing conflicts, and
+    * start conflicts (to be done).
 * We use focal search at the high-level of CBS. CBS node n is in the focal list iff
     * n.num_of_dead_agents == best.num_of_dead_agents,
     * n.makespan <= max(best.makespan, makespan(P)), and
@@ -162,11 +163,16 @@ Here is a summary:
 | max distance (1) | 32 | 1.000 | 128.27 | 1.243 | 297.82 |
 
 
-# Winner Solutions
+# Past Winner Solutions
 
-Here are some documents about winner solutions of last year.
+Here are some material about the winner solutions of last year.
 
-* First place: they don't have any documents. But by a glance at their code and their interview, they use heuristic search to find paths and a method similar to STN to address delays. 
-* [Second place](https://docs.google.com/presentation/d/12bbp7MwoB0S7FaTYI4QOAKMoijf_f4em64VkoUtdwts/edit#slide=id.g6dde6a5360_0_1)
-* [Third place](https://github.com/vetand/FlatlandChallenge2019/blob/master/Approach_description.pdf)
-* [Fourth place](https://eprints.hsr.ch/855/1/Masterarbeit_Waelter_Jonas.pdf)
+
+| Team | Initial planning | Replanning | Success rate in the final round |
+| --- | --- | --- | --- |
+|First place| Prioritized planning (max-speed agent first, breaking ties randomly) with multiple runs | MCP + prioritized planning   | 99% |
+|[Second place](https://docs.google.com/presentation/d/12bbp7MwoB0S7FaTYI4QOAKMoijf_f4em64VkoUtdwts/edit#slide=id.g6dde6a5360_0_1)| Prioritized planning  (max-speed agent first, breaking ties by preferring min-distance agent) | MCP | 96% |
+|[Third place](https://github.com/vetand/FlatlandChallenge2019/blob/master/Approach_description.pdf)| Prioritized planning  (max-speed agent first) | Replan the delayed agent by viewing it as the lowest-priority agent | 95% |
+|[Fourth place](https://eprints.hsr.ch/855/1/Masterarbeit_Waelter_Jonas.pdf)| Prioritized planning (max-distance agent first) | Complete Path Reservation (CPR) or reinforcement learning| 79% |
+|Fifth place| Reinforcement learning | Reinforcement learning | 55% |
+There are also some [presentations](https://www.youtube.com/watch?v=rGzXsOC7qXg) available online.
