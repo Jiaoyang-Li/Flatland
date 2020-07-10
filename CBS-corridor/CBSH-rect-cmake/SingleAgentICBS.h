@@ -47,7 +47,7 @@ public:
 	uint64_t num_expanded;
 	uint64_t num_generated;
 
-	double lower_bound;  // FOCAL's lower bound ( = e_weight * min_f_val)
+	double focal_threshold;  // FOCAL's lower bound ( = e_weight * min_f_val)
 	double min_f_val;  // min f-val seen so far
 	int num_of_conf; // number of conflicts between this agent to all the other agents
 
@@ -88,10 +88,10 @@ public:
 	// minimizing the number of internal conflicts (that is conflicts with known_paths for other agents found so far).
 	// lowerbound is the lowerbound of the length of the path
 	// max_plan_len used to compute the size of res_table
-	bool findPath(std::vector<PathEntry> &path, double f_weight,
-		ConstraintTable& constraints, ReservationTable* res_table,
-		size_t max_plan_len, double lowerbound,
-		std::clock_t start = 0, int time_limit = 0);
+	bool findPath(std::vector<PathEntry> &path, double f_weight, int focal_makespan,
+                  ConstraintTable& constraints, ReservationTable* res_table,
+                  size_t max_plan_len, double lowerbound,
+                  std::clock_t start = 0, int time_limit = 0);
 	bool validMove(int curr, int next) const; // whetehr curr->next is a valid move
 
 	inline void releaseClosedListNodes(hashtable_t* allNodes_table);

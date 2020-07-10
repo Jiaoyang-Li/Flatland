@@ -115,7 +115,7 @@ bool PythonCBS<Map>::search() {
         if (al->num_of_agents == 0) // all agents have paths
             break;
         runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
-        double time_limit = (timeLimit - runtime) * al->num_of_agents / al->getNumOfUnplannedAgents() / (1+0.5*log2(al->num_of_agents));
+        double time_limit = (timeLimit - runtime) * al->num_of_agents / al->getNumOfUnplannedAgents() / 2;
         cout << "Group size = " << al->num_of_agents <<
                 ", time limit = " << time_limit << " seconds. " <<
                 "(Remaining agents = " << al->getNumOfUnplannedAgents() <<

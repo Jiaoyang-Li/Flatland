@@ -87,7 +87,7 @@ A = sort(A);  // sort the agents by some heuristics (e.g., speed, distance to th
 m = M; // M is the default number of agents in a group
 while(A is not empty) {
     a = first m agents in A;
-    T = remaining_runtime * m / |A| / (1 + 0.5log(m));
+    T = remaining_runtime * m / 2|A|;
     paths = CBS(a, T, P);  // try to find collision-free paths for agents in a that do not collide with any path in P by CBS with a time limit of T 
     if(paths are found) {
         m = min(2 * m, M);

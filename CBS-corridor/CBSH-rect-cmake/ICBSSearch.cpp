@@ -1703,7 +1703,9 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 		//        &res_table, dummy_start->makespan + 1, 0);
         // TODO: for now, I use w=1 for the low-level, because
         //  if the low-level path is suboptimal, mdds, cardinal conflicts and many other parts need to be reconsidered.
-        bool found = search_engines[i]->findPath(paths_found_initially[i], 1, al.constraintTable,
+        bool found = search_engines[i]->findPath(paths_found_initially[i], 1,  // focal_w,
+                max(max(al.constraintTable.latest_timestep, dummy_start->makespan), al.constraintTable.length_max / 2),
+                                                 al.constraintTable,
                                                  &res_table, dummy_start->makespan + 1, 0);
         LL_num_expanded += search_engines[i]->num_expanded;
         LL_num_generated += search_engines[i]->num_generated;
@@ -1869,7 +1871,9 @@ bool MultiMapICBSSearch<Map>::findPathForSingleAgent(ICBSNode*  node, int ag, do
 	// bool foundSol = search_engines[ag]->findPath(newPath, focal_w, constraintTable, &res_table, max_plan_len, lowerbound, start, time_limit);
 	// TODO: for now, I use w=1 for the low-level, because
 	//  if the low-level path is suboptimal, mdds, cardinal conflicts and many other parts need to be reconsidered.
-    bool foundSol = search_engines[ag]->findPath(newPath, 1, constraintTable, &res_table, max_plan_len, lowerbound, start, time_limit);
+    bool foundSol = search_engines[ag]->findPath(newPath,  1, // focal_w,
+                    get<1>(focal_list_threshold),
+                    constraintTable, &res_table, max_plan_len, lowerbound, start, time_limit);
 
 	LL_num_expanded += search_engines[ag]->num_expanded;
 	LL_num_generated += search_engines[ag]->num_generated;

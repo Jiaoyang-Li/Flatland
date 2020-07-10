@@ -28,7 +28,7 @@ public:
 	int time_generated=0;
 	int num_internal_conf = 0; 
 	bool in_openlist = false;
-	bool in_focallist = false;
+	// bool in_focallist = false;
 	OldConfList* conflist=NULL;
 
 	int next_malfunction = -1;
