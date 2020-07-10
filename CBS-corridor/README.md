@@ -117,7 +117,7 @@ For the CBS solver, we have the following major changes:
     * start conflicts (to be done).
 * We use focal search at the high-level of CBS. CBS node n is in the focal list iff
     * n.num_of_dead_agents == best.num_of_dead_agents,
-    * n.makespan <= max(best.makespan, makespan(P)), and
+    * n.makespan <= max(best.makespan, makespan(P), max_timestep / 2), and
     * n.sum_of_costs + n.h <= w * (best.sum_of_costs + best.h),
    
    where best is the first node in the open list, makespan(P) is the makespan of the planned paths, and w is the user-provided suboptimality bound.
@@ -175,4 +175,5 @@ Here are some material about the winner solutions of last year.
 |[Third place](https://github.com/vetand/FlatlandChallenge2019/blob/master/Approach_description.pdf)| Prioritized planning  (max-speed agent first) | Replan the delayed agent by viewing it as the lowest-priority agent | 95% |
 |[Fourth place](https://eprints.hsr.ch/855/1/Masterarbeit_Waelter_Jonas.pdf)| Prioritized planning (max-distance agent first) | Complete Path Reservation (CPR) or reinforcement learning| 79% |
 |Fifth place| Reinforcement learning | Reinforcement learning | 55% |
+
 There are also some [presentations](https://www.youtube.com/watch?v=rGzXsOC7qXg) available online.

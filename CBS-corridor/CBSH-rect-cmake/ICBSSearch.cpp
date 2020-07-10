@@ -1172,7 +1172,7 @@ void ICBSSearch::updateFocalList()
         return;
     min_f_val = make_tuple(open_head->num_of_dead_agents, open_head->makespan, open_head->f_val);
     focal_list_threshold = make_tuple(open_head->num_of_dead_agents,
-            max(al.constraintTable.latest_timestep, open_head->makespan),  // latest_timestep is the makespan of the planned paths in previous iterations
+            max(max(al.constraintTable.latest_timestep, open_head->makespan), al.constraintTable.length_max / 2), // latest_timestep is the makespan of the planned paths in previous iterations
             (int)(open_head->f_val * focal_w));
     focal_list.clear();
 	for (ICBSNode* n : open_list) {
@@ -1753,7 +1753,7 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 		cout << "Find initial conflict done" << endl;
 	min_f_val = make_tuple(dummy_start->num_of_dead_agents, dummy_start->makespan, dummy_start->f_val);
 	focal_list_threshold = make_tuple(dummy_start->num_of_dead_agents,
-	        max(al.constraintTable.latest_timestep, dummy_start->makespan),  // latest_timestep is the makespan of the planned paths in previous iterations
+	        max(max(al.constraintTable.latest_timestep, dummy_start->makespan), al.constraintTable.length_max / 2),  // latest_timestep is the makespan of the planned paths in previous iterations
 	        (int)(dummy_start->f_val * focal_w));
 	if (debug_mode)
 	{
