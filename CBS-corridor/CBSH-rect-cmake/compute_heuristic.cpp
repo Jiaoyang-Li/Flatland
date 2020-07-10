@@ -79,17 +79,17 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 		ml->get_transitions(transitions, curr->loc,curr->heading,true);
 		for (const auto& move:transitions)
 		{
-			int next_loc = move.first;
+			int next_loc = move.location;
 			int next_g_val = curr->g_val + 1;
 			LLNode* next = new LLNode(next_loc, next_g_val, 0, NULL, 0);
 
 			if (curr->heading == -1) //heading == -1 means no heading info
 				next->heading = -1;
 			else
-				if (move.second == 4) //move == 4 means wait
+				if (move.heading == 4) //move == 4 means wait
 					next->heading = curr->heading;
 				else
-					next->heading = move.second;
+					next->heading = move.heading;
 
 			curr->possible_next_heading.push_back(next->heading);
 

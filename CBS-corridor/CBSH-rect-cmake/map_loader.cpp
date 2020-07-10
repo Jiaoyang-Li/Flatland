@@ -19,8 +19,8 @@ void MapLoader::get_transitions(list<Transition>& transitions, int loc, int head
 	{
 		Transition move;
 		int next_loc = loc + moves_offset[direction];
-		move.first = next_loc;
-		move.second = -1; //-1 means no heading
+		move.location = next_loc;
+		move.heading = -1; //-1 means no heading
 		if (validMove(loc, next_loc) && !my_map[next_loc])
 		{
 			transitions.push_back(move);
@@ -36,8 +36,8 @@ void MapLoader::get_exits(list<Transition>& transitions, int loc, int heading, f
 	{
 		Transition move;
 		int next_loc = loc + moves_offset[direction];
-		move.first = next_loc;
-		move.second = -1; //-1 means no heading
+		move.location = next_loc;
+		move.heading = -1; //-1 means no heading
 		if (validMove(loc, next_loc) && !my_map[next_loc])
 		{
 			transitions.push_back(move);

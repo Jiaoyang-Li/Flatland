@@ -53,8 +53,8 @@ struct PathEntry
 };
 
 struct Transition {
-	int first;//location
-	int second;//heading
+	int location;
+	int heading;
 	float position_fraction=0.0;
 	int exit_loc=-1;
 	int exit_heading = -1;

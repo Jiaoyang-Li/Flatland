@@ -81,8 +81,8 @@ void FlatlandLoader::get_transitions(list<Transition>& transitions, int location
 		if (moves[i] == 1) {
 			Transition move;
 
-			move.first = location + this->moves_offset[i];
-			move.second = i;
+			move.location = location + this->moves_offset[i];
+			move.heading = i;
 			transitions.push_back(move);
 
 		}
@@ -91,8 +91,8 @@ void FlatlandLoader::get_transitions(list<Transition>& transitions, int location
 	if (!noWait)
     {
         Transition wait;
-        wait.first = location;
-        wait.second = heading;
+        wait.location = location;
+        wait.heading = heading;
         transitions.push_back(wait);
     }
 }
@@ -106,9 +106,9 @@ void FlatlandLoader::get_exits(list<Transition>& transitions, int location, int 
 		if (moves[i] == 1) {
 			Transition move;
 
-			move.first = location;
+			move.location = location;
 			move.exit_loc = location + this->moves_offset[i];
-			move.second = heading;
+			move.heading = heading;
 			move.exit_heading = i;
 			move.position_fraction = 0.0 + speed;
 			transitions.push_back(move);
@@ -118,8 +118,8 @@ void FlatlandLoader::get_exits(list<Transition>& transitions, int location, int 
 	if (!noWait)
     {
         Transition wait;
-        wait.first = location;
-        wait.second = heading;
+        wait.location = location;
+        wait.heading = heading;
         wait.position_fraction = 0.0;
         transitions.push_back(wait);
     }

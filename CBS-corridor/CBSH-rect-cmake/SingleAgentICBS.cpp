@@ -125,8 +125,8 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 		list<Transition> temp;
 		ml->get_transitions(temp, start_location, start->heading, true);
 		if (temp.size() == 1) {
-			start->exit_loc = temp.front().first;
-			start->exit_heading = temp.front().second;
+			start->exit_loc = temp.front().location;
+			start->exit_heading = temp.front().heading;
 		}
 		else
 			start->exit_loc = start_location + ml->moves_offset[start->exit_heading];
@@ -199,16 +199,16 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 		list<Transition> transitions;
 		if(curr->loc == -1){
             Transition move;
-			move.first = -1;
-			move.second = curr->heading;
+			move.location = -1;
+			move.heading = curr->heading;
 			move.position_fraction = curr->position_fraction;
 			move.exit_loc = curr->exit_loc;
 			move.exit_heading = curr->exit_heading;
 			transitions.push_back(move);
             
             Transition move2;
-			move2.first = start_location;
-			move2.second = curr->heading;
+			move2.location = start_location;
+			move2.heading = curr->heading;
 			move2.position_fraction = curr->position_fraction;
 			move2.exit_loc = curr->exit_loc;
 			move2.exit_heading = curr->exit_heading;
@@ -220,8 +220,8 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			    ml->get_transitions(transitions, curr->loc, curr->heading, false);
 			else {
 				Transition move;
-				move.first = curr->exit_loc;
-				move.second = curr->exit_heading;
+				move.location = curr->exit_loc;
+				move.heading = curr->exit_heading;
 				move.position_fraction = 0;
 				transitions.push_back(move);
 			}
@@ -234,8 +234,8 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			
 
 			Transition move2;
-			move2.first = curr->loc;
-			move2.second = curr->heading;
+			move2.location = curr->loc;
+			move2.heading = curr->heading;
 			move2.position_fraction = curr->position_fraction + al->agents[agent_id]->speed;
 			move2.exit_loc = curr->exit_loc;
 			move2.exit_heading = curr->exit_heading;
@@ -247,7 +247,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 		for (const auto& move : transitions)
 		{
-			int next_id = move.first;
+			int next_id = move.location;
 			time_generated += 1;
 			int next_timestep = curr->timestep + 1;
 
@@ -262,7 +262,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 				if (curr->heading == -1) //heading == -1 means no heading info
 					next_heading = -1;
 				else
-					next_heading = move.second;
+					next_heading = move.heading;
 				float next_position_fraction = move.position_fraction;
 
 				
@@ -290,7 +290,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
                 // generate (maybe temporary) node
 				LLNode* next = new LLNode(next_id, next_g_val, next_h_val,	curr, next_timestep, next_internal_conflicts, false);
 				next->heading = next_heading;
-				next->actionToHere = move.second;
+				next->actionToHere = move.heading;
 				next->time_generated = time_generated;
 				next->position_fraction = next_position_fraction;
 				next->exit_heading = move.exit_heading;
