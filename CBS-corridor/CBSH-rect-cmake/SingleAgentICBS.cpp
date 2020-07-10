@@ -122,8 +122,8 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 	start->position_fraction = al->agents[agent_id]->position_fraction;
 	start->exit_heading = al->agents[agent_id]->exit_heading;
 	if (start->exit_heading >= 0) {
-		vector<Transition> temp;
-		temp = ml->get_transitions(start_location, start->heading, true);
+		list<Transition> temp;
+		ml->get_transitions(temp, start_location, start->heading, true);
 		if (temp.size() == 1) {
 			start->exit_loc = temp.front().first;
 			start->exit_heading = temp.front().second;
@@ -196,11 +196,11 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 		}
 		
 
-		vector<Transition> transitions;
+		list<Transition> transitions;
 		if(curr->loc == -1){
             Transition move;
 			move.first = -1;
-			move.second = 4;
+			move.second = curr->heading;
 			move.position_fraction = curr->position_fraction;
 			move.exit_loc = curr->exit_loc;
 			move.exit_heading = curr->exit_heading;
@@ -208,7 +208,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
             
             Transition move2;
 			move2.first = start_location;
-			move2.second = 4;
+			move2.second = curr->heading;
 			move2.position_fraction = curr->position_fraction;
 			move2.exit_loc = curr->exit_loc;
 			move2.exit_heading = curr->exit_heading;
@@ -217,7 +217,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
         }
 		else if (curr->position_fraction + al->agents[agent_id]->speed >= 0.97) {
 			if (curr->position_fraction == 0)
-				transitions = ml->get_transitions(curr->loc, curr->heading, false);
+			    ml->get_transitions(transitions, curr->loc, curr->heading, false);
 			else {
 				Transition move;
 				move.first = curr->exit_loc;
@@ -227,7 +227,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			}
 		}
 		else if (curr->position_fraction == 0) {
-			transitions = ml->get_exits(curr->loc, curr->heading, al->agents[agent_id]->speed, false);
+		    ml->get_exits(transitions, curr->loc, curr->heading, al->agents[agent_id]->speed, false);
 
 		}
 		else { //<0.97 and po_frac not 0
@@ -252,20 +252,17 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			int next_timestep = curr->timestep + 1;
 
 
-			if (!constraint_table.is_constrained(next_id, next_timestep) &&
-				!constraint_table.is_constrained(curr->loc * map_size + next_id, next_timestep)) // TODO:: for k-robust cases, we do not need to check edge constraint?
+			if (!constraint_table.is_constrained(next_id, next_timestep)) //&&
+				//!constraint_table.is_constrained(curr->loc * map_size + next_id, next_timestep)) // TODO:: for k-robust cases, we do not need to check edge constraint?
 			{
 
 				int next_g_val = curr->g_val + 1;
 				int next_heading;
 
-				if (curr->heading == -1) //heading == 4 means no heading info
+				if (curr->heading == -1) //heading == -1 means no heading info
 					next_heading = -1;
 				else
-					if (move.second == 4) //move == 4 means wait
-						next_heading = curr->heading;
-					else
-						next_heading = move.second;
+					next_heading = move.second;
 				float next_position_fraction = move.position_fraction;
 
 				

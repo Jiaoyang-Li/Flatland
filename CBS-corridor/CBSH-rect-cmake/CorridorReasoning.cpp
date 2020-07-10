@@ -133,9 +133,10 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 			length = curr->g_val;
 			break;
 		}
-		vector<Transition> transitions = my_map->get_transitions(curr->loc, curr->heading, false);
+		list<Transition> transitions;
+		my_map->get_transitions(transitions, curr->loc, curr->heading, false);
 
-		for (const auto move : transitions)
+		for (const auto& move : transitions)
 		{
 			int next_loc = move.first;
 			time_generated += 1;
@@ -147,15 +148,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 			}
 			int next_g_val = curr->g_val + 1;
 			LLNode* next = new LLNode(next_loc, next_g_val, getMahattanDistance(next_loc, end, num_col), NULL, 0);
-			int next_heading;
-
-			if (curr->heading == -1) //heading == 4 means no heading info
-				next_heading = -1;
-			else
-				if (move.second == 4) //move == 4 means wait
-					next_heading = curr->heading;
-				else
-					next_heading = move.second;
+			int next_heading = move.second;
 			next->heading = next_heading;
 			next->actionToHere = move.second;
 			next->time_generated = time_generated;
@@ -216,9 +209,10 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 			length = curr->g_val;
 			break;
 		}
-		vector<Transition> transitions = my_map->get_transitions(curr->loc, curr->heading, false);
+		list<Transition> transitions;
+		my_map->get_transitions(transitions, curr->loc, curr->heading, false);
 
-		for (const auto move : transitions)
+		for (const auto& move : transitions)
 		{
 			int next_loc = move.first;
 			time_generated += 1;
@@ -226,9 +220,9 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 			int next_timestep = curr->timestep + 1;
 			if (constraint_table.latest_timestep <= curr->timestep)
 			{
-				if (move.second == 4)
+				if (curr->loc == next_loc) // wait action
 				{
-					continue;
+					continue; // TODO:: why we need to skip wait action here?
 				}
 				next_timestep--;
 			}
@@ -241,15 +235,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 				{
 					continue;
 				}
-				int next_heading;
-
-				if (curr->heading == -1) //heading == 4 means no heading info
-					next_heading = -1;
-				else
-					if (move.second == 4) //move == 4 means wait
-						next_heading = curr->heading;
-					else
-						next_heading = move.second;
+				int next_heading = move.second;
 
 				int next_g_val = curr->g_val + 1;
 				int next_h_val = restable[next_loc].get_hval(next_heading);
@@ -341,11 +327,11 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
 			length = curr->g_val;
 			break;
 		}
-		vector<Transition> transitions;
+		list<Transition> transitions;
 		if(curr->loc == -1){
             Transition move;
             move.first = -1;
-            move.second = 4;
+            move.second = curr->heading;
             move.position_fraction = curr->position_fraction;
             move.exit_loc = curr->exit_loc;
             move.exit_heading = curr->exit_heading;
@@ -353,7 +339,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
 
             Transition move2;
             move2.first = start;
-            move2.second = 4;
+            move2.second = curr->heading;
             move2.position_fraction = curr->position_fraction;
             move2.exit_loc = curr->exit_loc;
             move2.exit_heading = curr->exit_heading;
@@ -362,7 +348,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
         }
 		else if (curr->position_fraction +speed >= 0.97) {
 			if (curr->position_fraction == 0)
-				transitions = my_map->get_transitions(curr->loc, curr->heading, false);
+				 my_map->get_transitions(transitions, curr->loc, curr->heading, false);
 			else {
 				Transition move;
 				move.first = curr->exit_loc;
@@ -372,7 +358,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
 			}
 		}
 		else if (curr->position_fraction == 0) {
-			transitions = my_map->get_exits(curr->loc, curr->heading, speed, false);
+			 my_map->get_exits(transitions, curr->loc, curr->heading, speed, false);
 
 		}
 		else { //<0.97 and po_frac not 0
@@ -380,7 +366,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
 
 			Transition move2;
 			move2.first = curr->loc;
-			move2.second = 4;
+			move2.second = curr->heading;
 			move2.position_fraction = curr->position_fraction + speed;
 			move2.exit_loc = curr->exit_loc;
 			move2.exit_heading = curr->exit_heading;
@@ -390,7 +376,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
 
 
 
-		for (const auto move : transitions)
+		for (const auto& move : transitions)
 		{
 			int next_loc = move.first;
 			time_generated += 1;
@@ -399,8 +385,8 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
 
 			int next_timestep = curr->timestep + 1;
 
-			if (!constraint_table.is_constrained(next_loc, next_timestep) &&
-				!constraint_table.is_constrained(curr->loc * map_size + next_loc, next_timestep))
+			if (!constraint_table.is_constrained(next_loc, next_timestep))  // &&
+				// !constraint_table.is_constrained(curr->loc * map_size + next_loc, next_timestep))
 			{  // if that grid is not blocked
 
                 if ((curr->loc == blocked.first && next_loc == blocked.second) ||
@@ -409,15 +395,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
 					continue;
 				}
 
-                int next_heading;
-
-				if (curr->heading == -1) //heading == 4 means no heading info
-					next_heading = -1;
-				else
-					if (move.second == 4) //move == 4 means wait
-						next_heading = curr->heading;
-					else
-						next_heading = move.second;
+                int next_heading = move.second;
 
 				int next_g_val = curr->g_val + 1;
 				int next_h_val;

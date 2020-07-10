@@ -13,10 +13,8 @@ using namespace std;
 MapLoader::MapLoader(){}
 
 
-vector<Transition> MapLoader::get_transitions(int loc, int heading, int noWait) const {
-	vector<Transition> transitions;
+void MapLoader::get_transitions(list<Transition>& transitions, int loc, int heading, int noWait) const {
 	int moveRange = 5;
-
 	for (int direction = 0; direction < moveRange; direction++)
 	{
 		Transition move;
@@ -30,15 +28,10 @@ vector<Transition> MapLoader::get_transitions(int loc, int heading, int noWait) 
 		}
 
 	}
-		
-	return transitions;
-	
 }
 
-vector<Transition> MapLoader::get_exits(int loc, int heading, float speed, int noWait) const {
-	vector<Transition> transitions;
+void MapLoader::get_exits(list<Transition>& transitions, int loc, int heading, float speed, int noWait) const {
 	int moveRange = 5;
-
 	for (int direction = 0; direction < moveRange; direction++)
 	{
 		Transition move;
@@ -52,9 +45,6 @@ vector<Transition> MapLoader::get_exits(int loc, int heading, float speed, int n
 		}
 
 	}
-
-	return transitions;
-
 }
 
 bool MapLoader::getLoc(int loc)  {

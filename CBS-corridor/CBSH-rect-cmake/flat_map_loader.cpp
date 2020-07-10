@@ -72,16 +72,13 @@ railCell FlatlandLoader::get_full_cell(int location) {
 }
 
 
-vector<Transition> FlatlandLoader::get_transitions(int location, int heading, bool noWait) const {
-	vector<Transition> transitions;
+void FlatlandLoader::get_transitions(list<Transition>& transitions, int location, int heading, bool noWait) const {
 	int cell_transition = railMap[location].transitions;
 	int bits = (cell_transition >> ((3 - heading) * 4));
 	int moves[4] = { (bits >> 3) & 1, (bits >> 2) & 1, (bits >> 1) & 1, (bits) & 1 };
 
 	for (int i = 0; i < 4; i++) {
-		int moveable = moves[i];
-
-		if (moveable == 1) {
+		if (moves[i] == 1) {
 			Transition move;
 
 			move.first = location + this->moves_offset[i];
@@ -90,25 +87,23 @@ vector<Transition> FlatlandLoader::get_transitions(int location, int heading, bo
 
 		}
 	}
-	Transition wait;
-	wait.first = location;
-	wait.second = 4;
-	if (!noWait)
-		transitions.push_back(wait);
 
-	return transitions;
+	if (!noWait)
+    {
+        Transition wait;
+        wait.first = location;
+        wait.second = heading;
+        transitions.push_back(wait);
+    }
 }
 
-vector<Transition> FlatlandLoader::get_exits(int location, int heading,float speed, bool noWait) const {
-	vector<Transition> transitions;
+void FlatlandLoader::get_exits(list<Transition>& transitions, int location, int heading,float speed, bool noWait) const {
 	int cell_transition = railMap[location].transitions;
 	int bits = (cell_transition >> ((3 - heading) * 4));
 	int moves[4] = { (bits >> 3) & 1, (bits >> 2) & 1, (bits >> 1) & 1, (bits) & 1 };
 
 	for (int i = 0; i < 4; i++) {
-		int moveable = moves[i];
-
-		if (moveable == 1) {
+		if (moves[i] == 1) {
 			Transition move;
 
 			move.first = location;
@@ -120,14 +115,14 @@ vector<Transition> FlatlandLoader::get_exits(int location, int heading,float spe
 
 		}
 	}
-	Transition wait;
-	wait.first = location;
-	wait.second = 4;
-	wait.position_fraction = 0.0;
 	if (!noWait)
-		transitions.push_back(wait);
-
-	return transitions;
+    {
+        Transition wait;
+        wait.first = location;
+        wait.second = heading;
+        wait.position_fraction = 0.0;
+        transitions.push_back(wait);
+    }
 }
 
 int FlatlandLoader::getDegree(int loc) {

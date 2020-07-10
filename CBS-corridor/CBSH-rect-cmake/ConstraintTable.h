@@ -33,8 +33,10 @@ public:
 	};
 	bool is_good_malfunction_location(int loc, int t);
 
+    void init(size_t map_size) { CT_Single.resize(map_size); }
 private:
-	unordered_map<size_t, std::unordered_set<int> > CT_Single;
+	// unordered_map<size_t, std::unordered_set<int> > CT_Single;
+    vector< std::unordered_set<int> > CT_Single;
     unordered_map<size_t, list<pair<int, int> > > CT;
 };
 

@@ -75,8 +75,9 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 		LLNode* curr = heap.top();
 		heap.pop();
 
-		vector<Transition> transitions = ml->get_transitions(curr->loc,curr->heading,true);
-		for (const auto move:transitions)
+		list<Transition> transitions;
+		ml->get_transitions(transitions, curr->loc,curr->heading,true);
+		for (const auto& move:transitions)
 		{
 			int next_loc = move.first;
 			int next_g_val = curr->g_val + 1;
@@ -118,7 +119,7 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 	for (it = nodes.begin(); it != nodes.end(); it++)
 	{
 		LLNode* s = (*it);
-		if (s->heading == -1) {
+		/*if (s->heading == -1) {
 
 			if (!res[s->loc].heading.count(-1)) {
 				res[s->loc].heading[-1] = s->g_val;
@@ -131,39 +132,23 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 			}
 
 		}
-		else {
+		else {*/
 
 			if (s->possible_next_heading.size() > 0) {
 				for (int& next_heading : s->possible_next_heading) {
 					int heading = (next_heading + 2) % 4;
-
-					if (!res[s->loc].heading.count(heading)) {
+                    if (s->g_val < res[s->loc].heading[heading]) {
 						res[s->loc].heading[heading] = s->g_val;
-
-					}
-					else if (s->g_val < res[s->loc].heading[heading]) {
-						res[s->loc].heading[heading] = s->g_val;
-
-
 					}
 
 				}
 			}
 
 			int heading = (s->heading + 2) % 4;
-			if (!res[s->loc].heading.count(heading)) {
+			if (s->g_val < res[s->loc].heading[heading]) {
 				res[s->loc].heading[heading] = s->g_val;
-
 			}
-			else if (s->g_val < res[s->loc].heading[heading]) {
-				res[s->loc].heading[heading] = s->g_val;
-
-
-			}
-
-
-
-		}
+		//}
 
 		delete (s);
 	}

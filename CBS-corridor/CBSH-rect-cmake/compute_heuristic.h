@@ -12,10 +12,10 @@
 using namespace std;
 
 struct hvals {
-	boost::unordered_map<int, int> heading;
+	int heading[4] = {MAX_COST, MAX_COST, MAX_COST, MAX_COST};
 	int get_hval(int direction) const {
-		if (heading.count(direction)) {
-			return heading.at(direction);
+		if (direction >= 0) {
+			return heading[direction];
 		}
 		else {
 			return MAX_COST;
