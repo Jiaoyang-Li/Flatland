@@ -512,7 +512,7 @@ bool AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)
         {
             if (paths_all[a][t].location == -1)
                 continue;
-            constraintTable.insert(paths_all[a][t].location, max(0, t - kDelay), t + kDelay + 1);
+            constraintTable.insert_to_fixed_CT(paths_all[a][t].location, t);
         }
         makespan = max(makespan, (int)paths_all[a].size() - 1);
     }

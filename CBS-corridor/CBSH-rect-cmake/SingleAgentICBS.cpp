@@ -376,12 +376,12 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 		if (open_list.empty())  // in case OPEN is empty, no path found
 			break;
 		LLNode* open_head = open_list.top();
-		
 
+        assert(open_head->getFVal() >= min_f_val);
 		if (open_head->getFVal() > min_f_val) 
 		{
 			min_f_val = open_head->getFVal();
-			double new_focal_threshold = std::max(lowerbound, std::min(f_weight * min_f_val, (double)focal_makespan));
+			double new_focal_threshold = std::max(lowerbound, std::max(std::min(f_weight * min_f_val, (double)focal_makespan), min_f_val));
             if (new_focal_threshold > focal_threshold)
             {
                 for (LLNode* n : open_list)
@@ -396,8 +396,10 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
             }
 		}
 
+
 	}  // end while loop
 
+	assert(min_f_val >= constraint_table.length_max);
 	  // no path found
 	releaseClosedListNodes(&allNodes_table);
 	open_list.clear();
