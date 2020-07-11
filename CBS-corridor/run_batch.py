@@ -11,7 +11,6 @@ from flatland.envs.malfunction_generators  import malfunction_from_params, Malfu
 
 f_w = 1
 debug = False
-k = 1
 timelimit = 240  # unit: seconds
 default_group_size = 8 # max number of agents in a group. Suggest 8
 corridor_method = 1 # or 0/off or 2/reasonable corridor. Suggest 1
@@ -62,7 +61,7 @@ for folder in os.listdir(path):
                     malfunction_generator_and_process_data=malfunction_from_file(test),
                     )
 
-        CBS = PythonCBS(env,"CBSH",k,timelimit,default_group_size,debug,f_w,
+        CBS = PythonCBS(env,"CBSH",timelimit,default_group_size,debug,f_w,
                         corridor_method, chasing ,accept_partial_solution,agent_priority_strategy)
         success = CBS.search()
 
