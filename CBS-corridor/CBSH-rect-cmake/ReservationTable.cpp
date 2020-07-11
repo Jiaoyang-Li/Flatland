@@ -1,5 +1,6 @@
 #include "ReservationTable.h"
 #include <iostream>
+#include <memory>
 
 ReservationTable::ReservationTable(int mapSize, int max_malfunction, bool ignoreFinishedAgent) {
 	this->ignoreFinishedAgent = ignoreFinishedAgent;
@@ -18,9 +19,9 @@ ReservationTable::ReservationTable(int mapSize, vector<vector<PathEntry>*>* path
 
 void ReservationTable::addPath(int agent_id, std::vector<PathEntry>* path) {
 	//add a path to reservation table
-	if (path == NULL)
+	if (path == nullptr)
 		return;
-	AgentStep* preStep = NULL;
+	AgentStep* preStep = nullptr;
 	for (int t = 0; t < path->size(); t++) {
 		int loc = path->at(t).location;
         if (loc == -1)
@@ -34,7 +35,7 @@ void ReservationTable::addPath(int agent_id, std::vector<PathEntry>* path) {
 		
 
 		res_table[loc][t][agent_id] = AgentStep(agent_id, loc, t);
-		if (preStep != NULL) {
+		if (preStep != nullptr) {
 			preStep->nextStep = &(res_table[loc][t][agent_id]);
 		}
 		res_table[loc][t][agent_id].preStep = preStep;
@@ -51,7 +52,7 @@ void ReservationTable::addPath(int agent_id, std::vector<PathEntry>* path) {
 					res_table[loc][t+i] = agentList();
 				}
 				res_table[loc][t+i][agent_id] = AgentStep(agent_id, loc, t+i);
-				if (preStep != NULL) {
+				if (preStep != nullptr) {
 					preStep->nextStep = &(res_table[loc][t+i][agent_id]);
 				}
 				res_table[loc][t+i][agent_id].preStep = preStep;
@@ -63,7 +64,7 @@ void ReservationTable::addPath(int agent_id, std::vector<PathEntry>* path) {
 
 void ReservationTable::addPaths(vector<vector<PathEntry>*>* paths,int exclude) {
 	for (int agent = 0; agent < paths->size(); agent++) {
-		if (agent == exclude || (*paths)[agent]==NULL)
+		if (agent == exclude || (*paths)[agent]==nullptr)
 			continue;
 		addPath(agent, (*paths)[agent]);
 	}
@@ -86,7 +87,7 @@ void ReservationTable::deletePath(int agent_id, std::vector<PathEntry>* path) {
 }
 
 OldConfList* ReservationTable::findConflict(int agent, int currLoc, int nextLoc, int currT,int kDelay) {
-    OldConfList* confs =  new OldConfList;
+    auto* confs =  new OldConfList;
     int nextT = currT + 1;
     if(nextLoc == -1)
         return confs;
@@ -101,10 +102,14 @@ OldConfList* ReservationTable::findConflict(int agent, int currLoc, int nextLoc,
 
             if (res_table[nextLoc].count(t)) {
                 agentList::iterator it;
-                for (it = res_table[nextLoc][t].begin(); it != res_table[nextLoc][t].end(); ++it) {
-                    confs->push_back(std::shared_ptr<tuple<int, int, int, int, int,int>>(
-                            new tuple<int, int, int, int, int,int>(
-                                    k < 0 ? it->second.agent_id : agent, k < 0 ? agent : it->second.agent_id, nextLoc, -1, k < 0 ? t : nextT,k>=0?k:-k)));
+                for (const auto& agents : res_table[nextLoc][t]) {
+                    confs->push_back(std::make_shared<tuple<int, int, int, int, int,int>>(
+                            k < 0 ? agents.second.agent_id : agent,
+                            k < 0 ? agent : agents.second.agent_id,
+                            nextLoc,
+                            -1,
+                            k < 0 ? t : nextT,
+                            k >= 0 ? k : -k));
 
                 }
             }
@@ -116,9 +121,8 @@ OldConfList* ReservationTable::findConflict(int agent, int currLoc, int nextLoc,
             for (it = goalTable[nextLoc].begin(); it != goalTable[nextLoc].end(); ++it) {
 
                 if (nextT > it->second) {
-                    confs->push_back(std::shared_ptr<tuple<int, int, int, int, int, int>>(
-                            new tuple<int, int, int, int, int, int>(
-                                    it->first, agent, nextLoc, -1, nextT, 0)));
+                    confs->push_back(std::make_shared<tuple<int, int, int, int, int,int>>(
+                            it->first, agent, nextLoc, -1, nextT, 0));
 
                 }
             }
@@ -130,18 +134,13 @@ OldConfList* ReservationTable::findConflict(int agent, int currLoc, int nextLoc,
                 agentList::iterator it;
                 for (it = res_table[nextLoc][currT].begin(); it != res_table[nextLoc][currT].end(); ++it) {
 
-                    if (it->second.nextStep != NULL && it->second.nextStep->loc == currLoc) {
-                        confs->push_back(std::shared_ptr<tuple<int, int, int, int, int, int>>(
-                                new tuple<int, int, int, int, int, int>(
-                                        agent, it->second.agent_id, currLoc, nextLoc, nextT, 0)));
+                    if (it->second.nextStep != nullptr && it->second.nextStep->loc == currLoc) {
+                        confs->push_back(std::make_shared<tuple<int, int, int, int, int,int>>(
+                                agent, it->second.agent_id, currLoc, nextLoc, nextT, 0));
                     }
-
-
                 }
             }
         }
-
-
     }
     return confs;
 }
@@ -172,7 +171,7 @@ int ReservationTable::countConflict(int agent, int currLoc, int nextLoc, int cur
                 agentList::iterator it;
                 for (it = res_table[nextLoc][currT].begin(); it != res_table[nextLoc][currT].end(); ++it) {
 
-                    if (it->second.nextStep != NULL && it->second.nextStep->loc == currLoc) {
+                    if (it->second.nextStep != nullptr && it->second.nextStep->loc == currLoc) {
                        count++;
                     }
 

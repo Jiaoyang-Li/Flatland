@@ -7,7 +7,7 @@
 template<class Map>
 bool MDD<Map>::buildMDD( ConstraintTable& constraints, int numOfLevels, SingleAgentICBS<Map> & solver)
 {
-	MDDNode* root = new MDDNode(-1, NULL); // Root
+	MDDNode* root = new MDDNode(-1, nullptr); // Root
     root->heading = solver.start_heading;
     root->row = solver.start_location / solver.num_col;
     root->col = solver.start_location % solver.num_col;
@@ -50,38 +50,38 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints, int numOfLevels, SingleAg
 		// We want (g + 1)+h <= f = numOfLevels - 1, so h <= numOfLevels - g. -1 because it's the bound of the children.
 		double heuristicBound = numOfLevels - node->level - 2+ 0.001;
 
-        vector<Transition> transitions;
+        list<Transition> transitions;
         if(node->location == -1){
             Transition move;
-            move.first = -1;
-            move.second = 4;
+            move.location = -1;
+            move.heading = node->heading;
             move.position_fraction = node->position_fraction;
             transitions.push_back(move);
 
             Transition move2;
-            move2.first =  solver.start_location;
-            move2.second = 4;
+            move2.location =  solver.start_location;
+            move2.heading = node->heading;
             move2.position_fraction = node->position_fraction;
             transitions.push_back(move2);
 
         }
         else if (node->position_fraction + solver.al->agents[solver.agent_id]->speed >= 0.97) {
             if (node->position_fraction == 0)
-                transitions = solver.ml->get_transitions(node->location, node->heading, false);
+                solver.ml->get_transitions(transitions, node->location, node->heading, false);
             else
-                transitions = solver.ml->get_transitions(node->location, node->heading, true);
+                solver.ml->get_transitions(transitions, node->location, node->heading, true);
         }
         else if (node->position_fraction == 0) {
             Transition move;
-            move.first = node->location;
-            move.second = 4;
+            move.location = node->location;
+            move.heading = node->heading;
             move.position_fraction = node->position_fraction;
 
             transitions.push_back(move);
 
             Transition move2;
-            move2.first = node->location;
-            move2.second = 4;
+            move2.location = node->location;
+            move2.heading = node->heading;
             move2.position_fraction = node->position_fraction + solver.al->agents[solver.agent_id]->speed;
 
             transitions.push_back(move2);
@@ -90,8 +90,8 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints, int numOfLevels, SingleAg
 
 
             Transition move2;
-            move2.first = node->location;
-            move2.second = 4;
+            move2.location = node->location;
+            move2.heading = node->heading;
             move2.position_fraction = node->position_fraction + solver.al->agents[solver.agent_id]->speed;
 
             transitions.push_back(move2);
@@ -99,23 +99,13 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints, int numOfLevels, SingleAg
 
         }
 		//cout << "current " << node->location << " heading " << node->heading << endl;
-		for (const auto move : transitions)
+		for (const auto& move : transitions)
 		{
             float next_position_fraction = move.position_fraction;
 
-            int new_heading;
-			if (node->heading == -1) //heading == -1 means no heading info
-				new_heading = -1;
-			else
-				if (move.second == 4) //move == 4 means wait
-					new_heading = node->heading;
-				else
-					new_heading = move.second;
-			int newLoc = move.first;
+            int new_heading = move.heading;
+			int newLoc = move.location;
 			//cout << "newLoc " << newLoc << " heading " << new_heading<<" h "<< solver.my_heuristic[newLoc].heading[new_heading] << endl;
-			if(newLoc != -1 && !solver.my_heuristic[newLoc].heading.count(new_heading)) {
-			    continue;
-			}
 			int new_h;
 			if(newLoc == -1)
 			    new_h = solver.my_heuristic[solver.start_location].get_hval(solver.start_heading);
@@ -123,8 +113,8 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints, int numOfLevels, SingleAg
                 new_h = solver.my_heuristic[newLoc].get_hval(new_heading);
 
 			if ( (new_h < heuristicBound) &&
-				!constraints.is_constrained(newLoc, node->level + 1) &&
-				!constraints.is_constrained(node->location * solver.map_size + newLoc, node->level + 1)) // valid move
+				!constraints.is_constrained(newLoc, node->level + 1)) //&&
+				//!constraints.is_constrained(node->location * solver.map_size + newLoc, node->level + 1)) // valid move
 			{
 				std::list<MDDNode*>::reverse_iterator child = closed.rbegin();
 				bool find = false;
@@ -192,7 +182,7 @@ template<class Map>
 bool MDD<Map>::buildMDD( ConstraintTable& constraints,
 	int numOfLevels, SingleAgentICBS<Map> & solver,int start,int start_time, int start_heading)
 {
-	MDDNode* root = new MDDNode(-1, NULL); // Root
+	MDDNode* root = new MDDNode(-1, nullptr); // Root
 	root->heading = start_heading;
 	root->row = solver.start_location / solver.num_col;
 	root->col = solver.start_location % solver.num_col;
@@ -233,45 +223,45 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints,
 		// We want (g + 1)+h <= f = numOfLevels - 1, so h <= numOfLevels - g. -1 because it's the bound of the children.
 		double heuristicBound = numOfLevels - node->level - 2+ 0.001; 
 
-		vector<Transition> transitions;
+		list<Transition> transitions;
 		if (node->malfunction_left > 0) {
 			Transition move;
-			move.first = node->location;
-			move.second = 4;
+			move.location = node->location;
+			move.heading = node->heading;
 			move.position_fraction = node->position_fraction;
 			transitions.push_back(move);
 		}
         else if(node->location == -1){
             Transition move;
-            move.first = -1;
-            move.second = 4;
+            move.location = -1;
+            move.heading = node->heading;
             move.position_fraction = node->position_fraction;
             transitions.push_back(move);
 
             Transition move2;
-            move2.first = start;
-            move2.second = 4;
+            move2.location = start;
+            move2.heading = node->heading;
             move2.position_fraction = node->position_fraction;
             transitions.push_back(move2);
 
         }
 		else if (node->position_fraction + solver.al->agents[solver.agent_id]->speed >= 0.97) {
 			if (node->position_fraction == 0)
-				transitions = solver.ml->get_transitions(node->location, node->heading, false);
+				solver.ml->get_transitions(transitions, node->location, node->heading, false);
 			else
-				transitions = solver.ml->get_transitions(node->location, node->heading, true);
+				solver.ml->get_transitions(transitions, node->location, node->heading, true);
 		}
 		else if (node->position_fraction == 0) {
 			Transition move;
-			move.first = node->location;
-			move.second = 4;
+			move.location = node->location;
+			move.heading = node->heading;
 			move.position_fraction = node->position_fraction;
 
 			transitions.push_back(move);
 
 			Transition move2;
-			move2.first = node->location;
-			move2.second = 4;
+			move2.location = node->location;
+			move2.heading = node->heading;
 			move2.position_fraction = node->position_fraction + solver.al->agents[solver.agent_id]->speed;
 
 			transitions.push_back(move2);
@@ -280,8 +270,8 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints,
 
 
 			Transition move2;
-			move2.first = node->location;
-			move2.second = 4;
+			move2.location = node->location;
+			move2.heading = node->heading;
 			move2.position_fraction = node->position_fraction + solver.al->agents[solver.agent_id]->speed;
 
 			transitions.push_back(move2);
@@ -289,11 +279,11 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints,
 
 		}
 		//cout << "current " << node->location << " heading " << node->heading << endl;
-		for (const auto move : transitions)
+		for (const auto& move : transitions)
 		{
 			int next_malfunction_left = node->malfunction_left > 0 ? node->malfunction_left - 1 : node->malfunction_left;
 			int next_next_malfuntion = (node->next_malfunction > 0 && node->malfunction_left == 0) ? node->next_malfunction - 1 : node->next_malfunction;
-			if (node->parent != NULL && next_next_malfuntion == 0 && node->next_malfunction == 1) {
+			if (node->parent != nullptr && next_next_malfuntion == 0 && node->next_malfunction == 1) {
 				next_malfunction_left = solver.max_malfunction;
 			}
 
@@ -303,16 +293,13 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints,
 			if (node->heading == -1) //heading == -1 means no heading info
 				new_heading = -1;
 			else
-				if (move.second == 4) //move == 4 means wait
-					new_heading = node->heading;
-				else
-					new_heading = move.second;
-			int newLoc = move.first;
+				new_heading = move.heading;
+			int newLoc = move.location;
 			//cout << "newLoc " << newLoc << " heading " << new_heading<<" h "<< solver.my_heuristic[newLoc].heading[new_heading] << endl;
 
-			if (solver.my_heuristic[newLoc].heading.count(new_heading) && solver.my_heuristic[newLoc].get_hval(new_heading) < heuristicBound &&
-				!constraints.is_constrained(newLoc, start_time+node->level + 1) &&
-				!constraints.is_constrained(node->location * solver.map_size + newLoc, start_time+node->level + 1)) // valid move
+			if (solver.my_heuristic[newLoc].get_hval(new_heading) < heuristicBound &&
+				!constraints.is_constrained(newLoc, start_time+node->level + 1))  // &&
+				// !constraints.is_constrained(node->location * solver.map_size + newLoc, start_time+node->level + 1)) // valid move
 			{
 				std::list<MDDNode*>::reverse_iterator child = closed.rbegin();
 				bool find = false;
@@ -380,7 +367,7 @@ template<class Map>
 bool MDD<Map>::buildMDD(ConstraintTable& constraints,
 	int numOfLevels, SingleAgentICBS<Map> & solver, int start, int start_time, int goal, int start_heading)
 {
-	MDDNode* root = new MDDNode(start, NULL); // Root
+	MDDNode* root = new MDDNode(start, nullptr); // Root
 	root->heading = start_heading;
 	root->row = solver.start_location / solver.num_col;
 	root->col = solver.start_location % solver.num_col;
@@ -418,31 +405,31 @@ bool MDD<Map>::buildMDD(ConstraintTable& constraints,
 		// We want (g + 1)+h <= f = numOfLevels - 1, so h <= numOfLevels - g. -1 because it's the bound of the children.
 		double heuristicBound = numOfLevels - node->level - 2 + 0.001;
 
-		vector<Transition> transitions;
+		list<Transition> transitions;
 		if (node->malfunction_left > 1) {
 			Transition move;
-			move.first = node->location;
-			move.second = 4;
+			move.location = node->location;
+			move.heading = node->heading;
 			move.position_fraction = node->position_fraction;
 			transitions.push_back(move);
 		}
 		else if (node->position_fraction + solver.al->agents[solver.agent_id]->speed >= 0.97) {
 			if (node->position_fraction == 0)
-				transitions = solver.ml->get_transitions(node->location, node->heading, false);
+				solver.ml->get_transitions(transitions, node->location, node->heading, false);
 			else
-				transitions = solver.ml->get_transitions(node->location, node->heading, true);
+				solver.ml->get_transitions(transitions, node->location, node->heading, true);
 		}
 		else if (node->position_fraction == 0) {
 			Transition move;
-			move.first = node->location;
-			move.second = 4;
+			move.location = node->location;
+			move.heading = node->heading;
 			move.position_fraction = node->position_fraction;
 
 			transitions.push_back(move);
 
 			Transition move2;
-			move2.first = node->location;
-			move2.second = 4;
+			move2.location = node->location;
+			move2.heading = node->heading;
 			move2.position_fraction = node->position_fraction +solver.al->agents[solver.agent_id]->speed;
 
 			transitions.push_back(move2);
@@ -451,8 +438,8 @@ bool MDD<Map>::buildMDD(ConstraintTable& constraints,
 
 
 			Transition move2;
-			move2.first = node->location;
-			move2.second = 4;
+			move2.location = node->location;
+			move2.heading = node->heading;
 			move2.position_fraction = node->position_fraction +solver.al->agents[solver.agent_id]->speed;
 
 			transitions.push_back(move2);
@@ -461,11 +448,11 @@ bool MDD<Map>::buildMDD(ConstraintTable& constraints,
 		}
 
 		//cout << "nodeent " << node->location << " heading " << node->heading << endl;
-		for (const auto move : transitions)
+		for (const auto& move : transitions)
 		{
 			int next_malfunction_left = node->malfunction_left > 0 ? node->malfunction_left - 1 : node->malfunction_left;
 			int next_next_malfuntion = (node->next_malfunction > 0 && node->malfunction_left == 0) ? node->next_malfunction - 1 : node->next_malfunction;
-			if (node->parent != NULL && next_next_malfuntion == 0 && node->next_malfunction == 1) {
+			if (node->parent != nullptr && next_next_malfuntion == 0 && node->next_malfunction == 1) {
 				next_malfunction_left = solver.max_malfunction;
 			}
 
@@ -476,15 +463,12 @@ bool MDD<Map>::buildMDD(ConstraintTable& constraints,
 			if (node->heading == -1) //heading == -1 means no heading info
 				new_heading = -1;
 			else
-				if (move.second == 4) //move == 4 means wait
-					new_heading = node->heading;
-				else
-					new_heading = move.second;
-			int newLoc = move.first;
+				new_heading = move.heading;
+			int newLoc = move.location;
 			int next_h_val = getMahattanDistance(newLoc, goal, solver.num_col);
 			if (next_h_val < heuristicBound &&
-				!constraints.is_constrained(newLoc, start_time+node->level + 1) &&
-				!constraints.is_constrained(node->location * solver.map_size + newLoc, start_time + node->level + 1)) // valid move
+				!constraints.is_constrained(newLoc, start_time+node->level + 1)) // &&
+				//!constraints.is_constrained(node->location * solver.map_size + newLoc, start_time + node->level + 1)) // valid move
 			{
 				std::list<MDDNode*>::reverse_iterator child = closed.rbegin();
 				bool find = false;
@@ -585,14 +569,14 @@ MDDNode* MDD<Map>::find(int location, int level)
 		for (std::list<MDDNode*>::iterator it = levels[level].begin(); it != levels[level].end(); ++it)
 			if((*it)->location == location)
 				return (*it);
-	return NULL;
+	return nullptr;
 }
 
 template<class Map>
 MDD<Map>::MDD(MDD & cpy) // deep copy
 {
 	levels.resize(cpy.levels.size());
-	MDDNode* root = new MDDNode(cpy.levels[0].front()->location, NULL);
+	MDDNode* root = new MDDNode(cpy.levels[0].front()->location, nullptr);
 	levels[0].push_back(root);
 	for(int t = 0; t < levels.size() - 1; t++)
 	{
@@ -602,7 +586,7 @@ MDD<Map>::MDD(MDD & cpy) // deep copy
 			for (std::list<MDDNode*>::const_iterator cpyChild = cpyNode->children.begin(); cpyChild != cpyNode->children.end(); ++cpyChild)
 			{
 				MDDNode* child = find((*cpyChild)->location, (*cpyChild)->level);
-				if (child == NULL)
+				if (child == nullptr)
 				{
 					child = new MDDNode((*cpyChild)->location, (*node));
 					levels[child->level].push_back(child);

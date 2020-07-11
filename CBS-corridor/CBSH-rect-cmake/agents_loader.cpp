@@ -479,6 +479,7 @@ void AgentsLoader::updateToBePlannedAgents(int _num_of_agents)
 
 bool AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)
 {
+    constraintTable.clear();
     assert((int)new_paths.size() == num_of_agents);
     list<int> giveup_agents;
     for (int i = 0; i < num_of_agents; i++)
@@ -501,7 +502,7 @@ bool AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)
         {
             if (constraintTable.is_constrained(paths_all[a][t].location, t))
             {
-                cout << "Agent "<< a <<"has a conflict at location " <<
+                cout << "Agent "<< a <<" has a conflict at location " <<
                         paths_all[a][t].location << " at timestep " << t << endl;
                 return false; // the path is conflicting with someone else
             }
@@ -511,8 +512,9 @@ bool AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)
         {
             if (paths_all[a][t].location == -1)
                 continue;
-            constraintTable.insert(paths_all[a][t].location, max(0, t - kDelay), t + kDelay + 1);
+            constraintTable.insert_to_fixed_CT(paths_all[a][t].location, t);
         }
+        makespan = max(makespan, (int)paths_all[a].size() - 1);
     }
     unplanned_agents.splice(unplanned_agents.begin(), giveup_agents);
     return true;

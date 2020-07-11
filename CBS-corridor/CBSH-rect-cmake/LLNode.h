@@ -23,13 +23,13 @@ public:
 	int heading;
 	int actionToHere = 4;
 	std::vector<int> possible_next_heading;
-	LLNode* parent=NULL;
+	LLNode* parent=nullptr;
 	int timestep = 0;
 	int time_generated=0;
 	int num_internal_conf = 0; 
 	bool in_openlist = false;
-	bool in_focallist = false;
-	OldConfList* conflist=NULL;
+	// bool in_focallist = false;
+	OldConfList* conflist=nullptr;
 
 	int next_malfunction = -1;
 	int malfunction_left = 0;
@@ -90,7 +90,7 @@ public:
 
 	// The following is used by googledensehash for checking whether two nodes are equal
 	// we say that two nodes, s1 and s2, are equal if
-	// both are non-NULL and agree on the id and timestep and same heading
+	// both are non-nullptr and agree on the id and timestep and same heading
 	struct eqnode 
 	{
 		bool operator()(const LLNode* s1, const LLNode* s2) const 

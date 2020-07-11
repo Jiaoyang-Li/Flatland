@@ -22,14 +22,18 @@ void SingleAgentICBS<Map>::updatePath(LLNode* goal, std::vector<PathEntry> &path
 		path[t].exit_loc = curr->exit_loc;
 		delete path[t].conflist;
 		if (t!=0)
-		    path[t].conflist =  res_table->findConflict(agent_id, curr->parent->loc, curr->loc, t-1, kRobust);
+        {
+            path[t].conflist =  res_table->findConflict(agent_id, curr->parent->loc, curr->loc, t-1, kRobust);
+        }
         else
-            path[t].conflist = NULL;
+        {
+            path[t].conflist = nullptr;
+        }
         if (t == goal->timestep && curr->loc != goal_location) {
 			path[t].malfunction = true;
 		}
 
-		curr->conflist = NULL;
+		curr->conflist = nullptr;
 		curr = curr->parent;
 	}
 }
@@ -37,12 +41,12 @@ void SingleAgentICBS<Map>::updatePath(LLNode* goal, std::vector<PathEntry> &path
 
 // iterate over the constraints ( cons[t] is a list of all constraints for timestep t) and return the latest
 // timestep which has a constraint involving the goal location
-template<class Map>
+/*template<class Map>
 int SingleAgentICBS<Map>::extractLastGoalTimestep(int goal_location, const std::vector< std::list< std::pair<int, int> > >* cons) {
-	if (cons != NULL) {
+	if (cons != nullptr) {
 		for (int t = static_cast<int>(cons->size()) - 1; t > 0; t--) 
 		{
-			for (std::list< std::pair<int, int> >::const_iterator it = cons->at(t).begin(); it != cons->at(t).end(); ++it)
+			for (const auto it : cons->at(t).begin(); it != cons->at(t).end(); ++it)
 			{
 				if (std::get<0>(*it) == goal_location && it->second < 0) 
 				{
@@ -52,7 +56,7 @@ int SingleAgentICBS<Map>::extractLastGoalTimestep(int goal_location, const std::
 		}
 	}
 	return -1;
-}
+}*/
 
 
 
@@ -91,8 +95,12 @@ bool SingleAgentICBS<Map>::validMove(int curr, int next) const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // return true if a path found (and updates vector<int> path) or false if no path exists
+// focal_makespan is the makespan threshold of the focal list used in the high-level.
+// When the path length is shorter than focal_makespan, the low-level performs a focal search;
+// When the path length exceeds focal_makespan, it performs an A* search.
 template<class Map>
-bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weight, ConstraintTable& constraint_table,
+bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weight, int focal_makespan,
+        ConstraintTable& constraint_table,
 	ReservationTable* res_table, size_t max_plan_len, double lowerbound, std::clock_t start_clock ,int time_limit)
 {
 
@@ -103,7 +111,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 
 	 // generate start and add it to the OPEN list
-	LLNode* start = new LLNode(-1, 0, my_heuristic[start_location].get_hval(start_heading), NULL, 0, 0, false); // TODO::Shouldn't the h value be divided by its speed?
+	auto start = new LLNode(-1, 0, my_heuristic[start_location].get_hval(start_heading), nullptr, 0, 0, false); // TODO::Shouldn't the h value be divided by its speed?
 	start->heading = start_heading;
 	num_generated++;
 	start->open_handle = open_list.push(start);
@@ -118,11 +126,11 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 	start->position_fraction = al->agents[agent_id]->position_fraction;
 	start->exit_heading = al->agents[agent_id]->exit_heading;
 	if (start->exit_heading >= 0) {
-		vector<Transition> temp;
-		temp = ml->get_transitions(start_location, start->heading, true);
+		list<Transition> temp;
+		ml->get_transitions(temp, start_location, start->heading, true);
 		if (temp.size() == 1) {
-			start->exit_loc = temp.front().first;
-			start->exit_heading = temp.front().second;
+			start->exit_loc = temp.front().location;
+			start->exit_heading = temp.front().heading;
 		}
 		else
 			start->exit_loc = start_location + ml->moves_offset[start->exit_heading];
@@ -142,9 +150,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 	allNodes_table.insert(start);
 	min_f_val = start->getFVal();
 
-	lowerbound = std::max(lowerbound, (double)constraint_table.length_min);
-
-	lower_bound = std::max(lowerbound, f_weight * min_f_val);
+    focal_threshold = std::max(lowerbound, std::min(f_weight * min_f_val, (double)focal_makespan));
 
 	int time_generated = 0;
 	int time_check_count = 0;
@@ -174,7 +180,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 		//cout << "focal size " << focal_list.size() << endl;
 		//cout << "goal_location: " << goal_location << " curr time: " << curr->timestep << " length_min: " << constraint_table.length_min << endl;
 		// check if the popped node is a goal
-		if ((curr->loc == goal_location ) /*|| (curr->parent!= NULL && curr->next_malfunction==0 && curr->parent->next_malfunction ==1)*/)
+		if ((curr->loc == goal_location ) /*|| (curr->parent!= nullptr && curr->next_malfunction==0 && curr->parent->next_malfunction ==1)*/)
 		{
 
 			updatePath(curr, path, res_table);
@@ -185,26 +191,24 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			focal_list.clear();
 
 			allNodes_table.clear();
-			goal_nodes.clear();
-
 			return true;
 			//}
 		}
 		
 
-		vector<Transition> transitions;
+		list<Transition> transitions;
 		if(curr->loc == -1){
             Transition move;
-			move.first = -1;
-			move.second = 4;
+			move.location = -1;
+			move.heading = curr->heading;
 			move.position_fraction = curr->position_fraction;
 			move.exit_loc = curr->exit_loc;
 			move.exit_heading = curr->exit_heading;
 			transitions.push_back(move);
             
             Transition move2;
-			move2.first = start_location;
-			move2.second = 4;
+			move2.location = start_location;
+			move2.heading = curr->heading;
 			move2.position_fraction = curr->position_fraction;
 			move2.exit_loc = curr->exit_loc;
 			move2.exit_heading = curr->exit_heading;
@@ -213,25 +217,25 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
         }
 		else if (curr->position_fraction + al->agents[agent_id]->speed >= 0.97) {
 			if (curr->position_fraction == 0)
-				transitions = ml->get_transitions(curr->loc, curr->heading, false);
+			    ml->get_transitions(transitions, curr->loc, curr->heading, false);
 			else {
 				Transition move;
-				move.first = curr->exit_loc;
-				move.second = curr->exit_heading;
+				move.location = curr->exit_loc;
+				move.heading = curr->exit_heading;
 				move.position_fraction = 0;
 				transitions.push_back(move);
 			}
 		}
 		else if (curr->position_fraction == 0) {
-			transitions = ml->get_exits(curr->loc, curr->heading, al->agents[agent_id]->speed, false);
+		    ml->get_exits(transitions, curr->loc, curr->heading, al->agents[agent_id]->speed, false);
 
 		}
 		else { //<0.97 and po_frac not 0
 			
 
 			Transition move2;
-			move2.first = curr->loc;
-			move2.second = curr->heading;
+			move2.location = curr->loc;
+			move2.heading = curr->heading;
 			move2.position_fraction = curr->position_fraction + al->agents[agent_id]->speed;
 			move2.exit_loc = curr->exit_loc;
 			move2.exit_heading = curr->exit_heading;
@@ -243,25 +247,22 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 		for (const auto& move : transitions)
 		{
-			int next_id = move.first;
+			int next_id = move.location;
 			time_generated += 1;
 			int next_timestep = curr->timestep + 1;
 
 
-			if (!constraint_table.is_constrained(next_id, next_timestep) &&
-				!constraint_table.is_constrained(curr->loc * map_size + next_id, next_timestep)) // TODO:: for k-robust cases, we do not need to check edge constraint?
+			if (!constraint_table.is_constrained(next_id, next_timestep)) //&&
+				//!constraint_table.is_constrained(curr->loc * map_size + next_id, next_timestep)) // TODO:: for k-robust cases, we do not need to check edge constraint?
 			{
 
 				int next_g_val = curr->g_val + 1;
 				int next_heading;
 
-				if (curr->heading == -1) //heading == 4 means no heading info
+				if (curr->heading == -1) //heading == -1 means no heading info
 					next_heading = -1;
 				else
-					if (move.second == 4) //move == 4 means wait
-						next_heading = curr->heading;
-					else
-						next_heading = move.second;
+					next_heading = move.heading;
 				float next_position_fraction = move.position_fraction;
 
 				
@@ -287,9 +288,9 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 
                 // generate (maybe temporary) node
-				LLNode* next = new LLNode(next_id, next_g_val, next_h_val,	curr, next_timestep, next_internal_conflicts, false);
+				auto next = new LLNode(next_id, next_g_val, next_h_val,	curr, next_timestep, next_internal_conflicts, false);
 				next->heading = next_heading;
-				next->actionToHere = move.second;
+				next->actionToHere = move.heading;
 				next->time_generated = time_generated;
 				next->position_fraction = next_position_fraction;
 				next->exit_heading = move.exit_heading;
@@ -297,23 +298,19 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 				// try to retrieve it from the hash table
 				it = allNodes_table.find(next);
-				if (it == allNodes_table.end() || (next_id == goal_location && constraint_table.length_min > 0) )
+				if (it == allNodes_table.end())
 				{
 
 					next->open_handle = open_list.push(next);
 					next->in_openlist = true;
 					num_generated++;
-					if (next->getFVal() <= lower_bound) {
+					if (next->getFVal() <= focal_threshold)
+					{
 						next->focal_handle = focal_list.push(next);
-						next->in_focallist = true;
 					}
 
-					if (it == allNodes_table.end())
-						allNodes_table.insert(next);
-					else
-						goal_nodes.push_back(next);
-					next->conflist = conflicts;
-
+					allNodes_table.insert(next);
+					next->conflist = conflicts; // TODO: Can I delete this line?
 				}
 				else
 				{  // update existing node's if needed (only in the open_list)
@@ -329,9 +326,9 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 							bool add_to_focal = false;  // check if it was above the focal bound before and now below (thus need to be inserted)
 							bool update_in_focal = false;  // check if it was inside the focal and needs to be updated (because f-val changed)
 							bool update_open = false;
-							if ((next_g_val + next_h_val) <= lower_bound)
+							if ((next_g_val + next_h_val) <= focal_threshold)
 							{  // if the new f-val qualify to be in FOCAL
-								if (existing_next->getFVal() > lower_bound)
+								if (existing_next->getFVal() > focal_threshold)
 									add_to_focal = true;  // and the previous f-val did not qualify to be in FOCAL then add
 								else
 									update_in_focal = true;  // and the previous f-val did qualify to be in FOCAL then update
@@ -367,8 +364,8 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 							existing_next->in_openlist = true;
 							delete(existing_next->conflist);
 							existing_next->conflist = conflicts;
-							if (existing_next->getFVal() <= lower_bound)
-								existing_next->focal_handle = focal_list.push(existing_next);
+							if (existing_next->getFVal() <= focal_threshold)
+                                existing_next->focal_handle = focal_list.push(existing_next);
 						}
 					}  // end update a node in closed list
 				}  // end update an existing node
@@ -379,38 +376,35 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 		if (open_list.empty())  // in case OPEN is empty, no path found
 			break;
 		LLNode* open_head = open_list.top();
-		
 
+        assert(open_head->getFVal() >= min_f_val);
 		if (open_head->getFVal() > min_f_val) 
 		{
+			min_f_val = open_head->getFVal();
+			double new_focal_threshold = std::max(lowerbound, std::max(std::min(f_weight * min_f_val, (double)focal_makespan), min_f_val));
+            if (new_focal_threshold > focal_threshold)
+            {
+                for (LLNode* n : open_list)
+                {
 
-			double new_min_f_val = open_head->getFVal();
-			double new_lower_bound = std::max(lowerbound, f_weight * new_min_f_val);
-
-			for (LLNode* n : open_list) 
-			{
-
-				if (!n->in_focallist && n->getFVal() > lower_bound && n->getFVal() <= new_lower_bound) {
-
-					n->focal_handle = focal_list.push(n);
-					n->in_focallist = true;
-				}
-			}
-
-			min_f_val = new_min_f_val;
-			lower_bound = new_lower_bound;
-
+                    if (n->getFVal() > focal_threshold && n->getFVal() <= new_focal_threshold)
+                    {
+                        n->focal_handle = focal_list.push(n);
+                    }
+                }
+                focal_threshold = new_focal_threshold;
+            }
 		}
+
 
 	}  // end while loop
 
+	assert(min_f_val >= constraint_table.length_max);
 	  // no path found
 	releaseClosedListNodes(&allNodes_table);
 	open_list.clear();
 	focal_list.clear();
 	allNodes_table.clear();
-	goal_nodes.clear();
-
 	return false;
 }
 
@@ -423,9 +417,6 @@ inline void SingleAgentICBS<Map>::releaseClosedListNodes(hashtable_t* allNodes_t
 
 			delete (*it);
 	}
-	for (auto node : goal_nodes)
-		delete node;
-
 }
 
 template<class Map>
@@ -445,7 +436,7 @@ SingleAgentICBS<Map>::SingleAgentICBS(int start_location, int goal_location,  Ma
 	this->num_expanded = 0;
 	this->num_generated = 0;
 
-	this->lower_bound = 0;
+	this->focal_threshold = 0;
 	this->min_f_val = 0;
 
 	this->num_col = ml->cols;
@@ -455,8 +446,7 @@ SingleAgentICBS<Map>::SingleAgentICBS(int start_location, int goal_location,  Ma
 
 template<class Map>
 SingleAgentICBS<Map>::~SingleAgentICBS()
-{
-}
+= default;
 
 template class SingleAgentICBS<MapLoader>;
 template class SingleAgentICBS<FlatlandLoader>;

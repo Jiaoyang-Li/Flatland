@@ -28,8 +28,8 @@ class MapLoader
   MapLoader(std::string fname); // load map from file
   MapLoader(int rows, int cols); // initialize new [rows x cols] empty map
   MapLoader();
-  vector<Transition> get_transitions(int loc, int heading, int noWait) const;
-  vector<Transition> get_exits(int loc, int heading,float speed, int noWait) const;
+  void get_transitions(list<Transition>& transition, int loc, int heading, int noWait) const;
+  void get_exits(list<Transition>& transition, int loc, int heading,float speed, int noWait) const;
 
   bool getLoc(int loc) ;
   inline bool is_blocked (int row, int col) const { return my_map[row * this->cols + col]; }
@@ -44,6 +44,7 @@ class MapLoader
   inline int col_coordinate(int id) const { return id % this->cols; }
   void printPath (std::vector<int> path);
   void saveToFile(std::string fname);
-  int getDegree(int loc);
+
+    virtual int getDegree(int loc);
   ~MapLoader();
 };

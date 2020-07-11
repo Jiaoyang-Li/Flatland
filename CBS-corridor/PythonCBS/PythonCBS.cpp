@@ -3,14 +3,14 @@
 #include "MDD.h"
 #include <iomanip>
 #include <sstream>
-
+#include <math.h>       /* log2 */
 namespace p = boost::python;
 
 
 
 
 template <class Map>
-PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int t,
+PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int t,
                           int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
                           int agent_priority_strategy) :
                           railEnv(railEnv1), defaultGroupSize(default_group_size),
@@ -23,7 +23,7 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int
     srand(0);
     this->f_w = f_w;
 	this->algo = algo;
-	this->kRobust = kRobust;
+	this->kRobust = 1;
 	this->chasing = chasing;
 	if(corridor > 0){
 	    this->corridor2 = true;
@@ -95,7 +95,8 @@ bool PythonCBS<Map>::search() {
 		cout << "start initialize" << endl;
 	//initialize search engine
 	int screen;
-	screen = options1.debug;
+    screen = options1.debug;
+	al->constraintTable.init(ml->map_size());
     al->computeHeuristics(ml);
 	if (options1.debug)
 		cout << "Sort the agents" << endl;
@@ -120,9 +121,7 @@ bool PythonCBS<Map>::search() {
 
         if (options1.debug)
             cout << "Time limit = " << time_limit << "second." << endl;
-        MultiMapICBSSearch <Map> icbs(ml, al, f_w, s, time_limit * CLOCKS_PER_SEC, screen, kRobust, options1);
-        if(s == constraint_strategy::CBSH_RM)
-            icbs.rectangleMDD = true;
+        MultiMapICBSSearch <Map> icbs(ml, al, f_w, s, time_limit * CLOCKS_PER_SEC, screen, options1);
         icbs.trainCorridor1 = trainCorridor1;
         icbs.corridor2 = corridor2;
         icbs.ignoreFinishedAgent = true;
@@ -158,7 +157,7 @@ bool PythonCBS<Map>::search() {
             old_runtime = get<2>(iteration_stats.back());
         iteration_stats.emplace_back(al->num_of_agents, time_limit,
                                      runtime, runtime - old_runtime,
-                                     al->constraintTable.latest_timestep,
+                                     al->makespan,
                                      icbs.solution_cost,
                                      icbs.getSumOfHeuristicsAtStarts(),
                                      al->num_of_agents - giveup_agents,
@@ -250,7 +249,7 @@ p::dict PythonCBS<Map>::getResultDetail() {
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
 {
 	using namespace boost::python;
-	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, int, int, int, int,float,int,bool,bool,int>())
+	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, int, int, int,float,int,bool,bool,int>())
 		.def("getResult", &PythonCBS<FlatlandLoader>::getResult)
 		.def("search", &PythonCBS<FlatlandLoader>::search)
 		.def("getResultDetail", &PythonCBS<FlatlandLoader>::getResultDetail)

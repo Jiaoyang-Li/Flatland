@@ -25,8 +25,8 @@ public:
 
 	boost::python::object rail;
 	railCell* railMap;
-	vector<Transition> get_transitions(int location, int heading = -1, bool noWait=false) const;
-	vector<Transition> get_exits(int location, int heading = -1,float speed=1.0, bool noWait = false) const;
+	void get_transitions(list<Transition>& transition, int location, int heading = -1, bool noWait=false) const;
+	void get_exits(list<Transition>& transition, int location, int heading = -1,float speed=1.0, bool noWait = false) const;
 	~FlatlandLoader();
 protected:
 	float blockRate;

@@ -4,7 +4,6 @@
 #include "SingleAgentICBS.h"
 #include "compute_heuristic.h"
 #include "agents_loader.h"
-#include "RectangleReasoning.h"
 #include "CorridorReasoning.h"
 #include "ConstraintTable.h"
 #include "common.h"
@@ -14,7 +13,7 @@
 
 struct options {
 	bool asymmetry_constraint=false;
-	int debug;
+	int debug = 0;
 	bool ignore_t0=false;
 	bool shortBarrier=false;
 	bool flippedRec=false;
@@ -48,10 +47,10 @@ public:
 	uint64_t num_corridor2 = 0;
 	uint64_t num_corridor4 = 0;
 	uint64_t num_rectangle = 0;
-	uint64_t num_0FlipRectangle = 0;
-	uint64_t num_1FlipRectangle = 0;
-	uint64_t num_2FlipRectangle = 0;
-	uint64_t num_target = 0;
+	//uint64_t num_0FlipRectangle = 0;
+	//uint64_t num_1FlipRectangle = 0;
+	//uint64_t num_2FlipRectangle = 0;
+	//uint64_t num_target = 0;
     uint64_t num_start = 0;
     uint64_t num_semi_corridor = 0;
 
@@ -67,12 +66,12 @@ public:
 	tuple<int, int, int> min_f_val;  // <#dead agents, makespan, sum of costs>
     tuple<int, int, int> focal_list_threshold;  // <#dead agents, w * makespan, w * sum of costs>
     ICBSNode* goal_node = nullptr;
-	bool cardinalRect = false;
-	bool rectangleMDD = false;
+	//bool cardinalRect = false;
+	//bool rectangleMDD = false;
 	bool corridor2 = false;
 	bool chasing_reasoning = false;
 	bool cardinalCorridorReasoning = false;
-	bool targetReasoning=false;
+	//bool targetReasoning=false;
 	int kDelay;
 	bool asymmetry_constraint;
 	int numOfRectangle = 0;
@@ -91,7 +90,7 @@ public:
 
 
 
-	ICBSSearch(AgentsLoader& al): al(al) {};
+	ICBSSearch(AgentsLoader& al): al(al), constraintTable(al.constraintTable) {};
 
 protected:
     AgentsLoader& al;
@@ -103,7 +102,7 @@ protected:
 
 	CorridorTable corridorTable;
 
-	ConstraintTable constraintTable;
+	ConstraintTable& constraintTable;
 
 	constraint_strategy cons_strategy;
 	int time_limit;
@@ -121,28 +120,28 @@ protected:
 	
 	virtual bool findPathForSingleAgent(ICBSNode*  node, int ag, double lowerbound = 0) { return false; };
 	virtual void  classifyConflicts(ICBSNode &parent) {};
-	void findTargetConflicts(int a1, int a2, ICBSNode& curr);
+	//void findTargetConflicts(int a1, int a2, ICBSNode& curr);
 
 	// high level search
 	bool generateChild(ICBSNode* child, ICBSNode* curr);
 	//conflicts
 	void findConflicts(ICBSNode& curr);
-	std::shared_ptr<Conflict> chooseConflict(ICBSNode &parent);
-	void copyConflicts(const std::list<std::shared_ptr<Conflict>>& conflicts,
-		std::list<std::shared_ptr<Conflict>>& copy, const list<int>& excluded_agent) const;
+	std::shared_ptr<Conflict> chooseConflict(ICBSNode &parent) const;
+	static void copyConflicts(const std::list<std::shared_ptr<Conflict>>& conflicts,
+		std::list<std::shared_ptr<Conflict>>& copy, const list<int>& excluded_agent) ;
 	// void copyConflicts(const std::list<std::shared_ptr<CConflict>>& conflicts,
 	// 	std::list<std::shared_ptr<CConflict>>& copy, int excluded_agent) const;
 	// void deleteRectConflict(ICBSNode& curr, const Conflict& conflict);
 	bool hasCardinalConflict(const ICBSNode& node) const;
 	bool blocked(const Path& path, const std::list<Constraint>& constraint) const;
-	bool traverse(const Path& path, int loc, int t) const;
+	static bool traverse(const Path& path, int loc, int t) ;
 	void removeLowPriorityConflicts(std::list<std::shared_ptr<Conflict>>& conflicts) const;
 
 	// add heuristics for the high-level search
 	int computeHeuristics(const ICBSNode& curr);
 	bool KVertexCover(const vector<vector<bool>>& CG, int num_of_CGnodes, int num_of_CGedges, int k);
     int minimumVertexCover(const vector<vector<bool>>& CG);
-    int greedyMatching(const vector<vector<bool>>& CG) const;
+    static int greedyMatching(const vector<vector<bool>>& CG) ;
 
 	//update information
 	// vector < list< pair<int, int> > >* collectConstraints(ICBSNode* curr, int agent_id);
@@ -170,11 +169,11 @@ public:
 
     int getBestSolutionSoFar(); // return the number of dead agents, and the paths are stored in paths
 	MultiMapICBSSearch(Map * ml, AgentsLoader* al, double f_w, constraint_strategy c, int time_limit, int screen,
-	        int kDlay, options options1);
+	        options options1);
 	// build MDD
 	MDD<Map>* buildMDD(ICBSNode& node, int id);
-	void updateConstraintTable(ICBSNode* curr, int agent_id);
-	void classifyConflicts(ICBSNode &parent);
+	void updateConstraintTable(ICBSNode* curr, int agent_id) override;
+	void classifyConflicts(ICBSNode &parent) override;
 	void initializeDummyStart();
 	bool isCorridorConflict(std::shared_ptr<Conflict>& corridor, const std::shared_ptr<Conflict>& con, ICBSNode* node);
 //	bool markInCorridor(int a1, int a2, pair<int,int> a1_times, pair<int,int> a2_times,ICBSNode &parent,const std::shared_ptr<Conflict>& con){
@@ -230,9 +229,9 @@ protected:
 	options option;
 	vector<SingleAgentICBS<Map> *> search_engines;  // used to find (single) agents' paths and mdd
 	Map* ml;
-	ICBSNode* goalNode;
+	ICBSNode* goalNode = nullptr;
 
-    void addPathsToInitialCT(const vector<Path>& paths);
+    // void addPathsToInitialCT(const vector<Path>& paths);
 };
 
 
