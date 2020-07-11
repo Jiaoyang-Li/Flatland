@@ -145,7 +145,7 @@ p::dict PythonCBS<Map>::getResultDetail() {
     std::stringstream stream;
     stream << std::fixed << std::setprecision(1) << f_w;
     std::string s = stream.str();
-	result["algorithm"] = algo + "(" + s + ")_groupsize=" + to_string(defaultGroupSize) +
+	result["algorithm"] = framework + "_" + algo + "(" + s + ")_groupsize=" + to_string(defaultGroupSize) +
 	        "_priority=" + to_string(agent_priority_strategy);
 	result["No_f_rectangle"] = num_rectangle;
 	result["num_chasing"] = num_chasing;
@@ -351,7 +351,8 @@ bool PythonCBS<Map>::LNS()
          << "remaining time = " << timeLimit - runtime << endl;
 
     boost::unordered_set<int> tabu_list;
-    while (runtime < timeLimit)
+    int groupSize = defaultGroupSize;
+    while (runtime < timeLimit && groupSize <= (int)al->paths_all.size())
     {
         if (tabu_list.size() >= al->paths_all.size() / 2)
             tabu_list.clear();
@@ -371,10 +372,10 @@ bool PythonCBS<Map>::LNS()
         set<int> neighbors;
         int T = al->paths_all[a].size();
         int count = 0;
-        while (neighbors.size() < defaultGroupSize - 1 && count < 10 && T > 0)
+        while (neighbors.size() < groupSize - 1 && count < 10 && T > 0)
         {
             int t = rand() % T;
-            generateNeighbor(a, al->paths_all[a][t], t, neighbors, defaultGroupSize - 1, (int)al->paths_all[a].size() - 1);
+            generateNeighbor(a, al->paths_all[a][t], t, neighbors, groupSize - 1, (int)al->paths_all[a].size() - 1);
             T = t;
             count++;
         }
@@ -382,6 +383,11 @@ bool PythonCBS<Map>::LNS()
         {
             al->constraintTable.insert_path(a, al->paths_all[a]);
             continue;
+        }
+        while (neighbors.size() < groupSize - 1)
+        {
+            int new_agent = rand() % al->paths_all.size();
+            neighbors.insert(new_agent);
         }
         al->num_of_agents = (int)neighbors.size() + 1;
         al->agents.clear();
@@ -424,6 +430,7 @@ bool PythonCBS<Map>::LNS()
                 al->paths_all[n] = *icbs.paths[i];
                 i++;
             }
+            groupSize++;
         }
         else
         {
@@ -434,6 +441,8 @@ bool PythonCBS<Map>::LNS()
                 if(!al->constraintTable.insert_path(i, al->paths_all[i]))
                     exit(13);
             }
+            if (groupSize > 2)
+                groupSize--;
         }
         size_t solution_cost = 0;
         int finished_agents = 0;

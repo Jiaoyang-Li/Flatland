@@ -51,23 +51,31 @@ plt.subplot(2, 2, 1)
 plt.xticks(rotation=45)
 plt.ylabel("success rate")
 for algo in instances.keys():
+    if algo == 'CBSH(1.0)_groupsize=32_priority=1' or algo == 'CBSH(1.0)_groupsize=8_priority=1':
+        continue
     plt.scatter(instances[algo], success[algo], label=algo, alpha=0.3)
 plt.legend()
 plt.subplot(2, 2, 2)
 plt.xticks(rotation=45)
 plt.ylabel("runtime (s)")
 for algo in instances.keys():
+    if algo == 'CBSH(1.0)_groupsize=32_priority=1' or algo == 'CBSH(1.0)_groupsize=8_priority=1':
+        continue
     plt.scatter(instances[algo], runtime[algo], label=algo, alpha=0.3)
     plt.hlines(240, instances[algo][0], instances[algo][-1], linestyles='dashed')
 plt.subplot(2, 2, 3)
 plt.xticks(rotation=45)
 plt.ylabel("normalized cost")
 for algo in instances.keys():
+    if algo == 'CBSH(1.0)_groupsize=32_priority=1' or algo == 'CBSH(1.0)_groupsize=8_priority=1':
+        continue
     plt.scatter(instances[algo], cost[algo], label=algo, alpha=0.3)
 plt.subplot(2, 2, 4)
 plt.xticks(rotation=45)
 plt.ylabel("makespan")
 for algo in instances.keys():
+    if algo == 'CBSH(1.0)_groupsize=32_priority=1' or algo == 'CBSH(1.0)_groupsize=8_priority=1':
+        continue
     plt.scatter(instances[algo], makespan[algo], label=algo, alpha=0.3)
     plt.scatter(instances[algo], deadline[algo], label="Max timstep", marker='x', c='k')
 plt.show()

@@ -43,7 +43,7 @@ for folder in os.listdir(path):
 
         # Avoid solving the same problem again
         skip = False
-        algo_name = "CBSH(1.0)_groupsize=" + str(default_group_size) + "_priority=" + str(agent_priority_strategy)
+        algo_name = framework + "_CBSH(1.0)_groupsize=" + str(default_group_size) + "_priority=" + str(agent_priority_strategy)
         for r in results:
             if r['algorithm'] == algo_name and r['instance'] == folder + "_" + file_name:
                 skip = True
