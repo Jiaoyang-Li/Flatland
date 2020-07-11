@@ -1341,9 +1341,9 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
             goal_node = curr;
 			collectConstraints(curr);
 
-			if (debug_mode)
+			if (screen>=1)
 				printHLTree();
-			if (screen >= 1)
+			if (screen >= 2)
 				printPaths();
 			cout << solution_cost << " (" << goal_node->num_of_dead_agents << ") ; " << goal_node->makespan << " ; " <<
 			    solution_cost - dummy_start->g_val << " ; " <<
@@ -1372,7 +1372,8 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 
 		}
 
-		if (debug_mode) {
+		if (screen>=1) {
+		    if(debug_mode)
             cout << "check conflict repeatance" << endl;
             stringstream con;
             //con << *(curr->conflict);
@@ -1541,6 +1542,8 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 
 	if (!solution_found)
 	{
+        if (screen>=1)
+            printHLTree();
         runtime = (std::clock() - start);
 	    if (runtime > time_limit)
         {
@@ -1621,8 +1624,10 @@ MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader* al0, double f
 	this->focal_w = f_w;
 	this->time_limit = time_limit;
 	this->screen = screen;
-	if (screen >= 2||options1.debug)
+	if (screen >= 3)
 		debug_mode = true;
+    else
+        debug_mode = false;
 
 
 	if (debug_mode)

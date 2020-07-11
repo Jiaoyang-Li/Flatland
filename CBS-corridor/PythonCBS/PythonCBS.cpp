@@ -11,7 +11,7 @@ namespace p = boost::python;
 
 template <class Map>
 PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int kRobust, int t,
-                          int default_group_size, bool debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
+                          int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
                           int agent_priority_strategy) :
                           railEnv(railEnv1), defaultGroupSize(default_group_size),
                           accept_partial_solution(accept_partial_solution),
@@ -95,12 +95,7 @@ bool PythonCBS<Map>::search() {
 		cout << "start initialize" << endl;
 	//initialize search engine
 	int screen;
-	if (options1.debug) {
-		screen = 3;
-	}
-	else {
-		screen = 0;
-	}
+	screen = options1.debug;
     al->computeHeuristics(ml);
 	if (options1.debug)
 		cout << "Sort the agents" << endl;
@@ -255,7 +250,7 @@ p::dict PythonCBS<Map>::getResultDetail() {
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
 {
 	using namespace boost::python;
-	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, int, int, int, bool,float,int,bool,bool,int>())
+	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, int, int, int, int,float,int,bool,bool,int>())
 		.def("getResult", &PythonCBS<FlatlandLoader>::getResult)
 		.def("search", &PythonCBS<FlatlandLoader>::search)
 		.def("getResultDetail", &PythonCBS<FlatlandLoader>::getResultDetail)

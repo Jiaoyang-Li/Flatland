@@ -14,7 +14,7 @@
 
 struct options {
 	bool asymmetry_constraint=false;
-	bool debug;
+	int debug;
 	bool ignore_t0=false;
 	bool shortBarrier=false;
 	bool flippedRec=false;
