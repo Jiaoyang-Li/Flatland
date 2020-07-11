@@ -1018,7 +1018,7 @@ void ICBSSearch::updateFocalList()
         return;
     min_f_val = make_tuple(open_head->num_of_dead_agents, open_head->makespan, open_head->f_val);
     focal_list_threshold = make_tuple(open_head->num_of_dead_agents,
-            max(max(al.constraintTable.latest_timestep, open_head->makespan), al.constraintTable.length_max / 2), // latest_timestep is the makespan of the planned paths in previous iterations
+            max(max(al.makespan, open_head->makespan), al.constraintTable.length_max / 2), // latest_timestep is the makespan of the planned paths in previous iterations
             (int)(open_head->f_val * focal_w));
     focal_list.clear();
 	for (ICBSNode* n : open_list) {
@@ -1179,6 +1179,7 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 				printHLTree();
 			if (screen >= 1)
 				printPaths();
+			assert(solution_cost >= dummy_start->g_val);
 			cout << solution_cost << " (" << goal_node->num_of_dead_agents << ") ; " << goal_node->makespan << " ; " <<
 			    solution_cost - dummy_start->g_val << " ; " <<
 				HL_num_expanded << " ; " << HL_num_generated << " ; " <<
@@ -1540,7 +1541,7 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
         // TODO: for now, I use w=1 for the low-level, because
         //  if the low-level path is suboptimal, mdds, cardinal conflicts and many other parts need to be reconsidered.
         bool found = search_engines[i]->findPath(paths_found_initially[i], 1,  // focal_w,
-                max(max(al.constraintTable.latest_timestep, dummy_start->makespan), al.constraintTable.length_max / 2),
+                max(max(al.makespan, dummy_start->makespan), al.constraintTable.length_max / 2),
                                                  al.constraintTable,
                                                  &res_table, dummy_start->makespan + 1, 0);
         LL_num_expanded += search_engines[i]->num_expanded;
@@ -1593,7 +1594,7 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 		cout << "Find initial conflict done" << endl;
 	min_f_val = make_tuple(dummy_start->num_of_dead_agents, dummy_start->makespan, dummy_start->f_val);
 	focal_list_threshold = make_tuple(dummy_start->num_of_dead_agents,
-	        max(max(al.constraintTable.latest_timestep, dummy_start->makespan), al.constraintTable.length_max / 2),  // latest_timestep is the makespan of the planned paths in previous iterations
+	        max(max(al.makespan, dummy_start->makespan), al.constraintTable.length_max / 2),  // latest_timestep is the makespan of the planned paths in previous iterations
 	        (int)(dummy_start->f_val * focal_w));
 	if (debug_mode)
 	{
@@ -1699,7 +1700,7 @@ bool MultiMapICBSSearch<Map>::findPathForSingleAgent(ICBSNode*  node, int ag, do
 	//  if the low-level path is suboptimal, mdds, cardinal conflicts and many other parts need to be reconsidered.
     bool foundSol = search_engines[ag]->findPath(newPath,  1, // focal_w,
                     get<1>(focal_list_threshold),
-                    constraintTable, &res_table, max_plan_len, lowerbound, start, time_limit);
+                    al.constraintTable, &res_table, max_plan_len, lowerbound, start, time_limit);
 
 	LL_num_expanded += search_engines[ag]->num_expanded;
 	LL_num_generated += search_engines[ag]->num_generated;
@@ -1733,8 +1734,7 @@ bool MultiMapICBSSearch<Map>::findPathForSingleAgent(ICBSNode*  node, int ag, do
 template<class Map>
 void MultiMapICBSSearch<Map>::updateConstraintTable(ICBSNode* curr, int agent_id)
 {
-	constraintTable.copy(al.constraintTable);
-	constraintTable.goal_location = search_engines[agent_id]->goal_location;
+	constraintTable.clear();
 	while (curr != dummy_start)
 	{
 		if (curr->agent_id == agent_id)

@@ -162,7 +162,7 @@ bool PythonCBS<Map>::search() {
             old_runtime = get<2>(iteration_stats.back());
         iteration_stats.emplace_back(al->num_of_agents, time_limit,
                                      runtime, runtime - old_runtime,
-                                     al->constraintTable.latest_timestep,
+                                     al->makespan,
                                      icbs.solution_cost,
                                      icbs.getSumOfHeuristicsAtStarts(),
                                      al->num_of_agents - giveup_agents,

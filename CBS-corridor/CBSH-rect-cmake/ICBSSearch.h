@@ -90,7 +90,7 @@ public:
 
 
 
-	ICBSSearch(AgentsLoader& al): al(al) {};
+	ICBSSearch(AgentsLoader& al): al(al), constraintTable(al.constraintTable) {};
 
 protected:
     AgentsLoader& al;
@@ -102,7 +102,7 @@ protected:
 
 	CorridorTable corridorTable;
 
-	ConstraintTable constraintTable;
+	ConstraintTable& constraintTable;
 
 	constraint_strategy cons_strategy;
 	int time_limit;

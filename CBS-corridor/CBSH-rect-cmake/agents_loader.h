@@ -38,6 +38,7 @@ public:
     vector<Agent*> agents;
     ConstraintTable constraintTable; // store already planned paths, which are viewed as obstacles for future iterations
     vector<Path> paths_all;
+    int makespan = 0; // the makepsan of the paths in paths_all
 
     //vector< pair<int, int> > initial_locations;
     //vector< pair<int, int> > goal_locations;

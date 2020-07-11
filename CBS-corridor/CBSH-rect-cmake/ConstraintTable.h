@@ -2,41 +2,28 @@
 #include "Conflict.h"
 #include <climits>
 #include <unordered_set>
+#include <set>
 class ConstraintTable
 {
 public:
-	int length_min = 0;
 	int length_max = INT_MAX;
-	int goal_location = -1;
-	int latest_timestep = 0; // No negative constraints after this timestep.
 
-	void copy(const ConstraintTable& other)
-    {
-        length_min = other.length_min;
-        length_max = other.length_max;
-        goal_location = other.goal_location;
-        latest_timestep = other.latest_timestep;
-        CT_Single = other.CT_Single;
-        CT = other.CT;
-    }
 	void clear(){
-		CT.clear(); 
-		length_min = 0, 
-		length_max = INT_MAX; 
-		latest_timestep = 0;
-		CT_Single.clear();
+		CT.clear();
+		CT.resize(CT_paths.size());
 	}
-	void insert(int loc, int t_min, int t_max);
-	bool is_constrained(int loc, int t);
-	void printSize() {
-		std::cout << CT.size() << std::endl;;
-	};
-	bool is_good_malfunction_location(int loc, int t);
+	void insert(int loc, int t_min, int t_max); // insert a constraint
+	void insert_to_fixed_CT(int loc, int t, int kRobust = 1);
+	bool is_constrained(int loc, int t, int kRobust = 1) const;
+	// bool is_good_malfunction_location(int loc, int t);
 
-    void init(size_t map_size) { CT_Single.resize(map_size); }
+    void init(size_t map_size)
+    {
+        CT_paths.resize(map_size);
+        CT.resize(map_size);
+    }
 private:
-	// unordered_map<size_t, std::unordered_set<int> > CT_Single;
-    vector< std::unordered_set<int> > CT_Single;
-    unordered_map<size_t, list<pair<int, int> > > CT;
+    vector< vector<bool> > CT; // this stores the constraints from CBS
+    vector< vector<bool> > CT_paths; // this stores the already planned paths
 };
 

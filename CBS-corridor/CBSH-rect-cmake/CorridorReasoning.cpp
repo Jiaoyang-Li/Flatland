@@ -218,15 +218,6 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 			time_generated += 1;
 
 			int next_timestep = curr->timestep + 1;
-			if (constraint_table.latest_timestep <= curr->timestep)
-			{
-				if (curr->loc == next_loc) // wait action
-				{
-					continue; // TODO:: why we need to skip wait action here?
-				}
-				next_timestep--;
-			}
-			
 			if ( !constraint_table.is_constrained(next_loc, next_timestep) &&
 				!constraint_table.is_constrained(curr->loc * map_size + next_loc, next_timestep))
 			{  // if that grid is not blocked

@@ -150,8 +150,6 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 	allNodes_table.insert(start);
 	min_f_val = start->getFVal();
 
-	lowerbound = std::max(lowerbound, (double)constraint_table.length_min);
-
     focal_threshold = std::max(lowerbound, std::min(f_weight * min_f_val, (double)focal_makespan));
 
 	int time_generated = 0;
@@ -193,8 +191,6 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			focal_list.clear();
 
 			allNodes_table.clear();
-			goal_nodes.clear();
-
 			return true;
 			//}
 		}
@@ -302,7 +298,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 				// try to retrieve it from the hash table
 				it = allNodes_table.find(next);
-				if (it == allNodes_table.end() || (next_id == goal_location && constraint_table.length_min > 0) )
+				if (it == allNodes_table.end())
 				{
 
 					next->open_handle = open_list.push(next);
@@ -313,12 +309,8 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 						next->focal_handle = focal_list.push(next);
 					}
 
-					if (it == allNodes_table.end())
-						allNodes_table.insert(next);
-					else
-						goal_nodes.push_back(next);
-					next->conflist = conflicts;
-
+					allNodes_table.insert(next);
+					next->conflist = conflicts; // TODO: Can I delete this line?
 				}
 				else
 				{  // update existing node's if needed (only in the open_list)
@@ -411,8 +403,6 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 	open_list.clear();
 	focal_list.clear();
 	allNodes_table.clear();
-	goal_nodes.clear();
-
 	return false;
 }
 
@@ -425,9 +415,6 @@ inline void SingleAgentICBS<Map>::releaseClosedListNodes(hashtable_t* allNodes_t
 
 			delete (*it);
 	}
-	for (auto node : goal_nodes)
-		delete node;
-
 }
 
 template<class Map>

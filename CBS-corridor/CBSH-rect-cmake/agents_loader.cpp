@@ -479,6 +479,7 @@ void AgentsLoader::updateToBePlannedAgents(int _num_of_agents)
 
 bool AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)
 {
+    constraintTable.clear();
     assert((int)new_paths.size() == num_of_agents);
     list<int> giveup_agents;
     for (int i = 0; i < num_of_agents; i++)
@@ -513,6 +514,7 @@ bool AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)
                 continue;
             constraintTable.insert(paths_all[a][t].location, max(0, t - kDelay), t + kDelay + 1);
         }
+        makespan = max(makespan, (int)paths_all[a].size() - 1);
     }
     unplanned_agents.splice(unplanned_agents.begin(), giveup_agents);
     return true;
