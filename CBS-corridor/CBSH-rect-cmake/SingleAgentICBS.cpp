@@ -317,7 +317,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 					delete(next);  // not needed anymore -- we already generated it before
 					LLNode* existing_next = (*it);
 
-					if (existing_next->in_openlist == true)
+					if (existing_next->in_openlist)
 					{  // if its in the open list
 						if (existing_next->getFVal() > next_g_val + next_h_val ||
 							(existing_next->getFVal() == next_g_val + next_h_val && existing_next->num_internal_conf > next_internal_conflicts))

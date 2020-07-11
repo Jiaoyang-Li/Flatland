@@ -37,6 +37,8 @@ public:
     int num_of_agents;
     vector<Agent*> agents;
     ConstraintTable constraintTable; // store already planned paths, which are viewed as obstacles for future iterations
+
+    vector<Agent> agents_all;
     vector<Path> paths_all;
     int makespan = 0; // the makepsan of the paths in paths_all
 
@@ -94,7 +96,6 @@ private:
     int num_of_dead_agents = 0;
     list<int> unplanned_agents;
     int num_of_agents_all;
-    vector<Agent> agents_all;
     //vector< pair<int, int> > initial_locations_all;
     //vector< pair<int, int> > goal_locations_all;
     //vector<int> headings_all;

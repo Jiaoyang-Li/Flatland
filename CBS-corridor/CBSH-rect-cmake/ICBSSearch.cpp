@@ -1550,7 +1550,7 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
         paths[i] = &paths_found_initially[i];
         if (found)
         {
-            res_table.addPath(i, paths[i]);
+            res_table.addPath(i, *paths[i]);
             dummy_start->makespan = max(dummy_start->makespan, (int)paths_found_initially[i].size() - 1);
             dummy_start->g_val += paths[i]->size() - 1;
         }

@@ -8,7 +8,7 @@ from flatland.envs.rail_generators import sparse_rail_generator,rail_from_file
 from flatland.envs.schedule_generators import sparse_schedule_generator,schedule_from_file
 from flatland.envs.malfunction_generators  import malfunction_from_params, MalfunctionParameters,malfunction_from_file
 
-
+framework = "LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning
 f_w = 1
 debug = False
 timelimit = 240  # unit: seconds
@@ -61,7 +61,7 @@ for folder in os.listdir(path):
                     malfunction_generator_and_process_data=malfunction_from_file(test),
                     )
 
-        CBS = PythonCBS(env,"CBSH",timelimit,default_group_size,debug,f_w,
+        CBS = PythonCBS(env,framework,"CBSH",timelimit,default_group_size,debug,f_w,
                         corridor_method, chasing ,accept_partial_solution,agent_priority_strategy)
         success = CBS.search()
 

@@ -13,7 +13,7 @@ namespace p = boost::python;
 template <class Map>
 class PythonCBS {
 public:
-	PythonCBS(p::object railEnv1, std::string algo, int t,
+	PythonCBS(p::object railEnv1, string framework, std::string algo, int t,
               int default_group_size, bool debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
               int agent_priority_strategy);
 
@@ -26,7 +26,6 @@ public:
 	p::dict getResultDetail();
 	void updateAgents(p::object railEnv1);
 	void updateFw(float fw);
-
 
 	void writeResultsToFile(const string& fileName) const
     {
@@ -63,6 +62,7 @@ public:
 
 private:
 	std::string algo;
+	string framework;
 	p::object railEnv;
 	FlatlandLoader* ml;  // TODO:: Shouldn't it be Map* ml?
 	AgentsLoader* al;
@@ -100,6 +100,12 @@ private:
                     int, int, int, int, int, int> IterationStats;
     list<IterationStats> iteration_stats;
 
+    bool PrioritizedPlaning();
+    bool GroupPrioritizedPlaning();
+    bool LNS();
+
+    void generateNeighbor(int agent_id, const PathEntry& start, int start_time,
+            set<int>& neighbor, int neighbor_size, int upperbound);
     void updateCBSResults(const MultiMapICBSSearch<Map>& cbs)
     {
         runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;

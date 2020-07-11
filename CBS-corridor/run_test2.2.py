@@ -80,6 +80,7 @@ env.reset()
 #                           screen_height=800,  # Adjust these parameters to fit your resolution
 #                           screen_width=800)  # Adjust these parameters to fit your resolution
 
+framework = "LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning
 f_w = 1
 debug = True
 timelimit = 240  # unit: seconds
@@ -94,8 +95,8 @@ agent_priority_strategy = 0  #  choose a number between 0 and 5
 #                               3: prefer max speed then min distance
 #                               4: prefer min speed then min distance
 #                               5: prefer different start locations then max speed then max distance
-CBS = PythonCBS(env,"CBSH",timelimit,default_group_size,debug,f_w,
-                corridor_method, chasing ,accept_partial_solution,agent_priority_strategy)
+CBS = PythonCBS(env, framework, "CBSH", timelimit, default_group_size, debug, f_w,
+                corridor_method, chasing ,accept_partial_solution, agent_priority_strategy)
 success = CBS.search()
 plan = CBS.getResult()
 

@@ -44,10 +44,10 @@ public:
 	typedef boost::unordered_map<int, int> goalAgentList;
 	boost::unordered_map<int, goalAgentList> goalTable;
 	map_table res_table;
-	void addPath(int agent_id, std::vector<PathEntry>* path);
-	void addPaths(vector<vector<PathEntry>*>* paths, int exclude = -1);
-
-    void deletePath(int agent_id, std::vector<PathEntry>* path);
+    void addPath(int agent_id, const Path& path);
+	void addPaths(const vector<Path*>* paths, int exclude = -1);
+    void addPaths(const vector<Path>& paths, int exclude = -1);
+    void deletePath(int agent_id, const Path& path);
 	OldConfList* findConflict(int agent, int currLoc, int nextLoc, int currT, int kDelay =0);
     int countConflict(int agent, int currLoc, int nextLoc, int currT, int kDelay =0);
 	bool ignoreFinishedAgent;
@@ -56,5 +56,4 @@ public:
 
 	explicit ReservationTable(int mapSize, int max_malfunction = 5, bool ignoreFinishedAgent = false);
 	ReservationTable(int mapSize, vector<vector<PathEntry>*>* paths, int exclude=-1, int max_malfunction = 5, bool ignoreFinishedAgent = false);
-
 };

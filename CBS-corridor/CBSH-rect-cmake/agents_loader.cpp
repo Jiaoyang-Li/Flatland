@@ -496,24 +496,9 @@ bool AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)
         if(new_paths[i]->empty())
             num_of_dead_agents++;
         paths_all[a] = *new_paths[i];
-        assert(kDelay > 0); // TODO: consider kDelay==0 in the future (in which case, we also need to add edge constraints)
-        // check conflicts //TODO: this can be removed in our final solution
-        for (int t = 0; t < paths_all[a].size(); t++)
-        {
-            if (constraintTable.is_constrained(paths_all[a][t].location, t))
-            {
-                cout << "Agent "<< a <<" has a conflict at location " <<
-                        paths_all[a][t].location << " at timestep " << t << endl;
-                return false; // the path is conflicting with someone else
-            }
-        }
         // add the path to the constraint table
-        for (int t = 0; t < paths_all[a].size(); t++)
-        {
-            if (paths_all[a][t].location == -1)
-                continue;
-            constraintTable.insert_to_fixed_CT(paths_all[a][t].location, t);
-        }
+        if(!constraintTable.insert_path(a, paths_all[a]))
+            return false;
         makespan = max(makespan, (int)paths_all[a].size() - 1);
     }
     unplanned_agents.splice(unplanned_agents.begin(), giveup_agents);
