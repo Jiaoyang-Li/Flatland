@@ -17,14 +17,14 @@ public:
 	MDDNode(int currloc, MDDNode* parent)
 	{
 		location = currloc; 
-		if(parent == NULL)
+		if(parent == nullptr)
 			level = 0;
 		else
 		{
 			level = parent->level + 1;
 			parents.push_back(parent);
 		}
-		parent = NULL;
+		parent = nullptr;
 	}
 	int location;
 	int row;
@@ -116,7 +116,7 @@ struct ConstraintsHasher // Hash a CT node by constraints on one agent
 	{
 		std::set<Constraint> cons1, cons2;
 		const ICBSNode* curr = n;
-		while (curr->parent != NULL)
+		while (curr->parent != nullptr)
 		{
 			if (curr->agent_id == a)
 				for (auto con : curr->constraints)
@@ -124,7 +124,7 @@ struct ConstraintsHasher // Hash a CT node by constraints on one agent
 			curr = curr->parent;
 		}
 		curr = other.n;
-		while (curr->parent != NULL)
+		while (curr->parent != nullptr)
 		{
 			if (curr->agent_id == a)
 				for (auto con : curr->constraints)
@@ -148,7 +148,7 @@ struct std::hash<ConstraintsHasher>
 	{
 		const ICBSNode* curr = entry.n;
 		size_t cons_hash = 0;
-		while (curr->parent != NULL)
+		while (curr->parent != nullptr)
 		{
 			if (curr->agent_id == entry.a)
 			{

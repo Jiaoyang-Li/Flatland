@@ -95,12 +95,12 @@ public:
 	conflict_type type;
 	conflict_priority p = conflict_priority::UNKNOWN;
 
-	Conflict() {};
-	Conflict(int v,int t) {
-		this->originalConf1 = v;
-		this->originalConf2 = -1;
-		this->t = t;
-	};
+	//Conflict() {};
+	//Conflict(int v,int t) {
+	//	this->originalConf1 = v;
+	//	this->originalConf2 = -1;
+	//	this->t = t;
+	//};
 
 	void vertexConflict(int a1, int a2, int v, int t,int k=0,int kRobust =0)
 	{
@@ -323,7 +323,7 @@ public:
 	bool kRectangleConflict(int a1, int a2, const std::pair<int, int>& Rs, const std::pair<int, int>& Rg,
 		const std::pair<int, int>& s1, const std::pair<int, int>& s2, int Rg_t,
 		const std::vector<Path*>& paths, int S1_t,int S2_t, const std::pair<int, int>& G1, const std::pair<int, int>& G2,
-		int num_col, int k, MDDPath* a1kMDD=NULL, MDDPath* a2kMDD=NULL ) // For K-RM
+		int num_col, int k, MDDPath* a1kMDD=nullptr, MDDPath* a2kMDD=nullptr ) // For K-RM
 	{
 		this->a1 = a1;
 		this->a2 = a2;
@@ -404,7 +404,7 @@ public:
 	bool flippedRectangleConflict(int a1, int a2, const std::pair<int, int>& Rs, const std::pair<int, int>& Rg,
 		const std::pair<int, int>& s1, const std::pair<int, int>& s2, int Rg_t,
 		const std::vector<Path*>& paths, int S1_t, int S2_t, const std::pair<int, int>& G1, const std::pair<int, int>& G2,
-		int num_col, int k,int flipType, MDDPath* a1kMDD = NULL, MDDPath* a2kMDD = NULL) // For K-RM
+		int num_col, int k,int flipType, MDDPath* a1kMDD = nullptr, MDDPath* a2kMDD = nullptr) // For K-RM
 	{
 		this->a1 = a1;
 		this->a2 = a2;

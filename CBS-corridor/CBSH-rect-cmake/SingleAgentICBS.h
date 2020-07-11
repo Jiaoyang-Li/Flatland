@@ -54,14 +54,14 @@ public:
 
 	//returns the minimal plan length for the agent (that is, extract the latest timestep which
 	// has a constraint invloving this agent's goal location).
-	int extractLastGoalTimestep(int goal_location, const std::vector< std::list<std::pair<int, int> > >* cons);
+	//int extractLastGoalTimestep(int goal_location, const std::vector< std::list<std::pair<int, int> > >* cons);
 
 	//Checks if a vaild path found (wrt my_map and constraints)
 	//Note -- constraint[timestep] is a list of pairs. Each pair is a disallowed <loc1,loc2> (loc2=-1 for vertex constraint).
 	//bool isConstrained(int curr_id, int next_id, int next_timestep, const std::vector< std::list< std::pair<int, int> > >* cons) const;
 	inline bool isConstrained(int curr_id, int next_id, int next_timestep, const std::vector< std::list< std::pair<int, int> > >* cons)  const
 	{
-		if (cons == NULL)
+		if (cons == nullptr)
 			return false;
 		// check vertex constraints (being in next_id at next_timestep is disallowed)
 		if (next_timestep < static_cast<int>(cons->size()))

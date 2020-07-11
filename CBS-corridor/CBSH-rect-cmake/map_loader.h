@@ -44,6 +44,7 @@ class MapLoader
   inline int col_coordinate(int id) const { return id % this->cols; }
   void printPath (std::vector<int> path);
   void saveToFile(std::string fname);
-  int getDegree(int loc);
+
+    virtual int getDegree(int loc);
   ~MapLoader();
 };

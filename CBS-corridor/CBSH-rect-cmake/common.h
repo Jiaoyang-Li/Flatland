@@ -37,31 +37,31 @@ namespace N
 struct PathEntry
 {
 
-	int location;
-	int heading;
-	bool single;
-	int actionToHere;
+	int location = -1;
+	int heading = -1;
+	bool single = false;
+	int actionToHere = -1;
 	bool malfunction = false;
 	int malfunction_left = 0;
 	int next_malfunction = 0;
-	float position_fraction;
-	int exit_heading;
-	int exit_loc;
-	PathEntry(int loc = -1) { location = loc; single = false; }
-	std::list<int> locations; // all possible locations at the same time step (i.e., mdd nodes at the same time step)
-	OldConfList* conflist=NULL;
+	float position_fraction = 0.0;
+	int exit_heading = -1;
+	int exit_loc = -1;
+	//PathEntry(int loc = -1) { location = loc; single = false; }
+	//std::list<int> locations; // all possible locations at the same time step (i.e., mdd nodes at the same time step)
+	OldConfList* conflist=nullptr;
 };
 
 struct Transition {
-	int location;
-	int heading;
+	int location = -1;
+	int heading = -2;
 	float position_fraction=0.0;
 	int exit_loc=-1;
 	int exit_heading = -1;
-    bool turn_active = false;
+    //bool turn_active = false;
 };
 
-struct MDDPath {
+/*struct MDDPath {
 	vector<std::unordered_set<int>> levels;
 	void print() {
 		for (int l = 0; l < levels.size(); l++) {
@@ -83,7 +83,7 @@ struct MDDPath {
 			std::cout << std::endl;
 		}
 	}
-};
+};*/
 
 
 

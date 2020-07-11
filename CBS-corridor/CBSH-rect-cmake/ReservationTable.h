@@ -10,8 +10,7 @@ using namespace std;
 
 class AgentStep {
 public:
-	AgentStep() {};
-	AgentStep(int id, int l, int t0) {
+	AgentStep(int id = -1, int l = -1, int t0 = -1) {
 		agent_id = id;
 		loc = l;
 		t = t0;
@@ -19,10 +18,10 @@ public:
 	int agent_id;
 	int loc;
 	int t;
-	AgentStep* preStep = NULL;
-	AgentStep* nextStep = NULL;
+	AgentStep* preStep = nullptr;
+	AgentStep* nextStep = nullptr;
 
-	bool operator == (AgentStep const& s2)
+	bool operator == (AgentStep const& s2) const
 	{
 		return agent_id == s2.agent_id;
 	}
@@ -47,14 +46,15 @@ public:
 	map_table res_table;
 	void addPath(int agent_id, std::vector<PathEntry>* path);
 	void addPaths(vector<vector<PathEntry>*>* paths, int exclude = -1);
-	void deletePath(int agent_id, std::vector<PathEntry>* path);
+
+    void deletePath(int agent_id, std::vector<PathEntry>* path);
 	OldConfList* findConflict(int agent, int currLoc, int nextLoc, int currT, int kDelay =0);
     int countConflict(int agent, int currLoc, int nextLoc, int currT, int kDelay =0);
 	bool ignoreFinishedAgent;
 	int max_malfunction=5;
 
 
-	ReservationTable(int mapSize, int max_malfunction = 5, bool ignoreFinishedAgent = false);
+	explicit ReservationTable(int mapSize, int max_malfunction = 5, bool ignoreFinishedAgent = false);
 	ReservationTable(int mapSize, vector<vector<PathEntry>*>* paths, int exclude=-1, int max_malfunction = 5, bool ignoreFinishedAgent = false);
 
 };

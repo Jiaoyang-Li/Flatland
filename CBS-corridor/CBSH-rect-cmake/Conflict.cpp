@@ -474,7 +474,7 @@ bool addModifiedVerticalLongBarrierConstraint(const std::vector<PathEntry>& path
 				//std::cout << std::endl;
 			}
 
-			if (kMDD==NULL||t2 - St + i >= kMDD->levels.size())
+			if (kMDD==nullptr||t2 - St + i >= kMDD->levels.size())
 				continue;
 			if ((kMDD)->levels[t2 - St + i].count(loc)) {
 				for (int consk = 0; consk <= k - i; consk++) {
@@ -557,12 +557,12 @@ bool addModifiedHorizontalLongBarrierConstraint(const std::vector<PathEntry>& pa
 			}
 
 
-			//if (kMDD != NULL){
+			//if (kMDD != nullptr){
 			//	//std::cout << "add constraint on k=" << i << " t=" << t2 << ": ";
 			//	for (int mdd = 0; mdd < (*kMDD).size(); mdd++) {
 			//		if ((t2 - St + i) >= (*kMDD)[mdd]->levels.size())
 			//			continue;
-			if (kMDD == NULL||t2 - St + i >= kMDD->levels.size())
+			if (kMDD == nullptr||t2 - St + i >= kMDD->levels.size())
 				continue;
 			if (kMDD->levels[t2 - St + i].count(loc)) {
 				for (int consk = 0; consk <= k - i; consk++) {
@@ -641,7 +641,7 @@ bool addFlippedVerticalLongBarrierConstraint(const std::vector<PathEntry>& path,
 				//}
 				//std::cout << std::endl;
 
-				if (kMDD == NULL || t >= kMDD->levels.size())
+				if (kMDD == nullptr || t >= kMDD->levels.size())
 					continue;
 				if ((kMDD)->levels[t].count(loc)) {
 					std::stringstream con;
@@ -714,7 +714,7 @@ bool addFlippedHorizontalLongBarrierConstraint(const std::vector<PathEntry>& pat
 				//}
 				//std::cout << std::endl;
 
-				if (kMDD == NULL || t >= kMDD->levels.size())
+				if (kMDD == nullptr || t >= kMDD->levels.size())
 					continue;
 				if ((kMDD)->levels[t].count(loc)) {
 					std::stringstream con;

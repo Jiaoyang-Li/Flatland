@@ -22,14 +22,18 @@ void SingleAgentICBS<Map>::updatePath(LLNode* goal, std::vector<PathEntry> &path
 		path[t].exit_loc = curr->exit_loc;
 		delete path[t].conflist;
 		if (t!=0)
-		    path[t].conflist =  res_table->findConflict(agent_id, curr->parent->loc, curr->loc, t-1, kRobust);
+        {
+            path[t].conflist =  res_table->findConflict(agent_id, curr->parent->loc, curr->loc, t-1, kRobust);
+        }
         else
-            path[t].conflist = NULL;
+        {
+            path[t].conflist = nullptr;
+        }
         if (t == goal->timestep && curr->loc != goal_location) {
 			path[t].malfunction = true;
 		}
 
-		curr->conflist = NULL;
+		curr->conflist = nullptr;
 		curr = curr->parent;
 	}
 }
@@ -37,12 +41,12 @@ void SingleAgentICBS<Map>::updatePath(LLNode* goal, std::vector<PathEntry> &path
 
 // iterate over the constraints ( cons[t] is a list of all constraints for timestep t) and return the latest
 // timestep which has a constraint involving the goal location
-template<class Map>
+/*template<class Map>
 int SingleAgentICBS<Map>::extractLastGoalTimestep(int goal_location, const std::vector< std::list< std::pair<int, int> > >* cons) {
-	if (cons != NULL) {
+	if (cons != nullptr) {
 		for (int t = static_cast<int>(cons->size()) - 1; t > 0; t--) 
 		{
-			for (std::list< std::pair<int, int> >::const_iterator it = cons->at(t).begin(); it != cons->at(t).end(); ++it)
+			for (const auto it : cons->at(t).begin(); it != cons->at(t).end(); ++it)
 			{
 				if (std::get<0>(*it) == goal_location && it->second < 0) 
 				{
@@ -52,7 +56,7 @@ int SingleAgentICBS<Map>::extractLastGoalTimestep(int goal_location, const std::
 		}
 	}
 	return -1;
-}
+}*/
 
 
 
@@ -107,7 +111,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 
 	 // generate start and add it to the OPEN list
-	LLNode* start = new LLNode(-1, 0, my_heuristic[start_location].get_hval(start_heading), NULL, 0, 0, false); // TODO::Shouldn't the h value be divided by its speed?
+	auto start = new LLNode(-1, 0, my_heuristic[start_location].get_hval(start_heading), nullptr, 0, 0, false); // TODO::Shouldn't the h value be divided by its speed?
 	start->heading = start_heading;
 	num_generated++;
 	start->open_handle = open_list.push(start);
@@ -178,7 +182,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 		//cout << "focal size " << focal_list.size() << endl;
 		//cout << "goal_location: " << goal_location << " curr time: " << curr->timestep << " length_min: " << constraint_table.length_min << endl;
 		// check if the popped node is a goal
-		if ((curr->loc == goal_location ) /*|| (curr->parent!= NULL && curr->next_malfunction==0 && curr->parent->next_malfunction ==1)*/)
+		if ((curr->loc == goal_location ) /*|| (curr->parent!= nullptr && curr->next_malfunction==0 && curr->parent->next_malfunction ==1)*/)
 		{
 
 			updatePath(curr, path, res_table);
@@ -288,7 +292,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 
                 // generate (maybe temporary) node
-				LLNode* next = new LLNode(next_id, next_g_val, next_h_val,	curr, next_timestep, next_internal_conflicts, false);
+				auto next = new LLNode(next_id, next_g_val, next_h_val,	curr, next_timestep, next_internal_conflicts, false);
 				next->heading = next_heading;
 				next->actionToHere = move.heading;
 				next->time_generated = time_generated;
@@ -453,8 +457,7 @@ SingleAgentICBS<Map>::SingleAgentICBS(int start_location, int goal_location,  Ma
 
 template<class Map>
 SingleAgentICBS<Map>::~SingleAgentICBS()
-{
-}
+= default;
 
 template class SingleAgentICBS<MapLoader>;
 template class SingleAgentICBS<FlatlandLoader>;

@@ -117,12 +117,12 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
     hashtable_t nodes;
     hashtable_t::iterator it; // will be used for find()
 
-	LLNode* root = new LLNode(start, 0, getMahattanDistance(start, end, num_col), NULL, 0);
+	LLNode* root = new LLNode(start, 0, getMahattanDistance(start, end, num_col), nullptr, 0);
 	root->heading = start_heading;
 	root->open_handle = heap.push(root);  // add root to heap
 	nodes.insert(root);       // add root to hash_table (nodes)
 	int moves_offset[4] = { 1, -1, num_col, -num_col };
-	LLNode* curr = NULL;
+	LLNode* curr = nullptr;
 	int time_generated = 0;
 	while (!heap.empty())
 	{
@@ -147,7 +147,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 				continue;
 			}
 			int next_g_val = curr->g_val + 1;
-			LLNode* next = new LLNode(next_loc, next_g_val, getMahattanDistance(next_loc, end, num_col), NULL, 0);
+			LLNode* next = new LLNode(next_loc, next_g_val, getMahattanDistance(next_loc, end, num_col), nullptr, 0);
 			int next_heading = move.heading;
 			next->heading = next_heading;
 			next->actionToHere = move.heading;
@@ -193,12 +193,12 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
     hashtable_t nodes;
     hashtable_t::iterator it; // will be used for find()
 
-	LLNode* root = new LLNode(start, 0, getMahattanDistance(start, end, num_col), NULL, 0);
+	LLNode* root = new LLNode(start, 0, getMahattanDistance(start, end, num_col), nullptr, 0);
 	root->heading = start_heading;
 	root->open_handle = heap.push(root);  // add root to heap
 	nodes.insert(root);       // add root to hash_table (nodes)
 	int moves_offset[5] = { 1, -1, num_col, -num_col, 0};
-	LLNode* curr = NULL;
+	LLNode* curr = nullptr;
 	int time_generated = 0;
 	while (!heap.empty())
 	{
@@ -241,7 +241,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 				int next_h_val = restable[next_loc].get_hval(next_heading);
 				if (next_g_val + next_h_val >= upper_bound) // the cost of the path is larger than the upper bound
 					continue;
-				LLNode* next = new LLNode(next_loc, next_g_val, next_h_val, NULL, next_timestep);
+				LLNode* next = new LLNode(next_loc, next_g_val, next_h_val, nullptr, next_timestep);
 
 				next->heading = next_heading;
 				next->actionToHere = move.heading;
@@ -291,7 +291,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
     hashtable_t nodes;
     hashtable_t::iterator it; // will be used for find()
 
-	LLNode* root = new LLNode(-1, 0, getMahattanDistance(start, end, num_col), NULL, 0);
+	LLNode* root = new LLNode(-1, 0, getMahattanDistance(start, end, num_col), nullptr, 0);
 	root->heading = start_heading;
 	root->position_fraction = 0;
 
@@ -313,7 +313,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
 
 	nodes.insert(root);       // add root to hash_table (nodes)
 	int moves_offset[5] = { 1, -1, num_col, -num_col, 0 };
-	LLNode* curr = NULL;
+	LLNode* curr = nullptr;
 	int time_generated = 0;
 	int num_nodes=0;
 	while (!heap.empty())
@@ -414,7 +414,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
                 if ((next_g_val + next_h_val*speed) >= upper_bound) // the cost of the path is larger than the upper bound
 					continue;
 
-                LLNode* next = new LLNode(next_loc, next_g_val, next_h_val, NULL, next_timestep);
+                LLNode* next = new LLNode(next_loc, next_g_val, next_h_val, nullptr, next_timestep);
 
 				next->heading = next_heading;
 				next->actionToHere = move.heading;
@@ -456,7 +456,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
 
 bool isConstrained(int curr_id, int next_id, int next_timestep, const std::vector< std::list< std::pair<int, int> > >* cons)
 {
-	if (cons == NULL)
+	if (cons == nullptr)
 		return false;
 	// check vertex constraints (being in next_id at next_timestep is disallowed)
 	if (next_timestep < static_cast<int>(cons->size()))

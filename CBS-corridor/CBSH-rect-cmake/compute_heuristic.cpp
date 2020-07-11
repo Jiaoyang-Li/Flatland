@@ -57,14 +57,14 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
     hashtable_t::iterator it; // will be used for find()
 
 	if (start_heading == -1) {
-		LLNode* root = new LLNode(root_location, 0, 0, NULL, 0);
+		LLNode* root = new LLNode(root_location, 0, 0, nullptr, 0);
 		root->heading = start_heading;
 		root->open_handle = heap.push(root);  // add root to heap
 		nodes.insert(root);       // add root to hash_table (nodes)
 	}
 	else {
 		for (int heading = 0; heading < 4; heading++) {
-			LLNode* root = new LLNode(root_location, 0, 0, NULL, 0);
+			LLNode* root = new LLNode(root_location, 0, 0, nullptr, 0);
 			root->heading = heading;
 			root->open_handle = heap.push(root);  // add root to heap
 			nodes.insert(root);       // add root to hash_table (nodes)
@@ -81,7 +81,7 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 		{
 			int next_loc = move.location;
 			int next_g_val = curr->g_val + 1;
-			LLNode* next = new LLNode(next_loc, next_g_val, 0, NULL, 0);
+			LLNode* next = new LLNode(next_loc, next_g_val, 0, nullptr, 0);
 
 			if (curr->heading == -1) //heading == -1 means no heading info
 				next->heading = -1;

@@ -13,14 +13,14 @@ inline void ICBSSearch::updatePaths(ICBSNode* curr)
 		paths[i] = &paths_found_initially[i];
 	vector<bool> updated(num_of_agents, false);  // initialized for false
 
-	while (curr->parent != NULL)
+	while (curr->parent != nullptr)
 	{
-		for (list<pair<int, vector<PathEntry>>>::iterator it = curr->paths.begin(); it != curr->paths.end() ; ++it)
+		for (auto& path_pair :curr->paths)
 		{
-			if (!updated[it->first])
+			if (!updated[path_pair.first])
 			{
-				paths[it->first] = &(it->second);
-				updated[it->first] = true;
+				paths[path_pair.first] = &(path_pair.second);
+				updated[path_pair.first] = true;
 			}
 		}
 		curr = curr->parent;
@@ -106,7 +106,7 @@ int ICBSSearch::computeHeuristics(const ICBSNode& curr)
 		CG[i].resize(num_of_agents, false);
     if (debug_mode)
         cout << "Conflict graph: ";
-	for (auto conflict : curr.conflicts)
+	for (const auto& conflict : curr.conflicts)
 	{
 		if(conflict->p == conflict_priority::CARDINAL && !CG[conflict->a1][conflict->a2])
 		{
@@ -138,7 +138,7 @@ int ICBSSearch::computeHeuristics(const ICBSNode& curr)
 
 
 	// Minimum Vertex Cover
-	if (curr.parent == NULL || // root node of CBS tree or
+	if (curr.parent == nullptr || // root node of CBS tree or
         num_of_CGedges > MAX_K_VERTEX_COVER_EDGES) // too many edges for k vertex cover method
 	{
 		return minimumVertexCover(CG);
@@ -201,14 +201,14 @@ int ICBSSearch::minimumVertexCover(const vector<vector<bool>>& CG)
 
         if (num_edges < MAX_K_VERTEX_COVER_EDGES)
         {
-            for (int i = 1; i < (int)indices.size(); i++)
+            for (int k = 1; k < (int)indices.size(); k++)
             {
-                if (KVertexCover(subgraph, (int)indices.size(), num_edges, i))
+                if (KVertexCover(subgraph, (int)indices.size(), num_edges, k))
                 {
                     rst += i;
                     break;
                 }
-                runtime = (std::clock() - start);
+                runtime = (double)(std::clock() - start);
                 if (runtime > time_limit)
                     return -1; // run out of time
             }
@@ -221,7 +221,7 @@ int ICBSSearch::minimumVertexCover(const vector<vector<bool>>& CG)
     return rst;
 }
 
-int ICBSSearch::greedyMatching(const vector<vector<bool>>& CG) const
+int ICBSSearch::greedyMatching(const vector<vector<bool>>& CG)
 {
     int rst = 0;
     std::vector<bool> selected(CG.size(), false);
@@ -264,17 +264,17 @@ bool ICBSSearch::KVertexCover(const vector<vector<bool>>& CG, int num_of_CGnodes
 			}
 		}
 	}
-	for (int i = 0; i < 2; i++)
+	for (int i : node)
 	{
 		vector<vector<bool>> CG_copy(CG.size());
 		CG_copy.assign(CG.cbegin(), CG.cend());
 		int num_of_CGedges_copy = num_of_CGedges;
 		for (int j = 0; j < (int)CG.size(); j++)
 		{
-			if (CG_copy[node[i]][j])
+			if (CG_copy[i][j])
 			{
-				CG_copy[node[i]][j] = false;
-				CG_copy[j][node[i]] = false;
+				CG_copy[i][j] = false;
+				CG_copy[j][i] = false;
 				num_of_CGedges_copy--;
 			}
 		}
@@ -287,9 +287,9 @@ bool ICBSSearch::KVertexCover(const vector<vector<bool>>& CG, int num_of_CGnodes
 // deep copy of all conflicts except ones that involve the particular agent
 // used for copying conflicts from the parent node to the child nodes
 void ICBSSearch::copyConflicts(const std::list<std::shared_ptr<Conflict >>& conflicts,
-	std::list<std::shared_ptr<Conflict>>& copy, const list<int>& excluded_agents) const
+	std::list<std::shared_ptr<Conflict>>& copy, const list<int>& excluded_agents)
 {
-	for (auto conflict : conflicts)
+	for (const auto& conflict : conflicts)
 	{
 		bool found = false;
 		for (auto a : excluded_agents)
@@ -324,7 +324,7 @@ void ICBSSearch::copyConflicts(const std::list<std::shared_ptr<Conflict >>& conf
 void ICBSSearch::findConflicts(ICBSNode& curr)
 {
 
-	if (curr.parent != NULL)
+	if (curr.parent != nullptr)
 	{
 		if (debug_mode)
 			cout << "copy from parent" << endl;
@@ -348,77 +348,24 @@ void ICBSSearch::findConflicts(ICBSNode& curr)
 		{
 			int a1 = *it;
 			//collect conflict from path;
-			for (size_t t = 0; t < paths[a1]->size(); t++) {
-				if (paths[a1]->at(t).conflist != NULL && paths[a1]->at(t).conflist->size() != 0) {
-					int preciousConflit[4];
-					for (auto& con : *(paths[a1]->at(t).conflist)) {
-						if (debug_mode)
-							cout << "l<" << get<0>(*con) << "," << get<1>(*con) << ","
-							<< "(" << get<2>(*con) / num_col << "," << get<2>(*con) % num_col << ")" << ","
-							<< "(" << get<3>(*con) / num_col << "," << get<3>(*con) % num_col << ")" << ","
-							<< get<4>(*con) << "," << get<5>(*con) << ">; ";
-						//cout << "(" << abs(preciousConflit[2] - get<2>(*con)) << ")";
-//						if (preciousConflit[0] == get<0>(*con) &&
-//							preciousConflit[1] == get<1>(*con) &&
-//							(abs(preciousConflit[2] - get<2>(*con)) == num_col || abs(preciousConflit[2] - get<2>(*con)) == 1 || preciousConflit[2] == get<2>(*con)) &&
-//							abs(get<4>(*con) - preciousConflit[3]) == 1
-//							) {
-//							preciousConflit[0] = get<0>(*con);
-//							preciousConflit[1] = get<1>(*con);
-//							preciousConflit[2] = get<2>(*con);
-//							preciousConflit[3] = get<4>(*con);
-//							//cout << "continues conf, jump" << endl;
-//							continue;
-//						}
-						std::shared_ptr<Conflict> newConf(new Conflict());
+			for (auto& state : *paths[a1])
+			{
+				if (state.conflist == nullptr)
+				    continue;
+                for (const auto& con : *(state.conflist))
+                {
+                    if (debug_mode)
+                        cout << "l<" << get<0>(*con) << "," << get<1>(*con) << ","
+                        << "(" << get<2>(*con) / num_col << "," << get<2>(*con) % num_col << ")" << ","
+                        << "(" << get<3>(*con) / num_col << "," << get<3>(*con) % num_col << ")" << ","
+                        << get<4>(*con) << "," << get<5>(*con) << ">; ";
 
-						//if (targetReasoning && (get<3>(*con) < 0) && (get<4>(*con) >= paths[get<0>(*con)]->size() - 1)) {
-						//	newConf->targetConflict(get<0>(*con), get<1>(*con), get<2>(*con), get<4>(*con)+ get<5>(*con), kDelay);
-						//}
-						//else if (targetReasoning && (get<3>(*con) < 0) && (get<4>(*con) >= paths[get<1>(*con)]->size() - 1)) {
-						//	newConf->targetConflict(get<1>(*con), get<0>(*con), get<2>(*con), get<4>(*con)+ get<5>(*con), kDelay);
-						//}
-						//else if (get<3>(*con) < 0) {
-							//if(get<4>(*con) >= paths[get<0>(*con)]->size() - 1)
-							//	newConf->vertexConflict(get<0>(*con), get<1>(*con), get<2>(*con), get<4>(*con) + get<5>(*con),0, kDelay);
-							//else
-								newConf->vertexConflict(get<0>(*con), get<1>(*con), get<2>(*con), get<4>(*con), get<5>(*con), kDelay);
-						//}
-						//else {
-						//	newConf->edgeConflict(get<0>(*con), get<1>(*con), get<2>(*con), get<3>(*con), get<4>(*con));
-						//}
+                    std::shared_ptr<Conflict> newConf(new Conflict());
+                    newConf->vertexConflict(get<0>(*con), get<1>(*con), get<2>(*con), get<4>(*con), get<5>(*con), kDelay);
+                    curr.unknownConf.emplace_back(newConf);
 
-						curr.unknownConf.emplace_back(newConf);
-//						preciousConflit[0] = get<0>(*con);
-//						preciousConflit[1] = get<1>(*con);
-//						preciousConflit[2] = get<2>(*con);
-//						preciousConflit[3] = get<4>(*con);
-
-					}
-					delete paths[a1]->at(t).conflist;
-				}
-			}
-
-			if (ignoreFinishedAgent)
-				continue;
-
-			for (int a2 = 0; a2 < num_of_agents; a2++)
-			{//low level search can't find target conflict if a1<a2
-				if (a1 == a2)
-					continue;
-				if (paths[a1]->size() == 0 || paths[a2]->size() == 0)
-					continue;
-				bool skip = false;
-				for (list<int>::iterator it2 = new_agents.begin(); it2 != it; ++it2)
-				{
-					if (*it2 == a2)
-					{
-						skip = true;
-						break;
-					}
-				}
-				//findTargetConflicts(a1, a2, curr);
-
+                }
+                delete state.conflist;
 			}
 		}
 	}
@@ -430,73 +377,22 @@ void ICBSSearch::findConflicts(ICBSNode& curr)
 		{
 
 			//collect conflicts from path
-			for (size_t t = 0; t < paths[a1]->size(); t++) {
-
-				if (paths[a1]->at(t).conflist == NULL || paths[a1]->at(t).conflist->size() == 0)
+            for (auto& state : *paths[a1])
+            {
+				if (state.conflist == nullptr)
 					continue;
-
-				int preciousConflit[4];
-				for (auto& con : *(paths[a1]->at(t).conflist)) {
-//					if (preciousConflit[0]== get<0>(*con) &&
-//						preciousConflit[1] == get<1>(*con)&&
-//						(abs(preciousConflit[2] - get<2>(*con)) ==num_col|| abs(preciousConflit[2] - get<2>(*con)) == 1|| preciousConflit[2] == get<2>(*con))&&
-//						abs(get<4>(*con)- preciousConflit[3]) == 1
-//						) {
-//
-//						preciousConflit[0] = get<0>(*con);
-//						preciousConflit[1] = get<1>(*con);
-//						preciousConflit[2] = get<2>(*con);
-//						preciousConflit[3] = get<4>(*con);
-//						//cout << "continues conf, jump" << endl;
-//
-//						continue;
-//					}
-
+				for (auto& con : *(state.conflist))
+				{
 					std::shared_ptr<Conflict> newConf(new Conflict());
-					
-					//if (targetReasoning && (get<3>(*con) < 0) && (get<4>(*con) > paths[get<0>(*con)]->size() - 1)) {
-					//	newConf->targetConflict(get<0>(*con), get<1>(*con), get<2>(*con), get<4>(*con), kDelay);
-					//}
-					//else if (targetReasoning && (get<3>(*con) < 0) && (get<4>(*con) > paths[get<1>(*con)]->size() - 1)) {
-					//	newConf->targetConflict(get<1>(*con), get<0>(*con), get<2>(*con), get<4>(*con), kDelay);
-					//}
-					//else if (get<3>(*con) < 0) {
-						if (get<4>(*con) >= paths[get<0>(*con)]->size() - 1)
-							newConf->vertexConflict(get<0>(*con), get<1>(*con), get<2>(*con), get<4>(*con) + get<5>(*con), 0, kDelay);
-						else
-							newConf->vertexConflict(get<0>(*con), get<1>(*con), get<2>(*con), get<4>(*con), get<5>(*con), kDelay);
-					//}
-					//else {
-					//	newConf->edgeConflict(get<0>(*con), get<1>(*con), get<2>(*con), get<3>(*con), get<4>(*con));
-					//}
+					newConf->vertexConflict(get<0>(*con), get<1>(*con), get<2>(*con), get<4>(*con), get<5>(*con), kDelay);
 					if (debug_mode)
-					cout << "<" << get<0>(*con) << "," << get<1>(*con) << ","
-						<< "(" << get<2>(*con) / num_col << "," << get<2>(*con) % num_col << ")" << ","
-						<< "(" << get<3>(*con) / num_col << "," << get<3>(*con) % num_col << ")" << ","
-						<< get<4>(*con) << "," << get<5>(*con) << ">; ";
+                        cout << "<" << get<0>(*con) << "," << get<1>(*con) << ","
+                            << "(" << get<2>(*con) / num_col << "," << get<2>(*con) % num_col << ")" << ","
+                            << "(" << get<3>(*con) / num_col << "," << get<3>(*con) % num_col << ")" << ","
+                            << get<4>(*con) << "," << get<5>(*con) << ">; ";
 					curr.unknownConf.emplace_back(newConf);
-//					preciousConflit[0] = get<0>(*con);
-//					preciousConflit[1] = get<1>(*con);
-//					preciousConflit[2] = get<2>(*con);
-//					preciousConflit[3] = get<4>(*con);
-
-
-
 				}
-				delete paths[a1]->at(t).conflist;
-			}
-
-			if (ignoreFinishedAgent)
-				continue;
-			for (int a2 = 0; a2 < num_of_agents; a2++)
-			{//low level search can't find target conflict if a1<a2
-				if (a1 == a2)
-					continue;
-				if (paths[a1]->size() == 0 || paths[a2]->size() == 0)
-					continue;
-
-				//findTargetConflicts(a1, a2, curr);
-				
+				delete state.conflist;
 			}
 		}
 	}
@@ -731,7 +627,7 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
                 early_exit = a2exit;
             }
             if(late_entrance>=early_entrance && late_exit>=early_exit){
-                corridor = std::shared_ptr<Conflict>(new Conflict());
+                corridor = std::make_shared<Conflict>(); // std::shared_ptr<Conflict>(new Conflict());
                 corridor->chasingConflict(earlyAgent, lateAgent, loc1, loc2,inerU[0], el[0],
                         late_entrance,late_entrance,early_exit, late_exit, kDelay);
 
@@ -775,7 +671,7 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 //            }
 
 
-            corridor = std::shared_ptr<Conflict>(new Conflict());
+            corridor = make_shared<Conflict>();
             corridor->trainCorridorConflict(a[0], a[1], inerU[0], inerU[1], t0, t1,exit_t0, exit_t1);
             if (blocked(*(paths[corridor->a1]), corridor->constraint1) &&
                 blocked(*(paths[corridor->a2]), corridor->constraint2)) {
@@ -786,7 +682,7 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
             }
         if (debug_mode)
             cout << "not blocked" << endl;
-            return false;
+        return false;
 //        }
 //        return false;
     }
@@ -819,7 +715,7 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
                                              paths[a[1]]->front(), al.agents[a[1]]->speed);
 
 
-        corridor = std::shared_ptr<Conflict>(new Conflict());
+        corridor = std::make_shared<Conflict>();
 		corridor->trainCorridorConflict(a[0], a[1], el[0], el[1] , t3, t4, kDelay);
 		if (blocked(*(paths[corridor->a1]), corridor->constraint1) && blocked(*(paths[corridor->a2]), corridor->constraint2)) {
 		    if (debug_mode)
@@ -840,7 +736,7 @@ void ICBSSearch::removeLowPriorityConflicts(std::list<std::shared_ptr<Conflict>>
 		return;
 	std::unordered_map<int, std::shared_ptr<Conflict> > keep;
 	std::list<std::shared_ptr<Conflict>> to_delete;
-	for (auto conflict : conflicts)
+	for (auto& conflict : conflicts)
 	{
 		int a1 = conflict->a1, a2 = conflict->a2;
 		int key = a1 * num_of_agents + a2;
@@ -860,27 +756,17 @@ void ICBSSearch::removeLowPriorityConflicts(std::list<std::shared_ptr<Conflict>>
 		}
 	}
 
-	for (auto conflict : to_delete)
+	for (auto& conflict : to_delete)
 	{
 		conflicts.remove(conflict);
 	}
 }
 
 
-bool ICBSSearch::traverse(const Path& path, int loc, int t) const
+bool ICBSSearch::traverse(const Path& path, int loc, int t)
 {
-	if (t >= path.size())
-		if (loc == path.back().location)
-			return true;
-		else
-			return false;
-	else if (t >= 0 && path[t].location == loc) {
-		//cout << "t: " << t << " loc: " << loc << " path: " << path[t].location << endl;
-		return true;
-
-	}
-	else 
-		return false;
+    assert(t < path.size() && t >= 0);
+	return (path[t].location == loc);
 }
 
 
@@ -952,18 +838,18 @@ bool ICBSSearch::blocked(const Path& path, const std::list<Constraint>& constrai
 }
 
 
-std::shared_ptr<Conflict> ICBSSearch::chooseConflict(ICBSNode &parent)
+std::shared_ptr<Conflict> ICBSSearch::chooseConflict(ICBSNode &parent) const
 {
 	if (debug_mode)
 		cout << "Start choosing conflict" << endl;
 
 	std::shared_ptr<Conflict> choose;
 	if (parent.conflicts.empty() && parent.unknownConf.empty())
-		return NULL;
+		return nullptr;
 	else if (!parent.conflicts.empty())
 	{
 		choose = parent.conflicts.back();
-		for (auto conflict : parent.conflicts)
+		for (auto& conflict : parent.conflicts)
 		{
 			if (*choose < *conflict)
 				choose = conflict;
@@ -972,7 +858,7 @@ std::shared_ptr<Conflict> ICBSSearch::chooseConflict(ICBSNode &parent)
 	else
 	{
 		choose = parent.unknownConf.back();
-		for (auto conflict : parent.unknownConf)
+		for (auto& conflict : parent.unknownConf)
 		{
 			if (conflict->t < choose->t)
 				choose = conflict;
@@ -1010,7 +896,7 @@ bool ICBSSearch::generateChild(ICBSNode*  node, ICBSNode* curr)
 	
 
 	
-	runtime_lowlevel += (std::clock() - t1) * 1000.0 / CLOCKS_PER_SEC;
+	runtime_lowlevel += (double)(std::clock() - t1) * 1000.0 / CLOCKS_PER_SEC;
 	
 	//Estimate h value
 	if (node->parent->g_val == node->g_val)
@@ -1031,7 +917,7 @@ bool ICBSSearch::generateChild(ICBSNode*  node, ICBSNode* curr)
     assert(node->num_of_dead_agents > curr->num_of_dead_agents || node->f_val >= curr->f_val);
 	t1 = std::clock();
 	findConflicts(*node);
-	runtime_conflictdetection += (std::clock() - t1)  * 1000.0 / CLOCKS_PER_SEC;
+	runtime_conflictdetection += (double)(std::clock() - t1)  * 1000.0 / CLOCKS_PER_SEC;
 
 	node->num_of_collisions = node->unknownConf.size() + node->conflicts.size();
 
@@ -1057,7 +943,7 @@ bool ICBSSearch::generateChild(ICBSNode*  node, ICBSNode* curr)
 	return true;
 }
 
-bool ICBSSearch::hasCardinalConflict(const ICBSNode& node) const
+/*bool ICBSSearch::hasCardinalConflict(const ICBSNode& node) const
 {
 	for (auto conflict : node.conflicts)
 	{
@@ -1065,7 +951,7 @@ bool ICBSSearch::hasCardinalConflict(const ICBSNode& node) const
 			return true;
 	}
 	return false;
-}
+}*/
 
 
 void ICBSSearch::printPaths() const
@@ -1082,14 +968,14 @@ void ICBSSearch::printPaths() const
 void ICBSSearch::printPaths(Path& path) const
 {
 
-		for (int t = 0; t < path.size(); t++)
-			std::cout << "(" << path.at(t).location / num_col << "," << path.at(t).location % num_col << ")->";
+		for (const auto & state : path)
+			std::cout << "(" << state.location / num_col << "," << state.location % num_col << ")->";
 		std::cout << std::endl;
 }
 
 void ICBSSearch::printBT(const std::string& prefix, const ICBSNode* node, bool isLeft)
 {
-	if (node != NULL)
+	if (node != nullptr)
 	{
 		std::cout << prefix;
 		std::cout << (isLeft ? "├──" : "└──");
@@ -1112,7 +998,7 @@ void ICBSSearch::printBT(const std::string& prefix, const ICBSNode* node, bool i
 		}
 
 		for (int i = 0; i < node->children.size(); i++) {
-			printBT(prefix + (isLeft ? "│   " : "    "), node->children[i], i == node->children.size() - 1 ? false: true);
+			printBT(prefix + (isLeft ? "│   " : "    "), node->children[i], i != node->children.size() - 1);
 		}
 	}
 }
@@ -1147,7 +1033,7 @@ void ICBSSearch::updateFocalList()
 void ICBSSearch::updateReservationTable(bool* res_table, int exclude_agent, const ICBSNode &node) {
 	for (int ag = 0; ag < num_of_agents; ag++) 
 	{
-		if (ag != exclude_agent && paths[ag] != NULL) 
+		if (ag != exclude_agent && paths[ag] != nullptr)
 		{
 			for (size_t timestep = 0; timestep < node.makespan + 1; timestep++) 
 			{
@@ -1189,7 +1075,7 @@ void MultiMapICBSSearch<Map>::collectConstraints(ICBSNode* curr) {
 	while (true)
 	{
 		allConstraints[curr->agent_id].merge(curr->constraints);
-		if (curr->parent == NULL)
+		if (curr->parent == nullptr)
 			break;
 		curr = curr->parent;
 	}
@@ -1254,7 +1140,7 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 			curr->conflict = chooseConflict(*curr);
 			runtime_conflictdetection += std::clock() - t1;
 		}
-		else if(curr->conflict == NULL) //CBSH based, and h value has not been computed yet
+		else if(curr->conflict == nullptr) //CBSH based, and h value has not been computed yet
 		{
 			t1 = std::clock();
 			classifyConflicts(*curr);
@@ -1281,7 +1167,7 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 
 
 
-		if (curr->conflict == NULL) //Fail to find a conflict => no conflicts
+		if (curr->conflict == nullptr) //Fail to find a conflict => no conflicts
 		{  // found a solution (and finish the while look)
 			runtime = (std::clock() - start);
 			solution_found = true;
@@ -1344,13 +1230,13 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
             bool stop = false;
             bool noRepeat = true;
             ICBSNode *parent = curr->parent;
-            if (parent != NULL) {
+            if (parent != nullptr) {
                 if (debug_mode)
                     cout << "Try find " << con.str() << " in curr's parent nodes" << endl;
                 while (!stop) {
                     if (debug_mode)
                         cout << "1";
-                    if (parent->parent == NULL) {
+                    if (parent->parent == nullptr) {
                         stop = true;
                         break;
                     }
@@ -1410,7 +1296,9 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 			children[1] = new ICBSNode(curr->conflict->a2);
 			children[1]->constraints = curr->conflict->constraint2;
 			if (curr->conflict->type == conflict_type::CORRIDOR2)
-				num_corridor2++;
+            {
+                num_corridor2++;
+            }
 			else if (curr->conflict->type == conflict_type::STANDARD) {
                 num_standard++;
                 if(get<0>(curr->conflict->constraint1.front()) == search_engines[curr->conflict->a1]->start_location
@@ -1418,25 +1306,31 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
                     num_activeConflict++;
             }
             else if (curr->conflict->type == conflict_type::CHASING)
+            {
                 num_chasing++;
+            }
             else if (curr->conflict->type == conflict_type::SEMI_CORRIDOR)
+            {
                 num_semi_corridor++;
+            }
             else if (curr->conflict->type == conflict_type::START)
+            {
                 num_start++;
+            }
 		}
 
 		if (screen >= 2)
 		{
 			std::cout << "Node " << curr->time_generated << " with f=" << curr->g_val << "+" << curr->h_val
 				<< " has " << std::endl;  
-			for (auto conflict : curr->conflicts)
+			for (const auto& conflict : curr->conflicts)
 				std::cout << *conflict;
 			std::cout << "We choose " << *curr->conflict;
 		}
 		vector<vector<PathEntry>*> copy(paths);
 		for (int i = 0; i < children.size(); i++)
 		{
-			if (children[i]->constraints.size()!=0 && generateChild(children[i], curr))
+			if (!children[i]->constraints.empty() && generateChild(children[i], curr))
 			{
 				curr->children.push_back(children[i]);
 				if (screen >= 2)
@@ -1522,8 +1416,8 @@ void MultiMapICBSSearch<Map>::cleanAll() {
 
 inline void ICBSSearch::releaseClosedListNodes() 
 {
-	for (list<ICBSNode*>::iterator it = allNodes_table.begin(); it != allNodes_table.end(); it++)
-		delete *it;
+	for (auto & it : allNodes_table)
+		delete it;
 }
 
 inline void ICBSSearch::releaseOpenListNodes()
@@ -1627,7 +1521,7 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 		al.printCurrentAgentsInitGoal();
 	}
 	// initialize paths_found_initially
-	paths.resize(num_of_agents, NULL);
+	paths.resize(num_of_agents, nullptr);
 	paths_found_initially.resize(num_of_agents);
 	ReservationTable res_table(map_size,this->max_malfunction,ignoreFinishedAgent);  // initialized to false
 	for (int i = 0; i < num_of_agents; i++) {
@@ -1659,9 +1553,11 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
             dummy_start->g_val += paths[i]->size() - 1;
         }
 		else
+        {
             dummy_start->num_of_dead_agents++;
+        }
 
-		/*if (paths[i]->at(2).conflist == NULL) {
+		/*if (paths[i]->at(2).conflist == nullptr) {
 			cout << "x" << endl;
 
 		}
@@ -1753,7 +1649,7 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 template<class Map>
 MDD<Map>* MultiMapICBSSearch<Map>::buildMDD(ICBSNode& node, int id)
 {
-	MDD<Map>* mdd = NULL;
+	MDD<Map>* mdd = nullptr;
 	if (!mddTable.empty())
 	{
 		ConstraintsHasher c(id, &node);
@@ -1763,7 +1659,7 @@ MDD<Map>* MultiMapICBSSearch<Map>::buildMDD(ICBSNode& node, int id)
 			mdd = got->second;
 		}
 	}
-	if (mdd == NULL)
+	if (mdd == nullptr)
 	{
 		mdd = new MDD<Map>();
 		// vector < list< pair<int, int> > >* cons_vec = collectConstraints(&node, id);

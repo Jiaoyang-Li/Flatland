@@ -7,7 +7,7 @@
 template<class Map>
 bool MDD<Map>::buildMDD( ConstraintTable& constraints, int numOfLevels, SingleAgentICBS<Map> & solver)
 {
-	MDDNode* root = new MDDNode(-1, NULL); // Root
+	MDDNode* root = new MDDNode(-1, nullptr); // Root
     root->heading = solver.start_heading;
     root->row = solver.start_location / solver.num_col;
     root->col = solver.start_location % solver.num_col;
@@ -182,7 +182,7 @@ template<class Map>
 bool MDD<Map>::buildMDD( ConstraintTable& constraints,
 	int numOfLevels, SingleAgentICBS<Map> & solver,int start,int start_time, int start_heading)
 {
-	MDDNode* root = new MDDNode(-1, NULL); // Root
+	MDDNode* root = new MDDNode(-1, nullptr); // Root
 	root->heading = start_heading;
 	root->row = solver.start_location / solver.num_col;
 	root->col = solver.start_location % solver.num_col;
@@ -283,7 +283,7 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints,
 		{
 			int next_malfunction_left = node->malfunction_left > 0 ? node->malfunction_left - 1 : node->malfunction_left;
 			int next_next_malfuntion = (node->next_malfunction > 0 && node->malfunction_left == 0) ? node->next_malfunction - 1 : node->next_malfunction;
-			if (node->parent != NULL && next_next_malfuntion == 0 && node->next_malfunction == 1) {
+			if (node->parent != nullptr && next_next_malfuntion == 0 && node->next_malfunction == 1) {
 				next_malfunction_left = solver.max_malfunction;
 			}
 
@@ -367,7 +367,7 @@ template<class Map>
 bool MDD<Map>::buildMDD(ConstraintTable& constraints,
 	int numOfLevels, SingleAgentICBS<Map> & solver, int start, int start_time, int goal, int start_heading)
 {
-	MDDNode* root = new MDDNode(start, NULL); // Root
+	MDDNode* root = new MDDNode(start, nullptr); // Root
 	root->heading = start_heading;
 	root->row = solver.start_location / solver.num_col;
 	root->col = solver.start_location % solver.num_col;
@@ -452,7 +452,7 @@ bool MDD<Map>::buildMDD(ConstraintTable& constraints,
 		{
 			int next_malfunction_left = node->malfunction_left > 0 ? node->malfunction_left - 1 : node->malfunction_left;
 			int next_next_malfuntion = (node->next_malfunction > 0 && node->malfunction_left == 0) ? node->next_malfunction - 1 : node->next_malfunction;
-			if (node->parent != NULL && next_next_malfuntion == 0 && node->next_malfunction == 1) {
+			if (node->parent != nullptr && next_next_malfuntion == 0 && node->next_malfunction == 1) {
 				next_malfunction_left = solver.max_malfunction;
 			}
 
@@ -569,14 +569,14 @@ MDDNode* MDD<Map>::find(int location, int level)
 		for (std::list<MDDNode*>::iterator it = levels[level].begin(); it != levels[level].end(); ++it)
 			if((*it)->location == location)
 				return (*it);
-	return NULL;
+	return nullptr;
 }
 
 template<class Map>
 MDD<Map>::MDD(MDD & cpy) // deep copy
 {
 	levels.resize(cpy.levels.size());
-	MDDNode* root = new MDDNode(cpy.levels[0].front()->location, NULL);
+	MDDNode* root = new MDDNode(cpy.levels[0].front()->location, nullptr);
 	levels[0].push_back(root);
 	for(int t = 0; t < levels.size() - 1; t++)
 	{
@@ -586,7 +586,7 @@ MDD<Map>::MDD(MDD & cpy) // deep copy
 			for (std::list<MDDNode*>::const_iterator cpyChild = cpyNode->children.begin(); cpyChild != cpyNode->children.end(); ++cpyChild)
 			{
 				MDDNode* child = find((*cpyChild)->location, (*cpyChild)->level);
-				if (child == NULL)
+				if (child == nullptr)
 				{
 					child = new MDDNode((*cpyChild)->location, (*node));
 					levels[child->level].push_back(child);
