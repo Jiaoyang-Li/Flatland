@@ -1524,6 +1524,7 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
 	// initialize paths_found_initially
 	paths.resize(num_of_agents, nullptr);
 	paths_found_initially.resize(num_of_agents);
+	constraintTable.clear();
 	ReservationTable res_table(map_size,this->max_malfunction,ignoreFinishedAgent);  // initialized to false
 	for (int i = 0; i < num_of_agents; i++) {
 		//cout << "******************************" << endl;
@@ -1541,8 +1542,8 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
         // TODO: for now, I use w=1 for the low-level, because
         //  if the low-level path is suboptimal, mdds, cardinal conflicts and many other parts need to be reconsidered.
         bool found = search_engines[i]->findPath(paths_found_initially[i], 1,  // focal_w,
-                max(max(al.makespan, dummy_start->makespan), al.constraintTable.length_max / 2),
-                                                 al.constraintTable,
+                max(max(al.makespan, dummy_start->makespan), constraintTable.length_max / 2),
+                                                 constraintTable,
                                                  &res_table, dummy_start->makespan + 1, 0);
         LL_num_expanded += search_engines[i]->num_expanded;
         LL_num_generated += search_engines[i]->num_generated;

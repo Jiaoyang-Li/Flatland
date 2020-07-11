@@ -20,7 +20,6 @@ public:
     void init(size_t map_size)
     {
         CT_paths.resize(map_size);
-        CT.resize(map_size);
     }
 private:
     vector< vector<bool> > CT; // this stores the constraints from CBS
