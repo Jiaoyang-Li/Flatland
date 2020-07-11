@@ -4,7 +4,6 @@
 #include "SingleAgentICBS.h"
 #include "compute_heuristic.h"
 #include "agents_loader.h"
-#include "RectangleReasoning.h"
 #include "CorridorReasoning.h"
 #include "ConstraintTable.h"
 #include "common.h"
@@ -48,10 +47,10 @@ public:
 	uint64_t num_corridor2 = 0;
 	uint64_t num_corridor4 = 0;
 	uint64_t num_rectangle = 0;
-	uint64_t num_0FlipRectangle = 0;
-	uint64_t num_1FlipRectangle = 0;
-	uint64_t num_2FlipRectangle = 0;
-	uint64_t num_target = 0;
+	//uint64_t num_0FlipRectangle = 0;
+	//uint64_t num_1FlipRectangle = 0;
+	//uint64_t num_2FlipRectangle = 0;
+	//uint64_t num_target = 0;
     uint64_t num_start = 0;
     uint64_t num_semi_corridor = 0;
 
@@ -67,12 +66,12 @@ public:
 	tuple<int, int, int> min_f_val;  // <#dead agents, makespan, sum of costs>
     tuple<int, int, int> focal_list_threshold;  // <#dead agents, w * makespan, w * sum of costs>
     ICBSNode* goal_node = nullptr;
-	bool cardinalRect = false;
-	bool rectangleMDD = false;
+	//bool cardinalRect = false;
+	//bool rectangleMDD = false;
 	bool corridor2 = false;
 	bool chasing_reasoning = false;
 	bool cardinalCorridorReasoning = false;
-	bool targetReasoning=false;
+	//bool targetReasoning=false;
 	int kDelay;
 	bool asymmetry_constraint;
 	int numOfRectangle = 0;
@@ -121,7 +120,7 @@ protected:
 	
 	virtual bool findPathForSingleAgent(ICBSNode*  node, int ag, double lowerbound = 0) { return false; };
 	virtual void  classifyConflicts(ICBSNode &parent) {};
-	void findTargetConflicts(int a1, int a2, ICBSNode& curr);
+	//void findTargetConflicts(int a1, int a2, ICBSNode& curr);
 
 	// high level search
 	bool generateChild(ICBSNode* child, ICBSNode* curr);
@@ -170,7 +169,7 @@ public:
 
     int getBestSolutionSoFar(); // return the number of dead agents, and the paths are stored in paths
 	MultiMapICBSSearch(Map * ml, AgentsLoader* al, double f_w, constraint_strategy c, int time_limit, int screen,
-	        int kDlay, options options1);
+	        options options1);
 	// build MDD
 	MDD<Map>* buildMDD(ICBSNode& node, int id);
 	void updateConstraintTable(ICBSNode* curr, int agent_id);

@@ -28,17 +28,12 @@ std::ostream& operator<<(std::ostream& os, const Conflict& conflict)
 		case conflict_type::STANDARD:
 			os << "standard";
 			break;
-		case conflict_type::RECTANGLE:
-			os <<conflict.flipType << " flip rectangle";
-			break;
 		case conflict_type::CORRIDOR2:
 			os << "corrdior2";
 			break;
 		case conflict_type::CORRIDOR4:
 			os << "corrdior4";
 			break;
-		case conflict_type::TARGET:
-			os << "target";
 	}
 	os << " conflict:  " << conflict.a1 << " with ";
 	for (auto con : conflict.constraint1)
@@ -166,7 +161,7 @@ bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return
 		return false;
 }
 
-
+/*
 // add a pair of barrier constraints
 void addBarrierConstraints(int S1, int S2, int S1_t, int S2_t, int Rg, int num_col,
 	std::list<Constraint>& constraints1, std::list<Constraint>& constraints2)
@@ -516,17 +511,6 @@ bool addModifiedHorizontalLongBarrierConstraint(const std::vector<PathEntry>& pa
 	int Ri_y, int Rg_y, int Rg_t, int num_col, int St,
 	std::list<Constraint>& constraints, int k, MDDPath* kMDD)
 {
-	/*for (int t = 0; t < path.size(); t++) {
-		std::cout << "(" << path.at(t).location / num_col << "," << path.at(t).location % num_col << ")";
-		list<int>::const_iterator locs;
-		for (locs = path.at(t).locations.begin(); locs != path.at(t).locations.end(); locs++)
-		{
-			cout << (*locs) << " ";
-		}
-		cout << "->";
-
-	}
-	std::cout << std::endl;*/
 	//std::cout << "Horizontal x:" << x << " Riy:" << Ri_y << "Rgy:" << Rg_y << " t:" << Rg_t << std::endl;
 
 	//for (int i = 0; i < kMDD.size(); i++) {
@@ -759,3 +743,4 @@ bool addFlippedHorizontalLongBarrierConstraint(const std::vector<PathEntry>& pat
 
 
 	}
+*/

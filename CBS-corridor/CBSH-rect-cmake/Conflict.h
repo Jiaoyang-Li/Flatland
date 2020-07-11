@@ -22,7 +22,7 @@ using namespace std;
 std::ostream& operator<<(std::ostream& os, const Constraint& constraint);
 
 
-// add a pair of barrier constraints
+/*// add a pair of barrier constraints
 void addBarrierConstraints(int S1, int S2, int S1_t, int S2_t, int Rg, int num_col,
 	std::list<std::tuple<int, int, int>>& constraints1, std::list<std::tuple<int, int, int>>& constraints2);
 
@@ -62,7 +62,7 @@ bool addFlippedVerticalLongBarrierConstraint(const std::vector<PathEntry>& path,
 bool addFlippedHorizontalLongBarrierConstraint(const std::vector<PathEntry>& path, int x,
 	vector<int> horizontal, vector<int> horizontalMin, vector<int> horizontalMax, int num_col, int St,
 	std::list<Constraint>& constraints, int k, MDDPath* kMDD);
-
+*/
 
 
 
@@ -74,17 +74,17 @@ public:
 	int a2;
 	int t;
 	int k=0;
-	int s1;
-	int s2;
-	int g1;
-	int g2;
-	int s1_t;
-	int s2_t;
-	int g1_t;
-	int g2_t;
-	int rs=0;
-	int rg=0;
-	int t_sg;
+	//int s1;
+	//int s2;
+	//int g1;
+	//int g2;
+	//int s1_t;
+	//int s2_t;
+	//int g1_t;
+	//int g2_t;
+	//int rs=0;
+	//int rg=0;
+	//int t_sg;
 	int originalConf1=0;
 	int originalConf2=-1;
 	int flipType = 0;
@@ -117,7 +117,7 @@ public:
 		type = conflict_type::STANDARD;
 	}
 		
-	void edgeConflict(int a1, int a2, int v1, int v2, int t)
+	/*void edgeConflict(int a1, int a2, int v1, int v2, int t)
 	{
 		this->a1 = a1;
 		this->a2 = a2;
@@ -129,7 +129,7 @@ public:
 		this->constraint1.emplace_back(v1, v2, t, constraint_type::EDGE);
 		this->constraint2.emplace_back(v2, v1, t, constraint_type::EDGE);
 		type = conflict_type::STANDARD;
-	}
+	}*/
 
 	void trainCorridorConflict(int a1, int a2, int e1, int e2, int et1, int et2, int kRobust)
 	{
@@ -205,7 +205,7 @@ public:
 		type = conflict_type::CORRIDOR4;
 	}
 
-	bool rectangleConflict(int a1, int a2, const std::pair<int, int>& Rs, const std::pair<int, int>& Rg, int move1, int move2, int Rg_t, const std::vector<Path*>& paths, int num_col) // For GR
+	/*bool rectangleConflict(int a1, int a2, const std::pair<int, int>& Rs, const std::pair<int, int>& Rg, int move1, int move2, int Rg_t, const std::vector<Path*>& paths, int num_col) // For GR
 	{
 		this->a1 = a1;
 		this->a2 = a2;
@@ -576,9 +576,6 @@ public:
 					verticalMax.clear();
 					for (int x = G2_x; x != R2_x - sign; x = x - sign * 1) {
 						vertical.push_back(x);
-						/*int tMin = min(getMahattanDistance(s1_x, s1_y, x, G2_y) + S1_t, getMahattanDistance(s2_x, s2_y, x, G2_y) + S2_t);
-						verticalMin.push_back(tMin);
-						verticalMax.push_back(tMin + k);*/
 						verticalMin.push_back(getMahattanDistance(s2_x, s2_y, x, G2_y) + S2_t);
 						verticalMax.push_back(getMahattanDistance(s1_x, s1_y, x, G2_y) + k + S1_t);
 					}
@@ -599,9 +596,6 @@ public:
 					horizontalMin.clear();
 					for (int y = G2_y; y != R2_y - sign; y = y - sign * 1) {
 						horizontal.push_back(y);
-						/*int tMin = min(getMahattanDistance(s1_x, s1_y, G2_x, y) + S1_t, getMahattanDistance(s2_x, s2_y, G2_x, y) + S2_t);
-						horizontalMin.push_back(tMin);
-						horizontalMax.push_back(tMin + k);*/
 						horizontalMin.push_back(getMahattanDistance(s2_x, s2_y, G2_x, y) + S2_t);
 						horizontalMax.push_back(getMahattanDistance(s1_x, s1_y, G2_x, y) + k + S1_t);
 					}
@@ -625,9 +619,6 @@ public:
 					verticalMax.clear();
 					for (int x = G1_x; x != R1_x-sign; x = x - sign * 1) {
 						vertical.push_back(x);
-						/*int tMin = min(getMahattanDistance(s1_x, s1_y, x, G1_y) + S1_t, getMahattanDistance(s2_x, s2_y, x, G1_y) + S2_t);
-						verticalMin.push_back(tMin);
-						verticalMax.push_back(tMin + k);*/
 						verticalMin.push_back(getMahattanDistance(s1_x, s1_y, x, G1_y) + S1_t);
 						verticalMax.push_back(getMahattanDistance(s2_x, s2_y, x, G1_y) + k + S2_t);
 					}
@@ -648,9 +639,6 @@ public:
 					horizontalMin.clear();
 					for (int y = G1_y; y != R1_y-sign; y = y - sign * 1) {
 						horizontal.push_back(y);
-						/*int tMin = min(getMahattanDistance(s1_x, s1_y, G1_x, y) + S1_t, getMahattanDistance(s2_x, s2_y, G1_x, y) + S2_t);
-						horizontalMin.push_back(tMin);
-						horizontalMax.push_back(tMin + k);*/
 						horizontalMin.push_back(getMahattanDistance(s1_x, s1_y, G1_x, y) + S1_t);
 						horizontalMax.push_back(getMahattanDistance(s2_x, s2_y, G1_x, y) + k + S2_t);
 					}
@@ -671,9 +659,6 @@ public:
 					verticalMax.clear();
 					for (int x = G2_x; x != R2_x - sign; x = x - sign * 1) {
 						vertical.push_back(x);
-						/*int tMin = min(getMahattanDistance(s1_x, s1_y, x, G2_y) + S1_t, getMahattanDistance(s2_x, s2_y, x, G2_y) + S2_t);
-						verticalMin.push_back(tMin);
-						verticalMax.push_back(tMin + k);*/
 						verticalMin.push_back(getMahattanDistance(s2_x, s2_y, x, G2_y) + S2_t);
 						verticalMax.push_back(getMahattanDistance(s1_x, s1_y, x, G2_y) + k + S1_t);
 					}
@@ -694,9 +679,6 @@ public:
 					horizontalMin.clear();
 					for (int y = G2_y; y != R2_y - sign; y = y - sign * 1) {
 						horizontal.push_back(y);
-						/*int tMin = min(getMahattanDistance(s1_x, s1_y, G2_x, y) + S1_t, getMahattanDistance(s2_x, s2_y, G2_x, y) + S2_t);
-						horizontalMin.push_back(tMin);
-						horizontalMax.push_back(tMin + k);*/
 						horizontalMin.push_back(getMahattanDistance(s2_x, s2_y, G2_x, y) + S2_t);
 						horizontalMax.push_back(getMahattanDistance(s1_x, s1_y, G2_x, y) + k + S1_t);
 					}
@@ -806,14 +788,14 @@ public:
 		this->originalConf1 = -1;
 		this->originalConf2 = a1;
 
-		this->constraint1.emplace_back(-1, a1, t + kDelay/* kDelay>0? t + kDelay+1:t*/, constraint_type::LENGTH); // length of a1 should be larger than t
+		this->constraint1.emplace_back(-1, a1, t + kDelay, constraint_type::LENGTH); // length of a1 should be larger than t
 		this->constraint2.emplace_back(v, a1, t, constraint_type::LENGTH); // length of a1 should be no larger than t, and other agents can not use v at and after timestep t
 		type = conflict_type::TARGET;
 	}
 	void clear(){
 	    this->constraint1.clear();
 	    this->constraint2.clear();
-	}
+	}*/
 
 
 };

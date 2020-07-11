@@ -501,7 +501,7 @@ bool AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)
         {
             if (constraintTable.is_constrained(paths_all[a][t].location, t))
             {
-                cout << "Agent "<< a <<"has a conflict at location " <<
+                cout << "Agent "<< a <<" has a conflict at location " <<
                         paths_all[a][t].location << " at timestep " << t << endl;
                 return false; // the path is conflicting with someone else
             }
