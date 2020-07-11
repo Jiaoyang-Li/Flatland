@@ -393,8 +393,12 @@ bool PythonCBS<Map>::LNS()
         al->agents.clear();
         al->agents.push_back(&al->agents_all[a]);
         cout << "Agents ids: " << a << "(" << al->paths_all[a].size() - 1 << ")";
+        int old_sum_of_costs = (int)al->paths_all[a].size() - 1;
+        int old_makespan = (int)al->paths_all[a].size() - 1;
         for (auto i : neighbors)
         {
+            old_sum_of_costs += (int)al->paths_all[i].size() - 1;
+            old_makespan = max(old_makespan, (int)al->paths_all[i].size() - 1);
             al->constraintTable.delete_path(i, al->paths_all[i]);
             al->agents.push_back(&al->agents_all[i]);
             cout << "," << i << "(" << al->paths_all[i].size() - 1 << ")";
@@ -413,7 +417,7 @@ bool PythonCBS<Map>::LNS()
             cout << "start search engine" << endl;
         bool res = icbs.runICBSSearch();
         updateCBSResults(icbs);
-        if (res)
+        if (res && icbs.solution_cost <= old_sum_of_costs)
         {
             assert(icbs.paths[0]->back().location == al->paths_all[a].back().location);
             if(!al->constraintTable.insert_path(a, *icbs.paths[0]))
