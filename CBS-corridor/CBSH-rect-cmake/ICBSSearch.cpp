@@ -205,7 +205,7 @@ int ICBSSearch::minimumVertexCover(const vector<vector<bool>>& CG)
             {
                 if (KVertexCover(subgraph, (int)indices.size(), num_edges, k))
                 {
-                    rst += i;
+                    rst += k;
                     break;
                 }
                 runtime = (double)(std::clock() - start);
@@ -215,7 +215,7 @@ int ICBSSearch::minimumVertexCover(const vector<vector<bool>>& CG)
         }
         else
         {
-            return greedyMatching(subgraph);
+            rst += greedyMatching(subgraph);
         }
     }
     return rst;
@@ -231,7 +231,7 @@ int ICBSSearch::greedyMatching(const vector<vector<bool>>& CG)
             continue;
         for (int j = i + 1; j < (int)CG.size(); j++)
         {
-            if(CG[i][j] > 0 && !selected[j])
+            if(CG[i][j] && !selected[j])
             {
                 rst += 1; // select the edge between i and j
                 selected[i] = true;
@@ -1516,7 +1516,7 @@ void MultiMapICBSSearch<Map>::initializeDummyStart() {
         paths[i] = &paths_found_initially[i];
         if (found)
         {
-            res_table.addPath(i, paths[i]);
+            res_table.addPath(i, *paths[i]);
             dummy_start->makespan = max(dummy_start->makespan, (int)paths_found_initially[i].size() - 1);
             dummy_start->g_val += paths[i]->size() - 1;
         }

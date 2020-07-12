@@ -76,7 +76,7 @@ Here is a summary of the changes to the standard MAPF model:
 
 For now, we do not consider the malfunction in this model.
 
-## Framework
+## Framework 1: GPP
 We use a hybrid framework of prioritized planning and CBS. Here is the pseudo-code:
 
 ```c++
@@ -102,6 +102,33 @@ while(A is not empty) {
 ```
 
 In particular, if M is the number of total agents, our framework is identical to CBS. If M is 1, our framework is identical to prioritized planning.
+
+## Framework 2: LNS
+We use Large Neighbourhood Search (LNS) as the framwork. 
+
+```c++
+A = [a1, a2, ...];  // unplanned agents
+A = sort(A);  // sort the agents by some heuristics (e.g., speed, distance to the goal location)
+P = PrioritizedPlanning(A); // get initial paths by PP
+m = M; // M is the default number of agents in one neighbourhood search
+tabu_list = {};
+while(not timeout and m <= num_of_agents) {
+    a = the agent with max makespan in A but not in tabu_list;
+    update tabu_list;
+    conflicting_agents = randomWalk(a, m - 1); // let agent a perform a random walk (starting from a random timestep on its path) until it conflicts with m - 1 agents
+    A' = {a} + conflicting_agents;
+    remove paths of A' from P;
+    T = min(remaining_runtime, 10s);
+    paths = CBS(A', T, P);  // try to find collision-free paths for agents in a that do not collide with any path in P by CBS with a time limit of T 
+    if(paths are found) {
+        add paths to P;
+        m += 1;
+    } else {
+        add the original paths of A' to P;
+        m -= 1;
+    }
+}
+```
 
 ## CBS
 For the CBS solver, we have the following major changes:
