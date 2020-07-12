@@ -104,7 +104,7 @@ while(A is not empty) {
 In particular, if M is the number of total agents, our framework is identical to CBS. If M is 1, our framework is identical to prioritized planning.
 
 ## Framework 2: LNS
-We use Large Neighbourhood Search (LNS) as the framwork.
+We use Large Neighbourhood Search (LNS) as the framwork. 
 
 ```c++
 A = [a1, a2, ...];  // unplanned agents
@@ -113,7 +113,7 @@ P = PrioritizedPlanning(A); // get initial paths by PP
 m = M; // M is the default number of agents in one neighbourhood search
 tabu_list = {};
 while(not timeout and m <= num_of_agents) {
-    a = the bottleneck agent in A\tabu_list;
+    a = the agent with max makespan in A but not in tabu_list;
     update tabu_list;
     conflicting_agents = randomWalk(a, m - 1); // let agent a perform a random walk (starting from a random timestep on its path) until it conflicts with m - 1 agents
     A' = {a} + conflicting_agents;
