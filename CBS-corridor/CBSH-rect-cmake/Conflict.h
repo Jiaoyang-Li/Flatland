@@ -65,7 +65,6 @@ bool addFlippedHorizontalLongBarrierConstraint(const std::vector<PathEntry>& pat
 */
 
 
-
 class Conflict
 {
 public:
@@ -154,7 +153,7 @@ public:
         this->originalConf2 = v2;
         this->constraint1.emplace_back(v1, t1, exit_2, constraint_type::RANGE);
         this->constraint2.emplace_back(v2, t2, exit_1, constraint_type::RANGE);
-        type = conflict_type::SEMI_CORRIDOR;
+        type = conflict_type::CORRIDOR;
     }
 
 	// t3 
@@ -174,17 +173,17 @@ public:
 	}
 
 	//a1 is the fast train, a2 is the slow train
-	void chasingConflict(int a1,int a2,int v1, int v2,int entrance, int exit, int early_entrance, int late_entrance, int early_exit, int late_exit, int kRobust)
+	void chasingConflict(int earlyExitAgent,int lateExitAgent,int v1, int v2,int entrance, int exit, int early_entrance, int late_entrance, int early_exit, int late_exit, int kRobust)
 	{
-		this->a1 = a1;
-		this->a2 = a2;
+		this->a1 = earlyExitAgent;
+		this->a2 = lateExitAgent;
 		this->k = kRobust;
 		this->t =  early_exit * 1000 + late_exit;
 		this->originalConf1 = v1;
 		this->originalConf2 = v2;
 		
-		this->constraint1.emplace_back(exit, early_exit, late_exit+1+ kRobust, constraint_type::RANGE);
-        this->constraint2.emplace_back(entrance, early_entrance, late_entrance + 1 + kRobust, constraint_type::RANGE);
+		this->constraint1.emplace_back(exit, early_exit, late_exit+ kRobust, constraint_type::RANGE);
+        this->constraint2.emplace_back(entrance, early_entrance, late_entrance + kRobust, constraint_type::RANGE);
 
         type = conflict_type::CHASING;
 	}

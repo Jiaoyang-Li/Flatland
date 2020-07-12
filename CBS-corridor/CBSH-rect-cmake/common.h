@@ -10,7 +10,7 @@
 #include <memory>  // std::shared_ptr
 
 #define MAX_COST INT_MAX/2
-enum conflict_type { CORRIDOR2, CORRIDOR4, STANDARD,CHASING,SEMI_CORRIDOR,START, TYPE_COUNT };
+enum conflict_type { CORRIDOR2, CORRIDOR4, STANDARD,CHASING,CORRIDOR,START, TYPE_COUNT };
 enum conflict_priority { CARDINAL, SEMI, NON, UNKNOWN, PRIORITY_COUNT };
 
 enum constraint_type { RANGE, VERTEX, EDGE, CONSTRAINT_COUNT };
@@ -58,7 +58,6 @@ struct Transition {
 	float position_fraction=0.0;
 	int exit_loc=-1;
 	int exit_heading = -1;
-    //bool turn_active = false;
 };
 
 /*struct MDDPath {

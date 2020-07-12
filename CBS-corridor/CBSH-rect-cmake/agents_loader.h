@@ -65,6 +65,8 @@ public:
     int getNumOfUnplannedAgents() const { return (int)unplanned_agents.size(); }
     int getNumOfAllAgents() const { return num_of_agents_all; }
     int getNumOfDeadAgents() const { return num_of_dead_agents; }
+    void sampleAgents(int _num_of_agents);
+
     boost::python::list outputPaths()   {
         boost::python::list result;
         for (const auto& path : paths_all)  {

@@ -52,7 +52,7 @@ public:
 	//uint64_t num_2FlipRectangle = 0;
 	//uint64_t num_target = 0;
     uint64_t num_start = 0;
-    uint64_t num_semi_corridor = 0;
+    uint64_t num_corridor = 0;
 
 
     uint64_t num_standard = 0;

@@ -14,7 +14,7 @@ template <class Map>
 class PythonCBS {
 public:
 	PythonCBS(p::object railEnv1, std::string algo, int t,
-              int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
+              int default_group_size, int debug, float f_w, bool corridor,bool chasing, bool accept_partial_solution,
               int agent_priority_strategy);
 
 	p::list getResult();
@@ -26,9 +26,10 @@ public:
 	p::dict getResultDetail();
 	void updateAgents(p::object railEnv1);
 	void updateFw(float fw);
+    p::list benchmarkSingleGroup(int group_size,int iterations, int time_limit);
 
 
-	void writeResultsToFile(const string& fileName) const
+        void writeResultsToFile(const string& fileName) const
     {
         std::ofstream output;
         output.open(fileName);
@@ -82,14 +83,14 @@ private:
 	//stats about CBS
     std::clock_t start_time;
     double runtime;
-    double runtime_corridor;
+    double runtime_corridor=0;
     int HL_num_expanded = 0;
     int HL_num_generated = 0;
     int LL_num_expanded = 0;
     int LL_num_generated = 0;
-    int num_rectangle = 0;
+    int num_standard = 0;
     int num_corridor2 = 0;
-    int num_semi_corridor = 0;
+    int num_corridor = 0;
     int num_start = 0;
     int num_chasing = 0;
 
@@ -108,9 +109,9 @@ private:
         HL_num_generated += cbs.HL_num_generated;
         LL_num_expanded += cbs.LL_num_expanded;
         LL_num_generated += cbs.LL_num_generated;
-        num_rectangle += cbs.num_rectangle;
+        num_standard += cbs.num_standard;
         num_corridor2 += cbs.num_corridor2;
-        num_semi_corridor += cbs.num_semi_corridor;
+        num_corridor += cbs.num_corridor;
         num_start+=cbs.num_start;
         num_chasing += cbs.num_chasing;
     }

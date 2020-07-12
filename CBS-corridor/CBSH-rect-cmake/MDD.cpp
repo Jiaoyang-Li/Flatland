@@ -12,8 +12,6 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints, int numOfLevels, SingleAg
     root->row = solver.start_location / solver.num_col;
     root->col = solver.start_location % solver.num_col;
     root->position_fraction = solver.al->agents[solver.agent_id]->position_fraction;
-    root->malfunction_left = solver.al->agents[solver.agent_id]->malfunction_left;
-    root->next_malfunction = solver.al->agents[solver.agent_id]->next_malfuntion;
 	std::queue<MDDNode*> open;
 	std::list<MDDNode*> closed;
 	open.push(root);
@@ -601,6 +599,17 @@ MDD<Map>::MDD(MDD & cpy) // deep copy
 		}
 		
 	}
+}
+template<class Map>
+int MDD<Map>::getTime(int loc, int heading) {
+    for (int i = 0; i < levels.size(); i++){
+        for(auto& node : levels[i]){
+            if(loc == node->location && heading == node->heading){
+                return i;
+            }
+        }
+    }
+    return -1;
 }
 
 template<class Map>

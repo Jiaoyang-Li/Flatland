@@ -11,7 +11,7 @@ namespace p = boost::python;
 
 template <class Map>
 PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int t,
-                          int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
+                          int default_group_size, int debug, float f_w, bool corridor,bool chasing, bool accept_partial_solution,
                           int agent_priority_strategy) :
                           railEnv(railEnv1), defaultGroupSize(default_group_size),
                           accept_partial_solution(accept_partial_solution),
@@ -25,11 +25,8 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, std::string algo, int t,
 	this->algo = algo;
 	this->kRobust = 1;
 	this->chasing = chasing;
-	if(corridor > 0){
+	if(corridor){
 	    this->corridor2 = true;
-	}
-	if(corridor = 1){
-	    this->trainCorridor1 = true;
 	}
 	if (algo == "ICBS")
 		s = constraint_strategy::ICBS;
@@ -122,7 +119,6 @@ bool PythonCBS<Map>::search() {
         if (options1.debug)
             cout << "Time limit = " << time_limit << "second." << endl;
         MultiMapICBSSearch <Map> icbs(ml, al, f_w, s, time_limit * CLOCKS_PER_SEC, screen, options1);
-        icbs.trainCorridor1 = trainCorridor1;
         icbs.corridor2 = corridor2;
         icbs.ignoreFinishedAgent = true;
         icbs.chasing_reasoning = chasing;
@@ -178,6 +174,86 @@ bool PythonCBS<Map>::search() {
 }
 
 template <class Map>
+p::list PythonCBS<Map>::benchmarkSingleGroup(int group_size,int iterations, int time_limit) {
+    p::list result;
+
+    start_time = std::clock();
+    if (options1.debug)
+        cout << "start initialize" << endl;
+    //initialize search engine
+    int screen;
+    screen = options1.debug;
+    al->constraintTable.init(ml->map_size());
+    al->computeHeuristics(ml);
+    if (options1.debug)
+        cout << "Sort the agents" << endl;
+    al->generateAgentOrder(agent_priority_strategy);
+
+    int groupSize = group_size;
+    runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+    while (iterations > 0) {
+        al->sampleAgents(groupSize);
+        if (al->num_of_agents == 0) // all agents have paths
+            break;
+        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        cout << "Group size = " << al->num_of_agents <<
+             ", time limit = " << time_limit << " seconds. " << endl;
+        if (options1.debug)
+            cout << "initialize cbs search engine" << endl;
+
+        if (options1.debug)
+            cout << "Time limit = " << time_limit << "second." << endl;
+        MultiMapICBSSearch <Map> icbs(ml, al, f_w, s, time_limit * CLOCKS_PER_SEC, screen, options1);
+        icbs.corridor2 = corridor2;
+        icbs.ignoreFinishedAgent = true;
+        icbs.chasing_reasoning = chasing;
+        if (options1.debug)
+            cout << "start search engine" << endl;
+        bool res = icbs.runICBSSearch();
+        updateCBSResults(icbs);
+
+        p::dict run;
+        run["success"] = res;
+        run["instance"] = iterations;
+        run["runtime"] = icbs.runtime;
+        run["group_size"] = group_size;
+        run["corridor"] = corridor2;
+        run["HL_expanded"] = icbs.HL_num_expanded;
+        run["HL_generated"] = icbs.HL_num_generated;
+        run["LL_expanded"] = icbs.LL_num_expanded;
+        run["LL_generated"] = icbs.LL_num_generated;
+        std::stringstream stream;
+        stream << std::fixed << std::setprecision(1) << f_w;
+        std::string s = stream.str();
+        run["algorithm"] = algo + "(" + s + ")_groupsize=" + to_string(defaultGroupSize) +
+                              "_priority=" + to_string(agent_priority_strategy);
+        run["num_standard"] = icbs.num_standard;
+        run["num_chasing"] = icbs.num_chasing;
+        run["num_start"] = icbs.num_start;
+        run["num_corridor"] = icbs.num_corridor;
+        run["runtime_corridor"] = icbs.runtime_corridor;
+        size_t solution_cost = 0;
+        int finished_agents = 0;
+        size_t makespan = 0;
+        for (const auto& path : al->paths_all)
+        {
+            solution_cost += path.size();
+            makespan = max(path.size(), makespan);
+            if (!path.empty())
+                finished_agents++;
+        }
+        run["solution_cost"] = solution_cost;
+
+        run["makespan"] = makespan;
+
+        result.append(run);
+        iterations --;
+    }
+
+    return result;
+}
+
+template <class Map>
 bool PythonCBS<Map>::hasConflicts(const vector<Path>& paths) const
 {
     assert(kRobust > 0); // TODO: consider kDelay==0 in the future (in which case, we also need to consider edge conflicts)
@@ -222,11 +298,10 @@ p::dict PythonCBS<Map>::getResultDetail() {
     std::string s = stream.str();
 	result["algorithm"] = algo + "(" + s + ")_groupsize=" + to_string(defaultGroupSize) +
 	        "_priority=" + to_string(agent_priority_strategy);
-	result["No_f_rectangle"] = num_rectangle;
+	result["num_standard"] = num_standard;
 	result["num_chasing"] = num_chasing;
-	result["num_corridor2"] = num_corridor2;
     result["num_start"] = num_start;
-    result["num_semi_corridor"] = num_semi_corridor;
+    result["num_corridor"] = num_corridor;
 	result["runtime_corridor"] = runtime_corridor;
 
     size_t solution_cost = 0;
@@ -249,9 +324,10 @@ p::dict PythonCBS<Map>::getResultDetail() {
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
 {
 	using namespace boost::python;
-	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, int, int, int,float,int,bool,bool,int>())
+	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, int, int, int,float,bool,bool,bool,int>())
 		.def("getResult", &PythonCBS<FlatlandLoader>::getResult)
 		.def("search", &PythonCBS<FlatlandLoader>::search)
+		.def("benchmarkSingleGroup", &PythonCBS<FlatlandLoader>::benchmarkSingleGroup)
 		.def("getResultDetail", &PythonCBS<FlatlandLoader>::getResultDetail)
 		.def("writeResultsToFile", &PythonCBS<FlatlandLoader>::writeResultsToFile)
 		.def("updateAgents",&PythonCBS<FlatlandLoader>::updateAgents)

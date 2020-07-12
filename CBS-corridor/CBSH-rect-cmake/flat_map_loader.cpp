@@ -84,7 +84,6 @@ void FlatlandLoader::get_transitions(list<Transition>& transitions, int location
 			move.location = location + this->moves_offset[i];
 			move.heading = i;
 			transitions.push_back(move);
-
 		}
 	}
 

@@ -9,7 +9,6 @@
 using namespace boost;
 using namespace std;
 
-
 MapLoader::MapLoader(){}
 
 

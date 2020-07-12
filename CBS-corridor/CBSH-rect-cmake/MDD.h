@@ -93,11 +93,13 @@ public:
 			std::list<MDDNode*>::iterator it;
 			std::cout << "level " << i << ": ";
 			for (it = levels[i].begin(); it != levels[i].end(); ++it) {
-				std::cout << (*it)->row << ","<< (*it)->col<<" ";
+				std::cout << (*it)->location<<"("<< (*it)->row << ","<< (*it)->col<<")" <<(*it)->heading<<" " ;
 			}
 			std::cout << std::endl;
 		}
 	};
+	int getTime(int loc, int heading = -1);
+
 
 	MDD(){};
 	MDD(MDD & cpy);

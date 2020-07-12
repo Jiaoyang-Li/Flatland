@@ -477,6 +477,21 @@ void AgentsLoader::updateToBePlannedAgents(int _num_of_agents)
     cout << endl;
 }
 
+void AgentsLoader::sampleAgents(int _num_of_agents)
+{
+
+    this->num_of_agents = _num_of_agents;
+    agents.resize(num_of_agents);
+    cout << "Agents ids: ";
+    for (int i = 0; i < num_of_agents; i++)
+    {
+        int agent = (rand() % (agents_all.size()-1)) + 1;
+        cout << agent << ",";
+        agents[i] = &agents_all[agent];
+    }
+    cout << endl;
+}
+
 bool AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)
 {
     constraintTable.clear();

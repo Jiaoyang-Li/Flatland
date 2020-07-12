@@ -9,6 +9,7 @@
 namespace p = boost::python;
 using namespace std;
 
+
 struct railCell {
 	int transitions;
 	bool isTurn;

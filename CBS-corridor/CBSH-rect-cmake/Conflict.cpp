@@ -31,9 +31,12 @@ std::ostream& operator<<(std::ostream& os, const Conflict& conflict)
 		case conflict_type::CORRIDOR2:
 			os << "corrdior2";
 			break;
-		case conflict_type::CORRIDOR4:
-			os << "corrdior4";
+		case conflict_type::CHASING:
+			os << "chasing";
 			break;
+        case conflict_type::CORRIDOR:
+            os << "corridor";
+            break;
 	}
 	os << " conflict:  " << conflict.a1 << " with ";
 	for (auto con : conflict.constraint1)
@@ -101,9 +104,9 @@ bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return
             if (conflict2.type != conflict_type::CHASING)
                 return false;
         }
-        else if (conflict1.type == conflict_type::SEMI_CORRIDOR)
+        else if (conflict1.type == conflict_type::CORRIDOR)
         {
-            if (conflict2.type != conflict_type::SEMI_CORRIDOR)
+            if (conflict2.type != conflict_type::CORRIDOR)
                 return false;
         }
 		else if (conflict2.type == conflict_type::CORRIDOR2 && conflict2.type != conflict_type::CHASING )
@@ -114,7 +117,7 @@ bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return
         {
             return true;
         }
-        else if (conflict2.type == conflict_type::SEMI_CORRIDOR )
+        else if (conflict2.type == conflict_type::CORRIDOR )
         {
             return true;
         }
@@ -130,7 +133,7 @@ bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return
         {
             return true;
         }
-        else if (conflict2.type == conflict_type::SEMI_CORRIDOR &&  conflict1.type != conflict_type::SEMI_CORRIDOR)
+        else if (conflict2.type == conflict_type::CORRIDOR &&  conflict1.type != conflict_type::CORRIDOR)
         {
             return true;
         }
@@ -141,7 +144,7 @@ bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return
 		else if(conflict2.type != conflict_type::CHASING && conflict1.type == conflict_type::CHASING){
 		    return false;
 		}
-        else if(conflict2.type != conflict_type::SEMI_CORRIDOR && conflict1.type == conflict_type::SEMI_CORRIDOR){
+        else if(conflict2.type != conflict_type::CORRIDOR && conflict1.type == conflict_type::CORRIDOR){
             return false;
         }
 		
