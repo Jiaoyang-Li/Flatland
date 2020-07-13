@@ -60,15 +60,16 @@ public:
 		{
 			if (n1->num_internal_conf == n2->num_internal_conf)
 			{
-				if (n1->g_val == n2->g_val)
+				if (n1->h_val == n2->h_val)
 				{
-                    if (rand() % 2 == 0)
-                        return true;
-                    else
-                        return false;
+				    return (n1->g_val <= n2->g_val);
+//                    if (rand() % 2 == 0)
+//                        return true;
+//                    else
+//                        return false;
 
 				}
-				return n1->g_val <= n2->g_val;
+				return n1->h_val >= n2->h_val;
 			}
 			return n1->num_internal_conf >= n2->num_internal_conf;  // n1 > n2 if it has more conflicts
 		}

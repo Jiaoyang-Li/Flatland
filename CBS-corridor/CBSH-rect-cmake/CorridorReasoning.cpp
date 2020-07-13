@@ -40,7 +40,7 @@ int getCorridorLength(const std::vector<PathEntry>& path, int t_start, int loc_e
 	int curr = path[t_start].location;
 	int next;
 	int prev = -1;
-	int length = 0; // distance to the start location
+	int length = 1; // distance to the start location
 	int t = t_start;
 	bool moveForward = true;
 	bool updateEdge = false;

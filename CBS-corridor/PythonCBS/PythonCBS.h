@@ -14,7 +14,7 @@ template <class Map>
 class PythonCBS {
 public:
 	PythonCBS(p::object railEnv1, string framework, std::string algo, int t,
-              int default_group_size, int debug, float f_w, bool corridor,bool chasing, bool accept_partial_solution,
+              int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
               int agent_priority_strategy);
 
 	p::list getResult();
@@ -27,9 +27,10 @@ public:
 	void updateAgents(p::object railEnv1);
 	void updateFw(float fw);
     p::list benchmarkSingleGroup(int group_size,int iterations, int time_limit);
+    p::list benchmarkSingleGroupLNS(int group_size,int iterations, int time_limit);
 
 
-	void writeResultsToFile(const string& fileName) const
+    void writeResultsToFile(const string& fileName) const
     {
         std::ofstream output;
         output.open(fileName);
@@ -75,6 +76,7 @@ private:
 	int max_malfunction;
 	float f_w;
 	// MultiMapICBSSearch<Map>* icbs = NULL;
+	int corridor_option = 0;
 	bool corridor2=false;
 	bool corridor4=false;
 	bool trainCorridor1 = false;

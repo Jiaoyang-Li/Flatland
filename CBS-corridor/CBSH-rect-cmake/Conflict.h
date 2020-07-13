@@ -130,16 +130,16 @@ public:
 		type = conflict_type::STANDARD;
 	}*/
 
-	void trainCorridorConflict(int a1, int a2, int e1, int e2, int et1, int et2, int kRobust)
+	void trainCorridorConflict(int a1, int a2, int u1, int u2,int entrance1, int entrance2, int exit1, int exit2, int kRobust)
 	{
 		this->a1 = a1;
 		this->a2 = a2;
 		this->k = k;
-		this->t = et1*1000+et2;
-		this->originalConf1 = e1;
-		this->originalConf2 = e2;
-		this->constraint1.emplace_back(e2, 0, et2 + 1 + kRobust, constraint_type::RANGE);
-		this->constraint2.emplace_back(e1, 0, et1 + 1 + kRobust, constraint_type::RANGE);
+		this->t = entrance1*1000+entrance2;
+		this->originalConf1 = u1;
+		this->originalConf2 = u2;
+		this->constraint1.emplace_back(u1, entrance1, exit2 + kRobust, constraint_type::RANGE);
+		this->constraint2.emplace_back(u2, entrance2, exit1 + kRobust, constraint_type::RANGE);
 		type = conflict_type::CORRIDOR2;
 	}
 

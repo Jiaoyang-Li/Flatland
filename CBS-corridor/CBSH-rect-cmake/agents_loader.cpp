@@ -477,19 +477,35 @@ void AgentsLoader::updateToBePlannedAgents(int _num_of_agents)
     cout << endl;
 }
 
-void AgentsLoader::sampleAgents(int _num_of_agents)
+void AgentsLoader::sampleAgents(int _num_of_agents, int iteration, int num_instances, bool deletePath)
 {
 
     this->num_of_agents = _num_of_agents;
     agents.resize(num_of_agents);
     cout << "Agents ids: ";
+    int start = agents_all.size()/num_instances * (iteration-1);
     for (int i = 0; i < num_of_agents; i++)
     {
-        int agent = (rand() % (agents_all.size()-1)) + 1;
+        int agent = (start+i)%agents_all.size();
         cout << agent << ",";
         agents[i] = &agents_all[agent];
+        if (deletePath){
+            constraintTable.delete_path(agent, paths_all[agent]);
+        }
     }
     cout << endl;
+}
+
+void AgentsLoader::recoverAgents(int _num_of_agents, int iteration, int num_instances)
+{
+
+    this->num_of_agents = _num_of_agents;
+    int start = agents_all.size()/num_instances * (iteration-1);
+    for (int i = 0; i < num_of_agents; i++)
+    {
+        int agent = (start+i)%agents_all.size();
+        constraintTable.insert_path(agent, paths_all[agent]);
+    }
 }
 
 bool AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)

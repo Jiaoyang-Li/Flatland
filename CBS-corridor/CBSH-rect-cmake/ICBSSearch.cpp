@@ -601,7 +601,7 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 //                cout<<(*paths[a[1]])[t[1]].heading<<endl;
 //            }
             assert(a0exit>=0 && a1exit>=0 && a0entrance>=0 && a1entrance>=0);
-            if(!((a0exit <= a1exit && a0entrance >= a1entrance)||(a0exit >= a1exit && a0entrance <= a1entrance))){
+            if(!((a0exit <= a1exit && a0entrance >= a1entrance)||(a0exit >= a1exit && a0entrance <= a1entrance))){ //not crossing
                 return false;
             }
             int earlyExitAgent;
@@ -658,18 +658,54 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 
     if(chasing)
         return false;
-    if (trainCorridor1 || corridor2){
+    if (corridor2) {
+        if (debug_mode)
+            cout << "train corridor" << endl;
+
+        MDD<Map> *a0mdd = buildMDD(*node, a[0]);
+        MDD<Map> *a1mdd = buildMDD(*node, a[1]);
+        //get exit location
+        int e[2];
+        e[0] = cp.getExitTime(*paths[a[0]], *paths[a[1]], t[0], ml) -
+               1; //-1 is the inner vertex of the corridor no matter what speed.
+        e[1] = cp.getExitTime(*paths[a[1]], *paths[a[0]], t[1], ml) - 1;
+        int el[2];
+        el[0] = paths[a[0]]->at(e[0]).location;
+        el[1] = paths[a[1]]->at(e[1]).location;
+        int speed_shift = 1 / al.agents[a[0]]->speed + 1 / al.agents[a[1]]->speed;
+        //get exit time for a1
+        int a0exit = a0mdd->getTime(el[0], (*paths[a[0]])[e[0]].heading) + speed_shift;
+
+        int a0entrance = a0mdd->getTime(u[0], (*paths[a[0]])[t[0]].heading);
+
+
+        //get exit time for a2
+        int a1exit = a1mdd->getTime(el[1], (*paths[a[1]])[e[1]].heading) + speed_shift;
+
+        int a1entrance = a1mdd->getTime(u[1], (*paths[a[1]])[t[1]].heading);
+        corridor = make_shared<Conflict>();
+        corridor->trainCorridorConflict(a[0], a[1], u[0], u[1], a0entrance, a1entrance, a0exit, a1exit, kDelay);
+        if (blocked(*(paths[corridor->a1]), corridor->constraint1) &&
+            blocked(*(paths[corridor->a2]), corridor->constraint2)) {
+            if (debug_mode)
+                cout << "is blocked" << endl;
+            return true;
+        }
+    }
+    if(trainCorridor1){
+
+
         if(debug_mode)
-        cout<<"train corridor"<<endl;
+            cout<<"try simplified version"<<endl;
 
-
-        int k = getCorridorLength(*paths[a[0]], t[0]-1, u[1], edge)+1;
+        int k = getCorridorLength(*paths[a[0]], t[0], u[1], edge);// funtion updated for start and end inside corridor.
 
         int t0 = t[0];
         int t1 = t[1];
-        int exit_t0 = t1 + k/al.agents[a[1]]->speed + kDelay;
-        int exit_t1 = t0 + k/al.agents[a[0]]->speed + kDelay;
-
+        int exit_t0 = t1 + k/al.agents[a[1]]->speed + 1/al.agents[a[0]]->speed + kDelay;
+        int exit_t1 = t0 + k/al.agents[a[0]]->speed + 1/al.agents[a[1]]->speed + kDelay;
+        if(t0 > exit_t0 || t1 > exit_t1)
+            return false;
         corridor = make_shared<Conflict>();
         corridor->trainCorridorConflict(a[0], a[1], u[0], u[1], t0, t1,exit_t0, exit_t1);
         if (blocked(*(paths[corridor->a1]), corridor->constraint1) &&
@@ -682,8 +718,9 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
         if (debug_mode) {
             cout << "not blocked" << endl;
         }
-        return false;
+
     }
+
 
 	return false;
 
@@ -1276,6 +1313,10 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
             {
                 num_corridor++;
             }
+            else if (curr->conflict->type == conflict_type::CORRIDOR2)
+            {
+                num_corridor2++;
+            }
             else if (curr->conflict->type == conflict_type::START)
             {
                 num_start++;
@@ -1821,7 +1862,7 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
 
 		parent.conflicts.push_back(con);
 	}
-    if (!corridor2)
+    if (!(corridor2||trainCorridor1))
         return;
     double corridorT = std::clock();
     bool found = false;
