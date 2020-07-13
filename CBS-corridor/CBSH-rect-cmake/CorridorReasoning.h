@@ -17,7 +17,7 @@ bool isConstrained(int curr_id, int next_id, int next_timestep, const std::vecto
 int getDegree(int loc, const bool*map, int num_col, int map_size);
 
 
-int getCorridorLength(const std::vector<PathEntry>& path, int t_start, int loc_end, std::pair<int, int>& edge);
+int getCorridorLength(const std::vector<PathEntry>& path, int t_start, int loc_end);
 
 
 bool validMove(int curr, int next, int map_cols, int map_size);

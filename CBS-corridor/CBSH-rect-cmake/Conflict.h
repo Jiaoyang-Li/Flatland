@@ -134,7 +134,6 @@ public:
 	{
 		this->a1 = a1;
 		this->a2 = a2;
-		this->k = k;
 		this->t = entrance1*1000+entrance2;
 		this->originalConf1 = u1;
 		this->originalConf2 = u2;
@@ -147,7 +146,6 @@ public:
     {
         this->a1 = a1;
         this->a2 = a2;
-        this->k = k;
         this->t = t1*1000+t2;
         this->originalConf1 = v1;
         this->originalConf2 = v2;

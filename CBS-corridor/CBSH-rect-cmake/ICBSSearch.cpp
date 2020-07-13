@@ -490,168 +490,141 @@ void ICBSSearch::findConflicts(ICBSNode& curr)
 template<class Map>
 bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corridor, const std::shared_ptr<Conflict>& con, ICBSNode* node)
 {
+    assert(kDelay > 0); // so that we do not need to consider edge conflicts
     if(debug_mode){
         cout<<"Check is corridor conflict"<<endl;
     }
 	CorridorReasoning<Map> cp;
 	int a[2] = {con->a1, con->a2};
-	int  loc1, loc2, timestep;
-	constraint_type type;
+	int loc = get<0>(con->constraint1.back());
 	int kConflict = con->k;
-	std::tie(loc1, loc2, timestep, type) = con->constraint1.back();
-	if (kDelay > 0)
-		timestep = con->t;
-    if(loc1 == search_engines[con->a1]->start_location || loc1 == search_engines[con->a2]->start_location){
-        return false;
-    }
+	int timestep = con->t;
 
-	int curr = -1;
-	if (ml->getDegree(loc1) == 2)
+	assert(ml->linearize_coordinate(al.agents[a[0]]->initial_location.first, al.agents[a[0]]->initial_location.second) != loc ||
+	    ml->linearize_coordinate(al.agents[a[1]]->initial_location.first, al.agents[a[1]]->initial_location.second) != loc);
+
+	if (ml->getDegree(loc) != 2)
 	{
-		curr = loc1;
-		if (loc2 >= 0)
-			timestep--;
-	}
-	else if (ml->getDegree(loc2) == 2)
-		curr = loc2;
-	if (curr <= 0) {
         if(debug_mode){
             cout<<"degree not 2"<<endl;
         }
         return false;
-    }
-
-	int t[2];
-	t[0] = cp.getEnteringTime(*paths[a[0]], *paths[a[1-0]], timestep, ml)+1; //+1 is the inside vertex of the corridor, no matter what speed
-	t[1] = cp.getEnteringTime(*paths[a[1]], *paths[a[1 - 1]], timestep+kConflict, ml)+1;
-
-	if (t[0] > t[1])
-	{
-		int temp = t[0]; t[0] = t[1]; t[1] = temp;
-		temp = a[0]; a[0] = a[1]; a[1] = temp;
 	}
+
+	int enter_time[2];
+    enter_time[0] = cp.getEnteringTime(*paths[a[0]], *paths[a[1 - 0]], timestep, ml);
+    enter_time[1] = cp.getEnteringTime(*paths[a[1]], *paths[a[1 - 1]], timestep + kConflict, ml);
+
+	//if (t[0] > t[1])
+	//{
+	//	int temp = t[0]; t[0] = t[1]; t[1] = temp;
+	//	temp = a[0]; a[0] = a[1]; a[1] = temp;
+	//}
 
 	bool chasing = false;
-	int u[2];//get entering location
+	int enter_loc[2];//get entering location
 
     for (int i = 0; i < 2; i++) {
-        if (t[i] >= paths[a[i]]->size())
-            return false;
-        u[i] = paths[a[i]]->at(t[i]).location;
+        assert(enter_time[i] < paths[a[i]]->size());
+        enter_loc[i] = paths[a[i]]->at(enter_time[i]).location;
     }
-	if (u[0] == u[1]) {
+	if (enter_loc[0] == enter_loc[1]) {
+	    if (enter_time[0] == enter_time[1])
+        {
+            if (debug_mode)
+                cout<<"enter corridor in the same direction at the same time"<<endl;
+            return false;
+        }
 		chasing = true;
 	}
-	if (!chasing) {
-		for (int i = 0; i < 2; i++)//check does one entering location lead to another's entering location
-		{
-			bool found = false;
-			for (int time = t[i]; time < paths[a[i]]->size() && !found; time++)
-			{
-				if (paths[a[i]]->at(time).location == u[1 - i])
-					found = true;
-			}
-			if (!found)
-				return false;
-		}
-	}
-
-
-	std::pair<int, int> edge; // one edge in the corridor
 
 	if (chasing && chasing_reasoning) {
 	    if (debug_mode)
 	        cout<<"chasing"<<endl;
 
         //get exit location
-        int e[2];
-        e[0] = cp.getExitTime(*paths[a[0]], *paths[a[1]], timestep, ml)-1; //-1 is the inner vertex of the corridor no matter what speed.
-        e[1] = cp.getExitTime(*paths[a[1]], *paths[a[0]], timestep+kConflict, ml)-1;
-        int el[2];
-        el[0] = paths[a[0]]->at(e[0]).location;
-        el[1] = paths[a[1]]->at(e[1]).location;
+        int exit_time[2];
+        exit_time[0] = cp.getExitTime(*paths[a[0]], *paths[a[1]], timestep, ml);
+        exit_time[1] = cp.getExitTime(*paths[a[1]], *paths[a[0]], timestep + kConflict, ml);
+
+        assert(paths[a[0]]->at(exit_time[0]).location == paths[a[1]]->at(exit_time[1]).location); // the two agents should have the same exit location
+        int exit_loc = paths[a[0]]->at(exit_time[0]).location;
+
+        //if ((exit_time[0] - exit_time[1]) * (enter_time[0] - enter_time[1]) > 0)
+        //{
+        //    if(debug_mode) {
+        //        cout << enter_time[0] << "," << enter_time[1] << "," << exit_time[0] << "," << exit_time[1] << endl;
+        //        cout << "not crossing" << endl;
+        //    }
+        //    return false;
+        //}
+
+        MDD<Map>* a0mdd = buildMDD(*node, a[0]);
+        MDD<Map>* a1mdd = buildMDD(*node, a[1]);
+
+        //get exit time for a1
+        int a0exit = a0mdd->getTime(exit_loc, (*paths[a[0]])[exit_time[0]].heading);
+
+        int a0entrance = a0mdd->getTime(enter_loc[0], (*paths[a[0]])[enter_time[0]].heading);
 
 
-        for(int i = -kDelay;i <= kDelay;i++){
-            if((e[0]+i==e[1] && t[0]+i==t[1]) ){
-                if(debug_mode)
-                    cout<<"same path"<<endl;
-                return false;
-            }
+        //get exit time for a2
+        int a1exit =  a1mdd->getTime(exit_loc, (*paths[a[1]])[exit_time[1]].heading);
 
-        }
-
-        if(el[0]==el[1]) {
-
-            MDD<Map>* a0mdd = buildMDD(*node, a[0]);
-            MDD<Map>* a1mdd = buildMDD(*node, a[1]);
-
-            //get exit time for a1
-            int a0exit = a0mdd->getTime(el[0],(*paths[a[0]])[e[0]].heading);
-
-            int a0entrance = a0mdd->getTime(u[0],(*paths[a[0]])[t[0]].heading);
-
-
-            //get exit time for a2
-            int a1exit =  a1mdd->getTime(el[1],(*paths[a[1]])[e[1]].heading);
-
-            int a1entrance = a1mdd->getTime(u[1],(*paths[a[1]])[t[1]].heading);
+        int a1entrance = a1mdd->getTime(enter_loc[1], (*paths[a[1]])[enter_time[1]].heading);
 //            if (a1entrance < 0 || a1exit<0) {
 //                a2mdd->print();
 //                cout<<(*paths[a[1]])[t[1]].heading<<endl;
 //            }
-            assert(a0exit>=0 && a1exit>=0 && a0entrance>=0 && a1entrance>=0);
-            if(!((a0exit <= a1exit && a0entrance >= a1entrance)||(a0exit >= a1exit && a0entrance <= a1entrance))){ //not crossing
-                return false;
-            }
-            int earlyExitAgent;
-            int early_exit;
-            int early_entrance;
-            int lateExitAgent;
-            int late_entrance;
-            int late_exit;
-            if (a0exit <= a1exit) {
-                earlyExitAgent = a[0];
-                lateExitAgent = a[1];
-                early_entrance = a1entrance;
-                late_entrance = a0entrance + 1/al.agents[a[0]]->speed;
-                early_exit = a0exit;
-                late_exit = a1exit + 1/al.agents[a[1]]->speed;
-            } else {
-                earlyExitAgent = a[1];
-                lateExitAgent = a[0];
-                early_entrance = a0entrance;
-                late_entrance = a1entrance + 1/al.agents[a[1]]->speed;
-                early_exit = a1exit;
-                late_exit = a0exit + 1/al.agents[a[0]]->speed;
+        assert(a0exit>=0 && a1exit>=0 && a0entrance>=0 && a1entrance>=0);
 
-            }
-            if(late_entrance>=early_entrance && late_exit>=early_exit){
-                corridor = std::make_shared<Conflict>(); // std::shared_ptr<Conflict>(new Conflict());
-                corridor->chasingConflict(earlyExitAgent, lateExitAgent, loc1, loc2,u[0], el[0],
-                        late_entrance,late_entrance,early_exit, late_exit, kDelay);
+        int earlyExitAgent;
+        int early_exit;
+        int early_entrance;
+        int lateExitAgent;
+        int late_entrance;
+        int late_exit;
+        if (a0exit <= a1exit) {
+            earlyExitAgent = a[0];
+            lateExitAgent = a[1];
+            early_entrance = a1entrance;
+            late_entrance = a0entrance + 1/al.agents[a[0]]->speed;
+            early_exit = a0exit;
+            late_exit = a1exit + 1/al.agents[a[1]]->speed;
+        } else {
+            earlyExitAgent = a[1];
+            lateExitAgent = a[0];
+            early_entrance = a0entrance;
+            late_entrance = a1entrance + 1/al.agents[a[1]]->speed;
+            early_exit = a1exit;
+            late_exit = a0exit + 1/al.agents[a[0]]->speed;
 
-                if (blocked(*(paths[corridor->a1]), corridor->constraint1) && blocked(*(paths[corridor->a2]), corridor->constraint2)) {
-                    if (debug_mode)
-                        cout<<"blocked"<<endl;
-                    return true;
-                }
-                else {
-                    if (debug_mode) {
-                        cout << "not blocked" << endl;
-                        cout<< "conflict time 0: "<<timestep <<" 1: "<<timestep+kConflict<<endl;
-                        cout << late_entrance << "," << early_entrance << "," << late_exit << "," << early_exit << endl;
-                    }
-                    return false;
-                }
+        }
+        if(late_entrance>=early_entrance && late_exit>=early_exit){
+            corridor = std::make_shared<Conflict>(); // std::shared_ptr<Conflict>(new Conflict());
+            corridor->chasingConflict(earlyExitAgent, lateExitAgent, loc, -1, enter_loc[0], exit_loc,
+                                      late_entrance, late_entrance, early_exit, late_exit, kDelay);
+
+            if (blocked(*(paths[corridor->a1]), corridor->constraint1) && blocked(*(paths[corridor->a2]), corridor->constraint2)) {
+                if (debug_mode)
+                    cout<<"blocked"<<endl;
+                return true;
             }
-            else{
-                if(debug_mode) {
+            else {
+                if (debug_mode) {
+                    cout << "not blocked" << endl;
+                    cout<< "conflict time 0: "<<timestep <<" 1: "<<timestep+kConflict<<endl;
                     cout << late_entrance << "," << early_entrance << "," << late_exit << "," << early_exit << endl;
-                    cout << "not crossing" << endl;
                 }
                 return false;
             }
+        }
+        else{
+            if(debug_mode) {
+                cout << late_entrance << "," << early_entrance << "," << late_exit << "," << early_exit << endl;
+                cout << "not crossing" << endl;
+            }
+            return false;
         }
 
 	}
@@ -665,26 +638,25 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
         MDD<Map> *a0mdd = buildMDD(*node, a[0]);
         MDD<Map> *a1mdd = buildMDD(*node, a[1]);
         //get exit location
-        int e[2];
-        e[0] = cp.getExitTime(*paths[a[0]], *paths[a[1]], t[0], ml) -
-               1; //-1 is the inner vertex of the corridor no matter what speed.
-        e[1] = cp.getExitTime(*paths[a[1]], *paths[a[0]], t[1], ml) - 1;
-        int el[2];
-        el[0] = paths[a[0]]->at(e[0]).location;
-        el[1] = paths[a[1]]->at(e[1]).location;
+        int exit_time[2];
+        exit_time[0] = cp.getExitTime(*paths[a[0]], *paths[a[1]], enter_time[0], ml);
+        exit_time[1] = cp.getExitTime(*paths[a[1]], *paths[a[0]], enter_time[1], ml);
+        int exit_loc[2];
+        exit_loc[0] = paths[a[0]]->at(exit_time[0]).location;
+        exit_loc[1] = paths[a[1]]->at(exit_time[1]).location;
+        assert(exit_loc[0] == enter_loc[1] && exit_loc[1] == enter_loc[0]);
         int speed_shift = 1 / al.agents[a[0]]->speed + 1 / al.agents[a[1]]->speed;
+
         //get exit time for a1
-        int a0exit = a0mdd->getTime(el[0], (*paths[a[0]])[e[0]].heading) + speed_shift;
-
-        int a0entrance = a0mdd->getTime(u[0], (*paths[a[0]])[t[0]].heading);
-
+        int a0exit = a0mdd->getTime(exit_loc[0], (*paths[a[0]])[exit_time[0]].heading) + speed_shift;
+        int a0entrance = a0mdd->getTime(enter_loc[0], (*paths[a[0]])[enter_time[0]].heading);
 
         //get exit time for a2
-        int a1exit = a1mdd->getTime(el[1], (*paths[a[1]])[e[1]].heading) + speed_shift;
+        int a1exit = a1mdd->getTime(exit_loc[1], (*paths[a[1]])[exit_time[1]].heading) + speed_shift;
+        int a1entrance = a1mdd->getTime(enter_loc[1], (*paths[a[1]])[enter_time[1]].heading);
 
-        int a1entrance = a1mdd->getTime(u[1], (*paths[a[1]])[t[1]].heading);
         corridor = make_shared<Conflict>();
-        corridor->trainCorridorConflict(a[0], a[1], u[0], u[1], a0entrance, a1entrance, a0exit, a1exit, kDelay);
+        corridor->trainCorridorConflict(a[0], a[1], enter_loc[0], enter_loc[1], a0entrance, a1entrance, a0exit, a1exit, kDelay);
         if (blocked(*(paths[corridor->a1]), corridor->constraint1) &&
             blocked(*(paths[corridor->a2]), corridor->constraint2)) {
             if (debug_mode)
@@ -698,16 +670,16 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
         if(debug_mode)
             cout<<"try simplified version"<<endl;
 
-        int k = getCorridorLength(*paths[a[0]], t[0], u[1], edge);// funtion updated for start and end inside corridor.
+        int k = getCorridorLength(*paths[a[0]], enter_time[0], enter_loc[1]);// funtion updated for start and end inside corridor.
 
-        int t0 = t[0];
-        int t1 = t[1];
-        int exit_t0 = t1 + k/al.agents[a[1]]->speed + 1/al.agents[a[0]]->speed + kDelay;
-        int exit_t1 = t0 + k/al.agents[a[0]]->speed + 1/al.agents[a[1]]->speed + kDelay;
+        int t0 = enter_time[0];
+        int t1 = enter_time[1];
+        int exit_t0 = t1 + (k - 1)/al.agents[a[1]]->speed + 1/al.agents[a[0]]->speed + kDelay;
+        int exit_t1 = t0 + (k - 1)/al.agents[a[0]]->speed + 1/al.agents[a[1]]->speed + kDelay;
         if(t0 > exit_t0 || t1 > exit_t1)
             return false;
         corridor = make_shared<Conflict>();
-        corridor->trainCorridorConflict(a[0], a[1], u[0], u[1], t0, t1,exit_t0, exit_t1);
+        corridor->trainCorridorConflict(a[0], a[1], enter_loc[0], enter_loc[1], t0, t1, exit_t1, exit_t0);
         if (blocked(*(paths[corridor->a1]), corridor->constraint1) &&
             blocked(*(paths[corridor->a2]), corridor->constraint2)) {
             if (debug_mode)
@@ -1851,8 +1823,7 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
         if(loc1 == a1start && loc1 == a2start){
             con->type = conflict_type::START;
         }
-
-		if(con->p == conflict_priority::CARDINAL){
+		else if(con->p == conflict_priority::CARDINAL){ // we don't need corridor reasoning for start conflicts
 		    parent.cardinal_wating.push_back(con);
 		}
 		else{

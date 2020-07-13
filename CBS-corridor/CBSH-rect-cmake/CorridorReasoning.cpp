@@ -35,54 +35,38 @@ int getDegree(int loc, const bool*map, int num_col, int map_size)
 }
 
 
-int getCorridorLength(const std::vector<PathEntry>& path, int t_start, int loc_end, std::pair<int, int>& edge)
+int getCorridorLength(const std::vector<PathEntry>& path, int t_start, int loc_end)
 {
-	int curr = path[t_start].location;
-	int next;
-	int prev = -1;
-	int length = 1; // distance to the start location
+	int prev = path[t_start].location;
+	int length = 0; // distance to the start location
 	int t = t_start;
-	bool moveForward = true;
-	bool updateEdge = false;
-	while (curr != loc_end)
+	while (prev != loc_end)
 	{
 		t++;
-		next = path[t].location;
-		if (next == curr) // wait
-			continue;
-		else if (next == prev) // turn aournd
-			moveForward = !moveForward;
-		if (moveForward)
-		{
-			if (!updateEdge)
-			{
-				edge = std::make_pair(curr, next);
-				updateEdge = true;
-			}
-			length++;
-		}
-		else
-			length--;
-		prev = curr;
-		curr = next;
+		int curr = path[t].location;
+		if (prev != curr) // move forward
+        {
+            length++;
+            prev = curr;
+        }
 	}
-	return length;
+    return length + 2; // +2 because the start and end locations are one cell inside the corridor
 }
 
 template<class Map>
 int CorridorReasoning<Map>::getEnteringTime(const std::vector<PathEntry>& path, const std::vector<PathEntry>& path2, int t,
 	Map* map)
 {
-	if (t >= path.size())
-		t = path.size() - 1;
+    assert(t < path.size());
 	int loc = path[t].location;
-	while (loc != path.front().location && loc != path2.front().location && loc != path.back().location && loc != path2.back().location &&
+	while (loc != path.front().location && loc != path2.front().location &&
+	    loc != path.back().location && loc != path2.back().location &&
 		map->getDegree(loc) == 2)
 	{
 		t--;
 		loc = path[t].location;
 	}
-	return t;
+	return t + 1;
 }
 
 
@@ -90,16 +74,16 @@ template<class Map>
 int CorridorReasoning<Map>::getExitTime(const std::vector<PathEntry>& path, const std::vector<PathEntry>& path2, int t,
 	Map* map)
 {
-	if (t >= path.size())
-		t = path.size() - 1;
+    assert(t < path.size());
 	int loc = path[t].location;
-	while (loc != path.front().location && loc != path2.front().location && loc != path.back().location && loc != path2.back().location &&
+	while (loc != path.front().location && loc != path2.front().location &&
+	    loc != path.back().location && loc != path2.back().location &&
 		map->getDegree(loc) == 2)
 	{
 		t++;
 		loc = path[t].location;
 	}
-	return t;
+	return t - 1;
 }
 
 //with heading info. not using
