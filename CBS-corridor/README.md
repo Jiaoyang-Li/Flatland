@@ -16,6 +16,7 @@ Then, in python codes:
 
 ```python
 from libPythonCBS import PythonCBS
+framework = "LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning
 f_w = 1
 debug = True
 timelimit = 240  # unit: seconds
@@ -30,7 +31,7 @@ agent_priority_strategy = 0  #  the strategy for sorting agents, choosing a numb
 #                               3: prefer max speed then min distance
 #                               4: prefer min speed then min distance
 #                               5: prefer different start locations then max speed then max distance
-CBS = PythonCBS(env, "CBSH", timelimit, default_group_size, debug, f_w,
+CBS = PythonCBS(env, framework, "CBSH", timelimit, default_group_size, debug, f_w,
                 corridor_method, chasing, accept_partial_solution, agent_priority_strategy)
 success = CBS.search()
 plan = CBS.getResult()
