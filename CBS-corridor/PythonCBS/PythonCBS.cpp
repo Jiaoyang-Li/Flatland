@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <sstream>
 #include <math.h>       /* log2 */
+#include <algorithm>    // std::random_shuffle
 namespace p = boost::python;
 
 
@@ -108,7 +109,23 @@ bool PythonCBS<Map>::search() {
 	al->constraintTable.init(ml->map_size());
     al->computeHeuristics(ml);
     if (framework == "LNS")
-        return LNS();
+    {
+        LNS lns(*al, *ml, f_w, s, agent_priority_strategy, options1, corridor2, trainCorridor1, chasing);
+        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        bool succ = lns.run(timeLimit - runtime);
+        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        HL_num_expanded = lns.HL_num_expanded;
+        HL_num_generated = lns.HL_num_generated;
+        LL_num_expanded = lns.LL_num_expanded;
+        LL_num_generated = lns.LL_num_generated;
+        num_standard = lns.num_standard;
+        num_chasing = lns.num_chasing;
+        num_start = lns.num_start;
+        num_corridor = lns.num_corridor;
+        num_corridor2 = lns.num_corridor2;
+        runtime_corridor = lns.runtime_corridor;
+        return succ;
+    }
     else
 	    return GroupPrioritizedPlaning();
 }
@@ -207,7 +224,7 @@ bool PythonCBS<Map>::PrioritizedPlaning()
         icbs.ignoreFinishedAgent = true;
         bool res = icbs.runICBSSearch();
         updateCBSResults(icbs);
-        if(!al->addPaths(icbs.paths, kRobust))
+        if(!al->addPaths(icbs.paths))
         {
             cout << "The solution so far has conflicts!" << endl;
             hasConflicts(al->paths_all); // to print the conflict
@@ -296,7 +313,7 @@ bool PythonCBS<Map>::GroupPrioritizedPlaning()
             if (options1.debug)
                 cout << "Decreasing the group size to " << groupSize << endl;
         }
-        if(!al->addPaths(icbs.paths, kRobust))
+        if(!al->addPaths(icbs.paths))
         {
             cout << "The solution so far has conflicts!" << endl;
             hasConflicts(al->paths_all); // to print the conflict
@@ -467,7 +484,7 @@ p::list PythonCBS<Map>::benchmarkSingleGroupLNS(int group_size,int iterations, i
         while (neighbors.size() < groupSize - 1 && count < 10 && T > 0)
         {
             int t = ((iterations/num_iterations)*T) % T;
-            generateNeighbor(a, al->paths_all[a][t], t, neighbors, groupSize - 1, (int)al->paths_all[a].size() - 1);
+            generateNeighbor(a, al->paths_all[a][t], t, neighbors, groupSize - 1, (int) al->paths_all[a].size() - 1);
             T = t;
             count++;
         }
@@ -557,165 +574,7 @@ p::list PythonCBS<Map>::benchmarkSingleGroupLNS(int group_size,int iterations, i
 }
 
 template <class Map>
-bool PythonCBS<Map>::LNS()
-{
-    int screen;
-    if (options1.debug) {
-        screen = 3;
-    }
-    else {
-        screen = 0;
-    }
-    if (!PrioritizedPlaning()) // get initial solution
-        return false;
-
-    size_t solution_cost = 0;
-    int finished_agents = 0;
-    size_t makespan = 0;
-    for (const auto& path : al->paths_all)
-    {
-        solution_cost += path.size();
-        makespan = max(path.size(), makespan);
-        if (!path.empty())
-            finished_agents++;
-    }
-    runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
-    cout << "Solution cost = " << solution_cost << ", "
-         << "makespan = " << makespan << ", "
-         << "remaining time = " << timeLimit - runtime << endl;
-
-    boost::unordered_set<int> tabu_list;
-    int groupSize = defaultGroupSize;
-    while (runtime < timeLimit && groupSize <= (int)al->paths_all.size())
-    {
-        if (tabu_list.size() >= al->paths_all.size() / 2)
-            tabu_list.clear();
-        // find the bottleneck agent
-        int a = -1;
-        for (int i = 0; i < al->paths_all.size(); i++)
-        {
-            if (tabu_list.find(i) != tabu_list.end())
-                continue;
-            if (a < 0 || al->paths_all[a].size() < al->paths_all[i].size())
-            {
-                a = i;
-            }
-        }
-        tabu_list.insert(a);
-        al->constraintTable.delete_path(a, al->paths_all[a]);
-        set<int> neighbors;
-        int T = al->paths_all[a].size();
-        int count = 0;
-        while (neighbors.size() < groupSize - 1 && count < 10 && T > 0)
-        {
-            int t = rand() % T;
-            generateNeighbor(a, al->paths_all[a][t], t, neighbors, groupSize - 1, (int)al->paths_all[a].size() - 1);
-            T = t;
-            count++;
-        }
-        if (neighbors.empty())
-        {
-            al->constraintTable.insert_path(a, al->paths_all[a]);
-            continue;
-        }
-        while (neighbors.size() < groupSize - 1)
-        {
-            int new_agent = rand() % al->paths_all.size();
-            neighbors.insert(new_agent);
-        }
-        al->num_of_agents = (int)neighbors.size() + 1;
-        al->agents.clear();
-        al->agents.push_back(&al->agents_all[a]);
-        cout << "Agents ids: " << a;
-        int old_sum_of_costs = (int)al->paths_all[a].size() - 1;
-        int old_makespan = (int)al->paths_all[a].size() - 1;
-        for (auto i : neighbors)
-        {
-            old_sum_of_costs += (int)al->paths_all[i].size() - 1;
-            old_makespan = max(old_makespan, (int)al->paths_all[i].size() - 1);
-            al->constraintTable.delete_path(i, al->paths_all[i]);
-            al->agents.push_back(&al->agents_all[i]);
-            cout << "," << i;
-        }
-        cout << endl;
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
-        if (runtime >= timeLimit)
-            break;
-        double time_limit = min(timeLimit - runtime, 10.0);
-        MultiMapICBSSearch <Map> icbs(ml, al, f_w, s, time_limit * CLOCKS_PER_SEC, screen, options1);
-        icbs.trainCorridor1 = trainCorridor1;
-        icbs.corridor2 = corridor2;
-        icbs.ignoreFinishedAgent = true;
-        icbs.chasing_reasoning = chasing;
-        if (options1.debug)
-            cout << "start search engine" << endl;
-        bool res = icbs.runICBSSearch();
-        updateCBSResults(icbs);
-        assert(!res || icbs.solution_cost <= old_sum_of_costs);
-        if (res && icbs.solution_cost <= old_sum_of_costs)
-        {
-            assert(icbs.paths[0]->back().location == al->paths_all[a].back().location);
-            if(!al->constraintTable.insert_path(a, *icbs.paths[0]))
-                exit(10);
-            //cout << a << ": " << al->paths_all[a].size() - 1 << "->" << icbs.paths[0]->size() - 1 << endl;
-            al->paths_all[a] = *icbs.paths[0];
-            int i = 1;
-            for (auto n : neighbors)
-            {
-                assert(icbs.paths[i]->back().location == al->paths_all[n].back().location);
-                if(!al->constraintTable.insert_path(n, *icbs.paths[i]))
-                    exit(10);
-                //cout << n << ": " << al->paths_all[n].size() - 1 << "->" << icbs.paths[i]->size() - 1 << endl;
-                al->paths_all[n] = *icbs.paths[i];
-                i++;
-            }
-            groupSize++;
-        }
-        else
-        {
-            if(!al->constraintTable.insert_path(a, al->paths_all[a]))
-                exit(11);
-            for (auto i : neighbors)
-            {
-                if(!al->constraintTable.insert_path(i, al->paths_all[i]))
-                    exit(13);
-            }
-            if (groupSize > 2)
-                groupSize--;
-        }
-        size_t solution_cost = 0;
-        int finished_agents = 0;
-        size_t makespan = 0;
-        for (const auto& path : al->paths_all)
-        {
-            solution_cost += path.size();
-            makespan = max(path.size(), makespan);
-            if (!path.empty())
-                finished_agents++;
-        }
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
-        cout << "Solution cost = " << solution_cost << ", "
-             << "makespan = " << makespan  << ", "
-             << "remaining time = " << timeLimit - runtime << endl;
-
-        int old_runtime = 0;
-        if (!iteration_stats.empty())
-            old_runtime = get<2>(iteration_stats.back());
-        iteration_stats.emplace_back(al->num_of_agents, time_limit,
-                                     runtime, runtime - old_runtime,
-                                     makespan,
-                                     solution_cost,
-                                     0,
-                                     al->num_of_agents,
-                                     al->agents_all.size() - finished_agents,
-                                     icbs.HL_num_expanded,
-                                     icbs.LL_num_expanded);
-    }
-    return true;
-}
-
-template <class Map>
-void PythonCBS<Map>::generateNeighbor(int agent_id, const PathEntry& start, int start_time,  set<int>& conflicting_agents, int neighbor_size, int upperbound)
+void PythonCBS<Map>::generateNeighbor(int agent_id, const PathEntry& start, int start_time, set<int>& conflicting_agents, int neighbor_size, int upperbound)
 {
     // a random walk with path that is shorter than upperbound and has conflicting with neighbor_size agents
     int speed = al->agents_all[agent_id].speed;

@@ -110,25 +110,72 @@ We use Large Neighbourhood Search (LNS) as the framwork.
 A = [a1, a2, ...];  // unplanned agents
 A = sort(A);  // sort the agents by some heuristics (e.g., speed, distance to the goal location)
 P = PrioritizedPlanning(A); // get initial paths by PP
-m = M; // M is the default number of agents in one neighbourhood search
-tabu_list = {};
 while(not timeout and m <= num_of_agents) {
-    a = the agent with max makespan in A but not in tabu_list;
-    update tabu_list;
-    conflicting_agents = randomWalk(a, m - 1); // let agent a perform a random walk (starting from a random timestep on its path) until it conflicts with m - 1 agents
-    A' = {a} + conflicting_agents;
-    remove paths of A' from P;
-    T = min(remaining_runtime, 10s);
-    paths = CBS(A', T, P);  // try to find collision-free paths for agents in a that do not collide with any path in P by CBS with a time limit of T 
-    if(paths are found) {
+    A' = a subset of agents in A;
+    old_paths = paths of A' in P;
+    remove old_paths from P;
+    paths = replan paths for agents in A' by viewing paths in P as dynamic obstabcles;
+    if (paths are better than old_paths)
         add paths to P;
-        m += 1;
-    } else {
-        add the original paths of A' to P;
-        m -= 1;
-    }
+    else
+        add old_paths to P;
 }
 ```
+
+### Different stratefies for the neighborhood search
+
+#### Strategy 1: random walk
+We select a bottleneck agent and let it perform a random walk on "improving moves" until it conflicts with m-1 agents.
+Together with the bottle neck agent, we replan the paths of the m agents by CBS.
+```c++
+a = the agent with max cost increment in A but not in tabu_list;
+update tabu_list;
+conflicting_agents = randomWalk(a, m - 1); // let agent a perform a random walk (starting from a random timestep on its path) until it conflicts with m - 1 agents
+A' = {a} + conflicting_agents;
+old_paths = paths of A' in P;
+remove old_paths from P;
+T = min(remaining_runtime, 10s);
+paths = CBS(A', T, P);  // try to find collision-free paths for agents in a that do not collide with any path in P by CBS with a time limit of T 
+if(paths are found) {
+    add paths to P;
+    m += 1;
+} else {
+    add old_paths to P;
+    m -= 1;
+}
+```
+
+#### Strategy 2: start location
+We randomly select a start location and collect the agents who start from there.
+We sort the agents in decreasing order of their cost increments (breaking ties randomly) and replan their paths by prioritized planning.
+ ```c++
+x = a random start location;
+A' = agents who start at location x;
+A' = sort(A'); // sort the agents in decreasing order of their cost increments
+old_paths = paths of A' in P;
+remove old_paths from P;
+paths = PrioritizedPlanning(A); // get initial paths by PP
+if (paths are better than old_paths)
+    add paths to P;
+else
+    add old_paths to P;
+ ```
+
+#### Strategy 3: intersection
+We randomly select an intersection and collect the agents who has visited there.
+We sort the agents randomly and replan their paths by prioritized planning.
+ ```c++
+x = a random inersection location;
+A' = agents who has visited x;
+A' = random_shuffle(A');
+old_paths = paths of A' in P;
+remove old_paths from P;
+paths = PrioritizedPlanning(A); // get initial paths by PP
+if (paths are better than old_paths)
+    add paths to P;
+else
+    add old_paths to P;
+ ```
 
 ## CBS
 For the CBS solver, we have the following major changes:

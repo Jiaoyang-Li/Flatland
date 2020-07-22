@@ -3,9 +3,7 @@
 #include <vector>
 #include <boost/python.hpp>
 #include "flat_map_loader.h"
-
-
-#include "ICBSSearch.h"
+#include "LNS.h"
 
 
 namespace p = boost::python;
@@ -97,8 +95,6 @@ private:
     int num_start = 0;
     int num_chasing = 0;
 
-    ConstraintTable constraintTable;
-
     //stats about each iteration
     typedef tuple<int, double, double, double, int,
                     int, int, int, int, int, int> IterationStats;
@@ -106,7 +102,6 @@ private:
 
     bool PrioritizedPlaning();
     bool GroupPrioritizedPlaning();
-    bool LNS();
 
     void generateNeighbor(int agent_id, const PathEntry& start, int start_time,
             set<int>& neighbor, int neighbor_size, int upperbound);

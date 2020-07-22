@@ -39,6 +39,7 @@ class MapLoader
   void printMap (char* mapChar);
   char* mapToChar();
   bool* get_map () const; // return a deep-copy of my_map
+  inline int linearize_coordinate(const pair<int,int>& cell) const { return ( this->cols * cell.first + cell.second); }
   inline int linearize_coordinate(int row, int col) const { return ( this->cols * row + col); }
   inline int row_coordinate(int id) const { return id / this->cols; }
   inline int col_coordinate(int id) const { return id % this->cols; }

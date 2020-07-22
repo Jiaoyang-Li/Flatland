@@ -117,8 +117,6 @@ int ICBSSearch::computeHeuristics(const ICBSNode& curr)
 			    cout << "(" << conflict->a1 << "," << conflict->a2 << "),";
 		}
 	}
-    if (debug_mode)
-        cout << endl;
 
 	if (num_of_CGedges < 2)
 		return num_of_CGedges;
@@ -136,19 +134,25 @@ int ICBSSearch::computeHeuristics(const ICBSNode& curr)
 		}
 	}
 
-
+    int h;
 	// Minimum Vertex Cover
 	if (curr.parent == nullptr || // root node of CBS tree or
         num_of_CGedges > MAX_K_VERTEX_COVER_EDGES) // too many edges for k vertex cover method
 	{
-		return minimumVertexCover(CG);
+		h = minimumVertexCover(CG);
 	}
-	if (KVertexCover(CG, num_of_CGnodes, num_of_CGedges, curr.parent->h_val - 1))
-		return curr.parent->h_val - 1;
-	else if (KVertexCover(CG, num_of_CGnodes, num_of_CGedges, curr.parent->h_val))
-		return curr.parent->h_val;
-	else
-		return curr.parent->h_val + 1;
+    else
+    {
+        if (KVertexCover(CG, num_of_CGnodes, num_of_CGedges, curr.parent->h_val - 1))
+            h = curr.parent->h_val - 1;
+        else if (KVertexCover(CG, num_of_CGnodes, num_of_CGedges, curr.parent->h_val))
+            h = curr.parent->h_val;
+        else
+            h = curr.parent->h_val + 1;
+    }
+    if (debug_mode)
+        cout << "-> h = " << h << endl;
+    return h;
 }
 
 // Find disjoint components and apply k vertex cover or greedy matching on each component
@@ -498,8 +502,8 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
 	int kConflict = con->k;
 	int timestep = con->t;
 
-	assert(ml->linearize_coordinate(al.agents[a[0]]->initial_location.first, al.agents[a[0]]->initial_location.second) != loc ||
-	    ml->linearize_coordinate(al.agents[a[1]]->initial_location.first, al.agents[a[1]]->initial_location.second) != loc);
+	assert(ml->linearize_coordinate(al.agents[a[0]]->initial_location) != loc ||
+	    ml->linearize_coordinate(al.agents[a[1]]->initial_location) != loc);
 
 	if (ml->getDegree(loc) != 2)
 	{
@@ -509,13 +513,12 @@ bool MultiMapICBSSearch<Map>::isCorridorConflict(std::shared_ptr<Conflict>& corr
         return false;
 	}
 
-	if (paths[a[0]]->at(timestep).heading == paths[a[1]]->at(timestep).heading) //chasing
+	if (paths[a[0]]->at(timestep).heading == paths[a[1]]->at(timestep + kConflict).heading) //chasing
 	{
 	    if (!chasing_reasoning)
 	        return false;
         int enter_time[2];
-        enter_time[0] = cp.getEnteringTimeForChasing(*paths[a[0]], *paths[a[1]], timestep, ml);
-        enter_time[1] = cp.getEnteringTimeForChasing(*paths[a[1]], *paths[a[0]], timestep + kConflict, ml);
+        cp.getEnteringTimeForChasing(enter_time, *paths[a[0]], *paths[a[1]], timestep, timestep + kConflict, ml);
         if (enter_time[0] == enter_time[1])
         {
             if (debug_mode)
@@ -964,6 +967,7 @@ void ICBSSearch::printHLTree()
 // adding new nodes to FOCAL (those with min-f-val*f_weight between the old and new LB)
 void ICBSSearch::updateFocalList()
 {
+    assert(!open_list.empty());
     ICBSNode* open_head = open_list.top();
     assert(make_tuple(open_head->num_of_dead_agents, open_head->makespan, open_head->f_val) >= min_f_val);
     if (make_tuple(open_head->num_of_dead_agents, open_head->makespan, open_head->f_val) == min_f_val)
@@ -974,12 +978,12 @@ void ICBSSearch::updateFocalList()
             (int)(open_head->f_val * focal_w));
     focal_list.clear();
 	for (ICBSNode* n : open_list) {
-        if (n->num_of_dead_agents == get<0>(focal_list_threshold) &&
+        if (n->num_of_dead_agents <= get<0>(focal_list_threshold) &&
             n->makespan <= get<1>(focal_list_threshold) &&
             n->f_val <= get<2>(focal_list_threshold))
 			n->focal_handle = focal_list.push(n);
 	}
-
+    assert(!focal_list.empty());
 }
 
 void ICBSSearch::updateReservationTable(bool* res_table, int exclude_agent, const ICBSNode &node) {
@@ -1112,6 +1116,9 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 				t1 = std::clock();
 				curr->open_handle = open_list.push(curr);
 				runtime_listoperation += std::clock() - t1;
+                if(debug_mode){
+                    cout << "Reinsert Node #" << curr->time_generated << endl;
+                }
 				continue;
 			}
 

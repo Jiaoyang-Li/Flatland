@@ -79,7 +79,7 @@ public:
 	bool ignore_t0=false;
 	bool shortBarrier = false;
 	std::clock_t start;
-	bool ignoreFinishedAgent = false;
+	bool ignoreFinishedAgent = true;
 	int max_malfunction = 5;
 
     vector<vector<PathEntry>*> paths;

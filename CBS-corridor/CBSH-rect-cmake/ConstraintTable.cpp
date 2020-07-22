@@ -33,6 +33,18 @@ bool ConstraintTable::is_constrained(int loc, int timestep, int kRobust) const
 	return false;
 }
 
+void ConstraintTable::get_agents(set<int>& conflicting_agents, int loc) const
+{
+    if (loc < 0)
+        return;
+
+    for (auto agent : CT_paths[loc])
+    {
+        if (agent >= 0)
+            conflicting_agents.insert(agent);
+    }
+}
+
 void ConstraintTable::get_conflicting_agents(set<int>& conflicting_agents, int loc, int timestep, int kRobust) const
 {
     if (loc < 0 || CT_paths[loc].empty())
