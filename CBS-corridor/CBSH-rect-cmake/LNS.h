@@ -17,14 +17,23 @@ public:
     int num_start = 0;
     int num_chasing = 0;
 
+    //stats about each iteration
+    typedef tuple<int, double, double, double, int,
+            int, int, int, int, int, int> IterationStats;
+    list<IterationStats> iteration_stats;
+
     LNS(AgentsLoader& al, FlatlandLoader& ml, double f_w, const constraint_strategy c,
         int agent_priority_strategy,
         const options& options1,
         bool corridor2,
         bool trainCorridor1,
-        bool chasing):
+        bool chasing, int neighbor_generation_strategy,
+        int prirority_ordering_strategy, int replan_strategy):
         al(al), ml(ml), f_w(f_w), c(c), agent_priority_strategy(agent_priority_strategy), options1(options1),
-        corridor2(corridor2), trainCorridor1(trainCorridor1), chasing(chasing) {}
+        corridor2(corridor2), trainCorridor1(trainCorridor1), chasing(chasing),
+        neighbor_generation_strategy(neighbor_generation_strategy),
+        prirority_ordering_strategy(prirority_ordering_strategy),
+        replan_strategy(replan_strategy) {}
     bool run(double time_limit);
 
 private:
@@ -58,10 +67,6 @@ private:
     int prirority_ordering_strategy = 0; // 0: random; 1: max regret
     int replan_strategy = 0; // 0: CBS; 1: prioritized planning
 
-    //stats about each iteration
-    typedef tuple<int, double, double, double, int,
-            int, int, int, int, int, int> IterationStats;
-    list<IterationStats> iteration_stats;
 
     bool getInitialSolution();
 
@@ -69,8 +74,8 @@ private:
     bool replanByCBS();
 
     void generateNeighborByRandomWalk(boost::unordered_set<int>& tabu_list);
-    void generateNeighborByStart();
-    void generateNeighborByIntersection();
+    bool generateNeighborByStart();
+    bool generateNeighborByIntersection();
 
     void sortNeighborsRandomly();
     void sortNeighborsByRegrets();

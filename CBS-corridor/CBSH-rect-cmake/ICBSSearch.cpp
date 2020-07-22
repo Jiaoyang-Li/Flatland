@@ -1008,6 +1008,8 @@ void ICBSSearch::updateReservationTable(bool* res_table, int exclude_agent, cons
 
 void ICBSSearch::printStrategy() const
 {
+    if (num_of_agents == 1)
+        return;
 	switch (cons_strategy)
 	{
 	case constraint_strategy::CBS:
@@ -1140,12 +1142,13 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 			if (screen >= 2)
 				printPaths();
 			assert(solution_cost >= dummy_start->g_val);
-			cout << solution_cost << " (" << goal_node->num_of_dead_agents << ") ; " << goal_node->makespan << " ; " <<
-			    solution_cost - dummy_start->g_val << " ; " <<
-				HL_num_expanded << " ; " << HL_num_generated << " ; " <<
-				LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime / CLOCKS_PER_SEC << ";"<<
-				num_standard << ";" << num_start << "," <<
-				num_corridor2 << ";" << num_chasing << "," << num_corridor << endl;
+            if (num_of_agents > 1)
+			    cout << solution_cost << " (" << goal_node->num_of_dead_agents << ") ; " << goal_node->makespan << " ; " <<
+			        solution_cost - dummy_start->g_val << " ; " <<
+				    HL_num_expanded << " ; " << HL_num_generated << " ; " <<
+				    LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime / CLOCKS_PER_SEC << ";"<<
+				    num_standard << ";" << num_start << "," <<
+				    num_corridor2 << ";" << num_chasing << "," << num_corridor << endl;
 			
 			break;
 		}
@@ -1348,7 +1351,8 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
         runtime = (std::clock() - start);
 	    if (runtime > time_limit)
         {
-            cout << "TIMEOUT  ; ";
+            if (num_of_agents > 1)
+                cout << "TIMEOUT  ; ";
             solution_cost = -1;
             timeout = true;
         }
@@ -1359,10 +1363,11 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
             timeout = false;
         }
         updateFocalList();
-        cout << solution_cost << " (" << get<0>(min_f_val) << ") ; " << get<1>(min_f_val) << " ; " << get<2>(min_f_val) - dummy_start->g_val << " ; " <<
-             HL_num_expanded << " ; " << HL_num_generated << " ; " <<
-             LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime / CLOCKS_PER_SEC << " ; "
-             << num_standard << ";" << num_start << "," <<
+        if (num_of_agents > 1)
+            cout << solution_cost << " (" << get<0>(min_f_val) << ") ; " << get<1>(min_f_val) << " ; " << get<2>(min_f_val) - dummy_start->g_val << " ; " <<
+                HL_num_expanded << " ; " << HL_num_generated << " ; " <<
+                LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime / CLOCKS_PER_SEC << " ; "
+                << num_standard << ";" << num_start << "," <<
                      num_corridor2 << ";" << num_chasing << "," << num_corridor << endl;
         if(debug_mode)
             printHLTree();

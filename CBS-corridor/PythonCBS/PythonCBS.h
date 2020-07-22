@@ -13,7 +13,8 @@ class PythonCBS {
 public:
 	PythonCBS(p::object railEnv1, string framework, std::string algo, int t,
               int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
-              int agent_priority_strategy);
+              int agent_priority_strategy, int neighbor_generation_strategy,
+              int prirority_ordering_strategy, int replan_strategy);
 
 	p::list getResult();
 
@@ -26,7 +27,7 @@ public:
 	void updateFw(float fw);
     p::list benchmarkSingleGroup(int group_size,int iterations, int time_limit);
     p::list benchmarkSingleGroupLNS(int group_size,int iterations, int time_limit);
-
+    bool findConflicts() const;
 
     void writeResultsToFile(const string& fileName) const
     {
@@ -80,6 +81,9 @@ private:
 	bool trainCorridor1 = false;
 	bool trainCorridor2 = false;
 	bool chasing = false;
+    int neighbor_generation_strategy;
+    int prirority_ordering_strategy;
+    int replan_strategy;
 
 	//stats about CBS
     std::clock_t start_time;

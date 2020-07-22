@@ -31,8 +31,12 @@ agent_priority_strategy = 0  #  the strategy for sorting agents, choosing a numb
 #                               3: prefer max speed then min distance
 #                               4: prefer min speed then min distance
 #                               5: prefer different start locations then max speed then max distance
+neighbor_generation_strategy = 2    # 0: random walk; 1: start; 2: intersection;
+prirority_ordering_strategy = 0     # 0: random; 1: max regret;
+replan_strategy = 1                 # 0: CBS; 1: prioritized planning;
 CBS = PythonCBS(env, framework, "CBSH", timelimit, default_group_size, debug, f_w,
-                corridor_method, chasing, accept_partial_solution, agent_priority_strategy)
+                corridor_method, chasing, accept_partial_solution, agent_priority_strategy,
+                neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
 success = CBS.search()
 plan = CBS.getResult()
 ```

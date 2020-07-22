@@ -17,24 +17,38 @@ bool LNS::run(double _time_limit)
         makespan = max(path.size() - 1, makespan);
     }
     runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
-    cout << "Solution cost = " << solution_cost << ", "
+    cout << "Initial solution cost = " << solution_cost << ", "
          << "makespan = " << makespan << ", "
          << "remaining time = " << time_limit - runtime << endl;
-
+    iteration_stats.emplace_back(al.agents_all.size(), 0,
+                                 runtime, runtime,
+                                 makespan,
+                                 solution_cost,
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 0);
     boost::unordered_set<int> tabu_list;
     bool succ;
-    while (runtime < time_limit)
+    int old_runtime = runtime;
+    while (runtime < time_limit && iteration_stats.size() < 10000)
     {
+        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
         switch (neighbor_generation_strategy)
         {
             case 0:
                 generateNeighborByRandomWalk(tabu_list);
                 break;
             case 1:
-                generateNeighborByStart();
+                succ = generateNeighborByStart();
+                if(!succ) // no two agents have the same start locations
+                    return true;
                 break;
             case 2:
-                generateNeighborByIntersection();
+                succ = generateNeighborByIntersection();
+                if(!succ) // the selected intersection has fewer than 2 agents
+                    continue;
                 break;
             default:
                 cout << "Wrong neighbor generation strategy" << endl;
@@ -77,9 +91,19 @@ bool LNS::run(double _time_limit)
 
         runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
         solution_cost += delta_costs;
-        cout << "Solution cost = " << solution_cost << ", "
+        cout << "Iteration " << iteration_stats.size() << ", "
+             << "solution cost = " << solution_cost << ", "
              << "remaining time = " << time_limit - runtime << endl;
-
+        iteration_stats.emplace_back(neighbors.size(), 0,
+                                     runtime, runtime - old_runtime,
+                                     makespan,
+                                     solution_cost,
+                                     0,
+                                     0,
+                                     0,
+                                     0,
+                                     0);
+        old_runtime = runtime;
         if (replan_strategy == 0 && group_size > al.agents_all.size())
             return true; // CBS has replanned paths for all agents. No need for further iterations
     }
@@ -126,17 +150,26 @@ bool LNS::getInitialSolution()
     return true;
 }
 
-void LNS::generateNeighborByStart()
+bool LNS::generateNeighborByStart()
 {
     if (start_locations.empty())
     {
-        for (int i = 0; i < al.num_of_agents; i++)
+        for (int i = 0; i < (int)al.agents_all.size(); i++)
         {
             auto start = ml.linearize_coordinate(al.agents_all[i].initial_location);
             start_locations[start].push_back(i);
         }
+        auto it = start_locations.begin();
+        while(it != start_locations.end()) // delete start locations that have only one agent
+        {
+            if (it->second.size() == 1)
+                it = start_locations.erase(it);
+            else
+                ++it;
+        }
     }
-
+    if (start_locations.empty())
+        return false;
     auto step = rand() % start_locations.size();
     auto it = start_locations.begin();
     advance(it, step);
@@ -147,9 +180,10 @@ void LNS::generateNeighborByStart()
         neighbors.resize(group_size);
     }
     cout << "Generate " << neighbors.size() << " neighbors by start location " << it->first << endl;
+    return true;
 }
 
-void LNS::generateNeighborByIntersection()
+bool LNS::generateNeighborByIntersection()
 {
     if (intersections.empty())
     {
@@ -159,9 +193,12 @@ void LNS::generateNeighborByIntersection()
                 intersections.push_back(i);
         }
     }
-    int location = intersections[rand() % intersections.size()];
+
     set<int> neighbors_set;
+    int location = intersections[rand() % intersections.size()];
     al.constraintTable.get_agents(neighbors_set, location);
+    if (neighbors_set.size() <= 1)
+        return false;
     neighbors.assign(neighbors_set.begin(), neighbors_set.end());
     if (replan_strategy == 0 && neighbors.size() > group_size) // resize the group for CBS
     {
@@ -169,6 +206,7 @@ void LNS::generateNeighborByIntersection()
         neighbors.resize(group_size);
     }
     cout << "Generate " << neighbors.size() << " neighbors by intersection " << location << endl;
+    return true;
 }
 
 void LNS::generateNeighborByRandomWalk(boost::unordered_set<int>& tabu_list)
@@ -228,7 +266,6 @@ void LNS::replanByPP()
     al.agents.resize(1);
     list<Path> new_paths;
     int sum_of_costs = 0;
-    int makespan = 0;
 
     for (auto agent : neighbors)
     {
@@ -249,9 +286,10 @@ void LNS::replanByPP()
         updateCBSResults(icbs);
         assert(icbs.paths[0]->back().location == al.paths_all[agent].back().location);
         addAgentPath(agent, *icbs.paths[0]);
+        sum_of_costs += (int)icbs.paths[0]->size() - 1;
     }
 
-    if (sum_of_costs < neighbor_sum_of_costs)
+    if (sum_of_costs > neighbor_sum_of_costs)
     { // change back to the original paths
         deleteNeighborPaths();
         auto path = neighbor_paths.begin();
@@ -362,7 +400,7 @@ void LNS::sortNeighborsRandomly()
     std::random_shuffle(neighbors.begin(), neighbors.end());
     for (auto agent : neighbors)
     {
-        cout << agent << "(" << al.paths_all[agent].size() << "), ";
+        cout << agent << "(" << al.agents_all[agent].distance_to_goal << "->" << al.paths_all[agent].size() - 1<< "), ";
     }
     cout << endl;
 }
@@ -372,7 +410,7 @@ void LNS::sortNeighborsByRegrets()
     quickSort(neighbors, 0, neighbors.size() - 1, true);
     for (auto agent : neighbors)
     {
-        cout << agent << "(" << al.paths_all[agent].size() << "), ";
+        cout << agent << "(" << al.agents_all[agent].distance_to_goal << "->" << al.paths_all[agent].size() - 1<< "), ";
     }
     cout << endl;
 }

@@ -13,12 +13,16 @@ namespace p = boost::python;
 template <class Map>
 PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, string algo, int t,
                           int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
-                          int agent_priority_strategy) :
+                          int agent_priority_strategy, int neighbor_generation_strategy,
+                          int prirority_ordering_strategy, int replan_strategy) :
                           railEnv(railEnv1), framework(framework), algo(algo), timeLimit(t),
                           f_w(f_w), defaultGroupSize(default_group_size),
                           chasing(chasing),
                           accept_partial_solution(accept_partial_solution),
-                          agent_priority_strategy(agent_priority_strategy) {
+                          agent_priority_strategy(agent_priority_strategy),
+                          neighbor_generation_strategy(neighbor_generation_strategy),
+                          prirority_ordering_strategy(prirority_ordering_strategy),
+                          replan_strategy(replan_strategy) {
 	//Initialize PythonCBS. Load map and agent info into memory
 	std::cout << "framework: " << framework << "    algo: " << algo << "(" << f_w << ")" << std::endl;
 	options1.debug = debug;
@@ -108,7 +112,8 @@ bool PythonCBS<Map>::search() {
     al->computeHeuristics(ml);
     if (framework == "LNS")
     {
-        LNS lns(*al, *ml, f_w, s, agent_priority_strategy, options1, corridor2, trainCorridor1, chasing);
+        LNS lns(*al, *ml, f_w, s, agent_priority_strategy, options1, corridor2, trainCorridor1, chasing,
+                neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
         runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
         bool succ = lns.run(timeLimit - runtime);
         runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
@@ -122,11 +127,38 @@ bool PythonCBS<Map>::search() {
         num_corridor = lns.num_corridor;
         num_corridor2 = lns.num_corridor2;
         runtime_corridor = lns.runtime_corridor;
+        iteration_stats = lns.iteration_stats;
         return succ;
     }
     else
 	    return GroupPrioritizedPlaning();
 }
+
+
+template <class Map>
+bool PythonCBS<Map>::findConflicts() const
+{
+    assert(kRobust > 0); // TODO: consider kDelay==0 in the future (in which case, we also need to consider edge conflicts)
+    for (int i = 0; i < (int)al->agents_all.size() - 1; i++)
+    {
+        for (int j = i + 1; j < (int)al->agents_all.size(); j++)
+        {
+            for (int t = 0; t < (int)al->paths_all[i].size(); t++)
+            {
+                int loc = al->paths_all[i][t].location;
+                if (loc < 0)
+                    continue;
+                for (int timestep = max(0, t - kRobust); timestep <= min(t + kRobust, (int)al->paths_all[j].size() - 1); timestep++)
+                {
+                    if (al->paths_all[j][timestep].location == loc)
+                        return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
 
 template <class Map>
 bool PythonCBS<Map>::hasConflicts(const vector<Path>& paths) const
@@ -171,7 +203,9 @@ p::dict PythonCBS<Map>::getResultDetail() {
     std::stringstream stream;
     stream << std::fixed << std::setprecision(1) << f_w;
     std::string s = stream.str();
-	result["algorithm"] = framework + "_" + algo + "(" + s + ")_groupsize=" + to_string(defaultGroupSize) +
+	result["algorithm"] = framework +
+            to_string(neighbor_generation_strategy) + to_string(prirority_ordering_strategy) + to_string(replan_strategy) +
+            "_" + algo + "(" + s + ")_groupsize=" + to_string(defaultGroupSize) +
 	        "_priority=" + to_string(agent_priority_strategy);
     result["num_standard"] = num_standard;
     result["num_chasing"] = num_chasing;
@@ -680,14 +714,14 @@ void PythonCBS<Map>::generateNeighbor(int agent_id, const PathEntry& start, int 
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
 {
 	using namespace boost::python;
-	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, string, int, int, int,float,int,bool,bool,int>())
+	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, string, int, int, int,float,int,bool,bool,int,int,int,int>())
 		.def("getResult", &PythonCBS<FlatlandLoader>::getResult)
 		.def("search", &PythonCBS<FlatlandLoader>::search)
 		.def("benchmarkSingleGroup", &PythonCBS<FlatlandLoader>::benchmarkSingleGroup)
 		.def("benchmarkSingleGroupLNS", &PythonCBS<FlatlandLoader>::benchmarkSingleGroupLNS)
+		.def("hasConflicts", &PythonCBS<FlatlandLoader>::findConflicts)
 		.def("getResultDetail", &PythonCBS<FlatlandLoader>::getResultDetail)
 		.def("writeResultsToFile", &PythonCBS<FlatlandLoader>::writeResultsToFile)
 		.def("updateAgents",&PythonCBS<FlatlandLoader>::updateAgents)
 		.def("updateFw", &PythonCBS<FlatlandLoader>::updateFw);
-
 }
