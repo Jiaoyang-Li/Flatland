@@ -86,7 +86,7 @@ void CorridorReasoning<Map>::getEnteringTimeForChasing(int enter_time[2], const 
         const std::vector<PathEntry>& path2, int t1, int t2, Map* map)
 {
     assert(t1 < path1.size() && path1[0].location < 0 &&
-           t2 < path1.size() && path2[0].location < 0 &&
+           t2 < path2.size() && path2[0].location < 0 &&
            path1[t1].location == path2[t2].location);
     int loc = path1[t1].location;
     while (map->getDegree(loc) == 2)

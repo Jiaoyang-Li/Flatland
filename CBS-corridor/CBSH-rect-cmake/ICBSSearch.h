@@ -64,7 +64,7 @@ public:
     bool solution_found = false;
 	int solution_cost;
 	tuple<int, int, int> min_f_val;  // <#dead agents, makespan, sum of costs>
-    tuple<int, int, int> focal_list_threshold;  // <#dead agents, w * makespan, w * sum of costs>
+    tuple<int, int, int> focal_list_threshold;  // <#dead agents, makespan, w * sum of costs>
     ICBSNode* goal_node = nullptr;
 	//bool cardinalRect = false;
 	//bool rectangleMDD = false;

@@ -881,10 +881,11 @@ bool ICBSSearch::generateChild(ICBSNode*  node, ICBSNode* curr)
 	HL_num_generated++;
 	node->time_generated = HL_num_generated;
 	if(debug_mode) {
-        cout << "child dead: " <<node->num_of_dead_agents << " makespan: "<<node->makespan << "f: " << node->f_val<< endl;
+        cout << "child dead: " <<node->num_of_dead_agents << " makespan: "<<node->makespan << " f: " << node->f_val<< endl;
+        cout << "min_f_val: " << get<0>(min_f_val)<<","<< get<1>(min_f_val) <<","<<get<2>(min_f_val) << endl;
         cout << "focal_list_threshold: " << get<0>(focal_list_threshold)<<","<< get<1>(focal_list_threshold) <<","<<get<2>(focal_list_threshold) << endl;
     }
-	if (node->num_of_dead_agents == get<0>(focal_list_threshold) &&
+	if (node->num_of_dead_agents <= get<0>(focal_list_threshold) &&
 	    node->makespan <= get<1>(focal_list_threshold) &&
 	    node->f_val <= get<2>(focal_list_threshold))
 	{
@@ -1010,13 +1011,13 @@ void ICBSSearch::printStrategy() const
 	switch (cons_strategy)
 	{
 	case constraint_strategy::CBS:
-		cout << "      CBS: ";
+		cout << "      CBS(" << focal_w << "): ";
 		break;
 	case constraint_strategy::ICBS:
-		cout << "     ICBS: ";
+		cout << "     ICBS(" << focal_w << "): ";
 		break;
 	case constraint_strategy::CBSH:
-		cout << "     CBSH:";
+		cout << "     CBSH(" << focal_w << "): ";
 		break;
 	default:
 		exit(10);
@@ -1421,6 +1422,7 @@ MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader* al0, double f
         int time_limit, int screen, options options1): ICBSSearch(*al0)
 {
 	this->option = options1;
+	assert(f_w >= 1);
 	this->focal_w = f_w;
 	this->time_limit = time_limit;
 	this->screen = screen;

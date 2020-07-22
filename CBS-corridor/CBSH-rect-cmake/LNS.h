@@ -17,13 +17,12 @@ public:
     int num_start = 0;
     int num_chasing = 0;
 
-    LNS(AgentsLoader& al, FlatlandLoader& ml,
-        const double& f_w, const constraint_strategy& c,
-        const int& agent_priority_strategy,
+    LNS(AgentsLoader& al, FlatlandLoader& ml, double f_w, const constraint_strategy c,
+        int agent_priority_strategy,
         const options& options1,
-        const bool& corridor2,
-        const bool& trainCorridor1,
-        const bool& chasing):
+        bool corridor2,
+        bool trainCorridor1,
+        bool chasing):
         al(al), ml(ml), f_w(f_w), c(c), agent_priority_strategy(agent_priority_strategy), options1(options1),
         corridor2(corridor2), trainCorridor1(trainCorridor1), chasing(chasing) {}
     bool run(double time_limit);
@@ -33,10 +32,10 @@ private:
     double runtime = 0;
     AgentsLoader& al;
     FlatlandLoader& ml;
-    const double& f_w;
-    const constraint_strategy& c;
-    const int& agent_priority_strategy;
-    const options& options1;
+    double f_w;
+    constraint_strategy c;
+    int agent_priority_strategy;
+    options options1;
 
     //data for neighbors
     vector<int> neighbors;

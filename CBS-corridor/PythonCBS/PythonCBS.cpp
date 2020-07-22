@@ -11,21 +11,19 @@ namespace p = boost::python;
 
 
 template <class Map>
-PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, std::string algo, int t,
+PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, string algo, int t,
                           int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
                           int agent_priority_strategy) :
-                          railEnv(railEnv1), framework(framework), defaultGroupSize(default_group_size),
+                          railEnv(railEnv1), framework(framework), algo(algo), timeLimit(t),
+                          f_w(f_w), defaultGroupSize(default_group_size),
+                          chasing(chasing),
                           accept_partial_solution(accept_partial_solution),
                           agent_priority_strategy(agent_priority_strategy) {
 	//Initialize PythonCBS. Load map and agent info into memory
-	std::cout << "algo: " << algo << std::endl;
+	std::cout << "framework: " << framework << "    algo: " << algo << "(" << f_w << ")" << std::endl;
 	options1.debug = debug;
-	timeLimit = t;
     srand(0);
-    this->f_w = f_w;
-	this->algo = algo;
 	this->kRobust = 1;
-	this->chasing = chasing;
 	this->corridor_option = corridor;
     if(corridor == 0){
         this->trainCorridor1 = false;
