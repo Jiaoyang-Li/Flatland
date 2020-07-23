@@ -254,26 +254,36 @@ p::dict PythonCBS<Map>::getResultDetail() {
 template <class Map>
 void PythonCBS<Map>::buildMCP(void)
 {
-    int map_size = ml->cols * ml->rows;
+    cout << "Start MCP ..." << endl;
+    size_t map_size = ml->cols * ml->rows;
+    cout << "map_size: " << map_size << endl;
     mcp.resize(map_size);
-    agent_time.resize(al->getNumOfAllAgents(), 0);
+    agent_time.resize(al->getNumOfAllAgents(), -1);
     to_go.resize(al->getNumOfAllAgents(), -1);
 
     size_t max_timestep = 0;
     for (int i = 0; i < al->getNumOfAllAgents(); i++)
         if (!al->paths_all[i].empty() && al->paths_all[i].size() > max_timestep)
             max_timestep = al->paths_all[i].size();
+    cout << "max_timestep = " << max_timestep << endl;
 
     for (size_t t = 0; t < max_timestep; t++)
     {
         for (int i = 0; i < al->getNumOfAllAgents(); i++)
         {
-            if (!al->paths_all[i].empty() && al->paths_all[i][t].location != -1)
+            if (!al->paths_all[i].empty() && t < al->paths_all[i].size() && al->paths_all[i][t].location != -1)
             {
-                mcp[al->paths_all[i][t].location].emplace_back(i, t);
+                mcp[al->paths_all[i][t].location].push_back(make_tuple(i, t));
+                
+                if (agent_time[i] == -1)
+                    agent_time[i] = t;
+
+                // cout << "Agent, time = " << get<0>(mcp[al->paths_all[i][t].location].back()) << ", "
+                //     << get<1>(mcp[al->paths_all[i][t].location].back()) << endl;
             }
         }
     }
+    cout << "End building MCP ..." << endl;
     return;
 }
 
@@ -323,7 +333,7 @@ void PythonCBS<Map>::printMCP(void)
                 cout << "->";
         }
     }
-    cout << "================== MCP END ==================" << endl;
+    cout << "\n================== MCP END ==================" << endl;
     return;
 }
 

@@ -113,8 +113,9 @@ CBS.writeResultsToFile(fileName)
 inspect.getmembers(PythonCBS, predicate=inspect.ismethod)
 
 CBS.buildMCP()
+print("Building MCP in python")
 CBS.printMCP()
 for t in range(10):
     next_loc = CBS.getNextLoc()
-    print(next_loc)
+    print(next_loc, " at time ", t)
     CBS.updateMCP(next_loc)
