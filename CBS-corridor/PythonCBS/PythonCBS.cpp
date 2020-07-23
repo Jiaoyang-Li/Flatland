@@ -310,9 +310,10 @@ void PythonCBS<Map>::updateMCP(p::list agent_location)
 {
     for (int i = 0; i < al->getNumOfAllAgents(); i++)
     {
-        if (agent_location[i] == to_go[i])
+        if (agent_location[i] != -1 && agent_location[i] == to_go[i])
         {
-            mcp[al->paths_all[i][agent_time[i]].location].pop_front();
+            if (agent_time[i] > 0 && al->paths_all[i][agent_time[i]-1].location != -1)
+                mcp[al->paths_all[i][agent_time[i]-1].location].pop_front();
             agent_time[i] ++;
         }
     }
@@ -331,6 +332,8 @@ void PythonCBS<Map>::printMCP(void)
             cout << "(" << get<0>(p) << "," << get<1>(p) << ")";
             if (&p != &last)
                 cout << "->";
+            else
+                cout << endl;
         }
     }
     cout << "\n================== MCP END ==================" << endl;

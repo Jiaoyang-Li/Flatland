@@ -2,19 +2,21 @@
 
 #Compile codes in PythonCBS in folder CBS-corridor with cmake
 
-import numpy as np
+import inspect
 import time
+from random import random
+
+import numpy as np
+from flatland.envs.malfunction_generators import MalfunctionParameters, malfunction_from_params
 from flatland.envs.observations import GlobalObsForRailEnv
 # First of all we import the Flatland rail environment
 from flatland.envs.rail_env import RailEnv
 from flatland.envs.rail_generators import sparse_rail_generator
 from flatland.envs.schedule_generators import sparse_schedule_generator
-from flatland.envs.malfunction_generators  import malfunction_from_params, MalfunctionParameters
-
 # We also include a renderer because we want to visualize what is going on in the environment
-from flatland.utils.rendertools import RenderTool, AgentRenderVariant
+from flatland.utils.rendertools import AgentRenderVariant, RenderTool
+
 from libPythonCBS import PythonCBS
-import inspect
 
 width = 50  # With of map
 height = 50  # Height of map
@@ -115,7 +117,18 @@ inspect.getmembers(PythonCBS, predicate=inspect.ismethod)
 CBS.buildMCP()
 print("Building MCP in python")
 CBS.printMCP()
+prob = 0.6
+cur_loc = [-1 for _ in range(len(plan))]
 for t in range(10):
+    print('--------------------------------------------------------')
+    print('At time ', t)
+    print('Current location: ', cur_loc)
     next_loc = CBS.getNextLoc()
-    print(next_loc, " at time ", t)
-    CBS.updateMCP(next_loc)
+    print("Next location :", next_loc)
+    mal_function = [random() < prob for _ in range(len(plan))]
+    for i in range(len(plan)):
+        if mal_function[i]:
+            cur_loc[i] = next_loc[i]
+    print('Malfunction: ', mal_function)
+    print('Current location after update: ', cur_loc)
+    CBS.updateMCP(cur_loc)
