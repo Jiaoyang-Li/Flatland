@@ -26,7 +26,10 @@ public:
 	p::dict getResultDetail();
 	void updateAgents(p::object railEnv1);
 	void updateFw(float fw);
-
+    p::list getNextLoc(void);
+    void updateMCP(p::list agent_location);
+    void buildMCP(void);
+    void printMCP(void);
 
 	void writeResultsToFile(const string& fileName) const
     {
@@ -99,6 +102,12 @@ private:
     typedef tuple<int, double, double, double, int,
                     int, int, int, int, int, int> IterationStats;
     list<IterationStats> iteration_stats;
+
+    // MCP
+    typedef list<tuple<int, int>> Occupy;
+    vector<Occupy> mcp;
+    vector<int> agent_time;
+    vector<int> to_go;
 
     void updateCBSResults(const MultiMapICBSSearch<Map>& cbs)
     {

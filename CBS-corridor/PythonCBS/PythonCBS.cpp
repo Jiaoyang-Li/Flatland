@@ -251,6 +251,82 @@ p::dict PythonCBS<Map>::getResultDetail() {
 	return result;
 }
 
+template <class Map>
+void PythonCBS<Map>::buildMCP(void)
+{
+    int map_size = ml->cols * ml->rows;
+    mcp.resize(map_size);
+    agent_time.resize(al->getNumOfAllAgents(), 0);
+    to_go.resize(al->getNumOfAllAgents(), -1);
+
+    size_t max_timestep = 0;
+    for (int i = 0; i < al->getNumOfAllAgents(); i++)
+        if (!al->paths_all[i].empty() && al->paths_all[i].size() > max_timestep)
+            max_timestep = al->paths_all[i].size();
+
+    for (size_t t = 0; t < max_timestep; t++)
+    {
+        for (int i = 0; i < al->getNumOfAllAgents(); i++)
+        {
+            if (!al->paths_all[i].empty() && al->paths_all[i][t].location != -1)
+            {
+                mcp[al->paths_all[i][t].location].emplace_back(i, t);
+            }
+        }
+    }
+    return;
+}
+
+template<class Map>
+p::list PythonCBS<Map>::getNextLoc(void)
+{
+    for (int i = 0; i < al->getNumOfAllAgents(); i++)
+    {
+        if (!al->paths_all[i].empty() && get<0>(mcp[al->paths_all[i][agent_time[i]].location].front()) == i)
+        {
+            to_go[i] = al->paths_all[i][agent_time[i]].location;
+        }
+    }
+
+    boost::python::list next_loc;
+    for (int i = 0; i < al->getNumOfAllAgents(); i++)  
+        next_loc.append(to_go[i]);
+
+    return next_loc;
+}
+
+template<class Map>
+void PythonCBS<Map>::updateMCP(p::list agent_location)
+{
+    for (int i = 0; i < al->getNumOfAllAgents(); i++)
+    {
+        if (agent_location[i] == to_go[i])
+        {
+            mcp[al->paths_all[i][agent_time[i]].location].pop_front();
+            agent_time[i] ++;
+        }
+    }
+    return;
+}
+
+template <class Map>
+void PythonCBS<Map>::printMCP(void)
+{
+    cout << "==================== MCP ====================" << endl;
+    for (const auto& m: mcp)
+    {
+        auto &last = *(--m.end());
+        for (const auto& p: m)
+        {
+            cout << "(" << get<0>(p) << "," << get<1>(p) << ")";
+            if (&p != &last)
+                cout << "->";
+        }
+    }
+    cout << "================== MCP END ==================" << endl;
+    return;
+}
+
 
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
 {
@@ -261,6 +337,9 @@ BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final
 		.def("getResultDetail", &PythonCBS<FlatlandLoader>::getResultDetail)
 		.def("writeResultsToFile", &PythonCBS<FlatlandLoader>::writeResultsToFile)
 		.def("updateAgents",&PythonCBS<FlatlandLoader>::updateAgents)
-		.def("updateFw", &PythonCBS<FlatlandLoader>::updateFw);
-
+		.def("updateFw", &PythonCBS<FlatlandLoader>::updateFw)
+        .def("buildMCP", &PythonCBS<FlatlandLoader>::buildMCP)
+        .def("getNextLoc", &PythonCBS<FlatlandLoader>::getNextLoc)
+        .def("printMCP", &PythonCBS<FlatlandLoader>::printMCP)
+        .def("updateMCP", &PythonCBS<FlatlandLoader>::updateMCP);
 }

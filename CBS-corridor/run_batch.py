@@ -62,6 +62,7 @@ for folder in os.listdir(path):
                     malfunction_generator_and_process_data=malfunction_from_file(test),
                     )
 
+        env.reset()
         CBS = PythonCBS(env,"CBSH",k,timelimit,default_group_size,debug,f_w,
                         corridor_method, chasing ,accept_partial_solution,agent_priority_strategy)
         success = CBS.search()
