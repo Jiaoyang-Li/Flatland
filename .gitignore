@@ -1,8 +1,15 @@
 .DS-Store
 CBS-corridor/cmake-build-debug
 CBS-corridor/cmake-build-release
+CBS-corridor/cmake_install.cmake
+CBS-corridor/CMakeCache.txt
+CBS-corridor/libPythonCBS.so
+CBS-corridor/Makefile
+CBS-corridor/CMakeFiles/**
 CBS-corridor/.idea
 Flatland2019
 CBS-corridor/data_analysis/.idea
 CBS-corridor/data_analysis/venv
 /.idea/
+/.vscode/
+
