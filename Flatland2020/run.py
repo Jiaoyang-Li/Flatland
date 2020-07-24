@@ -1,5 +1,4 @@
 from MapDecoder import convert_flatland_map,linearize_loc
-from STN import FlatlandPost
 from Controllers import The_Controller
 
 from flatland.evaluators.client import FlatlandRemoteClient
@@ -20,10 +19,8 @@ import matplotlib.pyplot as plt
 
 from libPythonCBS import PythonCBS
 
-import networkx as nx
 from typing import List, Tuple
 from logging import warning
-from pulp import *
 import os
 import subprocess
 import numpy as np
@@ -450,18 +447,19 @@ while True:
             # particular Env instantiation is complete, and we can break out 
             # of this loop, and move onto the next Env evaluation
             break
-    break
-    # np_time_taken_by_controller = np.array(time_taken_by_controller)
-    # np_time_taken_per_step = np.array(time_taken_per_step)
-    # print("="*100)
-    # print("="*100)
-    # print("Evaluation Number : ", evaluation_number)
-    # print("Current Env Path : ", remote_client.current_env_path)
-    # print("Env Creation Time : ", env_creation_time)
-    # print("Number of Steps : ", steps)
-    # print("Mean/Std of Time taken by Controller : ", np_time_taken_by_controller.mean(), np_time_taken_by_controller.std())
-    # print("Mean/Std of Time per Step : ", np_time_taken_per_step.mean(), np_time_taken_per_step.std())
-    # print("="*100)
+
+    if remote_test:
+        np_time_taken_by_controller = np.array(time_taken_by_controller)
+        np_time_taken_per_step = np.array(time_taken_per_step)
+        print("="*100)
+        print("="*100)
+        print("Evaluation Number : ", evaluation_number)
+        print("Current Env Path : ", remote_client.current_env_path)
+        print("Env Creation Time : ", env_creation_time)
+        print("Number of Steps : ", steps)
+        print("Mean/Std of Time taken by Controller : ", np_time_taken_by_controller.mean(), np_time_taken_by_controller.std())
+        print("Mean/Std of Time per Step : ", np_time_taken_per_step.mean(), np_time_taken_per_step.std())
+        print("="*100)
 
 print("Evaluation of all environments complete...")
 ########################################################################
@@ -471,7 +469,8 @@ print("Evaluation of all environments complete...")
 # final computation of the score statistics, video generation, etc
 # and is necesaary to have your submission marked as successfully evaluated
 ########################################################################
-# print(remote_client.submit())
+if remote_test:
+    print(remote_client.submit())
 
 
 
