@@ -729,7 +729,6 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
     this->statistic_list.resize(no_threads);
     this->iteration_stats.resize(no_threads);
     boost::thread_group t_group;
-    int strategies[4] = {0,1,3,5};
     if (no_threads>4){
         cout<<"Max threads number: 4"<<endl;
         exit(1);
@@ -750,17 +749,17 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
     int best_makespan = -1;
     int best_finished_agents = -1;
     for (int i=0; i<no_threads; i++){
-        statistic_list[0].HL_num_expanded = lns_pool[i]->HL_num_expanded;
-        statistic_list[0].HL_num_generated = lns_pool[i]->HL_num_generated;
-        statistic_list[0].LL_num_expanded = lns_pool[i]->LL_num_expanded;
-        statistic_list[0].LL_num_generated = lns_pool[i]->LL_num_generated;
-        statistic_list[0].num_standard = lns_pool[i]->num_standard;
-        statistic_list[0].num_chasing = lns_pool[i]->num_chasing;
-        statistic_list[0].num_start = lns_pool[i]->num_start;
-        statistic_list[0].num_corridor = lns_pool[i]->num_corridor;
-        statistic_list[0].num_corridor2 = lns_pool[i]->num_corridor2;
-        statistic_list[0].runtime_corridor = lns_pool[i]->runtime_corridor;
-        iteration_stats[0] = lns_pool[i]->iteration_stats;
+        statistic_list[i].HL_num_expanded = lns_pool[i]->HL_num_expanded;
+        statistic_list[i].HL_num_generated = lns_pool[i]->HL_num_generated;
+        statistic_list[i].LL_num_expanded = lns_pool[i]->LL_num_expanded;
+        statistic_list[i].LL_num_generated = lns_pool[i]->LL_num_generated;
+        statistic_list[i].num_standard = lns_pool[i]->num_standard;
+        statistic_list[i].num_chasing = lns_pool[i]->num_chasing;
+        statistic_list[i].num_start = lns_pool[i]->num_start;
+        statistic_list[i].num_corridor = lns_pool[i]->num_corridor;
+        statistic_list[i].num_corridor2 = lns_pool[i]->num_corridor2;
+        statistic_list[i].runtime_corridor = lns_pool[i]->runtime_corridor;
+        iteration_stats[i] = lns_pool[i]->iteration_stats;
 
         size_t solution_cost = 0;
         int finished_agents = 0;

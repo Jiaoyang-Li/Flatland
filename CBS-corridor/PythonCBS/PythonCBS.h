@@ -59,20 +59,24 @@ public:
                "planned agents," <<
                "dead agents," <<
                "HL nodes," <<
-               "LL nodes" << endl;
-        for (const auto& data : iteration_stats[best_thread_id])
-        {
-            output << get<0>(data) << "," <<
-                   get<1>(data) << "," <<
-                   get<2>(data) << "," <<
-                   get<3>(data) << "," <<
-                   get<4>(data) << "," <<
-                   get<5>(data) << "," <<
-                   get<6>(data) << "," <<
-                   get<7>(data) << "," <<
-                   get<8>(data) << "," <<
-                   get<9>(data) << "," <<
-                   get<10>(data) << endl;
+               "LL nodes," <<
+               "Initial agent priority"<<
+               endl;
+        for (int i = 0 ; i<iteration_stats.size(); i++) {
+            for (const auto &data : iteration_stats[i]) {
+                output << get<0>(data) << "," <<
+                       get<1>(data) << "," <<
+                       get<2>(data) << "," <<
+                       get<3>(data) << "," <<
+                       get<4>(data) << "," <<
+                       get<5>(data) << "," <<
+                       get<6>(data) << "," <<
+                       get<7>(data) << "," <<
+                       get<8>(data) << "," <<
+                       get<9>(data) << "," <<
+                       get<10>(data) <<"," <<
+                       strategies[i] << endl;
+            }
         }
         output.close();
     }
@@ -108,6 +112,8 @@ private:
     std::clock_t start_time;
     double runtime;
     vector<statistics> statistic_list;
+    int strategies[4] = {0,1,3,5};
+
 
 
     //stats about each iteration
