@@ -44,9 +44,11 @@ public:
     p::list benchmarkSingleGroupLNS(int group_size,int iterations, int time_limit);
     bool findConflicts() const;
     p::list getNextLoc(void);
-    void updateMCP(p::list agent_location);
+    void updateMCP(p::list agent_location, p::dict agent_action);
     void buildMCP(void);
-    void printMCP(void);
+    void printAllMCP(void);
+    void printMCP(int loc);
+    void printAgentTime(void);
 
     void writeResultsToFile(const string& fileName) const
     {

@@ -12,6 +12,10 @@ CBS-corridor/data_analysis/.idea
 CBS-corridor/data_analysis/venv
 /.idea/
 /.vscode/
+Flatland2020/cmake_install.cmake
+Flatland2020/CMakeCache.txt
+Flatland2020/Makefile
+Flatland2020/CMakeFiles
 
 
 ./CBS-corridor/build
