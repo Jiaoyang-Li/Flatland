@@ -292,7 +292,17 @@ p::list PythonCBS<Map>::getNextLoc(void)
 {
     for (int i = 0; i < al->getNumOfAllAgents(); i++)
     {
-        if (!al->paths_all[i].empty() && get<0>(mcp[al->paths_all[i][agent_time[i]].location].front()) == i)
+        // cout << "********************************************" << endl;
+        // cout << "Agent: " << i << endl;
+        // cout << "Next location: " << al->paths_all[i][agent_time[i]].location << endl;
+        // cout << "MCP at location: " << get<0>(mcp[al->paths_all[i][agent_time[i]].location].front()) << ", " << 
+        //     get<1>(mcp[al->paths_all[i][agent_time[i]].location].front()) << endl;
+        // cout << "********************************************" << endl;
+
+        if (!al->paths_all[i].empty() && 
+            agent_time[i] < al->paths_all[i].size() &&
+            !mcp[al->paths_all[i][agent_time[i]].location].empty() &&
+            get<0>(mcp[al->paths_all[i][agent_time[i]].location].front()) == i)
         {
             to_go[i] = al->paths_all[i][agent_time[i]].location;
         }
@@ -306,28 +316,68 @@ p::list PythonCBS<Map>::getNextLoc(void)
 }
 
 template<class Map>
-void PythonCBS<Map>::updateMCP(p::list agent_location)
+void PythonCBS<Map>::updateMCP(p::list agent_location, p::dict agent_action)
 {
     for (int i = 0; i < al->getNumOfAllAgents(); i++)
     {
-        if (agent_location[i] != -1 && agent_location[i] == to_go[i])
+        if (agent_time[i] == al->paths_all[i].size() - 1 && 
+            !mcp[al->paths_all[i][agent_time[i]].location].empty() && 
+            get<0>(mcp[al->paths_all[i][agent_time[i]].location].front()) == i)
         {
-            if (agent_time[i] > 0 && al->paths_all[i][agent_time[i]-1].location != -1)
+            mcp[al->paths_all[i][agent_time[i]].location].pop_front();
+        }
+
+        else if (agent_location[i] != -1 && agent_location[i] == al->paths_all[i][agent_time[i]].location)
+        {
+            if (agent_time[i] > 0 && 
+                al->paths_all[i][agent_time[i]-1].location != -1 && 
+                !mcp[al->paths_all[i][agent_time[i]-1].location].empty() && 
+                get<0>(mcp[al->paths_all[i][agent_time[i]-1].location].front()) == i)
+            {
+                // cout << "Pop mcp: " << al->paths_all[i][agent_time[i]-1].location << endl;
                 mcp[al->paths_all[i][agent_time[i]-1].location].pop_front();
-            agent_time[i] ++;
+            }
+
+            if (agent_time[i] < al->paths_all[i].size() - 1)
+                agent_time[i] ++;
         }
     }
     return;
 }
 
 template <class Map>
-void PythonCBS<Map>::printMCP(void)
+void PythonCBS<Map>::printAllMCP(void)
 {
     cout << "==================== MCP ====================" << endl;
-    for (const auto& m: mcp)
+    for (int i = 0; i < mcp.size(); i++)
     {
-        auto &last = *(--m.end());
-        for (const auto& p: m)
+        if (!mcp[i].empty())
+        {
+            cout << "[" << i << "]: ";
+            auto &last = *(--mcp[i].end());
+            for (const auto& p: mcp[i])
+            {
+                cout << "(" << get<0>(p) << "," << get<1>(p) << ")";
+                if (&p != &last)
+                    cout << "->";
+                else
+                    cout << endl;
+            }
+        }
+    }
+    cout << "\n================== MCP END ==================" << endl;
+    return;
+}
+
+template <class Map>
+void PythonCBS<Map>::printMCP(int loc)
+{
+    cout << "==================== MCP ====================" << endl;
+    if (loc < mcp.size() && !mcp[loc].empty())
+    {
+        cout << "[" << loc << "]: ";
+        auto &last = *(--mcp[loc].end());
+        for (const auto& p: mcp[loc])
         {
             cout << "(" << get<0>(p) << "," << get<1>(p) << ")";
             if (&p != &last)
@@ -338,6 +388,17 @@ void PythonCBS<Map>::printMCP(void)
     }
     cout << "\n================== MCP END ==================" << endl;
     return;
+}
+
+template<class Map>
+void PythonCBS<Map>::printAgentTime(void)
+{
+    cout << "==================== Time ====================" << endl;
+    for (int i = 0; i < al->getNumOfAllAgents(); i++)
+    {
+        cout << "Agent " << i << ": " << agent_time[i] << endl;
+    }
+    cout << "================== End Time ==================" << endl;
 }
 
 
@@ -353,6 +414,8 @@ BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final
 		.def("updateFw", &PythonCBS<FlatlandLoader>::updateFw)
         .def("buildMCP", &PythonCBS<FlatlandLoader>::buildMCP)
         .def("getNextLoc", &PythonCBS<FlatlandLoader>::getNextLoc)
+        .def("printAllMCP", &PythonCBS<FlatlandLoader>::printAllMCP)
         .def("printMCP", &PythonCBS<FlatlandLoader>::printMCP)
+        .def("printAgentTime", &PythonCBS<FlatlandLoader>::printAgentTime)
         .def("updateMCP", &PythonCBS<FlatlandLoader>::updateMCP);
 }

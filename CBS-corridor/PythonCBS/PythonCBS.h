@@ -27,9 +27,11 @@ public:
 	void updateAgents(p::object railEnv1);
 	void updateFw(float fw);
     p::list getNextLoc(void);
-    void updateMCP(p::list agent_location);
+    void updateMCP(p::list agent_location, p::dict agent_action);
     void buildMCP(void);
-    void printMCP(void);
+    void printAllMCP(void);
+    void printMCP(int loc);
+    void printAgentTime(void);
 
 	void writeResultsToFile(const string& fileName) const
     {

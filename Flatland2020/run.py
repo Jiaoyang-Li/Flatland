@@ -34,6 +34,7 @@ save_txt_file = False
 debug_print = True
 env_renderer_enable = True
 input_pause_renderer = True
+# input_pause_renderer = False
 
 #####################################################################
 # local testing parameters
@@ -46,7 +47,7 @@ max_num_stations = 3
 given_seed = 12
 given_max_rails_between_cities = 2 # not clear what this does
 given_max_rails_in_city = 3 # not clear what this does
-given_num_agents = 2
+given_num_agents = 5
 
 # speed profile, 1 -> speed is 1, 1_2 -> speed 0.5, 1_3 -> speed 1/3, etc. sum has to be 1
 given_1_speed_train_percentage = 1
@@ -199,13 +200,16 @@ while True:
     success = CBS.search()
     paths = CBS.getResult()
 
+    time_temp = time.time()
     CBS.buildMCP()
+    print('TIme for building MCP: ', time.time() - time_temp)
+
     if debug_print:
         # print paths
         for i,p in enumerate(paths):
             print(i, ": " , p)
         # print mcp
-        CBS.printMCP()
+        CBS.printAllMCP()
 
     #####################################################################
     # stn to action controller
@@ -243,8 +247,11 @@ while True:
         #####################################################################
         # get curr, next locations from mcp
         #####################################################################
-
+        if debug_print:
+            CBS.printAgentTime()
+        time_temp = time.time()
         next_locs = CBS.getNextLoc() 
+        print('TIme for get next location: ', time.time() - time_temp)
 
         # get curr locations from the environment (observation)
         curr_locs = []
@@ -320,11 +327,13 @@ while True:
         if debug_print:
             print("new curr locations to MCP: ", new_curr_locs)
 
-        CBS.updateMCP(new_curr_locs)
+        time_temp = time.time()
+        CBS.updateMCP(new_curr_locs, action)
+        print('Time for update MCP: ', time.time() - time_temp)
 
         # display the updated mcp
         # if debug_print:
-        #     CBS.printMCP()
+        #     CBS.printAllMCP()
 
         # update prev_locs
         for i, a in enumerate(local_env.agents):
