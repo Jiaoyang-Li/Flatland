@@ -12,11 +12,9 @@ from flatland.envs.rail_generators import sparse_rail_generator
 from flatland.envs.schedule_generators import sparse_schedule_generator
 from flatland.utils.rendertools import RenderTool, AgentRenderVariant
 
-import matplotlib.pyplot as plt
-from MapDecoder import convert_flatland_map,linearize_loc
-
 from typing import List, Tuple
 from logging import warning
+
 import os
 import subprocess
 import numpy as np
@@ -24,7 +22,105 @@ import time
 from flatland.utils.rendertools import RenderTool
 import math
 
+class MCP_Controller:
+
+    def __init__(self, in_env):
+        self.env = in_env
+        self.num_agents = len(in_env.agents)
+
+
+    def linearize_loc(self, loc):
+        """
+        This method linearize the locaiton(x,y) into an int.
+        :param in_env: local environment of flatland
+        :param loc: locaiton pair(x,y)
+        :return: linearized locaiton, int.
+        """
+        return loc[0] * self.env.width + loc[1]
+
+    def unlinearize(self, location):
+        """
+        Method to unlinearize locations
+        :param location: int, location to unlinearize
+        """
+        # print(math.floor(location / self.y_dim), location % self.y_dim)
+        return math.floor(location / self.env.width), location % self.env.width
+
+    def get_actions(self, prev_locs, next_locs, curr_locs):
+
+        """
+        Function called by run.py.
+        :param prev_locs: provided by run.py
+        :param next_locs: from CBS next locations
+        :param curr_locs: obtained from current envirnoment (given by run.py, so this py dones't have to access CBS objects)
+        """
+
+        self.prev_locs = prev_locs
+        self.next_locs = next_locs
+
+        actions = {}
+
+        for i in range(0,self.num_agents):
+            actions[i] = (self.pos2action(i, curr_locs))
+
+        return actions
+
+    def pos2action(self, i, curr_locs):
+
+        """
+        Function to get action for each agent based on the information given. (Prev_loc, Curr_loc, Next_loc)
+        :param i: the agent id
+        :param curr_locs: reference to the curr location list.
+        """
+
+
+        # if next_location = current_location: including doens't move, wait in the station
+        if self.next_locs[i] == curr_locs[i]:
+            return 4
+
+        # leave station to the start location
+        if curr_locs[i] == -1 and self.next_locs[i] != -1:
+            return 2
+
+        prev_pos = self.unlinearize(self.prev_locs[i])
+        curr_pos = self.unlinearize(curr_locs[i])
+        next_pos = self.unlinearize(self.next_locs[i])
+
+        agent_dir = np.subtract(curr_pos, prev_pos)
+        move_dir = np.subtract(next_pos, curr_pos)
+
+        if np.linalg.norm(agent_dir) > 0:
+            agent_dir = agent_dir // np.linalg.norm(agent_dir)
+        if np.linalg.norm(move_dir) > 0:
+            move_dir = move_dir // np.linalg.norm(move_dir)
+
+        # meet deadend
+        if (not np.any(agent_dir + move_dir)) and np.linalg.norm(agent_dir) > 0 and np.linalg.norm(move_dir) > 0:
+            # print('Agent {0} meets deadend at time step {1}'.format(agent, time_step))
+            return 2
+
+        # Transform move direction into agent frame
+        else:
+            # Relative to agent frame
+            out_dir = (agent_dir[0] * move_dir[0] + agent_dir[1] * move_dir[1],
+                       -agent_dir[1] * move_dir[0] + agent_dir[0] * move_dir[1])
+
+            # print('out_dir: ', out_dir)
+            if out_dir == (0, 0):  # stay
+                return 4
+            elif out_dir == (0, 1):  # move left
+                return 1
+            elif out_dir == (1, 0):  # move forward
+                return 2
+            elif out_dir == (0, -1):  # move right
+                return 3
+
+
+
 class The_Controller:
+    """
+    Old controller, no longer in use.
+    """
     def __init__(self, in_env, idx2node, idx2pose, node2idx, paths, max_step,x_dim, y_dim):
 
         print('Controller Initialization')
