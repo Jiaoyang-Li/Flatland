@@ -131,7 +131,6 @@ private:
 
     void generateNeighbor(int agent_id, const PathEntry& start, int start_time,
             set<int>& neighbor, int neighbor_size, int upperbound);
-    void updateCBSResults(const MultiMapICBSSearch<Map>& cbs, int thread_id = 0)
 
     // MCP
     typedef list<tuple<int, int>> Occupy;
@@ -139,7 +138,7 @@ private:
     vector<int> agent_time;
     vector<int> to_go;
 
-    void updateCBSResults(const MultiMapICBSSearch<Map>& cbs)
+    void updateCBSResults(const MultiMapICBSSearch<Map>& cbs, int thread_id = 0)
     {
         statistic_list[thread_id].runtime_corridor += cbs.runtime_corridor.count();
         statistic_list[thread_id].HL_num_expanded += cbs.HL_num_expanded;
