@@ -37,7 +37,7 @@ public:
     bool accept_partial_solution;
     int agent_priority_strategy;
 	bool search();
-	p::dict getResultDetail(int thread_id = 0);
+	p::dict getResultDetail();
 	void updateAgents(p::object railEnv1);
 	void updateFw(float fw);
     p::list benchmarkSingleGroup(int group_size,int iterations, int time_limit);
@@ -84,6 +84,7 @@ private:
 	FlatlandLoader* ml;  // TODO:: Shouldn't it be Map* ml?
 	AgentsLoader* al;
 	vector<AgentsLoader*> al_pool;
+	vector<LNS*> lns_pool;
 	constraint_strategy s;
 	options options1;
 	int timeLimit;
@@ -98,6 +99,7 @@ private:
 	bool trainCorridor2 = false;
 	bool chasing = false;
 	int best_thread_id = 0;
+	int bset_initisl_priority_strategy = -1;
     int neighbor_generation_strategy;
     int prirority_ordering_strategy;
     int replan_strategy;
@@ -118,11 +120,10 @@ private:
     bool parallel_LNS(int no_threads = 4);
 
     void generateNeighbor(int agent_id, const PathEntry& start, int start_time,
-            set<int>& neighbor, int neighbor_size, int upperbound, AgentsLoader * al = NULL);
+            set<int>& neighbor, int neighbor_size, int upperbound);
     void updateCBSResults(const MultiMapICBSSearch<Map>& cbs, int thread_id = 0)
     {
-        statistic_list[thread_id].runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
-        statistic_list[thread_id].runtime_corridor += cbs.runtime_corridor/CLOCKS_PER_SEC;
+        statistic_list[thread_id].runtime_corridor += cbs.runtime_corridor.count();
         statistic_list[thread_id].HL_num_expanded += cbs.HL_num_expanded;
         statistic_list[thread_id].HL_num_generated += cbs.HL_num_generated;
         statistic_list[thread_id].LL_num_expanded += cbs.LL_num_expanded;

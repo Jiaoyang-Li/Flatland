@@ -10,6 +10,10 @@
 #include "MDD.h"
 #include <unordered_map>
 #include <boost/python.hpp>
+#include <chrono>
+using namespace std::chrono;
+typedef std::chrono::high_resolution_clock Time;
+typedef std::chrono::duration<float> fsec;
 
 struct options {
 	bool asymmetry_constraint=false;
@@ -24,14 +28,14 @@ struct options {
 class ICBSSearch
 {
 public:
-	double runtime = 0;
-	double runtime_lowlevel;
-	double runtime_conflictdetection;
-	double runtime_computeh;
-	double runtime_listoperation;
-	double runtime_updatepaths;
-	double runtime_updatecons;
-    double runtime_corridor=0;
+	fsec runtime = fsec::zero();
+    fsec runtime_lowlevel;
+    fsec runtime_conflictdetection;
+    fsec runtime_computeh;
+    fsec runtime_listoperation;
+    fsec runtime_updatepaths;
+    fsec runtime_updatecons;
+    fsec runtime_corridor = fsec::zero();
 
     double RMTime = 0;
 
@@ -78,7 +82,7 @@ public:
 	bool debug_mode=false;
 	bool ignore_t0=false;
 	bool shortBarrier = false;
-	std::clock_t start;
+    Time::time_point start;
 	bool ignoreFinishedAgent = true;
 	int max_malfunction = 5;
 

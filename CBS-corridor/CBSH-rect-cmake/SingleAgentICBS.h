@@ -16,6 +16,9 @@
 #include "compute_heuristic.h"
 #include <boost/heap/fibonacci_heap.hpp>
 #include <boost/unordered_set.hpp>
+using namespace std::chrono;
+typedef std::chrono::high_resolution_clock Time;
+typedef std::chrono::duration<float> fsec;
 
 template<class Map>
 class SingleAgentICBS
@@ -90,7 +93,7 @@ public:
 	bool findPath(std::vector<PathEntry> &path, double f_weight, int focal_makespan,
                   ConstraintTable& constraints, ReservationTable* res_table,
                   size_t max_plan_len, double lowerbound,
-                  std::clock_t start = 0, int time_limit = 0);
+                  Time::time_point start=Time::time_point::min(), int time_limit = 0);
 	bool validMove(int curr, int next) const; // whetehr curr->next is a valid move
 
 	inline void releaseClosedListNodes(hashtable_t* allNodes_table);

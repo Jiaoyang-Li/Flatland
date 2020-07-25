@@ -1,5 +1,9 @@
 #pragma once
 #include "ICBSSearch.h"
+#include <chrono>
+using namespace std::chrono;
+typedef std::chrono::high_resolution_clock Time;
+typedef std::chrono::duration<float> fsec;
 
 #define DEFAULT_GROUP_SIZE 4
 class LNS
@@ -37,8 +41,8 @@ public:
     bool run(double time_limit);
 
 private:
-    std::clock_t start_time = 0;
-    double runtime = 0;
+    high_resolution_clock::time_point start_time;
+    float runtime = 0;
     AgentsLoader& al;
     FlatlandLoader& ml;
     double f_w;
@@ -92,8 +96,8 @@ private:
 
     void updateCBSResults(const MultiMapICBSSearch<FlatlandLoader>& cbs)
     {
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
-        runtime_corridor += cbs.runtime_corridor/CLOCKS_PER_SEC;
+        runtime = ((fsec)(Time::now() - start_time)).count();
+        runtime_corridor += cbs.runtime_corridor.count();
         HL_num_expanded += cbs.HL_num_expanded;
         HL_num_generated += cbs.HL_num_generated;
         LL_num_expanded += cbs.LL_num_expanded;

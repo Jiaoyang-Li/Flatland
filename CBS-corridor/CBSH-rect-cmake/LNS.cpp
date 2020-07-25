@@ -1,9 +1,11 @@
 #include "LNS.h"
 
 
+
+
 bool LNS::run(double _time_limit)
 {
-    start_time = std::clock();
+    start_time = Time::now();
     time_limit = _time_limit;
 
     if (!getInitialSolution()) // get initial solution
@@ -16,7 +18,7 @@ bool LNS::run(double _time_limit)
         solution_cost += path.size() - 1;
         makespan = max(path.size() - 1, makespan);
     }
-    runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+    runtime = ((fsec)(Time::now() - start_time)).count();
     cout << "Initial solution cost = " << solution_cost << ", "
          << "makespan = " << makespan << ", "
          << "remaining time = " << time_limit - runtime << endl;
@@ -34,7 +36,7 @@ bool LNS::run(double _time_limit)
     int old_runtime = runtime;
     while (runtime < time_limit && iteration_stats.size() < 10000)
     {
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        runtime =((fsec)(Time::now() - start_time)).count();
         switch (neighbor_generation_strategy)
         {
             case 0:
@@ -89,7 +91,7 @@ bool LNS::run(double _time_limit)
                 exit(0);
         }
 
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        runtime = ((fsec)(Time::now() - start_time)).count();
         solution_cost += delta_costs;
         cout << "Iteration " << iteration_stats.size() << ", "
              << "solution cost = " << solution_cost << ", "
@@ -128,7 +130,7 @@ bool LNS::getInitialSolution()
     int remaining_agents = (int)neighbors.size();
     for (auto agent : neighbors)
     {
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        runtime = ((fsec)(Time::now() - start_time)).count();
         if (runtime >= time_limit)
         {
             return false;
@@ -143,7 +145,7 @@ bool LNS::getInitialSolution()
         remaining_agents--;
     }
 
-    runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+    runtime = ((fsec)(Time::now() - start_time)).count();
     cout << endl << endl << "Find a solution for " << al.getNumOfAllAgents() - al.getNumOfUnplannedAgents()
          << " agents (including " << al.getNumOfDeadAgents() << " dead agents) in " << runtime << " seconds!" << endl;
 
@@ -269,7 +271,7 @@ void LNS::replanByPP()
 
     for (auto agent : neighbors)
     {
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        runtime = ((fsec)(Time::now() - start_time)).count();
         if (runtime >= time_limit)
         { // change back to the original paths
             auto path = neighbor_paths.begin();
@@ -314,9 +316,9 @@ bool LNS::replanByCBS()
     {
         al.agents.push_back(&al.agents_all[i]);
     }
-    runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+    runtime = ((fsec)(Time::now() - start_time)).count();
     double cbs_time_limit = min(time_limit - runtime, 10.0);
-    MultiMapICBSSearch<FlatlandLoader> icbs(&ml, &al, f_w, c, cbs_time_limit * CLOCKS_PER_SEC, options1.debug? 3 : 0, options1);
+    MultiMapICBSSearch<FlatlandLoader> icbs(&ml, &al, f_w, c, cbs_time_limit, options1.debug? 3 : 0, options1);
     icbs.trainCorridor1 = trainCorridor1;
     icbs.corridor2 = corridor2;
     icbs.chasing_reasoning = chasing;

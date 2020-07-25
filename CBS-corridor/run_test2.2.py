@@ -80,7 +80,7 @@ env.reset()
 #                           screen_height=800,  # Adjust these parameters to fit your resolution
 #                           screen_width=800)  # Adjust these parameters to fit your resolution
 
-framework = "LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning
+framework = "LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning or "Parallel-LNS" for parallel lns
 f_w = 1
 debug = True
 timelimit = 240  # unit: seconds

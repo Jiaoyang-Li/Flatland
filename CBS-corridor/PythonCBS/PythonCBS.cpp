@@ -105,31 +105,32 @@ p::list PythonCBS<Map>::getResult() {
 
 template <class Map>
 bool PythonCBS<Map>::search() {
-    start_time = time(NULL);
+    start_time = time(NULL);// time(NULL) return time in seconds
     if (options1.debug)
 		cout << "start initialize" << endl;
 	//initialize search engine
 	al->constraintTable.init(ml->map_size());
     al->computeHeuristics(ml);
     this->statistic_list.resize(1);
+    this->iteration_stats.resize(1);
     if (framework == "LNS")
     {
         LNS lns(*al, *ml, f_w, s, agent_priority_strategy, options1, corridor2, trainCorridor1, chasing,
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        runtime = (double)(time(NULL)- start_time) ;
         bool succ = lns.run(timeLimit - runtime);
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
-        HL_num_expanded = lns.HL_num_expanded;
-        HL_num_generated = lns.HL_num_generated;
-        LL_num_expanded = lns.LL_num_expanded;
-        LL_num_generated = lns.LL_num_generated;
-        num_standard = lns.num_standard;
-        num_chasing = lns.num_chasing;
-        num_start = lns.num_start;
-        num_corridor = lns.num_corridor;
-        num_corridor2 = lns.num_corridor2;
-        runtime_corridor = lns.runtime_corridor;
-        iteration_stats = lns.iteration_stats;
+        runtime = (double)(time(NULL) - start_time);
+        statistic_list[0].HL_num_expanded = lns.HL_num_expanded;
+        statistic_list[0].HL_num_generated = lns.HL_num_generated;
+        statistic_list[0].LL_num_expanded = lns.LL_num_expanded;
+        statistic_list[0].LL_num_generated = lns.LL_num_generated;
+        statistic_list[0].num_standard = lns.num_standard;
+        statistic_list[0].num_chasing = lns.num_chasing;
+        statistic_list[0].num_start = lns.num_start;
+        statistic_list[0].num_corridor = lns.num_corridor;
+        statistic_list[0].num_corridor2 = lns.num_corridor2;
+        statistic_list[0].runtime_corridor = lns.runtime_corridor;
+        iteration_stats[0] = lns.iteration_stats;
         return succ;
     }
     else if(framework == "Parallel-LNS")
@@ -195,11 +196,12 @@ bool PythonCBS<Map>::hasConflicts(const vector<Path>& paths) const
 }
 
 template <class Map>
-p::dict PythonCBS<Map>::getResultDetail(int thread_id) {
+p::dict PythonCBS<Map>::getResultDetail() {
 	//return result detail
 	p::dict result;
+	int thread_id = this->best_thread_id;
 
-	result["runtime"] = statistic_list[thread_id].runtime;
+	result["runtime"] = runtime;
 	result["HL_expanded"] = statistic_list[thread_id].HL_num_expanded;
 	result["HL_generated"] = statistic_list[thread_id].HL_num_generated;
 	result["LL_expanded"] = statistic_list[thread_id].LL_num_expanded;
@@ -217,6 +219,7 @@ p::dict PythonCBS<Map>::getResultDetail(int thread_id) {
     result["num_corridor"] = statistic_list[thread_id].num_corridor;
     result["num_corridor2"] = statistic_list[thread_id].num_corridor2;
     result["runtime_corridor"] = statistic_list[thread_id].runtime_corridor;
+    result["best_initial_priority_strategy"] = this->bset_initisl_priority_strategy;
 
 
     size_t solution_cost = 0;
@@ -722,6 +725,7 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
     al->constraintTable.init(ml->map_size());
     al->computeHeuristics(ml);
     this->al_pool.resize(no_threads);
+    this->lns_pool.resize(no_threads);
     this->statistic_list.resize(no_threads);
     this->iteration_stats.resize(no_threads);
     boost::thread_group t_group;
@@ -733,7 +737,10 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
     for (int i = 0; i<no_threads;i++){
         AgentsLoader* temp = this->al->clone();
         this->al_pool[i] = temp;
-        t_group.add_thread(new boost::thread(&PythonCBS<FlatlandLoader>::LNS, this ,this->al_pool[i],i, strategies[i]));
+        this->lns_pool[i] = new LNS(*al_pool[i], *ml, f_w, s, strategies[i], options1, corridor2, trainCorridor1, chasing,
+                neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
+        runtime = (double)(time(NULL) - start_time);
+        t_group.add_thread(new boost::thread(&LNS::run,&(*this->lns_pool[i]),timeLimit - runtime));
     }
     // wait until all finish
     t_group.join_all();
@@ -743,6 +750,17 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
     int best_makespan = -1;
     int best_finished_agents = -1;
     for (int i=0; i<no_threads; i++){
+        statistic_list[0].HL_num_expanded = lns_pool[i]->HL_num_expanded;
+        statistic_list[0].HL_num_generated = lns_pool[i]->HL_num_generated;
+        statistic_list[0].LL_num_expanded = lns_pool[i]->LL_num_expanded;
+        statistic_list[0].LL_num_generated = lns_pool[i]->LL_num_generated;
+        statistic_list[0].num_standard = lns_pool[i]->num_standard;
+        statistic_list[0].num_chasing = lns_pool[i]->num_chasing;
+        statistic_list[0].num_start = lns_pool[i]->num_start;
+        statistic_list[0].num_corridor = lns_pool[i]->num_corridor;
+        statistic_list[0].num_corridor2 = lns_pool[i]->num_corridor2;
+        statistic_list[0].runtime_corridor = lns_pool[i]->runtime_corridor;
+        iteration_stats[0] = lns_pool[i]->iteration_stats;
 
         size_t solution_cost = 0;
         int finished_agents = 0;
@@ -758,7 +776,7 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
             cout <<"Initial PP strategy = "<<strategies[i]<<", "
                 << "Final Solution cost = " << solution_cost << ", "
                 << "Final makespan = " << makespan  << ", "
-                << "Final remaining time = " << timeLimit - runtime << endl;
+                << endl;
         }
         if (solution_cost < best_cost){
             best_cost = solution_cost;
@@ -770,6 +788,7 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
     delete this->al;
     this->al = this->al_pool[best_al];
     this->best_thread_id = best_al;
+    this->bset_initisl_priority_strategy = strategies[best_al];
     runtime = (double)(time(NULL) - start_time);
     cout <<"Best PP strategy = "<<strategies[best_al]<<", "
         << "Final Solution cost = " << best_cost << ", "

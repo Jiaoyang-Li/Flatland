@@ -101,7 +101,7 @@ bool SingleAgentICBS<Map>::validMove(int curr, int next) const
 template<class Map>
 bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weight, int focal_makespan,
         ConstraintTable& constraint_table,
-	ReservationTable* res_table, size_t max_plan_len, double lowerbound, std::clock_t start_clock ,int time_limit)
+	ReservationTable* res_table, size_t max_plan_len, double lowerbound, Time::time_point start_clock ,int time_limit)
 {
 
 	num_expanded = 0;
@@ -154,7 +154,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 	int time_generated = 0;
 	int time_check_count = 0;
-	std:clock_t runtime;
+    fsec runtime;
 	/*for (int h = 0; h < my_heuristic.size();h++) {
 		for (int heading = 0; heading<5;heading++)
 			std::cout << "(" << h << ": heading:"<<-1 <<": "<< my_heuristic[h].heading[-1] << ")";
@@ -163,9 +163,9 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 	while (!focal_list.empty()) 
 	{
 		if (num_generated / 10000 > time_check_count && time_limit != 0) {
-			runtime = std::clock() - start_clock;
+			runtime = Time::now() - start_clock;
 			time_check_count = num_generated / 10000;
-			if (runtime > time_limit) {
+			if (runtime.count() > time_limit) {
 				return false;
 			}
 		}
