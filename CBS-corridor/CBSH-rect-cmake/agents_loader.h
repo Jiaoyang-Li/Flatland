@@ -37,7 +37,10 @@ public:
     int num_of_agents;
     vector<Agent*> agents;
     ConstraintTable constraintTable; // store already planned paths, which are viewed as obstacles for future iterations
+
+    vector<Agent> agents_all;
     vector<Path> paths_all;
+    int makespan = 0; // the makepsan of the paths in paths_all
 
     //vector< pair<int, int> > initial_locations;
     //vector< pair<int, int> > goal_locations;
@@ -60,10 +63,15 @@ public:
     void generateAgentOrder(int agent_priority_strategy);
     void updateToBePlannedAgents() { updateToBePlannedAgents(num_of_agents_all); };
     void updateToBePlannedAgents(int num_of_agents);
-    bool addPaths(const vector<Path*>& paths, int kDelay);
+    bool addPaths(const vector<Path*>& paths);
     int getNumOfUnplannedAgents() const { return (int)unplanned_agents.size(); }
     int getNumOfAllAgents() const { return num_of_agents_all; }
     int getNumOfDeadAgents() const { return num_of_dead_agents; }
+    void sampleAgents(int _num_of_agents, int iteration, int num_instances, bool deletePath = false);
+    void recoverAgents(int _num_of_agents, int iteration, int num_instances);
+    AgentsLoader* clone();
+
+
     boost::python::list outputPaths()   {
         boost::python::list result;
         for (const auto& path : paths_all)  {
@@ -89,17 +97,6 @@ public:
     Agent getAgent(int id){
         return agents_all[id];
     }
-private:
-    int num_of_dead_agents = 0;
-    list<int> unplanned_agents;
-    int num_of_agents_all;
-    vector<Agent> agents_all;
-    //vector< pair<int, int> > initial_locations_all;
-    //vector< pair<int, int> > goal_locations_all;
-    //vector<int> headings_all;
-    // vector< vector<hvals> > heuristics;  // [agent_id][loc]
-
-    void quickSort(vector<int>& agent_order, int low, int high, int agent_priority_strategy);
 
     static inline bool compareAgent(const Agent& a1, const Agent& a2, int agent_priority_strategy)
     {  // return true if a1 < a2
@@ -150,6 +147,13 @@ private:
         else
             return true;    // keep the original ordering
     }
+
+private:
+    int num_of_dead_agents = 0;
+    list<int> unplanned_agents;
+    int num_of_agents_all;
+
+    void quickSort(vector<int>& agent_order, int low, int high, int agent_priority_strategy);
 };
 
 #endif

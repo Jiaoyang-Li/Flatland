@@ -2,6 +2,7 @@
 # project specific logic here.
 #
 cmake_minimum_required (VERSION 3.8)
+project ("CBS-K")
 
 IF(NOT CMAKE_BUILD_TYPE)
   #SET(CMAKE_BUILD_TYPE "DEBUG")
@@ -12,40 +13,41 @@ ENDIF()
 
 
 ADD_LIBRARY(PythonCBS SHARED
-	PythonCBS.cpp
-	PythonCBS.h
-	../CBSH-rect-cmake/flat_map_loader.h
-	../CBSH-rect-cmake/flat_map_loader.cpp
-	../CBSH-rect-cmake/agents_loader.h
-    ../CBSH-rect-cmake/compute_heuristic.h
-	../CBSH-rect-cmake/ICBSNode.h
-	../CBSH-rect-cmake/ICBSSearch.h
-	../CBSH-rect-cmake/LLNode.h
-	../CBSH-rect-cmake/map_loader.h
-	../CBSH-rect-cmake/MDD.h
-	../CBSH-rect-cmake/RectangleReasoning.h
-	../CBSH-rect-cmake/SingleAgentICBS.h
-	../CBSH-rect-cmake/agents_loader.cpp
-   ../CBSH-rect-cmake/compute_heuristic.cpp
-	../CBSH-rect-cmake/ICBSNode.cpp
-	../CBSH-rect-cmake/ICBSSearch.cpp
-	../CBSH-rect-cmake/LLNode.cpp
-	../CBSH-rect-cmake/map_loader.cpp
-	../CBSH-rect-cmake/MDD.cpp
-	../CBSH-rect-cmake/RectangleReasoning.cpp
-	../CBSH-rect-cmake/SingleAgentICBS.cpp
-	../CBSH-rect-cmake/ReservationTable.h
-	../CBSH-rect-cmake/ReservationTable.cpp
-	../CBSH-rect-cmake/Conflict.h
-	../CBSH-rect-cmake/Conflict.cpp
-	../CBSH-rect-cmake/ConstraintTable.cpp
-	../CBSH-rect-cmake/ConstraintTable.h
-	../CBSH-rect-cmake/CorridorReasoning.cpp
-	../CBSH-rect-cmake/CorridorReasoning.h
-	../CBSH-rect-cmake/egraph_reader.h
-	../CBSH-rect-cmake/common.h
-	../CBSH-rect-cmake/common.cpp
-    
+		PythonCBS.cpp
+		PythonCBS.h
+		../CBSH-rect-cmake/flat_map_loader.h
+		../CBSH-rect-cmake/flat_map_loader.cpp
+		../CBSH-rect-cmake/agents_loader.h
+		../CBSH-rect-cmake/compute_heuristic.h
+		../CBSH-rect-cmake/ICBSNode.h
+		../CBSH-rect-cmake/ICBSSearch.h
+		../CBSH-rect-cmake/LLNode.h
+		../CBSH-rect-cmake/map_loader.h
+		../CBSH-rect-cmake/MDD.h
+		../CBSH-rect-cmake/SingleAgentICBS.h
+		../CBSH-rect-cmake/agents_loader.cpp
+	   ../CBSH-rect-cmake/compute_heuristic.cpp
+		../CBSH-rect-cmake/ICBSNode.cpp
+		../CBSH-rect-cmake/ICBSSearch.cpp
+		../CBSH-rect-cmake/LLNode.cpp
+		../CBSH-rect-cmake/map_loader.cpp
+		../CBSH-rect-cmake/MDD.cpp
+		../CBSH-rect-cmake/SingleAgentICBS.cpp
+		../CBSH-rect-cmake/ReservationTable.h
+		../CBSH-rect-cmake/ReservationTable.cpp
+		../CBSH-rect-cmake/Conflict.h
+		../CBSH-rect-cmake/Conflict.cpp
+		../CBSH-rect-cmake/ConstraintTable.cpp
+		../CBSH-rect-cmake/ConstraintTable.h
+		../CBSH-rect-cmake/CorridorReasoning.cpp
+		../CBSH-rect-cmake/CorridorReasoning.h
+		../CBSH-rect-cmake/common.h
+		../CBSH-rect-cmake/common.cpp
+		../CBSH-rect-cmake/LNS.h
+		../CBSH-rect-cmake/LNS.cpp
+		../CBSH-rect-cmake/LLNode.h
+		../CBSH-rect-cmake/LLNode.cpp
+
 )
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY  "./bin")
 
@@ -97,7 +99,7 @@ if (WIN32)
 	SET(Boost_NO_BOOST_CMAKE ON)
 	set(BOOST_ROOT "C:/Users/czcz2/Google Drive/MIT/GCITR/boost_1_61_0/")
 	set(BOOST_LIBRARYDIR "C:/Users/czcz2/Google Drive/MIT/GCITR/boost_1_61_0/lib64-msvc-14.0")
-	FIND_PACKAGE(Boost 1.61.0 COMPONENTS system program_options python)
+	FIND_PACKAGE(Boost 1.61.0 COMPONENTS system program_options python thread)
 	IF(Boost_FOUND)
 		SET(Boost_USE_STATIC_LIBS ON)
 		SET(Boost_USE_MULTITHREADED ON)
@@ -111,6 +113,7 @@ if (WIN32)
 	ELSEIF(NOT Boost_FOUND)
 	  MESSAGE(FATAL_ERROR "Unable to find all boost libs")
 	ENDIF()
+
 else()
 	file(READ "/etc/issue" ETC_ISSUE)
 	string(REGEX MATCH "Ubuntu|Manjaro" DIST ${ETC_ISSUE})
@@ -145,7 +148,7 @@ else()
 	set(Boost_USE_STATIC_LIBS OFF)
 	set(Boost_USE_MULTITHREADED ON)  
 	set(Boost_USE_STATIC_RUNTIME OFF)
-	FIND_PACKAGE(Boost REQUIRED COMPONENTS system program_options ${boostPython})
+	FIND_PACKAGE(Boost REQUIRED COMPONENTS system program_options ${boostPython} thread)
 
 	# Detect and add SFML
 	# list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")

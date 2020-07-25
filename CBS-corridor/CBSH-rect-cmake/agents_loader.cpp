@@ -477,8 +477,40 @@ void AgentsLoader::updateToBePlannedAgents(int _num_of_agents)
     cout << endl;
 }
 
-bool AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)
+void AgentsLoader::sampleAgents(int _num_of_agents, int iteration, int num_instances, bool deletePath)
 {
+
+    this->num_of_agents = _num_of_agents;
+    agents.resize(num_of_agents);
+    cout << "Agents ids: ";
+    int start = agents_all.size()/num_instances * (iteration-1);
+    for (int i = 0; i < num_of_agents; i++)
+    {
+        int agent = (start+i)%agents_all.size();
+        cout << agent << ",";
+        agents[i] = &agents_all[agent];
+        if (deletePath){
+            constraintTable.delete_path(agent, paths_all[agent]);
+        }
+    }
+    cout << endl;
+}
+
+void AgentsLoader::recoverAgents(int _num_of_agents, int iteration, int num_instances)
+{
+
+    this->num_of_agents = _num_of_agents;
+    int start = agents_all.size()/num_instances * (iteration-1);
+    for (int i = 0; i < num_of_agents; i++)
+    {
+        int agent = (start+i)%agents_all.size();
+        constraintTable.insert_path(agent, paths_all[agent]);
+    }
+}
+
+bool AgentsLoader::addPaths(const vector<Path*>& new_paths)
+{
+    constraintTable.clear();
     assert((int)new_paths.size() == num_of_agents);
     list<int> giveup_agents;
     for (int i = 0; i < num_of_agents; i++)
@@ -495,24 +527,10 @@ bool AgentsLoader::addPaths(const vector<Path*>& new_paths, int kDelay)
         if(new_paths[i]->empty())
             num_of_dead_agents++;
         paths_all[a] = *new_paths[i];
-        assert(kDelay > 0); // TODO: consider kDelay==0 in the future (in which case, we also need to add edge constraints)
-        // check conflicts //TODO: this can be removed in our final solution
-        for (int t = 0; t < paths_all[a].size(); t++)
-        {
-            if (constraintTable.is_constrained(paths_all[a][t].location, t))
-            {
-                cout << "Agent "<< a <<"has a conflict at location " <<
-                        paths_all[a][t].location << " at timestep " << t << endl;
-                return false; // the path is conflicting with someone else
-            }
-        }
         // add the path to the constraint table
-        for (int t = 0; t < paths_all[a].size(); t++)
-        {
-            if (paths_all[a][t].location == -1)
-                continue;
-            constraintTable.insert(paths_all[a][t].location, max(0, t - kDelay), t + kDelay + 1);
-        }
+        if(!constraintTable.insert_path(a, paths_all[a]))
+            return false;
+        makespan = max(makespan, (int)paths_all[a].size() - 1);
     }
     unplanned_agents.splice(unplanned_agents.begin(), giveup_agents);
     return true;
@@ -527,4 +545,15 @@ void AgentsLoader::computeHeuristics(const FlatlandLoader* ml)
         ch.getHVals(agent.heuristics);
         agent.distance_to_goal = agent.heuristics[init_loc].get_hval(agent.heading);
     }
+}
+
+AgentsLoader* AgentsLoader::clone(){
+    AgentsLoader* new_al = new AgentsLoader();
+    new_al->num_of_agents_all =  this->num_of_agents_all;
+    ///this->heuristics.resize(num_of_agents_all);
+    new_al->agents_all =  this->agents_all;
+    new_al->paths_all =  this->paths_all;
+    new_al->constraintTable = this->constraintTable;
+    return new_al;
+
 }

@@ -57,14 +57,14 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
     hashtable_t::iterator it; // will be used for find()
 
 	if (start_heading == -1) {
-		LLNode* root = new LLNode(root_location, 0, 0, NULL, 0);
+		LLNode* root = new LLNode(root_location, 0, 0, nullptr, 0);
 		root->heading = start_heading;
 		root->open_handle = heap.push(root);  // add root to heap
 		nodes.insert(root);       // add root to hash_table (nodes)
 	}
 	else {
 		for (int heading = 0; heading < 4; heading++) {
-			LLNode* root = new LLNode(root_location, 0, 0, NULL, 0);
+			LLNode* root = new LLNode(root_location, 0, 0, nullptr, 0);
 			root->heading = heading;
 			root->open_handle = heap.push(root);  // add root to heap
 			nodes.insert(root);       // add root to hash_table (nodes)
@@ -75,20 +75,21 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 		LLNode* curr = heap.top();
 		heap.pop();
 
-		vector<Transition> transitions = ml->get_transitions(curr->loc,curr->heading,true);
-		for (const auto move:transitions)
+		list<Transition> transitions;
+		ml->get_transitions(transitions, curr->loc,curr->heading,true);
+		for (const auto& move:transitions)
 		{
-			int next_loc = move.first;
+			int next_loc = move.location;
 			int next_g_val = curr->g_val + 1;
-			LLNode* next = new LLNode(next_loc, next_g_val, 0, NULL, 0);
+			LLNode* next = new LLNode(next_loc, next_g_val, 0, nullptr, 0);
 
 			if (curr->heading == -1) //heading == -1 means no heading info
 				next->heading = -1;
 			else
-				if (move.second == 4) //move == 4 means wait
+				if (move.heading == 4) //move == 4 means wait
 					next->heading = curr->heading;
 				else
-					next->heading = move.second;
+					next->heading = move.heading;
 
 			curr->possible_next_heading.push_back(next->heading);
 
@@ -118,7 +119,7 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 	for (it = nodes.begin(); it != nodes.end(); it++)
 	{
 		LLNode* s = (*it);
-		if (s->heading == -1) {
+		/*if (s->heading == -1) {
 
 			if (!res[s->loc].heading.count(-1)) {
 				res[s->loc].heading[-1] = s->g_val;
@@ -131,39 +132,23 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 			}
 
 		}
-		else {
+		else {*/
 
 			if (s->possible_next_heading.size() > 0) {
 				for (int& next_heading : s->possible_next_heading) {
 					int heading = (next_heading + 2) % 4;
-
-					if (!res[s->loc].heading.count(heading)) {
+                    if (s->g_val < res[s->loc].heading[heading]) {
 						res[s->loc].heading[heading] = s->g_val;
-
-					}
-					else if (s->g_val < res[s->loc].heading[heading]) {
-						res[s->loc].heading[heading] = s->g_val;
-
-
 					}
 
 				}
 			}
 
 			int heading = (s->heading + 2) % 4;
-			if (!res[s->loc].heading.count(heading)) {
+			if (s->g_val < res[s->loc].heading[heading]) {
 				res[s->loc].heading[heading] = s->g_val;
-
 			}
-			else if (s->g_val < res[s->loc].heading[heading]) {
-				res[s->loc].heading[heading] = s->g_val;
-
-
-			}
-
-
-
-		}
+		//}
 
 		delete (s);
 	}

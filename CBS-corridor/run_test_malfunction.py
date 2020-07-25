@@ -48,11 +48,10 @@ schedule_generator = sparse_schedule_generator(speed_ration_map)
 
 # We can furthermore pass stochastic data to the RailEnv constructor which will allow for stochastic malfunctions
 # during an episode.
-stochastic_data = MalfunctionParameters(malfunction_rate=0,  # Rate of malfunction occurence
+stochastic_data = MalfunctionParameters(malfunction_rate=0.3,  # Rate of malfunction occurence
                                         min_duration=3,  # Minimal duration of malfunction
                                         max_duration=20  # Max duration of malfunction
                                         )
-print(stochastic_data)
 
 # Custom observation builder without predictor
 observation_builder = GlobalObsForRailEnv()
@@ -80,7 +79,7 @@ env.reset()
 #                           screen_height=800,  # Adjust these parameters to fit your resolution
 #                           screen_width=800)  # Adjust these parameters to fit your resolution
 
-framework = "LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning or "Parallel-LNS" for parallel lns
+framework = "LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning
 f_w = 1
 debug = True
 timelimit = 240  # unit: seconds
@@ -95,25 +94,36 @@ agent_priority_strategy = 0  #  choose a number between 0 and 5
 #                               3: prefer max speed then min distance
 #                               4: prefer min speed then min distance
 #                               5: prefer different start locations then max speed then max distance
-neighbor_generation_strategy = 2    # 0: random walk; 1: start; 2: intersection;
-prirority_ordering_strategy = 0     # 0: random; 1: max regret;
-replan_strategy = 1                 # 0: CBS; 1: prioritized planning;
 CBS = PythonCBS(env, framework, "CBSH", timelimit, default_group_size, debug, f_w,
-                corridor_method, chasing, accept_partial_solution, agent_priority_strategy,
-                neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
+                corridor_method, chasing ,accept_partial_solution, agent_priority_strategy)
 success = CBS.search()
 plan = CBS.getResult()
 
-if CBS.hasConflicts():
-    plan = CBS.getResult()
-    for p in plan:
-        print(p)
-    print("The solution has conflicts")
-    exit(-1)
+env_renderer = RenderTool(env,
+                          agent_render_variant=AgentRenderVariant.ONE_STEP_BEHIND,
+                          show_debug=False,
+                          screen_height=600,  # Adjust these parameters to fit your resolution
+                          screen_width=800)  # Adjust these parameters to fit your resolution
 
-# write results to files for performance analysis
-fileName = str(env.width) + "x" + str(env.height) + "map_" \
-           + str(env.get_num_agents()) + "trains_" \
-           + "_groupsize=" + str(default_group_size) \
-           + "_seed=" + str(seed) + ".csv"
-CBS.writeResultsToFile(fileName)
+env_renderer.reset()
+
+env_renderer.render_env(show=True, frames=True, show_observations=False)
+
+action_dict = {}
+for step in range(500):
+
+    action_dict = {0: 1,1:1,2:2} #This is just an example. Use Yi's action controller to convert path to action
+    # print(action_dict)
+
+    obs, all_rewards, done, info = env.step(action_dict)
+    print("Rewards: ", all_rewards, "  [done=", done, "]")
+    env_renderer.render_env(show=True, frames=False, show_observations=False )
+    # for agent in env.agents:
+    #     print(agent.position)
+    if done["__all__"]:
+        print("Done!!")
+        break
+    time.sleep(0.2)
+
+x=input("Press any key to exit")
+

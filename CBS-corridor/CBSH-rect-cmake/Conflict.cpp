@@ -28,17 +28,15 @@ std::ostream& operator<<(std::ostream& os, const Conflict& conflict)
 		case conflict_type::STANDARD:
 			os << "standard";
 			break;
-		case conflict_type::RECTANGLE:
-			os <<conflict.flipType << " flip rectangle";
-			break;
 		case conflict_type::CORRIDOR2:
 			os << "corrdior2";
 			break;
-		case conflict_type::CORRIDOR4:
-			os << "corrdior4";
+		case conflict_type::CHASING:
+			os << "chasing";
 			break;
-		case conflict_type::TARGET:
-			os << "target";
+        case conflict_type::CORRIDOR:
+            os << "corridor";
+            break;
 	}
 	os << " conflict:  " << conflict.a1 << " with ";
 	for (auto con : conflict.constraint1)
@@ -52,17 +50,17 @@ std::ostream& operator<<(std::ostream& os, const Conflict& conflict)
 
 bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return true if conflict2 has higher priority
 {
-//	if (conflict1.type == conflict_type::START && conflict2.type == conflict_type::START)
-//	{
-//		if (conflict1.p < conflict2.p)
-//			return false;
-//		else
-//			return true;
-//	}
-//	else if (conflict1.type == conflict_type::START)
-//		return false;
-//	else if (conflict2.type == conflict_type::START)
-//		return true;
+	if (conflict1.type == conflict_type::START && conflict2.type == conflict_type::START)
+	{
+		if (conflict1.p < conflict2.p)
+			return false;
+		else
+			return true;
+	}
+	else if (conflict1.type == conflict_type::START)
+		return false;
+	else if (conflict2.type == conflict_type::START)
+		return true;
 
 
 //	if (conflict1.type == conflict_type::CORRIDOR2 && conflict2.type != conflict_type::CORRIDOR2)
@@ -106,9 +104,9 @@ bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return
             if (conflict2.type != conflict_type::CHASING)
                 return false;
         }
-        else if (conflict1.type == conflict_type::SEMI_CORRIDOR)
+        else if (conflict1.type == conflict_type::CORRIDOR)
         {
-            if (conflict2.type != conflict_type::SEMI_CORRIDOR)
+            if (conflict2.type != conflict_type::CORRIDOR)
                 return false;
         }
 		else if (conflict2.type == conflict_type::CORRIDOR2 && conflict2.type != conflict_type::CHASING )
@@ -119,7 +117,7 @@ bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return
         {
             return true;
         }
-        else if (conflict2.type == conflict_type::SEMI_CORRIDOR )
+        else if (conflict2.type == conflict_type::CORRIDOR )
         {
             return true;
         }
@@ -135,7 +133,7 @@ bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return
         {
             return true;
         }
-        else if (conflict2.type == conflict_type::SEMI_CORRIDOR &&  conflict1.type != conflict_type::SEMI_CORRIDOR)
+        else if (conflict2.type == conflict_type::CORRIDOR &&  conflict1.type != conflict_type::CORRIDOR)
         {
             return true;
         }
@@ -146,7 +144,7 @@ bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return
 		else if(conflict2.type != conflict_type::CHASING && conflict1.type == conflict_type::CHASING){
 		    return false;
 		}
-        else if(conflict2.type != conflict_type::SEMI_CORRIDOR && conflict1.type == conflict_type::SEMI_CORRIDOR){
+        else if(conflict2.type != conflict_type::CORRIDOR && conflict1.type == conflict_type::CORRIDOR){
             return false;
         }
 		
@@ -166,7 +164,7 @@ bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return
 		return false;
 }
 
-
+/*
 // add a pair of barrier constraints
 void addBarrierConstraints(int S1, int S2, int S1_t, int S2_t, int Rg, int num_col,
 	std::list<Constraint>& constraints1, std::list<Constraint>& constraints2)
@@ -479,7 +477,7 @@ bool addModifiedVerticalLongBarrierConstraint(const std::vector<PathEntry>& path
 				//std::cout << std::endl;
 			}
 
-			if (kMDD==NULL||t2 - St + i >= kMDD->levels.size())
+			if (kMDD==nullptr||t2 - St + i >= kMDD->levels.size())
 				continue;
 			if ((kMDD)->levels[t2 - St + i].count(loc)) {
 				for (int consk = 0; consk <= k - i; consk++) {
@@ -516,17 +514,6 @@ bool addModifiedHorizontalLongBarrierConstraint(const std::vector<PathEntry>& pa
 	int Ri_y, int Rg_y, int Rg_t, int num_col, int St,
 	std::list<Constraint>& constraints, int k, MDDPath* kMDD)
 {
-	/*for (int t = 0; t < path.size(); t++) {
-		std::cout << "(" << path.at(t).location / num_col << "," << path.at(t).location % num_col << ")";
-		list<int>::const_iterator locs;
-		for (locs = path.at(t).locations.begin(); locs != path.at(t).locations.end(); locs++)
-		{
-			cout << (*locs) << " ";
-		}
-		cout << "->";
-
-	}
-	std::cout << std::endl;*/
 	//std::cout << "Horizontal x:" << x << " Riy:" << Ri_y << "Rgy:" << Rg_y << " t:" << Rg_t << std::endl;
 
 	//for (int i = 0; i < kMDD.size(); i++) {
@@ -573,12 +560,12 @@ bool addModifiedHorizontalLongBarrierConstraint(const std::vector<PathEntry>& pa
 			}
 
 
-			//if (kMDD != NULL){
+			//if (kMDD != nullptr){
 			//	//std::cout << "add constraint on k=" << i << " t=" << t2 << ": ";
 			//	for (int mdd = 0; mdd < (*kMDD).size(); mdd++) {
 			//		if ((t2 - St + i) >= (*kMDD)[mdd]->levels.size())
 			//			continue;
-			if (kMDD == NULL||t2 - St + i >= kMDD->levels.size())
+			if (kMDD == nullptr||t2 - St + i >= kMDD->levels.size())
 				continue;
 			if (kMDD->levels[t2 - St + i].count(loc)) {
 				for (int consk = 0; consk <= k - i; consk++) {
@@ -657,7 +644,7 @@ bool addFlippedVerticalLongBarrierConstraint(const std::vector<PathEntry>& path,
 				//}
 				//std::cout << std::endl;
 
-				if (kMDD == NULL || t >= kMDD->levels.size())
+				if (kMDD == nullptr || t >= kMDD->levels.size())
 					continue;
 				if ((kMDD)->levels[t].count(loc)) {
 					std::stringstream con;
@@ -730,7 +717,7 @@ bool addFlippedHorizontalLongBarrierConstraint(const std::vector<PathEntry>& pat
 				//}
 				//std::cout << std::endl;
 
-				if (kMDD == NULL || t >= kMDD->levels.size())
+				if (kMDD == nullptr || t >= kMDD->levels.size())
 					continue;
 				if ((kMDD)->levels[t].count(loc)) {
 					std::stringstream con;
@@ -759,3 +746,4 @@ bool addFlippedHorizontalLongBarrierConstraint(const std::vector<PathEntry>& pat
 
 
 	}
+*/

@@ -12,10 +12,10 @@
 using namespace std;
 
 struct hvals {
-	boost::unordered_map<int, int> heading;
+	int heading[4] = {MAX_COST, MAX_COST, MAX_COST, MAX_COST};
 	int get_hval(int direction) const {
-		if (heading.count(direction)) {
-			return heading.at(direction);
+		if (direction >= 0) {
+			return heading[direction];
 		}
 		else {
 			return MAX_COST;
@@ -35,7 +35,7 @@ class ComputeHeuristic
   ComputeHeuristic();
   ComputeHeuristic(int start_location, int goal_location, const Map* ml0, int start_heading = 4);
  
- bool validMove(int curr, int next) const;
+ // bool validMove(int curr, int next) const;
 
  void getHVals(vector<hvals>& res,int limit = INT_MAX);
 

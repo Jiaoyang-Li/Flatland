@@ -16,9 +16,9 @@ Then, in python codes:
 
 ```python
 from libPythonCBS import PythonCBS
+framework = "LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning
 f_w = 1
 debug = True
-k = 1
 timelimit = 240  # unit: seconds
 default_group_size = 16 # max number of agents in a group
 corridor_method = 1 # or 0/off or 2/reasonable corridor. Suggest 1
@@ -31,8 +31,12 @@ agent_priority_strategy = 0  #  the strategy for sorting agents, choosing a numb
 #                               3: prefer max speed then min distance
 #                               4: prefer min speed then min distance
 #                               5: prefer different start locations then max speed then max distance
-CBS = PythonCBS(env,"CBSH",k,timelimit,default_group_size,debug,f_w,
-                corridor_method, chasing ,accept_partial_solution,agent_priority_strategy)
+neighbor_generation_strategy = 2    # 0: random walk; 1: start; 2: intersection;
+prirority_ordering_strategy = 0     # 0: random; 1: max regret;
+replan_strategy = 1                 # 0: CBS; 1: prioritized planning;
+CBS = PythonCBS(env, framework, "CBSH", timelimit, default_group_size, debug, f_w,
+                corridor_method, chasing, accept_partial_solution, agent_priority_strategy,
+                neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
 success = CBS.search()
 plan = CBS.getResult()
 ```
@@ -77,7 +81,7 @@ Here is a summary of the changes to the standard MAPF model:
 
 For now, we do not consider the malfunction in this model.
 
-## Framework
+## Framework 1: GPP
 We use a hybrid framework of prioritized planning and CBS. Here is the pseudo-code:
 
 ```c++
@@ -87,7 +91,7 @@ A = sort(A);  // sort the agents by some heuristics (e.g., speed, distance to th
 m = M; // M is the default number of agents in a group
 while(A is not empty) {
     a = first m agents in A;
-    T = remaining_runtime * m / |A| / (1 + 0.5log(m));
+    T = remaining_runtime * m / 2|A|;
     paths = CBS(a, T, P);  // try to find collision-free paths for agents in a that do not collide with any path in P by CBS with a time limit of T 
     if(paths are found) {
         m = min(2 * m, M);
@@ -104,6 +108,80 @@ while(A is not empty) {
 
 In particular, if M is the number of total agents, our framework is identical to CBS. If M is 1, our framework is identical to prioritized planning.
 
+## Framework 2: LNS
+We use Large Neighbourhood Search (LNS) as the framwork. 
+
+```c++
+A = [a1, a2, ...];  // unplanned agents
+A = sort(A);  // sort the agents by some heuristics (e.g., speed, distance to the goal location)
+P = PrioritizedPlanning(A); // get initial paths by PP
+while(not timeout and m <= num_of_agents) {
+    A' = a subset of agents in A;
+    old_paths = paths of A' in P;
+    remove old_paths from P;
+    paths = replan paths for agents in A' by viewing paths in P as dynamic obstabcles;
+    if (paths are better than old_paths)
+        add paths to P;
+    else
+        add old_paths to P;
+}
+```
+
+### Different stratefies for the neighborhood search
+
+#### Strategy 1: random walk
+We select a bottleneck agent and let it perform a random walk on "improving moves" until it conflicts with m-1 agents.
+Together with the bottle neck agent, we replan the paths of the m agents by CBS.
+```c++
+a = the agent with max cost increment in A but not in tabu_list;
+update tabu_list;
+conflicting_agents = randomWalk(a, m - 1); // let agent a perform a random walk (starting from a random timestep on its path) until it conflicts with m - 1 agents
+A' = {a} + conflicting_agents;
+old_paths = paths of A' in P;
+remove old_paths from P;
+T = min(remaining_runtime, 10s);
+paths = CBS(A', T, P);  // try to find collision-free paths for agents in a that do not collide with any path in P by CBS with a time limit of T 
+if(paths are found) {
+    add paths to P;
+    m += 1;
+} else {
+    add old_paths to P;
+    m -= 1;
+}
+```
+
+#### Strategy 2: start location
+We randomly select a start location and collect the agents who start from there.
+We sort the agents in decreasing order of their cost increments (breaking ties randomly) and replan their paths by prioritized planning.
+ ```c++
+x = a random start location;
+A' = agents who start at location x;
+A' = sort(A'); // sort the agents in decreasing order of their cost increments
+old_paths = paths of A' in P;
+remove old_paths from P;
+paths = PrioritizedPlanning(A); // get initial paths by PP
+if (paths are better than old_paths)
+    add paths to P;
+else
+    add old_paths to P;
+ ```
+
+#### Strategy 3: intersection
+We randomly select an intersection and collect the agents who has visited there.
+We sort the agents randomly and replan their paths by prioritized planning.
+ ```c++
+x = a random inersection location;
+A' = agents who has visited x;
+A' = random_shuffle(A');
+old_paths = paths of A' in P;
+remove old_paths from P;
+paths = PrioritizedPlanning(A); // get initial paths by PP
+if (paths are better than old_paths)
+    add paths to P;
+else
+    add old_paths to P;
+ ```
+
 ## CBS
 For the CBS solver, we have the following major changes:
 * We use k-robust CBSH with k = 1.
@@ -117,7 +195,7 @@ For the CBS solver, we have the following major changes:
     * start conflicts (to be done).
 * We use focal search at the high-level of CBS. CBS node n is in the focal list iff
     * n.num_of_dead_agents == best.num_of_dead_agents,
-    * n.makespan <= max(best.makespan, makespan(P)), and
+    * n.makespan <= max(best.makespan, makespan(P), max_timestep / 2), and
     * n.sum_of_costs + n.h <= w * (best.sum_of_costs + best.h),
    
    where best is the first node in the open list, makespan(P) is the makespan of the planned paths, and w is the user-provided suboptimality bound.
@@ -175,4 +253,5 @@ Here are some material about the winner solutions of last year.
 |[Third place](https://github.com/vetand/FlatlandChallenge2019/blob/master/Approach_description.pdf)| Prioritized planning  (max-speed agent first) | Replan the delayed agent by viewing it as the lowest-priority agent | 95% |
 |[Fourth place](https://eprints.hsr.ch/855/1/Masterarbeit_Waelter_Jonas.pdf)| Prioritized planning (max-distance agent first) | Complete Path Reservation (CPR) or reinforcement learning| 79% |
 |Fifth place| Reinforcement learning | Reinforcement learning | 55% |
+
 There are also some [presentations](https://www.youtube.com/watch?v=rGzXsOC7qXg) available online.

@@ -9,20 +9,17 @@
 using namespace boost;
 using namespace std;
 
-
 MapLoader::MapLoader(){}
 
 
-vector<Transition> MapLoader::get_transitions(int loc, int heading, int noWait) const {
-	vector<Transition> transitions;
+void MapLoader::get_transitions(list<Transition>& transitions, int loc, int heading, int noWait) const {
 	int moveRange = 5;
-
 	for (int direction = 0; direction < moveRange; direction++)
 	{
 		Transition move;
 		int next_loc = loc + moves_offset[direction];
-		move.first = next_loc;
-		move.second = -1; //-1 means no heading
+		move.location = next_loc;
+		move.heading = -1; //-1 means no heading
 		if (validMove(loc, next_loc) && !my_map[next_loc])
 		{
 			transitions.push_back(move);
@@ -30,21 +27,16 @@ vector<Transition> MapLoader::get_transitions(int loc, int heading, int noWait) 
 		}
 
 	}
-		
-	return transitions;
-	
 }
 
-vector<Transition> MapLoader::get_exits(int loc, int heading, float speed, int noWait) const {
-	vector<Transition> transitions;
+void MapLoader::get_exits(list<Transition>& transitions, int loc, int heading, float speed, int noWait) const {
 	int moveRange = 5;
-
 	for (int direction = 0; direction < moveRange; direction++)
 	{
 		Transition move;
 		int next_loc = loc + moves_offset[direction];
-		move.first = next_loc;
-		move.second = -1; //-1 means no heading
+		move.location = next_loc;
+		move.heading = -1; //-1 means no heading
 		if (validMove(loc, next_loc) && !my_map[next_loc])
 		{
 			transitions.push_back(move);
@@ -52,15 +44,12 @@ vector<Transition> MapLoader::get_exits(int loc, int heading, float speed, int n
 		}
 
 	}
-
-	return transitions;
-
 }
 
-bool MapLoader::getLoc(int loc)  {
+bool MapLoader::getLoc(int loc) const  {
 	return my_map[loc];
 }
-int MapLoader::getDegree(int loc)
+int MapLoader::getDegree(int loc) const
 {
 	if (loc < 0 || loc >= map_size() || getLoc(loc))
 		return -1;

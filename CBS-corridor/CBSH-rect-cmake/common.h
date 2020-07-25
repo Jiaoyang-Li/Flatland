@@ -10,14 +10,14 @@
 #include <memory>  // std::shared_ptr
 
 #define MAX_COST INT_MAX/2
-enum conflict_type { TARGET, CORRIDOR2, CORRIDOR4, RECTANGLE, STANDARD,CHASING,SEMI_CORRIDOR,START, TYPE_COUNT };
+enum conflict_type { CORRIDOR2, CORRIDOR4, STANDARD,CHASING,CORRIDOR,START, TYPE_COUNT };
 enum conflict_priority { CARDINAL, SEMI, NON, UNKNOWN, PRIORITY_COUNT };
 
-enum constraint_type { LENGTH, RANGE, BARRIER, VERTEX, EDGE, CONSTRAINT_COUNT };
+enum constraint_type { RANGE, VERTEX, EDGE, CONSTRAINT_COUNT };
 typedef std::tuple<int, int, int, constraint_type> Constraint;
 typedef std::list<std::shared_ptr<std::tuple<int, int, int, int, int,int>>> OldConfList;
 
-enum constraint_strategy { CBS, ICBS, CBSH, CBSH_CR, CBSH_R, CBSH_RM, CBSH_GR, STRATEGY_COUNT };
+enum constraint_strategy { CBS, ICBS, CBSH, STRATEGY_COUNT };
 
 using std::pair;
 using std::make_pair;
@@ -37,31 +37,30 @@ namespace N
 struct PathEntry
 {
 
-	int location;
-	int heading;
-	bool single;
-	int actionToHere;
+	int location = -1;
+	int heading = -1;
+	bool single = false;
+	int actionToHere = -1;
 	bool malfunction = false;
 	int malfunction_left = 0;
 	int next_malfunction = 0;
-	float position_fraction;
-	int exit_heading;
-	int exit_loc;
-	PathEntry(int loc = -1) { location = loc; single = false; }
-	std::list<int> locations; // all possible locations at the same time step (i.e., mdd nodes at the same time step)
-	OldConfList* conflist=NULL;
+	float position_fraction = 0.0;
+	int exit_heading = -1;
+	int exit_loc = -1;
+	//PathEntry(int loc = -1) { location = loc; single = false; }
+	//std::list<int> locations; // all possible locations at the same time step (i.e., mdd nodes at the same time step)
+	OldConfList* conflist=nullptr;
 };
 
 struct Transition {
-	int first;//location
-	int second;//heading
+	int location = -1;
+	int heading = -2;
 	float position_fraction=0.0;
 	int exit_loc=-1;
 	int exit_heading = -1;
-    bool turn_active = false;
 };
 
-struct MDDPath {
+/*struct MDDPath {
 	vector<std::unordered_set<int>> levels;
 	void print() {
 		for (int l = 0; l < levels.size(); l++) {
@@ -83,7 +82,7 @@ struct MDDPath {
 			std::cout << std::endl;
 		}
 	}
-};
+};*/
 
 
 

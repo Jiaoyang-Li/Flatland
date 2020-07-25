@@ -7,7 +7,6 @@
 
 
 
-
 class ICBSNode
 {
 public:
@@ -78,7 +77,7 @@ public:
 	//std::shared_ptr<RConflict> rConflict;
 	std::shared_ptr<Conflict> conflict;
 
-	ICBSNode* parent=NULL;
+	ICBSNode* parent = nullptr;
 	std::vector<ICBSNode*> children;
 
 	int agent_id;
