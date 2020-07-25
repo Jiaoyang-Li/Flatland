@@ -4,9 +4,7 @@
 #include <boost/python.hpp>
 #include <boost/thread.hpp>
 #include "flat_map_loader.h"
-
-
-#include "ICBSSearch.h"
+#include "LNS.h"
 
 
 namespace p = boost::python;
@@ -30,7 +28,8 @@ class PythonCBS {
 public:
 	PythonCBS(p::object railEnv1, string framework, std::string algo, int t,
               int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
-              int agent_priority_strategy);
+              int agent_priority_strategy, int neighbor_generation_strategy,
+              int prirority_ordering_strategy, int replan_strategy);
 
 	p::list getResult();
 
@@ -43,7 +42,7 @@ public:
 	void updateFw(float fw);
     p::list benchmarkSingleGroup(int group_size,int iterations, int time_limit);
     p::list benchmarkSingleGroupLNS(int group_size,int iterations, int time_limit);
-
+    bool findConflicts() const;
 
     void writeResultsToFile(const string& fileName) const
     {
@@ -99,14 +98,15 @@ private:
 	bool trainCorridor2 = false;
 	bool chasing = false;
 	int best_thread_id = 0;
+    int neighbor_generation_strategy;
+    int prirority_ordering_strategy;
+    int replan_strategy;
 
 	//stats about CBS
     std::clock_t start_time;
     double runtime;
     vector<statistics> statistic_list;
 
-
-    ConstraintTable constraintTable;
 
     //stats about each iteration
     typedef tuple<int, double, double, double, int,
@@ -115,7 +115,6 @@ private:
 
     bool PrioritizedPlaning(AgentsLoader* al = NULL, int thread_id = 0, int priority_strategy = -1);
     bool GroupPrioritizedPlaning();
-    bool LNS(AgentsLoader* al = NULL, int thread_id = 0, int priority_strategy = -1);
     bool parallel_LNS(int no_threads = 4);
 
     void generateNeighbor(int agent_id, const PathEntry& start, int start_time,

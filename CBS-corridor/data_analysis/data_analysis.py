@@ -36,10 +36,10 @@ for r in results:
     cost[algo].append(r['solution_cost'] / r['agents'] / r['max_timestep'])
     makespan[algo].append(r['makespan'])
     deadline[algo].append(r['max_timestep'])
-    conflicts[algo]['start'].append(r['num_start'])
-    conflicts[algo]['corridor'].append(r['num_semi_corridor'])
-    conflicts[algo]['chasing'].append(r['num_chasing'])
-    conflicts[algo]['vertex'].append(r['HL_expanded'] - r['num_start'] - r['num_semi_corridor'] - r['num_chasing'])
+    #conflicts[algo]['start'].append(r['num_start'])
+    #conflicts[algo]['corridor'].append(r['num_semi_corridor'])
+    #conflicts[algo]['chasing'].append(r['num_chasing'])
+    #conflicts[algo]['vertex'].append(r['HL_expanded'] - r['num_start'] - r['num_semi_corridor'] - r['num_chasing'])
 for algo in instances.keys():
     print("\n\nAlgorithm {}".format(algo))
     print("success rate = {}".format(np.mean(success[algo])))
@@ -81,7 +81,7 @@ for algo in instances.keys():
 plt.show()
 
 
-algo = 'CBSH(1.0)_groupsize=32_priority=1'
+'''algo = 'CBSH(1.0)_groupsize=32_priority=1'
 plt.subplot(1, 2, 1)
 plt.xticks(rotation=45)
 plt.ylabel("#resolved conflicts")
@@ -110,4 +110,4 @@ plt.bar(instances[algo], y, label='corridor')
 y = [conflicts[algo]['chasing'][i] / (conflicts[algo]['vertex'][i] + conflicts[algo]['start'][i] + conflicts[algo]['corridor'][i] + conflicts[algo]['chasing'][i]) for i in range(N)]
 plt.bar(instances[algo], y, label='chasing')
 plt.legend()
-plt.show()
+plt.show()'''

@@ -82,17 +82,26 @@ int CorridorReasoning<Map>::getEnteringTimeForCorridor(const std::vector<PathEnt
 }
 
 template<class Map>
-int CorridorReasoning<Map>::getEnteringTimeForChasing(const std::vector<PathEntry>& path,
-        const std::vector<PathEntry>& path2, int t, const Map* map)
+void CorridorReasoning<Map>::getEnteringTimeForChasing(int enter_time[2], const std::vector<PathEntry>& path1,
+        const std::vector<PathEntry>& path2, int t1, int t2, const Map* map)
 {
-    assert(t < path.size() && path[0].location < 0 && path2[0].location < 0);
-    int loc = path[t].location;
-    while (loc >= 0 && map->getDegree(loc) == 2)
+    assert(t1 < path1.size() && path1[0].location < 0 &&
+           t2 < path2.size() && path2[0].location < 0 &&
+           path1[t1].location == path2[t2].location);
+    int loc = path1[t1].location;
+    while (map->getDegree(loc) == 2)
     {
-        t--;
-        loc = path[t].location;
+        while (path1[t1].location == loc)
+            t1--;
+        while (path2[t2].location == loc)
+            t2--;
+        if (path1[t1].location < 0 || path2[t2].location < 0)
+            break;
+        assert(path1[t1].location == path2[t2].location);
+        loc = path1[t1].location;
     }
-    return t + 1;
+    enter_time[0] = t1 + 1;
+    enter_time[1] = t2 + 1;
 }
 
 template<class Map>

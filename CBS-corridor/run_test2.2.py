@@ -95,13 +95,21 @@ agent_priority_strategy = 0  #  choose a number between 0 and 5
 #                               3: prefer max speed then min distance
 #                               4: prefer min speed then min distance
 #                               5: prefer different start locations then max speed then max distance
+neighbor_generation_strategy = 2    # 0: random walk; 1: start; 2: intersection;
+prirority_ordering_strategy = 0     # 0: random; 1: max regret;
+replan_strategy = 1                 # 0: CBS; 1: prioritized planning;
 CBS = PythonCBS(env, framework, "CBSH", timelimit, default_group_size, debug, f_w,
-                corridor_method, chasing ,accept_partial_solution, agent_priority_strategy)
+                corridor_method, chasing, accept_partial_solution, agent_priority_strategy,
+                neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
 success = CBS.search()
 plan = CBS.getResult()
 
-for p in plan:
-    print(p)
+if CBS.hasConflicts():
+    plan = CBS.getResult()
+    for p in plan:
+        print(p)
+    print("The solution has conflicts")
+    exit(-1)
 
 # write results to files for performance analysis
 fileName = str(env.width) + "x" + str(env.height) + "map_" \

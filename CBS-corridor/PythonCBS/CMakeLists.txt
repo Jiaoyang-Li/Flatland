@@ -26,7 +26,7 @@ ADD_LIBRARY(PythonCBS SHARED
 	../CBSH-rect-cmake/MDD.h
 	../CBSH-rect-cmake/SingleAgentICBS.h
 	../CBSH-rect-cmake/agents_loader.cpp
-   ../CBSH-rect-cmake/compute_heuristic.cpp
+    ../CBSH-rect-cmake/compute_heuristic.cpp
 	../CBSH-rect-cmake/ICBSNode.cpp
 	../CBSH-rect-cmake/ICBSSearch.cpp
 	../CBSH-rect-cmake/LLNode.cpp
@@ -41,10 +41,10 @@ ADD_LIBRARY(PythonCBS SHARED
 	../CBSH-rect-cmake/ConstraintTable.h
 	../CBSH-rect-cmake/CorridorReasoning.cpp
 	../CBSH-rect-cmake/CorridorReasoning.h
-        ../CBSH-rect-cmake/common.h
+	../CBSH-rect-cmake/common.h
 	../CBSH-rect-cmake/common.cpp
-    
-)
+	../CBSH-rect-cmake/LNS.h
+	../CBSH-rect-cmake/LNS.cpp)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY  "./bin")
 
 
