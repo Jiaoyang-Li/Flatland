@@ -1,4 +1,5 @@
 #include "PythonCBS.h"
+#include <time.h>
 #include "flat_map_loader.h"
 #include "MDD.h"
 #include <iomanip>
@@ -60,8 +61,8 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, std::string algo
 
 	std::cout << "load map " << p::extract<int>(rows)<<" x "<< p::extract<int>(cols) << std::endl;
 	//ml =  new MapLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
-	ml = new FlatlandLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
-	std::cout << "load agents " << std::endl;
+    ml = new FlatlandLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
+    std::cout << "load agents " << std::endl;
 
 	al =  new AgentsLoader(railEnv.attr("agents"));
 	std::cout << "load done " << std::endl;
@@ -101,14 +102,17 @@ p::list PythonCBS<Map>::getResult() {
 
 template <class Map>
 bool PythonCBS<Map>::search() {
-    start_time = std::clock();
+    start_time = time(NULL);
     if (options1.debug)
 		cout << "start initialize" << endl;
 	//initialize search engine
 	al->constraintTable.init(ml->map_size());
     al->computeHeuristics(ml);
+    this->statistic_list.resize(1);
     if (framework == "LNS")
         return LNS();
+    else if(framework == "Parallel-LNS")
+        return parallel_LNS(4);
     else
 	    return GroupPrioritizedPlaning();
 }
@@ -144,26 +148,26 @@ bool PythonCBS<Map>::hasConflicts(const vector<Path>& paths) const
 }
 
 template <class Map>
-p::dict PythonCBS<Map>::getResultDetail() {
+p::dict PythonCBS<Map>::getResultDetail(int thread_id) {
 	//return result detail
 	p::dict result;
 
-	result["runtime"] = runtime;
-	result["HL_expanded"] = HL_num_expanded;
-	result["HL_generated"] = HL_num_generated;
-	result["LL_expanded"] = LL_num_expanded;
-	result["LL_generated"] = LL_num_generated;
+	result["runtime"] = statistic_list[thread_id].runtime;
+	result["HL_expanded"] = statistic_list[thread_id].HL_num_expanded;
+	result["HL_generated"] = statistic_list[thread_id].HL_num_generated;
+	result["LL_expanded"] = statistic_list[thread_id].LL_num_expanded;
+	result["LL_generated"] = statistic_list[thread_id].LL_num_generated;
     std::stringstream stream;
     stream << std::fixed << std::setprecision(1) << f_w;
     std::string s = stream.str();
 	result["algorithm"] = framework + "_" + algo + "(" + s + ")_groupsize=" + to_string(defaultGroupSize) +
 	        "_priority=" + to_string(agent_priority_strategy);
-    result["num_standard"] = num_standard;
-    result["num_chasing"] = num_chasing;
-    result["num_start"] = num_start;
-    result["num_corridor"] = num_corridor;
-    result["num_corridor2"] = num_corridor2;
-    result["runtime_corridor"] = runtime_corridor;
+    result["num_standard"] = statistic_list[thread_id].num_standard;
+    result["num_chasing"] = statistic_list[thread_id].num_chasing;
+    result["num_start"] = statistic_list[thread_id].num_start;
+    result["num_corridor"] = statistic_list[thread_id].num_corridor;
+    result["num_corridor2"] = statistic_list[thread_id].num_corridor2;
+    result["runtime_corridor"] = statistic_list[thread_id].runtime_corridor;
 
 
     size_t solution_cost = 0;
@@ -183,18 +187,22 @@ p::dict PythonCBS<Map>::getResultDetail() {
 }
 
 template <class Map>
-bool PythonCBS<Map>::PrioritizedPlaning()
+bool PythonCBS<Map>::PrioritizedPlaning(AgentsLoader* al, int thread_id, int priority_strategy)
 {
+    if (al == NULL)
+        al = this->al;
+    if (priority_strategy == -1)
+        priority_strategy = this->agent_priority_strategy;
     if (options1.debug)
         cout << "Prioritized planning" << endl;
     int screen;
     screen = options1.debug;
     if (options1.debug)
         cout << "Sort the agents" << endl;
-    al->generateAgentOrder(agent_priority_strategy);
+    al->generateAgentOrder(priority_strategy);
 
 
-    runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+    double runtime = (double)(time(NULL) - start_time);
     while (runtime < timeLimit) {
         cout << endl;
         al->updateToBePlannedAgents(1);
@@ -213,11 +221,11 @@ bool PythonCBS<Map>::PrioritizedPlaning()
             hasConflicts(al->paths_all); // to print the conflict
             return false;
         }
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        runtime = (double)(time(NULL) - start_time);
         int old_runtime = 0;
-        if (!iteration_stats.empty())
-            old_runtime = get<2>(iteration_stats.back());
-        iteration_stats.emplace_back(al->num_of_agents, 0,
+        if (!iteration_stats[thread_id].empty())
+            old_runtime = get<2>(iteration_stats[thread_id].back());
+        iteration_stats[thread_id].emplace_back(al->num_of_agents, 0,
                                      runtime, runtime - old_runtime,
                                      al->makespan,
                                      icbs.solution_cost,
@@ -228,7 +236,7 @@ bool PythonCBS<Map>::PrioritizedPlaning()
                                      icbs.LL_num_expanded);
     }
 
-    runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+    runtime = (double)(time(NULL) - start_time);
     cout << endl << endl << "Find a solution for " << al->getNumOfAllAgents() - al->getNumOfUnplannedAgents()
          << " agents (including " << al->getNumOfDeadAgents() << " dead agents) in " << runtime << " seconds!" << endl;
 
@@ -254,14 +262,14 @@ bool PythonCBS<Map>::GroupPrioritizedPlaning()
     al->generateAgentOrder(agent_priority_strategy);
 
     int groupSize = defaultGroupSize;
-    runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+    runtime = (double)(time(NULL) - start_time);
 
     while (runtime < timeLimit) {
         cout << endl;
         al->updateToBePlannedAgents(groupSize);
         if (al->num_of_agents == 0) // all agents have paths
             break;
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        runtime = (double)(time(NULL) - start_time);
         double time_limit = (timeLimit - runtime) * al->num_of_agents / al->getNumOfUnplannedAgents() / 2;
         cout << "Group size = " << al->num_of_agents <<
              ", time limit = " << time_limit << " seconds. " <<
@@ -302,11 +310,11 @@ bool PythonCBS<Map>::GroupPrioritizedPlaning()
             hasConflicts(al->paths_all); // to print the conflict
             return false;
         }
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        runtime = (double)(time(NULL) - start_time);
         int old_runtime = 0;
-        if (!iteration_stats.empty())
-            old_runtime = get<2>(iteration_stats.back());
-        iteration_stats.emplace_back(al->num_of_agents, time_limit,
+        if (!iteration_stats[0].empty())
+            old_runtime = get<2>(iteration_stats[0].back());
+        iteration_stats[0].emplace_back(al->num_of_agents, time_limit,
                                      runtime, runtime - old_runtime,
                                      al->makespan,
                                      icbs.solution_cost,
@@ -317,7 +325,7 @@ bool PythonCBS<Map>::GroupPrioritizedPlaning()
                                      icbs.LL_num_expanded);
     }
 
-    runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+    runtime = (double)(time(NULL) - start_time);
     cout << endl << endl << "Find a solution for " << al->getNumOfAllAgents() - al->getNumOfUnplannedAgents()
          << " agents (including " << al->getNumOfDeadAgents() << " dead agents) in " << runtime << " seconds!" << endl;
 
@@ -333,7 +341,7 @@ template <class Map>
 p::list PythonCBS<Map>::benchmarkSingleGroup(int group_size,int iterations, int time_limit) {
     p::list result;
 
-    start_time = std::clock();
+    start_time = time(NULL);
     if (options1.debug)
         cout << "start initialize" << endl;
     //initialize search engine
@@ -346,13 +354,13 @@ p::list PythonCBS<Map>::benchmarkSingleGroup(int group_size,int iterations, int 
     al->generateAgentOrder(agent_priority_strategy);
 
     int groupSize = group_size;
-    runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+    runtime = (double)(time(NULL) - start_time);
     int num_iterations = iterations;
     while (iterations > 0) {
         al->sampleAgents(groupSize,iterations,num_iterations);
         if (al->num_of_agents == 0) // all agents have paths
             break;
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        runtime = (double)(time(NULL) - start_time);
         cout << "Group size = " << al->num_of_agents <<
              ", time limit = " << time_limit << " seconds. " << endl;
         if (options1.debug)
@@ -414,7 +422,7 @@ p::list PythonCBS<Map>::benchmarkSingleGroup(int group_size,int iterations, int 
 template <class Map>
 p::list PythonCBS<Map>::benchmarkSingleGroupLNS(int group_size,int iterations, int time_limit) {
     p::list result;
-    start_time = std::clock();
+    start_time = time(NULL);
     if (options1.debug)
         cout << "start initialize" << endl;
     //initialize search engine
@@ -437,7 +445,7 @@ p::list PythonCBS<Map>::benchmarkSingleGroupLNS(int group_size,int iterations, i
         if (!path.empty())
             finished_agents++;
     }
-    runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+    runtime = (double)(time(NULL) - start_time);
     cout << "Solution cost = " << solution_cost << ", "
          << "makespan = " << makespan << ", "
          << "remaining time = " << timeLimit - runtime << endl;
@@ -557,16 +565,21 @@ p::list PythonCBS<Map>::benchmarkSingleGroupLNS(int group_size,int iterations, i
 }
 
 template <class Map>
-bool PythonCBS<Map>::LNS()
+bool PythonCBS<Map>::LNS(AgentsLoader* al, int thread_id, int priority_strategy)
 {
+    if (al == NULL)
+        al = this->al;
+    if(priority_strategy == -1)
+        priority_strategy = this->agent_priority_strategy;
     int screen;
     if (options1.debug) {
+
         screen = 3;
     }
     else {
         screen = 0;
     }
-    if (!PrioritizedPlaning()) // get initial solution
+    if (!PrioritizedPlaning(al,thread_id,priority_strategy)) // get initial solution
         return false;
 
     size_t solution_cost = 0;
@@ -579,7 +592,7 @@ bool PythonCBS<Map>::LNS()
         if (!path.empty())
             finished_agents++;
     }
-    runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+    double runtime = (double)(time(NULL) - start_time);
     cout << "Solution cost = " << solution_cost << ", "
          << "makespan = " << makespan << ", "
          << "remaining time = " << timeLimit - runtime << endl;
@@ -609,7 +622,7 @@ bool PythonCBS<Map>::LNS()
         while (neighbors.size() < groupSize - 1 && count < 10 && T > 0)
         {
             int t = rand() % T;
-            generateNeighbor(a, al->paths_all[a][t], t, neighbors, groupSize - 1, (int)al->paths_all[a].size() - 1);
+            generateNeighbor(a, al->paths_all[a][t], t, neighbors, groupSize - 1, (int)al->paths_all[a].size() - 1, al);
             T = t;
             count++;
         }
@@ -638,7 +651,9 @@ bool PythonCBS<Map>::LNS()
             cout << "," << i;
         }
         cout << endl;
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+
+        runtime = (double)(time(NULL) - start_time);
+
         if (runtime >= timeLimit)
             break;
         double time_limit = min(timeLimit - runtime, 10.0);
@@ -693,15 +708,17 @@ bool PythonCBS<Map>::LNS()
             if (!path.empty())
                 finished_agents++;
         }
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        runtime = (double)(time(NULL) - start_time);
+
+
         cout << "Solution cost = " << solution_cost << ", "
              << "makespan = " << makespan  << ", "
              << "remaining time = " << timeLimit - runtime << endl;
 
         int old_runtime = 0;
-        if (!iteration_stats.empty())
-            old_runtime = get<2>(iteration_stats.back());
-        iteration_stats.emplace_back(al->num_of_agents, time_limit,
+        if (!iteration_stats[thread_id].empty())
+            old_runtime = get<2>(iteration_stats[thread_id].back());
+        iteration_stats[thread_id].emplace_back(al->num_of_agents, time_limit,
                                      runtime, runtime - old_runtime,
                                      makespan,
                                      solution_cost,
@@ -715,8 +732,10 @@ bool PythonCBS<Map>::LNS()
 }
 
 template <class Map>
-void PythonCBS<Map>::generateNeighbor(int agent_id, const PathEntry& start, int start_time,  set<int>& conflicting_agents, int neighbor_size, int upperbound)
+void PythonCBS<Map>::generateNeighbor(int agent_id, const PathEntry& start, int start_time,  set<int>& conflicting_agents, int neighbor_size, int upperbound, AgentsLoader* al)
 {
+    if (al==NULL)
+        al = this->al;
     // a random walk with path that is shorter than upperbound and has conflicting with neighbor_size agents
     int speed = al->agents_all[agent_id].speed;
     const auto& heuristics = al->agents_all[agent_id].heuristics;
@@ -818,6 +837,68 @@ void PythonCBS<Map>::generateNeighbor(int agent_id, const PathEntry& start, int 
     }
 }
 
+template <class Map>
+bool PythonCBS<Map>::parallel_LNS(int no_threads){
+    al->constraintTable.init(ml->map_size());
+    al->computeHeuristics(ml);
+    this->al_pool.resize(no_threads);
+    this->statistic_list.resize(no_threads);
+    this->iteration_stats.resize(no_threads);
+    boost::thread_group t_group;
+    int strategies[4] = {0,1,3,5};
+    if (no_threads>4){
+        cout<<"Max threads number: 4"<<endl;
+        exit(1);
+    }
+    for (int i = 0; i<no_threads;i++){
+        AgentsLoader* temp = this->al->clone();
+        this->al_pool[i] = temp;
+        t_group.add_thread(new boost::thread(&PythonCBS<FlatlandLoader>::LNS, this ,this->al_pool[i],i, strategies[i]));
+    }
+    // wait until all finish
+    t_group.join_all();
+
+    int best_cost = INT_MAX;
+    int best_al = -1;
+    int best_makespan = -1;
+    int best_finished_agents = -1;
+    for (int i=0; i<no_threads; i++){
+
+        size_t solution_cost = 0;
+        int finished_agents = 0;
+        size_t makespan = 0;
+        for (const auto& path : this->al_pool[i]->paths_all)
+        {
+            solution_cost += path.size();
+            makespan = max(path.size(), makespan);
+            if (!path.empty())
+                finished_agents++;
+        }
+        if (options1.debug){
+            cout <<"Initial PP strategy = "<<strategies[i]<<", "
+                << "Final Solution cost = " << solution_cost << ", "
+                << "Final makespan = " << makespan  << ", "
+                << "Final remaining time = " << timeLimit - runtime << endl;
+        }
+        if (solution_cost < best_cost){
+            best_cost = solution_cost;
+            best_al = i;
+            best_makespan = makespan;
+            best_finished_agents = finished_agents;
+        }
+    }
+    delete this->al;
+    this->al = this->al_pool[best_al];
+    this->best_thread_id = best_al;
+    runtime = (double)(time(NULL) - start_time);
+    cout <<"Best PP strategy = "<<strategies[best_al]<<", "
+        << "Final Solution cost = " << best_cost << ", "
+         << "Final makespan = " << best_makespan  << ", "
+         << "Final remaining time = " << timeLimit - runtime << endl;
+    return true;
+}
+
+template class PythonCBS<FlatlandLoader>;
 
 
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so

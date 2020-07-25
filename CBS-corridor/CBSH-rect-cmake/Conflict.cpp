@@ -50,17 +50,17 @@ std::ostream& operator<<(std::ostream& os, const Conflict& conflict)
 
 bool operator < (const Conflict& conflict1, const Conflict& conflict2) // return true if conflict2 has higher priority
 {
-//	if (conflict1.type == conflict_type::START && conflict2.type == conflict_type::START)
-//	{
-//		if (conflict1.p < conflict2.p)
-//			return false;
-//		else
-//			return true;
-//	}
-//	else if (conflict1.type == conflict_type::START)
-//		return false;
-//	else if (conflict2.type == conflict_type::START)
-//		return true;
+	if (conflict1.type == conflict_type::START && conflict2.type == conflict_type::START)
+	{
+		if (conflict1.p < conflict2.p)
+			return false;
+		else
+			return true;
+	}
+	else if (conflict1.type == conflict_type::START)
+		return false;
+	else if (conflict2.type == conflict_type::START)
+		return true;
 
 
 //	if (conflict1.type == conflict_type::CORRIDOR2 && conflict2.type != conflict_type::CORRIDOR2)

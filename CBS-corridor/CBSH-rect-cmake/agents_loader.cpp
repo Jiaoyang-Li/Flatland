@@ -546,3 +546,14 @@ void AgentsLoader::computeHeuristics(const FlatlandLoader* ml)
         agent.distance_to_goal = agent.heuristics[init_loc].get_hval(agent.heading);
     }
 }
+
+AgentsLoader* AgentsLoader::clone(){
+    AgentsLoader* new_al = new AgentsLoader();
+    new_al->num_of_agents_all =  this->num_of_agents_all;
+    ///this->heuristics.resize(num_of_agents_all);
+    new_al->agents_all =  this->agents_all;
+    new_al->paths_all =  this->paths_all;
+    new_al->constraintTable = this->constraintTable;
+    return new_al;
+
+}

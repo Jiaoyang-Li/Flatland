@@ -124,7 +124,7 @@ void FlatlandLoader::get_exits(list<Transition>& transitions, int location, int 
     }
 }
 
-int FlatlandLoader::getDegree(int loc) {
+int FlatlandLoader::getDegree(int loc) const{
 	if (loc < 0 || loc >= map_size())
 		return -1;
 	std::unordered_set<int> possibleMoves;
@@ -141,7 +141,7 @@ int FlatlandLoader::getDegree(int loc) {
 	return possibleMoves.size();
 }
 
-int FlatlandLoader::getDegree(int loc,int heading) {
+int FlatlandLoader::getDegree(int loc,int heading) const{
     if (loc < 0 || loc >= map_size())
         return -1;
     std::unordered_set<int> possibleMoves;

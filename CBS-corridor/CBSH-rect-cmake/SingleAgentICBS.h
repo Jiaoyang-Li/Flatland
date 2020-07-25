@@ -36,7 +36,7 @@ public:
 	int max_malfunction=5;
 
 	AgentsLoader* al;
-	Map* ml;
+	const Map* ml;
 	int map_size;
 	int num_col;
 	const std::vector<hvals>& my_heuristic;  // this is the precomputed heuristic for this agent
@@ -97,7 +97,7 @@ public:
 
 	int getHeuristicAtStart() const {return (int)(my_heuristic[start_location].get_hval(start_heading) / al->agents[agent_id]->speed); }
 
-	SingleAgentICBS(int start_location, int goal_location, Map* ml, AgentsLoader* al, int agent_id, int start_heading = -1, int kRobust = 0);
+	SingleAgentICBS(int start_location, int goal_location, const Map* ml, AgentsLoader* al, int agent_id, int start_heading = -1, int kRobust = 0);
 	~SingleAgentICBS();
 
 };

@@ -168,7 +168,7 @@ public:
 	void collectConstraints(ICBSNode* curr);
 
     int getBestSolutionSoFar(); // return the number of dead agents, and the paths are stored in paths
-	MultiMapICBSSearch(Map * ml, AgentsLoader* al, double f_w, constraint_strategy c, int time_limit, int screen,
+	MultiMapICBSSearch(const Map * ml, AgentsLoader* al, double f_w, constraint_strategy c, int time_limit, int screen,
 	        options options1);
 	// build MDD
 	MDD<Map>* buildMDD(ICBSNode& node, int id);
@@ -224,11 +224,23 @@ public:
         return h;
     }
 
+    bool compare_start(int a1, int a2){
+        if (al.agents[a1]->heading  == al.agents[a2]->heading){
+            if (al.agents[a1]->speed == al.agents[a2]->speed){
+                return al.agents[a1]->distance_to_goal > al.agents[a2]->distance_to_goal;
+            }
+            else
+                return al.agents[a1]->speed > al.agents[a2]->speed;
+        }
+        return al.agents[a1]->heading  > al.agents[a2]->heading;
+
+    }
+
 protected:
 	std::vector<std::unordered_map<ConstraintsHasher, MDD<Map>*>> mddTable;
 	options option;
 	vector<SingleAgentICBS<Map> *> search_engines;  // used to find (single) agents' paths and mdd
-	Map* ml;
+	const Map* ml;
 	ICBSNode* goalNode = nullptr;
 
     // void addPathsToInitialCT(const vector<Path>& paths);

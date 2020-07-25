@@ -31,7 +31,7 @@ class MapLoader
   void get_transitions(list<Transition>& transition, int loc, int heading, int noWait) const;
   void get_exits(list<Transition>& transition, int loc, int heading,float speed, int noWait) const;
 
-  bool getLoc(int loc) ;
+  bool getLoc(int loc) const;
   inline bool is_blocked (int row, int col) const { return my_map[row * this->cols + col]; }
   inline bool is_blocked (int loc) const { return my_map[loc]; }
   inline size_t map_size() const { return rows * cols; }
@@ -45,6 +45,6 @@ class MapLoader
   void printPath (std::vector<int> path);
   void saveToFile(std::string fname);
 
-    virtual int getDegree(int loc);
+    virtual int getDegree(int loc) const;
   ~MapLoader();
 };

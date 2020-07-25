@@ -60,6 +60,7 @@ for folder in os.listdir(path):
                     schedule_generator=schedule_from_file(test),
                     malfunction_generator_and_process_data=malfunction_from_file(test),
                     )
+        env.reset()
 
         CBS = PythonCBS(env,framework,"CBSH",timelimit,default_group_size,debug,f_w,
                         corridor_method, chasing ,accept_partial_solution,agent_priority_strategy)

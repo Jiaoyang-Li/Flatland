@@ -69,6 +69,7 @@ public:
     int getNumOfDeadAgents() const { return num_of_dead_agents; }
     void sampleAgents(int _num_of_agents, int iteration, int num_instances, bool deletePath = false);
     void recoverAgents(int _num_of_agents, int iteration, int num_instances);
+    AgentsLoader* clone();
 
 
     boost::python::list outputPaths()   {

@@ -1243,12 +1243,26 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 		}
 		else // 2-way branching
 		{
-			
-			children.resize(2);
-			children[0] = new ICBSNode(curr->conflict->a1);
-			children[0]->constraints = curr->conflict->constraint1;
-			children[1] = new ICBSNode(curr->conflict->a2);
-			children[1]->constraints = curr->conflict->constraint2;
+		    if (curr->conflict->type == conflict_type::START){
+                if (compare_start(curr->conflict->a1,curr->conflict->a2)){
+                    children.resize(1);
+                    children[0] = new ICBSNode(curr->conflict->a2);
+                    children[0]->constraints = curr->conflict->constraint2;
+                }
+                else{
+                    children.resize(1);
+                    children[0] = new ICBSNode(curr->conflict->a1);
+                    children[0]->constraints = curr->conflict->constraint1;
+                }
+		    }
+		    else{
+                children.resize(2);
+                children[0] = new ICBSNode(curr->conflict->a1);
+                children[0]->constraints = curr->conflict->constraint1;
+                children[1] = new ICBSNode(curr->conflict->a2);
+                children[1]->constraints = curr->conflict->constraint2;
+		    }
+
 			if (curr->conflict->type == conflict_type::CORRIDOR2)
             {
                 num_corridor2++;
@@ -1410,7 +1424,7 @@ MultiMapICBSSearch<Map>::~MultiMapICBSSearch()
 }
 
 template<class Map>
-MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader* al0, double f_w, constraint_strategy c,
+MultiMapICBSSearch<Map>::MultiMapICBSSearch(const Map* ml, AgentsLoader* al0, double f_w, constraint_strategy c,
         int time_limit, int screen, options options1): ICBSSearch(*al0)
 {
 	this->option = options1;
