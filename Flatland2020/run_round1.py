@@ -46,6 +46,15 @@ neighbor_generation_strategy = 2    # 0: random walk; 1: start; 2: intersection;
 prirority_ordering_strategy = 0     # 0: random; 1: max regret;
 replan_strategy = 1                 # 0: CBS; 1: prioritized planning;
 
+
+#####################################################################
+# malfunction parameters
+#####################################################################
+malfunction_rate = 1/200          # fraction number, probability of having a stop.
+min_duration = 3
+max_duration = 20
+
+
 #####################################################################
 # step loop information
 #####################################################################
@@ -70,6 +79,12 @@ results = []
 # Uncomment the following lines to continue previous experiments
 # with open("summary.txt", 'r') as file:
 #     results = json.load(file)  # load existing results
+
+stochastic_data = MalfunctionParameters(
+    malfunction_rate=malfunction_rate,  # Rate of malfunction occurence
+    min_duration=min_duration,  # Minimal duration of malfunction
+    max_duration=max_duration  # Max duration of malfunction
+)
 
 
 def linearize_loc(in_env, loc):
@@ -108,7 +123,7 @@ for folder in os.listdir(path):
                     width=1,height=1,
                     rail_generator=rail_from_file(test),
                     schedule_generator=schedule_from_file(test),
-                    malfunction_generator_and_process_data=malfunction_from_file(test),
+                    malfunction_generator_and_process_data=malfunction_from_params(stochastic_data),
                     obs_builder_object=GlobalObsForRailEnv(),
                     remove_agents_at_target=True,
                     record_steps=True)
