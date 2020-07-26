@@ -30,8 +30,8 @@ debug_print = True
 remote_test = False
 env_renderer_enable = True
 input_pause_renderer = False
-timelimit = 240  # unit: seconds
-default_group_size = 8 # max number of agents in a group. Suggest 8
+timelimit = 200  # unit: seconds
+default_group_size = 16 # max number of agents in a group. Suggest 8
 corridor_method = 1 # or 0/off or 2/reasonable corridor. Suggest 1
 chasing = True # helps when speed =1, however takes more time on corridor reasoning.
 accept_partial_solution = True
@@ -51,6 +51,7 @@ replan_strategy = 1                 # 0: CBS; 1: prioritized planning;
 # malfunction parameters
 #####################################################################
 malfunction_rate = 1/200          # fraction number, probability of having a stop.
+# malfunction_rate = 0          # fraction number, probability of having a stop.
 min_duration = 3
 max_duration = 20
 
@@ -142,9 +143,11 @@ for folder in os.listdir(path):
         if debug_print:
             print('TIme for building MCP: ', time.time() - time_temp)
         if debug_print:
+            CBS.writeResultsToFile('./temp_path.csv')
             # print paths
             for i,p in enumerate(paths):
                 print(i, ": " , p)
+            print()
             # print mcp
             CBS.printAllMCP()
 
@@ -271,6 +274,10 @@ for folder in os.listdir(path):
 
             if debug_print:
                 print('Time for update MCP: ', time.time() - time_temp)
+                CBS.printMCP(729)
+                CBS.printMCP(833)
+                CBS.printMCP(868)
+                # time.sleep(1)
 
             # display the updated mcp
             # if debug_print:
