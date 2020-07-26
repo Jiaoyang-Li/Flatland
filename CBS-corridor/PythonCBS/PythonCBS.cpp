@@ -888,11 +888,10 @@ void PythonCBS<Map>::updateMCP(p::list agent_location, p::dict agent_action)
             !mcp[al->paths_all[i][agent_time[i]].location].empty() && 
             get<0>(mcp[al->paths_all[i][agent_time[i]].location].front()) == i)
         {
-            mcp[al->paths_all[i][agent_time[i]-1].location].pop_front();
             mcp[al->paths_all[i][agent_time[i]].location].pop_front();
         }
 
-        else if (agent_location[i] != -1 && agent_location[i] == al->paths_all[i][agent_time[i]].location)
+        if (agent_location[i] != -1 && agent_location[i] == al->paths_all[i][agent_time[i]].location)
         {
             if (agent_time[i] > 0 && 
                 al->paths_all[i][agent_time[i]-1].location != -1 && 
