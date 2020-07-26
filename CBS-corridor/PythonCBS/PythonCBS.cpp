@@ -739,7 +739,7 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
     this->lns_pool.resize(no_threads);
     this->statistic_list.resize(no_threads);
     this->iteration_stats.resize(no_threads);
-    boost::thread_group t_group;
+    pthread_t threads[no_threads];
     if (no_threads>4){
         cout<<"Max threads number: 4"<<endl;
         exit(1);
@@ -750,10 +750,13 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
         this->lns_pool[i] = new LNS(*al_pool[i], *ml, f_w, s, strategies[i], options1, corridor2, trainCorridor1, chasing,
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
         runtime = (double)(time(NULL) - start_time);
-        t_group.add_thread(new boost::thread(&LNS::run,&(*this->lns_pool[i]),timeLimit - runtime));
+        wrap* w = new wrap(timeLimit - runtime,*this->lns_pool[i]);
+        pthread_create( &threads[i], NULL, call_func, w );
     }
     // wait until all finish
-    t_group.join_all();
+    for (int i = 0; i<no_threads;i++){
+        pthread_join(threads[i], NULL);
+    }
 
     int best_cost = INT_MAX;
     int best_al = -1;
