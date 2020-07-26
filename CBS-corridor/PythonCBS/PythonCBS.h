@@ -26,16 +26,18 @@ struct statistics {
 
 // for p thread call non-static function in class
 struct wrap {
-    int time_limit;
+    float hard_time_limit;
+    float soft_time_limit;
     LNS& ins;
 
-    wrap( int time_limit, LNS& f ) : time_limit(time_limit), ins(f) {}
+    wrap(float hard_time_limit, float soft_time_limit, LNS& f ) :
+        hard_time_limit(hard_time_limit), soft_time_limit(soft_time_limit), ins(f) {}
 };
 
 extern "C" void* call_func( void *f )
 {
     std::auto_ptr< wrap > w( static_cast< wrap* >( f ) );
-    w->ins.run(w->time_limit);
+    w->ins.run(w->hard_time_limit, w->soft_time_limit);
 
     return 0;
 }
@@ -43,7 +45,7 @@ extern "C" void* call_func( void *f )
 template <class Map>
 class PythonCBS {
 public:
-	PythonCBS(p::object railEnv1, const string& framework, std::string algo, float hard_time_limit, float soft_time_limit,
+	PythonCBS(p::object railEnv1, string framework, std::string algo, float soft_time_limit,
               int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
               int agent_priority_strategy, int neighbor_generation_strategy,
               int prirority_ordering_strategy, int replan_strategy);
@@ -114,7 +116,7 @@ private:
 	vector<LNS*> lns_pool;
 	constraint_strategy s;
 	options options1;
-    float hard_time_limit;
+    float hard_time_limit = 240;
     float soft_time_limit;
 	int kRobust;
 	int max_malfunction;

@@ -89,7 +89,7 @@ my_observation_builder = GlobalObsForRailEnv()
 
 evaluation_number = 0  # evaluation counter
 num_of_evaluations = 400  # total number of evaluations
-total_time_limit = 8 * 60 - 5
+total_time_limit = 8 * 60 * 60 - 5
 global_time_start = time.time()
 
 while True:
@@ -192,8 +192,7 @@ while True:
     f_w = 1
     debug = False
     remaining_time = total_time_limit - (time.time() - global_time_start)
-    hard_time_limit = 240  # unit: seconds
-    soft_time_limit = remaining_time / (num_of_evaluations - evaluation_number + 1)
+    time_limit = remaining_time / (num_of_evaluations - evaluation_number + 1)
     default_group_size = 16  # max number of agents in a group
     corridor_method = 1  # or "corridor2" or ""
     chasing = True
@@ -203,7 +202,7 @@ while True:
     prirority_ordering_strategy = 0
     replan_strategy = 1
 
-    CBS = PythonCBS(local_env, framework, "CBSH", hard_time_limit, soft_time_limit, default_group_size, debug, f_w,
+    CBS = PythonCBS(local_env, framework, "CBSH", time_limit, default_group_size, debug, f_w,
                     corridor_method, chasing, accept_partial_solution, agent_priority_strategy,
                     neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
     success = CBS.search()
