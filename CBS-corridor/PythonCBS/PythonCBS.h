@@ -26,7 +26,7 @@ struct statistics {
 template <class Map>
 class PythonCBS {
 public:
-	PythonCBS(p::object railEnv1, string framework, std::string algo, int t,
+	PythonCBS(p::object railEnv1, const string& framework, std::string algo, float hard_time_limit, float soft_time_limit,
               int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
               int agent_priority_strategy, int neighbor_generation_strategy,
               int prirority_ordering_strategy, int replan_strategy);
@@ -97,7 +97,8 @@ private:
 	vector<LNS*> lns_pool;
 	constraint_strategy s;
 	options options1;
-	int timeLimit;
+    float hard_time_limit;
+    float soft_time_limit;
 	int kRobust;
 	int max_malfunction;
 	float f_w;

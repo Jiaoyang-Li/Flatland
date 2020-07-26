@@ -3,11 +3,11 @@
 
 
 
-bool LNS::run(double _time_limit)
+bool LNS::run(float _hard_time_limit, float _soft_time_limit)
 {
     start_time = Time::now();
-    time_limit = _time_limit;
-
+    hard_time_limit = _hard_time_limit;
+    soft_time_limit = min(_soft_time_limit, hard_time_limit);
     if (!getInitialSolution()) // get initial solution
         return false;
 
@@ -22,7 +22,7 @@ bool LNS::run(double _time_limit)
     if (options1.debug)
     cout << "Initial solution cost = " << solution_cost << ", "
          << "makespan = " << makespan << ", "
-         << "remaining time = " << time_limit - runtime << endl;
+         << "runtime = " << runtime << endl;
     iteration_stats.emplace_back(al.agents_all.size(), 0,
                                  runtime, runtime,
                                  makespan,
@@ -35,7 +35,7 @@ bool LNS::run(double _time_limit)
     boost::unordered_set<int> tabu_list;
     bool succ;
     int old_runtime = runtime;
-    while (runtime < time_limit && iteration_stats.size() < 10000)
+    while (runtime < soft_time_limit && iteration_stats.size() < 1000)
     {
         runtime =((fsec)(Time::now() - start_time)).count();
         switch (neighbor_generation_strategy)
@@ -97,7 +97,7 @@ bool LNS::run(double _time_limit)
         if (options1.debug)
             cout << "Iteration " << iteration_stats.size() << ", "
              << "solution cost = " << solution_cost << ", "
-             << "remaining time = " << time_limit - runtime << endl;
+             << "remaining time = " << soft_time_limit - runtime << endl;
         iteration_stats.emplace_back(neighbors.size(), 0,
                                      runtime, runtime - old_runtime,
                                      makespan,
@@ -133,13 +133,13 @@ bool LNS::getInitialSolution()
     for (auto agent : neighbors)
     {
         runtime = ((fsec)(Time::now() - start_time)).count();
-        if (runtime >= time_limit)
+        if (runtime >= hard_time_limit)
         {
             return false;
         }
         if (options1.debug)
             cout << "Remaining agents = " << remaining_agents <<
-             ", remaining time = " << time_limit - runtime << " seconds. " << endl;
+             ", remaining time = " << hard_time_limit - runtime << " seconds. " << endl;
         al.agents[0] = &al.agents_all[agent];
         MultiMapICBSSearch<FlatlandLoader> icbs(&ml, &al, f_w, c, 0, options1.debug? 3 : 0, options1);
         icbs.runICBSSearch();
@@ -279,7 +279,7 @@ void LNS::replanByPP()
     for (auto agent : neighbors)
     {
         runtime = ((fsec)(Time::now() - start_time)).count();
-        if (runtime >= time_limit)
+        if (runtime >= soft_time_limit)
         { // change back to the original paths
             auto path = neighbor_paths.begin();
             for (auto agent : neighbors)
@@ -324,7 +324,7 @@ bool LNS::replanByCBS()
         al.agents.push_back(&al.agents_all[i]);
     }
     runtime = ((fsec)(Time::now() - start_time)).count();
-    double cbs_time_limit = min(time_limit - runtime, 10.0);
+    double cbs_time_limit = min((double)soft_time_limit - runtime, 10.0);
     MultiMapICBSSearch<FlatlandLoader> icbs(&ml, &al, f_w, c, cbs_time_limit, options1.debug? 3 : 0, options1);
     icbs.trainCorridor1 = trainCorridor1;
     icbs.corridor2 = corridor2;
