@@ -20,6 +20,7 @@ public:
     int num_corridor = 0;
     int num_start = 0;
     int num_chasing = 0;
+    
 
     //stats about each iteration
     typedef tuple<int, double, double, double, int,

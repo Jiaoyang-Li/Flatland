@@ -25,7 +25,8 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, string algo, int
                           prirority_ordering_strategy(prirority_ordering_strategy),
                           replan_strategy(replan_strategy) {
 	//Initialize PythonCBS. Load map and agent info into memory
-	std::cout << "framework: " << framework << "    algo: " << algo << "(" << f_w << ")" << std::endl;
+    if (debug)
+	    std::cout << "framework: " << framework << "    algo: " << algo << "(" << f_w << ")" << std::endl;
 	options1.debug = debug;
     srand(0);
 	this->kRobust = 1;
@@ -44,7 +45,8 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, string algo, int
         this->trainCorridor1 = true;
         this->corridor2 = true;
     }
-    cout<<"Corridor option: "<< corridor<< " Chasing option: " << chasing << endl;
+    if (options1.debug)
+        cout<<"Corridor option: "<< corridor<< " Chasing option: " << chasing << endl;
 
 	if (algo == "ICBS")
 		s = constraint_strategy::ICBS;
@@ -58,16 +60,19 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, string algo, int
 		s = constraint_strategy::CBSH;
 	}
 
+    if (options1.debug)
 	std::cout << "get width height " << std::endl;
 	p::long_ rows(railEnv.attr("height"));
 	p::long_ cols(railEnv.attr("width"));
-
+    if (options1.debug)
 	std::cout << "load map " << p::extract<int>(rows)<<" x "<< p::extract<int>(cols) << std::endl;
 	//ml =  new MapLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
     ml = new FlatlandLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
+    if (options1.debug)
     std::cout << "load agents " << std::endl;
 
 	al =  new AgentsLoader(railEnv.attr("agents"));
+    if (options1.debug)
 	std::cout << "load done " << std::endl;
 	if (debug) {
 		al->printAllAgentsInitGoal();
@@ -260,6 +265,7 @@ bool PythonCBS<Map>::PrioritizedPlaning(AgentsLoader* al, int thread_id, int pri
         al->updateToBePlannedAgents(1);
         if (al->num_of_agents == 0) // all agents have paths
             break;
+        if (options1.debug)
         cout << "Remaining agents = " << al->getNumOfUnplannedAgents() <<
              ", remaining time = " << timeLimit - runtime << " seconds. " << endl;
 
@@ -289,6 +295,7 @@ bool PythonCBS<Map>::PrioritizedPlaning(AgentsLoader* al, int thread_id, int pri
     }
 
     runtime = (double)(time(NULL) - start_time);
+    if (options1.debug)
     cout << endl << endl << "Find a solution for " << al->getNumOfAllAgents() - al->getNumOfUnplannedAgents()
          << " agents (including " << al->getNumOfDeadAgents() << " dead agents) in " << runtime << " seconds!" << endl;
 
@@ -317,12 +324,14 @@ bool PythonCBS<Map>::GroupPrioritizedPlaning()
     runtime = (double)(time(NULL) - start_time);
 
     while (runtime < timeLimit) {
+        if (options1.debug)
         cout << endl;
         al->updateToBePlannedAgents(groupSize);
         if (al->num_of_agents == 0) // all agents have paths
             break;
         runtime = (double)(time(NULL) - start_time);
         double time_limit = (timeLimit - runtime) * al->num_of_agents / al->getNumOfUnplannedAgents() / 2;
+        if (options1.debug)
         cout << "Group size = " << al->num_of_agents <<
              ", time limit = " << time_limit << " seconds. " <<
              "(Remaining agents = " << al->getNumOfUnplannedAgents() <<
@@ -350,6 +359,7 @@ bool PythonCBS<Map>::GroupPrioritizedPlaning()
             if (accept_partial_solution)
             {
                 giveup_agents = icbs.getBestSolutionSoFar();
+                if (options1.debug)
                 cout << "Accept paths for " << al->num_of_agents - giveup_agents << " agents" << endl;
             }
             groupSize = max(1, al->num_of_agents / 2);
@@ -378,6 +388,7 @@ bool PythonCBS<Map>::GroupPrioritizedPlaning()
     }
 
     runtime = (double)(time(NULL) - start_time);
+    if (options1.debug)
     cout << endl << endl << "Find a solution for " << al->getNumOfAllAgents() - al->getNumOfUnplannedAgents()
          << " agents (including " << al->getNumOfDeadAgents() << " dead agents) in " << runtime << " seconds!" << endl;
 
@@ -789,10 +800,12 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
     this->best_thread_id = best_al;
     this->bset_initisl_priority_strategy = strategies[best_al];
     runtime = (double)(time(NULL) - start_time);
-    cout <<"Best PP strategy = "<<strategies[best_al]<<", "
-        << "Final Solution cost = " << best_cost << ", "
-         << "Final makespan = " << best_makespan  << ", "
-         << "Final remaining time = " << timeLimit - runtime << endl;
+    if (options1.debug) {
+        cout << "Best PP strategy = " << strategies[best_al] << ", "
+             << "Final Solution cost = " << best_cost << ", "
+             << "Final makespan = " << best_makespan << ", "
+             << "Final remaining time = " << timeLimit - runtime << endl;
+    }
     return true;
 }
 
