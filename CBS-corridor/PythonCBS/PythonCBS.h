@@ -2,9 +2,10 @@
 #include <string>
 #include <vector>
 #include <boost/python.hpp>
-#include <boost/thread.hpp>
+#include <pthread.h>
 #include "flat_map_loader.h"
 #include "LNS.h"
+
 
 
 namespace p = boost::python;
@@ -22,6 +23,22 @@ struct statistics {
     int num_start = 0;
     int num_chasing = 0;
 };
+
+// for p thread call non-static function in class
+struct wrap {
+    int time_limit;
+    LNS& ins;
+
+    wrap( int time_limit, LNS& f ) : time_limit(time_limit), ins(f) {}
+};
+
+extern "C" void* call_func( void *f )
+{
+    std::auto_ptr< wrap > w( static_cast< wrap* >( f ) );
+    w->ins.run(w->time_limit);
+
+    return 0;
+}
 
 template <class Map>
 class PythonCBS {
