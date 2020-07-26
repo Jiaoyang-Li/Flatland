@@ -51,7 +51,6 @@ replan_strategy = 1                 # 0: CBS; 1: prioritized planning;
 # malfunction parameters
 #####################################################################
 malfunction_rate = 1/200          # fraction number, probability of having a stop.
-# malfunction_rate = 0          # fraction number, probability of having a stop.
 min_duration = 3
 max_duration = 20
 
@@ -72,8 +71,7 @@ my_observation_builder = GlobalObsForRailEnv()
 
 evaluation_number = 0 # evaluation counter
 
-# path = '/mnt/d/Flatland/test-neurips2020-round1-v1/'
-path = '/home/rdaneel/Flatland/test-neurips2020-round1-v2/'
+path = '/mnt/d/Flatland/test-neurips2020-round1-v1/'
 import os
 import json
 results = []
@@ -143,13 +141,9 @@ for folder in os.listdir(path):
         if debug_print:
             print('TIme for building MCP: ', time.time() - time_temp)
         if debug_print:
-            CBS.writeResultsToFile('./temp_path.csv')
             # print paths
             for i,p in enumerate(paths):
                 print(i, ": " , p)
-            print()
-            # print mcp
-            CBS.printAllMCP()
 
         #####################################################################
         # stn to action controller
@@ -274,10 +268,6 @@ for folder in os.listdir(path):
 
             if debug_print:
                 print('Time for update MCP: ', time.time() - time_temp)
-                CBS.printMCP(729)
-                CBS.printMCP(833)
-                CBS.printMCP(868)
-                # time.sleep(1)
 
             # display the updated mcp
             # if debug_print:
@@ -307,7 +297,10 @@ for folder in os.listdir(path):
             if done['__all__']:
                 print("Reward : ", sum(list(all_rewards.values())))
                 print("all arrived.")
-                CBS.printAllMCP()
+                CBS.clearMCP()
+
+                if debug_print:
+                    CBS.printAllMCP()
                 #
                 # When done['__all__'] == True, then the evaluation of this 
                 # particular Env instantiation is complete, and we can break out 

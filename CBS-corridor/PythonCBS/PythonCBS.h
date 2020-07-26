@@ -65,6 +65,7 @@ public:
     p::list getNextLoc(void);
     void updateMCP(p::list agent_location, p::dict agent_action);
     void buildMCP(void);
+    void clearMCP(void) { mcp.clear(); };
     void printAllMCP(void);
     void printMCP(int loc);
     void printAgentTime(void);

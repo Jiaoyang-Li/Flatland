@@ -892,7 +892,7 @@ void PythonCBS<Map>::updateMCP(p::list agent_location, p::dict agent_action)
             mcp[al->paths_all[i][agent_time[i]-1].location].pop_front();
         }
 
-        if (agent_location[i] != -1 && agent_location[i] == al->paths_all[i][agent_time[i]].location)
+        else if (agent_location[i] != -1 && agent_location[i] == al->paths_all[i][agent_time[i]].location)
         {
             if (agent_time[i] > 0 && 
                 al->paths_all[i][agent_time[i]-1].location != -1 && 
@@ -983,8 +983,9 @@ BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final
 		.def("updateFw", &PythonCBS<FlatlandLoader>::updateFw)
         .def("buildMCP", &PythonCBS<FlatlandLoader>::buildMCP)
         .def("getNextLoc", &PythonCBS<FlatlandLoader>::getNextLoc)
+        .def("updateMCP", &PythonCBS<FlatlandLoader>::updateMCP)
+        .def("clearMCP", &PythonCBS<FlatlandLoader>::clearMCP)
         .def("printAllMCP", &PythonCBS<FlatlandLoader>::printAllMCP)
         .def("printMCP", &PythonCBS<FlatlandLoader>::printMCP)
-        .def("printAgentTime", &PythonCBS<FlatlandLoader>::printAgentTime)
-        .def("updateMCP", &PythonCBS<FlatlandLoader>::updateMCP);
+        .def("printAgentTime", &PythonCBS<FlatlandLoader>::printAgentTime);
 }
