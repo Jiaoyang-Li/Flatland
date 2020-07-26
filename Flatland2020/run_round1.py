@@ -8,9 +8,28 @@ from flatland.envs.rail_generators import sparse_rail_generator,rail_from_file
 from flatland.envs.schedule_generators import sparse_schedule_generator,schedule_from_file
 from flatland.envs.malfunction_generators  import malfunction_from_params, MalfunctionParameters,malfunction_from_file
 
+from flatland.evaluators.client import FlatlandRemoteClient
+from flatland.core.env_observation_builder import DummyObservationBuilder
+from my_observation_builder import CustomObservationBuilder
+from flatland.envs.observations import GlobalObsForRailEnv
+
+from flatland.envs.agent_utils import RailAgentStatus
+from flatland.envs.rail_env_shortest_paths import get_shortest_paths
+from flatland.envs.predictions import ShortestPathPredictorForRailEnv
+from flatland.utils.rendertools import RenderTool, AgentRenderVariant
+
+from Controllers import MCP_Controller
+import os
+import subprocess
+import numpy as np
+import time
+
 framework = "LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning
 f_w = 1
-debug = True
+debug_print = True
+remote_test = False
+env_renderer_enable = True
+input_pause_renderer = False
 timelimit = 240  # unit: seconds
 default_group_size = 8 # max number of agents in a group. Suggest 8
 corridor_method = 1 # or 0/off or 2/reasonable corridor. Suggest 1
@@ -27,6 +46,22 @@ neighbor_generation_strategy = 2    # 0: random walk; 1: start; 2: intersection;
 prirority_ordering_strategy = 0     # 0: random; 1: max regret;
 replan_strategy = 1                 # 0: CBS; 1: prioritized planning;
 
+#####################################################################
+# step loop information
+#####################################################################
+time_taken_by_controller = []
+time_taken_per_step = []
+steps = 0
+my_observation_builder = GlobalObsForRailEnv()
+
+#####################################################################
+# Main evaluation loop
+#
+# This iterates over an arbitrary number of env evaluations
+#####################################################################
+
+evaluation_number = 0 # evaluation counter
+
 # path = '/mnt/d/Flatland/test-neurips2020-round1-v1/'
 path = '/home/rdaneel/Flatland/test-neurips2020-round1-v1/'
 import os
@@ -35,6 +70,17 @@ results = []
 # Uncomment the following lines to continue previous experiments
 # with open("summary.txt", 'r') as file:
 #     results = json.load(file)  # load existing results
+
+
+def linearize_loc(in_env, loc):
+    """
+    This method linearize the locaiton(x,y) into an int.
+    :param in_env: local environment of flatland
+    :param loc: locaiton pair(x,y)
+    :return: linearized locaiton, int.
+    """
+    return loc[0]*in_env.width + loc[1]
+
 
 for folder in os.listdir(path):
     if os.path.isfile(path + folder):
@@ -62,14 +108,17 @@ for folder in os.listdir(path):
                     width=1,height=1,
                     rail_generator=rail_from_file(test),
                     schedule_generator=schedule_from_file(test),
-                    malfunction_generator_and_process_data=malfunction_from_file(test))
+                    malfunction_generator_and_process_data=malfunction_from_file(test),
+                    obs_builder_object=GlobalObsForRailEnv(),
+                    remove_agents_at_target=True,
+                    record_steps=True)
         local_env.reset()
 
-        CBS = PythonCBS(local_env, framework, "CBSH", timelimit, default_group_size, debug, f_w,
+        CBS = PythonCBS(local_env, framework, "CBSH", timelimit, default_group_size, debug_print, f_w,
                 corridor_method, chasing, accept_partial_solution, agent_priority_strategy,
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
         success = CBS.search()
-        plan = CBS.getResult()
+        paths = CBS.getResult()
 
         # This is for MCP
         if debug_print:
