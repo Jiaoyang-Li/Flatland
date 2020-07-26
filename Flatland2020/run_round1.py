@@ -63,7 +63,7 @@ my_observation_builder = GlobalObsForRailEnv()
 evaluation_number = 0 # evaluation counter
 
 # path = '/mnt/d/Flatland/test-neurips2020-round1-v1/'
-path = '/home/rdaneel/Flatland/test-neurips2020-round1-v1/'
+path = '/home/rdaneel/Flatland/test-neurips2020-round1-v2/'
 import os
 import json
 results = []
@@ -114,7 +114,7 @@ for folder in os.listdir(path):
                     record_steps=True)
         local_env.reset()
 
-        CBS = PythonCBS(local_env, framework, "CBSH", timelimit, default_group_size, debug_print, f_w,
+        CBS = PythonCBS(local_env, framework, "CBSH", timelimit, default_group_size, False, f_w,
                 corridor_method, chasing, accept_partial_solution, agent_priority_strategy,
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
         success = CBS.search()
@@ -285,6 +285,7 @@ for folder in os.listdir(path):
             if done['__all__']:
                 print("Reward : ", sum(list(all_rewards.values())))
                 print("all arrived.")
+                CBS.printAllMCP()
                 #
                 # When done['__all__'] == True, then the evaluation of this 
                 # particular Env instantiation is complete, and we can break out 
