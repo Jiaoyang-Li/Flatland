@@ -12,12 +12,12 @@ namespace p = boost::python;
 
 
 template <class Map>
-PythonCBS<Map>::PythonCBS(p::object railEnv1, const string& framework, string algo, float hard_time_limit, float soft_time_limit,
+PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, string algo, float soft_time_limit,
                           int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
                           int agent_priority_strategy, int neighbor_generation_strategy,
                           int prirority_ordering_strategy, int replan_strategy) :
                           railEnv(railEnv1), framework(framework), algo(algo),
-                          hard_time_limit(hard_time_limit), soft_time_limit(soft_time_limit),
+                          soft_time_limit(soft_time_limit),
                           f_w(f_w), defaultGroupSize(default_group_size),
                           chasing(chasing),
                           accept_partial_solution(accept_partial_solution),
@@ -740,7 +740,7 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
     this->lns_pool.resize(no_threads);
     this->statistic_list.resize(no_threads);
     this->iteration_stats.resize(no_threads);
-    boost::thread_group t_group;
+    pthread_t threads[no_threads];
     if (no_threads>4){
         cout<<"Max threads number: 4"<<endl;
         exit(1);
@@ -751,10 +751,13 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
         this->lns_pool[i] = new LNS(*al_pool[i], *ml, f_w, s, strategies[i], options1, corridor2, trainCorridor1, chasing,
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
         runtime = (double)(time(NULL) - start_time);
-        t_group.add_thread(new boost::thread(&LNS::run,&(*this->lns_pool[i]),hard_time_limit - runtime, soft_time_limit - runtime));
+        wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,*this->lns_pool[i]);
+        pthread_create( &threads[i], NULL, call_func, w );
     }
     // wait until all finish
-    t_group.join_all();
+    for (int i = 0; i<no_threads;i++){
+        pthread_join(threads[i], NULL);
+    }
 
     int best_cost = INT_MAX;
     int best_al = -1;
@@ -966,7 +969,8 @@ void PythonCBS<Map>::printAgentTime(void)
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
 {
 	using namespace boost::python;
-	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, string, float, float, int, int,float,int,bool,bool,int,int,int,int>())
+	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, string, float,
+	        int, int,float,int,bool,bool,int,int,int,int>())
 		.def("getResult", &PythonCBS<FlatlandLoader>::getResult)
 		.def("search", &PythonCBS<FlatlandLoader>::search)
 		.def("benchmarkSingleGroup", &PythonCBS<FlatlandLoader>::benchmarkSingleGroup)
