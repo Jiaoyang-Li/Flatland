@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <boost/python.hpp>
-#include <boost/thread.hpp>
+//#include <boost/thread.hpp>
 #include "flat_map_loader.h"
 #include "LNS.h"
 

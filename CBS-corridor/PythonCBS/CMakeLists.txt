@@ -113,7 +113,37 @@ if (WIN32)
 	ELSEIF(NOT Boost_FOUND)
 	  MESSAGE(FATAL_ERROR "Unable to find all boost libs")
 	ENDIF()
+elseif(APPLE)
+	add_definitions('-std=c++11')
 
+	message(STATUS ">>>> Found APPLE <<<<")
+	set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
+	#	add_definitions('-DBoost_NO_BOOST_CMAKE=ON')
+
+	find_package(PythonInterp 3.7 EXACT REQUIRED)
+	find_package(PythonLibs 3.7 EXACT REQUIRED)
+
+	include_directories(${PYTHON_INCLUDE_DIRS})
+
+	set(Boost_USE_STATIC_LIBS OFF)
+	set(Boost_USE_MULTITHREADED ON)
+	set(Boost_USE_STATIC_RUNTIME OFF)
+
+	# Other boost packages still use normal boost library
+	FIND_PACKAGE(Boost REQUIRED COMPONENTS system program_options)
+	include_directories(${Boost_INCLUDE_DIRS})
+
+	# Find py-boost include dir and py-boost lib
+	find_path(BOOST_PYTHON_INCLUDE_DIR boost/python.hpp HINTS ../py-boost/include)
+	find_library(BOOST_PYTHON NAMES libboost_python37.a HINTS ../py-boost/lib)
+	include_directories(${BOOST_PYTHON_INCLUDE_DIR})
+
+	#Print find result. Make its correct
+	message(STATUS ${PYTHON_INCLUDE_DIRS})
+	message(STATUS ${BOOST_PYTHON_INCLUDE_DIR})
+	message(STATUS ${BOOST_PYTHON})
+
+	target_link_libraries(PythonCBS ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${BOOST_PYTHON})
 else()
 	file(READ "/etc/issue" ETC_ISSUE)
 	string(REGEX MATCH "Ubuntu|Manjaro" DIST ${ETC_ISSUE})
@@ -148,7 +178,7 @@ else()
 	set(Boost_USE_STATIC_LIBS OFF)
 	set(Boost_USE_MULTITHREADED ON)  
 	set(Boost_USE_STATIC_RUNTIME OFF)
-	FIND_PACKAGE(Boost REQUIRED COMPONENTS system program_options ${boostPython} thread)
+	FIND_PACKAGE(Boost REQUIRED COMPONENTS system program_options ${boostPython})
 
 	# Detect and add SFML
 	# list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
