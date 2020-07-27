@@ -80,7 +80,7 @@ public:
                "runtime," <<
                "total makespan," <<
                "solution cost," <<
-               "sum of minimal time," <<
+               "destroy heuristic," <<
                "planned agents," <<
                "dead agents," <<
                "HL nodes," <<
