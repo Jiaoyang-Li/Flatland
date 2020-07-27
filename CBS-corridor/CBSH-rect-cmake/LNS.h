@@ -5,7 +5,7 @@ using namespace std::chrono;
 typedef std::chrono::high_resolution_clock Time;
 typedef std::chrono::duration<float> fsec;
 
-#define DEFAULT_GROUP_SIZE 4
+#define DEFAULT_GROUP_SIZE 10
 class LNS
 {
 public:
@@ -34,12 +34,14 @@ public:
         bool trainCorridor1,
         bool chasing, int neighbor_generation_strategy,
         int prirority_ordering_strategy, int replan_strategy):
-        al(al), ml(ml), f_w(f_w), c(c), agent_priority_strategy(agent_priority_strategy), options1(options1),
-        corridor2(corridor2), trainCorridor1(trainCorridor1), chasing(chasing),
-        neighbor_generation_strategy(neighbor_generation_strategy),
-        prirority_ordering_strategy(prirority_ordering_strategy),
-        replan_strategy(replan_strategy) {}
-    bool run(double time_limit);
+            al(al), ml(ml), f_w(f_w), c(c), agent_priority_strategy(agent_priority_strategy), options1(options1),
+            corridor2(corridor2), trainCorridor1(trainCorridor1), chasing(chasing),
+            destroy_strategy(neighbor_generation_strategy),
+            prirority_ordering_strategy(prirority_ordering_strategy),
+            replan_strategy(replan_strategy) {
+        max_timestep = al.constraintTable.length_max;
+    }
+    bool run(float hard_time_limit, float soft_time_limit);
 
 private:
     high_resolution_clock::time_point start_time;
@@ -50,6 +52,7 @@ private:
     constraint_strategy c;
     int agent_priority_strategy;
     options options1;
+    int max_timestep;
 
     //data for neighbors
     vector<int> neighbors;
@@ -58,20 +61,25 @@ private:
     int neighbor_makespan = 0;
     int delta_costs = 0;
     int group_size = DEFAULT_GROUP_SIZE; // this is useful only when we use CBS to replan
-
+    int max_group_size = 50;
 
     vector<int> intersections;
     map<int, list<int>> start_locations;  // <start location, corresponding agents>
 
     // intput params
-    double time_limit = 0;
+    float hard_time_limit = 0;
+    float soft_time_limit = 0;
     const bool& corridor2;
     const bool& trainCorridor1;
     const bool& chasing;
-    int neighbor_generation_strategy = 0; // 0: random walk; 1: start; 2: intersection
+    int destroy_strategy = 0; // 0: random walk; 1: start; 2: intersection
     int prirority_ordering_strategy = 0; // 0: random; 1: max regret
     int replan_strategy = 0; // 0: CBS; 1: prioritized planning
 
+    bool adaptive_destroy = false;
+    double decay_factor = 0.01;
+    double reaction_factor = 0.1;
+    vector<double> destroy_heuristics;
 
     bool getInitialSolution();
 

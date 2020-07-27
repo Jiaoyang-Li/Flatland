@@ -29,12 +29,11 @@ import time
 # parameter trigger local testing and remote testing
 #####################################################################
 
-remote_test = False
+remote_test = True
 save_txt_file = False
-debug_print = True
-env_renderer_enable = True
-input_pause_renderer = True
-# input_pause_renderer = False
+debug_print = False
+env_renderer_enable = False
+input_pause_renderer = False
 
 #####################################################################
 # local testing parameters
@@ -47,7 +46,7 @@ max_num_stations = 3
 given_seed = 12
 given_max_rails_between_cities = 2 # not clear what this does
 given_max_rails_in_city = 3 # not clear what this does
-given_num_agents = 5
+given_num_agents = 10
 
 # speed profile, 1 -> speed is 1, 1_2 -> speed 0.5, 1_3 -> speed 1/3, etc. sum has to be 1
 given_1_speed_train_percentage = 1
@@ -56,9 +55,9 @@ given_1_3_speed_train_percentage = 0
 given_1_4_speed_train_percentage = 0
 
 # malfunction parameters
-malfunction_rate = 0.5          # fraction number, probability of having a stop.
-min_duration = 1
-max_duration = 10
+malfunction_rate = 0.4          # fraction number, probability of having a stop.
+min_duration = 3
+max_duration = 20
 
 # temp solution: C++ solver path file
 # path_file ="./config/paths.txt"
@@ -88,7 +87,10 @@ my_observation_builder = GlobalObsForRailEnv()
 # This iterates over an arbitrary number of env evaluations
 #####################################################################
 
-evaluation_number = 0 # evaluation counter
+evaluation_number = 0  # evaluation counter
+num_of_evaluations = 400  # total number of evaluations
+total_time_limit = 8 * 60 * 60 - 5 * 60
+global_time_start = time.time()
 
 while True:
 
@@ -170,7 +172,7 @@ while True:
     for agent in local_env.agents:
         speed_list.append(1/agent.speed_data['speed'])
         speed_list_real.append(agent.speed_data['speed'])
-    print('speed_list: ', speed_list)
+    # print('speed_list: ', speed_list)
 
 
     #####################################################################
@@ -186,23 +188,31 @@ while True:
     #
     #####################################################################
 
+    framework = "LNS"
     f_w = 1
     debug = False
-    k = 1
-    timelimit = 240  # unit: seconds
+    remaining_time = total_time_limit - (time.time() - global_time_start)
+    time_limit = remaining_time / (num_of_evaluations - evaluation_number + 1)
     default_group_size = 16  # max number of agents in a group
     corridor_method = 1  # or "corridor2" or ""
     chasing = True
     accept_partial_solution = True
     agent_priority_strategy = 0
-    CBS = PythonCBS(local_env, "CBSH", k, timelimit, default_group_size, debug, f_w,
-                    corridor_method, chasing, accept_partial_solution, agent_priority_strategy)
+    neighbor_generation_strategy = 2
+    prirority_ordering_strategy = 0
+    replan_strategy = 1
+
+    CBS = PythonCBS(local_env, framework, "CBSH", time_limit, default_group_size, debug, f_w,
+                    corridor_method, chasing, accept_partial_solution, agent_priority_strategy,
+                    neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
     success = CBS.search()
     paths = CBS.getResult()
 
-    time_temp = time.time()
+    if debug_print:
+        time_temp = time.time()
     CBS.buildMCP()
-    print('TIme for building MCP: ', time.time() - time_temp)
+    if debug_print:
+        print('TIme for building MCP: ', time.time() - time_temp)
 
     if debug_print:
         # print paths
@@ -250,14 +260,15 @@ while True:
         if debug_print:
             CBS.printAgentTime()
         time_temp = time.time()
-        next_locs = CBS.getNextLoc() 
-        print('TIme for get next location: ', time.time() - time_temp)
+        next_locs = CBS.getNextLoc()
+        if debug_print:
+            print('TIme for get next location: ', time.time() - time_temp)
 
         # get curr locations from the environment (observation)
         curr_locs = []
         for i,a in enumerate(local_env.agents):
             if(a.status == RailAgentStatus.DONE_REMOVED):
-                print("---- agent " , i, "done! -----")
+                # print("---- agent " , i, "done! -----")
                 curr_locs.append(linearize_loc(local_env, a.target))
             elif(a.status == RailAgentStatus.READY_TO_DEPART):
                 curr_locs.append(-1)
@@ -317,7 +328,7 @@ while True:
         new_curr_locs = []
         for i,a in enumerate(local_env.agents):
             if(a.status == RailAgentStatus.DONE_REMOVED):
-                print("---- agent " , i, "done! -----")
+                # print("---- agent " , i, "done! -----")
                 new_curr_locs.append(linearize_loc(local_env, a.target))
             elif(a.status == RailAgentStatus.READY_TO_DEPART):
                 new_curr_locs.append(-1)
@@ -327,9 +338,13 @@ while True:
         if debug_print:
             print("new curr locations to MCP: ", new_curr_locs)
 
-        time_temp = time.time()
+        if debug_print:
+            time_temp = time.time()
+
         CBS.updateMCP(new_curr_locs, action)
-        print('Time for update MCP: ', time.time() - time_temp)
+
+        if debug_print:
+            print('Time for update MCP: ', time.time() - time_temp)
 
         # display the updated mcp
         # if debug_print:
