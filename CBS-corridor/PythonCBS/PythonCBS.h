@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <boost/python.hpp>
-#include <pthread.h>
+//#include <pthread.h>
 #include "flat_map_loader.h"
 #include "LNS.h"
 
@@ -25,22 +25,22 @@ struct statistics {
 };
 
 // for p thread call non-static function in class
-struct wrap {
-    float hard_time_limit;
-    float soft_time_limit;
-    LNS& ins;
-
-    wrap(float hard_time_limit, float soft_time_limit, LNS& f ) :
-        hard_time_limit(hard_time_limit), soft_time_limit(soft_time_limit), ins(f) {}
-};
-
-extern "C" void* call_func( void *f )
-{
-    std::auto_ptr< wrap > w( static_cast< wrap* >( f ) );
-    w->ins.run(w->hard_time_limit, w->soft_time_limit);
-
-    return 0;
-}
+//struct wrap {
+//    float hard_time_limit;
+//    float soft_time_limit;
+//    LNS& ins;
+//
+//    wrap(float hard_time_limit, float soft_time_limit, LNS& f ) :
+//        hard_time_limit(hard_time_limit), soft_time_limit(soft_time_limit), ins(f) {}
+//};
+//
+//extern "C" void* call_func( void *f )
+//{
+//    std::auto_ptr< wrap > w( static_cast< wrap* >( f ) );
+//    w->ins.run(w->hard_time_limit, w->soft_time_limit);
+//
+//    return 0;
+//}
 
 template <class Map>
 class PythonCBS {
