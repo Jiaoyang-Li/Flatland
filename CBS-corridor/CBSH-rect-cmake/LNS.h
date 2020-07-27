@@ -20,6 +20,7 @@ public:
     int num_corridor = 0;
     int num_start = 0;
     int num_chasing = 0;
+    
 
     //stats about each iteration
     typedef tuple<int, double, double, double, int,
@@ -38,7 +39,7 @@ public:
         neighbor_generation_strategy(neighbor_generation_strategy),
         prirority_ordering_strategy(prirority_ordering_strategy),
         replan_strategy(replan_strategy) {}
-    bool run(double time_limit);
+    bool run(float hard_time_limit, float soft_time_limit);
 
 private:
     high_resolution_clock::time_point start_time;
@@ -63,7 +64,8 @@ private:
     map<int, list<int>> start_locations;  // <start location, corresponding agents>
 
     // intput params
-    double time_limit = 0;
+    float hard_time_limit = 0;
+    float soft_time_limit = 0;
     const bool& corridor2;
     const bool& trainCorridor1;
     const bool& chasing;

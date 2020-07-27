@@ -1143,7 +1143,8 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 				printPaths();
 			assert(solution_cost >= dummy_start->g_val);
             if (num_of_agents > 1)
-			    cout << solution_cost << " (" << goal_node->num_of_dead_agents << ") ; " << goal_node->makespan << " ; " <<
+                if (debug_mode)
+                    cout << solution_cost << " (" << goal_node->num_of_dead_agents << ") ; " << goal_node->makespan << " ; " <<
 			        solution_cost - dummy_start->g_val << " ; " <<
 				    HL_num_expanded << " ; " << HL_num_generated << " ; " <<
 				    LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime.count() << ";"<<
@@ -1378,7 +1379,8 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
         }
         updateFocalList();
         if (num_of_agents > 1)
-            cout << solution_cost << " (" << get<0>(min_f_val) << ") ; " << get<1>(min_f_val) << " ; " << get<2>(min_f_val) - dummy_start->g_val << " ; " <<
+            if (debug_mode)
+                cout << solution_cost << " (" << get<0>(min_f_val) << ") ; " << get<1>(min_f_val) << " ; " << get<2>(min_f_val) - dummy_start->g_val << " ; " <<
                 HL_num_expanded << " ; " << HL_num_generated << " ; " <<
                 LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime.count() << " ; "
                 << num_standard << ";" << num_start << "," <<

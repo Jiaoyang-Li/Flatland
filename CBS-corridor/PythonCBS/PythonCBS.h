@@ -2,9 +2,10 @@
 #include <string>
 #include <vector>
 #include <boost/python.hpp>
-//#include <boost/thread.hpp>
+#include <pthread.h>
 #include "flat_map_loader.h"
 #include "LNS.h"
+
 
 
 namespace p = boost::python;
@@ -23,10 +24,28 @@ struct statistics {
     int num_chasing = 0;
 };
 
+// for p thread call non-static function in class
+struct wrap {
+    float hard_time_limit;
+    float soft_time_limit;
+    LNS& ins;
+
+    wrap(float hard_time_limit, float soft_time_limit, LNS& f ) :
+        hard_time_limit(hard_time_limit), soft_time_limit(soft_time_limit), ins(f) {}
+};
+
+extern "C" void* call_func( void *f )
+{
+    std::auto_ptr< wrap > w( static_cast< wrap* >( f ) );
+    w->ins.run(w->hard_time_limit, w->soft_time_limit);
+
+    return 0;
+}
+
 template <class Map>
 class PythonCBS {
 public:
-	PythonCBS(p::object railEnv1, string framework, std::string algo, int t,
+	PythonCBS(p::object railEnv1, string framework, std::string algo, float soft_time_limit,
               int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
               int agent_priority_strategy, int neighbor_generation_strategy,
               int prirority_ordering_strategy, int replan_strategy);
@@ -46,6 +65,7 @@ public:
     p::list getNextLoc(void);
     void updateMCP(p::list agent_location, p::dict agent_action);
     void buildMCP(void);
+    void clearMCP(void) { mcp.clear(); };
     void printAllMCP(void);
     void printMCP(int loc);
     void printAgentTime(void);
@@ -97,7 +117,8 @@ private:
 	vector<LNS*> lns_pool;
 	constraint_strategy s;
 	options options1;
-	int timeLimit;
+    float hard_time_limit = 240;
+    float soft_time_limit;
 	int kRobust;
 	int max_malfunction;
 	float f_w;
