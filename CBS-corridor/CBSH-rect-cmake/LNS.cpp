@@ -12,33 +12,67 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
         return false;
 
     size_t solution_cost = 0;
+    int sum_of_showup_time = 0;
     size_t makespan = 0;
     for (const auto& path : al.paths_all)
     {
         solution_cost += path.size() - 1;
         makespan = max(path.size() - 1, makespan);
+        for (int t  = 0; t < (int)path.size(); t++)
+        {
+            if (path[t].location >= 0)
+            {
+                sum_of_showup_time += t;
+                break;
+            }
+        }
     }
     runtime = ((fsec)(Time::now() - start_time)).count();
-    if (options1.debug)
+    //if (options1.debug)
     cout << "Initial solution cost = " << solution_cost << ", "
+         << "travel time = " << solution_cost - sum_of_showup_time << ", "
          << "makespan = " << makespan << ", "
          << "runtime = " << runtime << endl;
     iteration_stats.emplace_back(al.agents_all.size(), 0,
                                  runtime, runtime,
                                  makespan,
                                  solution_cost,
-                                 0,
+                                 destroy_strategy,
                                  0,
                                  0,
                                  0,
                                  0);
+    if (destroy_strategy == 3)
+    {
+        adaptive_destroy = true;
+        destroy_heuristics.assign(3, 1);
+    }
+    else
+        adaptive_destroy = false;
     boost::unordered_set<int> tabu_list;
     bool succ;
-    int old_runtime = runtime;
+    auto old_runtime = runtime;
     while (runtime < soft_time_limit && iteration_stats.size() < 1000)
     {
         runtime =((fsec)(Time::now() - start_time)).count();
-        switch (neighbor_generation_strategy)
+        if (adaptive_destroy)
+        {
+            double sum = 0;
+            for (const auto& h : destroy_heuristics)
+                sum += h;
+            cout << "destroy heuristics = ";
+            for (const auto& h : destroy_heuristics)
+                cout << h / sum << ",";
+            double r = (double) rand() / RAND_MAX;
+            if (r * sum < destroy_heuristics[0])
+                destroy_strategy = 0;
+            else if (r * sum < destroy_heuristics[0] + destroy_heuristics[1])
+                destroy_strategy = 1;
+            else
+                destroy_strategy = 2;
+            cout << "Choose destroy strategy " << destroy_strategy << endl;
+        }
+        switch (destroy_strategy)
         {
             case 0:
                 generateNeighborByRandomWalk(tabu_list);
@@ -92,17 +126,26 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
                 exit(0);
         }
 
+        if (adaptive_destroy) // update destroy heuristics
+        {
+            if (delta_costs < 0)
+                destroy_heuristics[destroy_strategy] = reaction_factor * (-delta_costs)
+                                                   + (1 - reaction_factor) * destroy_heuristics[destroy_strategy];
+            else
+                destroy_heuristics[destroy_strategy] = (1 - decay_factor) * destroy_heuristics[destroy_strategy];
+        }
         runtime = ((fsec)(Time::now() - start_time)).count();
         solution_cost += delta_costs;
-        if (options1.debug)
+        // if (options1.debug)
             cout << "Iteration " << iteration_stats.size() << ", "
+             << "group size = " << neighbors.size() << ", "
              << "solution cost = " << solution_cost << ", "
              << "remaining time = " << soft_time_limit - runtime << endl;
         iteration_stats.emplace_back(neighbors.size(), 0,
                                      runtime, runtime - old_runtime,
                                      makespan,
                                      solution_cost,
-                                     0,
+                                     destroy_strategy,
                                      0,
                                      0,
                                      0,
@@ -180,7 +223,8 @@ bool LNS::generateNeighborByStart()
     auto it = start_locations.begin();
     advance(it, step);
     neighbors.assign(it->second.begin(), it->second.end());
-    if (replan_strategy == 0 && neighbors.size() > group_size) // resize the group for CBS
+    if (neighbors.size() > max_group_size ||
+        (replan_strategy == 0 && neighbors.size() > group_size)) // resize the group for CBS
     {
         sortNeighborsRandomly();
         neighbors.resize(group_size);
@@ -275,14 +319,15 @@ void LNS::replanByPP()
     al.agents.resize(1);
     list<Path> new_paths;
     int sum_of_costs = 0;
-
-    for (auto agent : neighbors)
+    int sum_of_showup_time = 0;
+    int makespan = 0;
+    for (const auto& agent : neighbors)
     {
         runtime = ((fsec)(Time::now() - start_time)).count();
         if (runtime >= soft_time_limit)
         { // change back to the original paths
             auto path = neighbor_paths.begin();
-            for (auto agent : neighbors)
+            for (const auto& agent : neighbors)
             {
                 al.paths_all[agent] = *path;
                 ++path;
@@ -295,10 +340,32 @@ void LNS::replanByPP()
         updateCBSResults(icbs);
         assert(icbs.paths[0]->back().location == al.paths_all[agent].back().location);
         addAgentPath(agent, *icbs.paths[0]);
-        sum_of_costs += (int)icbs.paths[0]->size() - 1;
+        if (icbs.paths[0]->empty())
+        {
+            sum_of_costs += max_timestep;
+            makespan = max_timestep;
+        }
+        else
+        {
+            sum_of_costs += (int)icbs.paths[0]->size() - 1;
+            makespan = max(makespan, (int)icbs.paths[0]->size() - 1);
+            for (int t  = 0; t < (int)icbs.paths[0]->size(); t++)
+            {
+                if (icbs.paths[0]->at(t).location >= 0)
+                {
+                    sum_of_showup_time += t;
+                    break;
+                }
+            }
+        }
     }
-
-    if (sum_of_costs > neighbor_sum_of_costs)
+    if (sum_of_costs < neighbor_sum_of_costs ||
+        (sum_of_costs == neighbor_sum_of_costs && sum_of_showup_time > neighbor_sum_of_showup_time) ||
+        (sum_of_costs == neighbor_sum_of_costs && sum_of_showup_time == neighbor_sum_of_showup_time && makespan < neighbor_makespan))
+    {
+        delta_costs = sum_of_costs - neighbor_sum_of_costs;
+    }
+    else
     { // change back to the original paths
         deleteNeighborPaths();
         auto path = neighbor_paths.begin();
@@ -309,8 +376,6 @@ void LNS::replanByPP()
         }
         delta_costs = 0;
     }
-    else
-        delta_costs = sum_of_costs - neighbor_sum_of_costs;
 }
 
 bool LNS::replanByCBS()
@@ -363,15 +428,32 @@ void LNS::updateNeighborPaths()
     if (options1.debug)
         cout << "Agents ids: ";
     neighbor_sum_of_costs = 0;
+    neighbor_sum_of_showup_time = 0;
     neighbor_makespan = 0;
     neighbor_paths.clear();
     for (auto i : neighbors)
     {
         if (options1.debug)
             cout << i << ",";
-        neighbor_sum_of_costs += (int)al.paths_all[i].size() - 1;
-        neighbor_makespan = max(neighbor_makespan, (int)al.paths_all[i].size() - 1);
         neighbor_paths.emplace_back(al.paths_all[i]);
+        if (al.paths_all[i].empty())
+        {
+            neighbor_sum_of_costs += max_timestep;
+            neighbor_makespan = max_timestep;
+        }
+        else
+        {
+            neighbor_sum_of_costs += (int)al.paths_all[i].size() - 1;
+            neighbor_makespan = max(neighbor_makespan, (int)al.paths_all[i].size() - 1);
+            for (int t  = 0; t < (int)al.paths_all[i].size(); t++)
+            {
+                if (al.paths_all[i][t].location >= 0)
+                {
+                    neighbor_sum_of_showup_time += t;
+                    break;
+                }
+            }
+        }
     }
     if (options1.debug)
         cout << endl;

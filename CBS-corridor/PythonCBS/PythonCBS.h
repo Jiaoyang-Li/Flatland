@@ -62,7 +62,7 @@ public:
     p::list benchmarkSingleGroup(int group_size,int iterations, int time_limit);
     p::list benchmarkSingleGroupLNS(int group_size,int iterations, int time_limit);
     bool findConflicts() const;
-    p::list getNextLoc(void);
+    p::list getNextLoc(int timestep);
     void updateMCP(p::list agent_location, p::dict agent_action);
     void buildMCP(void);
     void clearMCP(void) { mcp.clear(); };
@@ -81,7 +81,7 @@ public:
                "runtime," <<
                "total makespan," <<
                "solution cost," <<
-               "sum of minimal time," <<
+               "destroy heuristic," <<
                "planned agents," <<
                "dead agents," <<
                "HL nodes," <<
@@ -160,6 +160,7 @@ private:
     vector<Occupy> mcp;
     vector<int> agent_time;
     vector<int> to_go;
+    vector<int> appear_time;
 
     void updateCBSResults(const MultiMapICBSSearch<Map>& cbs, int thread_id = 0)
     {
