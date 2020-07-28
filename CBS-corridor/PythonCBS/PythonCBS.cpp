@@ -865,7 +865,7 @@ p::list PythonCBS<Map>::getNextLoc(int timestep)
         // cout << "********************************************" << endl;
 
         if (!al->paths_all[i].empty() &&
-            appear_time[i] >= timestep &&
+            appear_time[i] <= timestep &&
             agent_time[i] < al->paths_all[i].size() &&
             !mcp[al->paths_all[i][agent_time[i]].location].empty() &&
             get<0>(mcp[al->paths_all[i][agent_time[i]].location].front()) == i)
