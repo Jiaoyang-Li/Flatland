@@ -12,15 +12,25 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
         return false;
 
     size_t solution_cost = 0;
+    int sum_of_showup_time = 0;
     size_t makespan = 0;
     for (const auto& path : al.paths_all)
     {
         solution_cost += path.size() - 1;
         makespan = max(path.size() - 1, makespan);
+        for (int t  = 0; t < (int)path.size(); t++)
+        {
+            if (path[t].location >= 0)
+            {
+                sum_of_showup_time += t;
+                break;
+            }
+        }
     }
     runtime = ((fsec)(Time::now() - start_time)).count();
     //if (options1.debug)
     cout << "Initial solution cost = " << solution_cost << ", "
+         << "travel time = " << solution_cost - sum_of_showup_time << ", "
          << "makespan = " << makespan << ", "
          << "runtime = " << runtime << endl;
     iteration_stats.emplace_back(al.agents_all.size(), 0,
@@ -309,14 +319,15 @@ void LNS::replanByPP()
     al.agents.resize(1);
     list<Path> new_paths;
     int sum_of_costs = 0;
-
-    for (auto agent : neighbors)
+    int sum_of_showup_time = 0;
+    int makespan = 0;
+    for (const auto& agent : neighbors)
     {
         runtime = ((fsec)(Time::now() - start_time)).count();
         if (runtime >= soft_time_limit)
         { // change back to the original paths
             auto path = neighbor_paths.begin();
-            for (auto agent : neighbors)
+            for (const auto& agent : neighbors)
             {
                 al.paths_all[agent] = *path;
                 ++path;
@@ -329,10 +340,32 @@ void LNS::replanByPP()
         updateCBSResults(icbs);
         assert(icbs.paths[0]->back().location == al.paths_all[agent].back().location);
         addAgentPath(agent, *icbs.paths[0]);
-        sum_of_costs += (int)icbs.paths[0]->size() - 1;
+        if (icbs.paths[0]->empty())
+        {
+            sum_of_costs += max_timestep;
+            makespan = max_timestep;
+        }
+        else
+        {
+            sum_of_costs += (int)icbs.paths[0]->size() - 1;
+            makespan = max(makespan, (int)icbs.paths[0]->size() - 1);
+            for (int t  = 0; t < (int)icbs.paths[0]->size(); t++)
+            {
+                if (icbs.paths[0]->at(t).location >= 0)
+                {
+                    sum_of_showup_time += t;
+                    break;
+                }
+            }
+        }
     }
-
-    if (sum_of_costs > neighbor_sum_of_costs)
+    if (sum_of_costs < neighbor_sum_of_costs ||
+        (sum_of_costs == neighbor_sum_of_costs && sum_of_showup_time > neighbor_sum_of_showup_time) ||
+        (sum_of_costs == neighbor_sum_of_costs && sum_of_showup_time == neighbor_sum_of_showup_time && makespan < neighbor_makespan))
+    {
+        delta_costs = sum_of_costs - neighbor_sum_of_costs;
+    }
+    else
     { // change back to the original paths
         deleteNeighborPaths();
         auto path = neighbor_paths.begin();
@@ -343,8 +376,6 @@ void LNS::replanByPP()
         }
         delta_costs = 0;
     }
-    else
-        delta_costs = sum_of_costs - neighbor_sum_of_costs;
 }
 
 bool LNS::replanByCBS()
@@ -397,15 +428,32 @@ void LNS::updateNeighborPaths()
     if (options1.debug)
         cout << "Agents ids: ";
     neighbor_sum_of_costs = 0;
+    neighbor_sum_of_showup_time = 0;
     neighbor_makespan = 0;
     neighbor_paths.clear();
     for (auto i : neighbors)
     {
         if (options1.debug)
             cout << i << ",";
-        neighbor_sum_of_costs += (int)al.paths_all[i].size() - 1;
-        neighbor_makespan = max(neighbor_makespan, (int)al.paths_all[i].size() - 1);
         neighbor_paths.emplace_back(al.paths_all[i]);
+        if (al.paths_all[i].empty())
+        {
+            neighbor_sum_of_costs += max_timestep;
+            neighbor_makespan = max_timestep;
+        }
+        else
+        {
+            neighbor_sum_of_costs += (int)al.paths_all[i].size() - 1;
+            neighbor_makespan = max(neighbor_makespan, (int)al.paths_all[i].size() - 1);
+            for (int t  = 0; t < (int)al.paths_all[i].size(); t++)
+            {
+                if (al.paths_all[i][t].location >= 0)
+                {
+                    neighbor_sum_of_showup_time += t;
+                    break;
+                }
+            }
+        }
     }
     if (options1.debug)
         cout << endl;

@@ -58,6 +58,7 @@ private:
     vector<int> neighbors;
     list<Path> neighbor_paths;
     int neighbor_sum_of_costs = 0;
+    int neighbor_sum_of_showup_time = 0;
     int neighbor_makespan = 0;
     int delta_costs = 0;
     int group_size = DEFAULT_GROUP_SIZE; // this is useful only when we use CBS to replan
@@ -118,7 +119,7 @@ private:
         num_chasing += cbs.num_chasing;
     }
 
-    bool hasConflicts(const vector<Path>& paths) const;
+    // bool hasConflicts(const vector<Path>& paths) const;
 
 
     inline bool compareByRegrets(int a1, int a2)
