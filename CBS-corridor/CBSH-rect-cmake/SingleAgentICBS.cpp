@@ -265,18 +265,23 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 					next_heading = move.heading;
 				float next_position_fraction = move.position_fraction;
 
-				
-                int next_h_val;
+                int next_h_val, next_show_time;
+                if (curr->loc == -1 and next_id!=-1)
+                    next_show_time = next_timestep;
+                else
+                    next_show_time = curr->show_time;
+
                 if (next_id!=-1)
-                    next_h_val = my_heuristic[next_id].get_hval(next_heading)/al->agents[agent_id]->speed;
+                    next_h_val = my_heuristic[next_id].get_hval(next_heading);
                 else
                     next_h_val = curr->h_val;
 
 				if (next_id!=-1 && move.exit_loc >= 0 && al->agents[agent_id]->speed<1) {
 					int h1 = my_heuristic[next_id].get_hval(next_heading);
 					int h2 = my_heuristic[move.exit_loc].get_hval(move.exit_heading);
-					next_h_val = h1 / al->agents[agent_id]->speed
-						- (h2-h1)*(move.position_fraction/al->agents[agent_id]->speed);
+					next_h_val = h1
+						- (h2-h1)*(move.position_fraction/1);
+                    next_h_val = round( next_h_val * 10000.0 ) / 10000.0;
 
 				}
 				if (next_g_val + next_h_val*al->agents[agent_id]->speed > constraint_table.length_max)
@@ -295,6 +300,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 				next->position_fraction = next_position_fraction;
 				next->exit_heading = move.exit_heading;
 				next->exit_loc = move.exit_loc;
+				next->show_time = next_show_time;
 
 				// try to retrieve it from the hash table
 				it = allNodes_table.find(next);
