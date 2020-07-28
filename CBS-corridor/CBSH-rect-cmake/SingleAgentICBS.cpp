@@ -280,7 +280,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 					int h1 = my_heuristic[next_id].get_hval(next_heading);
 					int h2 = my_heuristic[move.exit_loc].get_hval(move.exit_heading);
 					next_h_val = h1
-						- (h2-h1)*(move.position_fraction/1);
+						+ (h2-h1)*(move.position_fraction/1);
                     next_h_val = round( next_h_val * 10000.0 ) / 10000.0;
 
 				}
