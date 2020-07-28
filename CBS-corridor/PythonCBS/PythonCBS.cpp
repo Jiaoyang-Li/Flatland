@@ -824,7 +824,7 @@ void PythonCBS<Map>::buildMCP(void)
     mcp.resize(map_size);
     agent_time.resize(al->getNumOfAllAgents(), -1);
     to_go.resize(al->getNumOfAllAgents(), -1);
-
+    appear_time.resize(al->getNumOfAllAgents(), al->constraintTable.length_max + 1);
     size_t max_timestep = 0;
     for (int i = 0; i < al->getNumOfAllAgents(); i++)
         if (!al->paths_all[i].empty() && al->paths_all[i].size() > max_timestep)
@@ -842,6 +842,7 @@ void PythonCBS<Map>::buildMCP(void)
                 if (agent_time[i] == -1)
                     agent_time[i] = t;
 
+                appear_time[i] = min(appear_time[i], (int)t);
                 // cout << "Agent, time = " << get<0>(mcp[al->paths_all[i][t].location].back()) << ", "
                 //     << get<1>(mcp[al->paths_all[i][t].location].back()) << endl;
             }
@@ -852,7 +853,7 @@ void PythonCBS<Map>::buildMCP(void)
 }
 
 template<class Map>
-p::list PythonCBS<Map>::getNextLoc(void)
+p::list PythonCBS<Map>::getNextLoc(int timestep)
 {
     for (int i = 0; i < al->getNumOfAllAgents(); i++)
     {
@@ -863,7 +864,8 @@ p::list PythonCBS<Map>::getNextLoc(void)
         //     get<1>(mcp[al->paths_all[i][agent_time[i]].location].front()) << endl;
         // cout << "********************************************" << endl;
 
-        if (!al->paths_all[i].empty() && 
+        if (!al->paths_all[i].empty() &&
+            appear_time[i] >= timestep &&
             agent_time[i] < al->paths_all[i].size() &&
             !mcp[al->paths_all[i][agent_time[i]].location].empty() &&
             get<0>(mcp[al->paths_all[i][agent_time[i]].location].front()) == i)
