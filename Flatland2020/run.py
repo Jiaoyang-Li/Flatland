@@ -260,7 +260,7 @@ while True:
         if debug_print:
             CBS.printAgentTime()
         time_temp = time.time()
-        next_locs = CBS.getNextLoc()
+        next_locs = CBS.getNextLoc(steps + 1)
         if debug_print:
             print('TIme for get next location: ', time.time() - time_temp)
 
