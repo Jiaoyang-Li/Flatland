@@ -56,14 +56,6 @@ max_duration = 20
 
 
 #####################################################################
-# step loop information
-#####################################################################
-time_taken_by_controller = []
-time_taken_per_step = []
-steps = 0
-my_observation_builder = GlobalObsForRailEnv()
-
-#####################################################################
 # Main evaluation loop
 #
 # This iterates over an arbitrary number of env evaluations
@@ -116,6 +108,14 @@ for folder in os.listdir(path):
 
         print("\n\n Instance " + folder + '/' + filename)
 
+        #####################################################################
+        # step loop information
+        #####################################################################
+        time_taken_by_controller = []
+        time_taken_per_step = []
+        steps = 0
+        my_observation_builder = GlobalObsForRailEnv()
+
         # Construct the enviornment from file
         test = path + folder + '/' + filename
         local_env = RailEnv(  
@@ -139,7 +139,7 @@ for folder in os.listdir(path):
             time_temp = time.time()
         CBS.buildMCP()
         if debug_print:
-            print('TIme for building MCP: ', time.time() - time_temp)
+            print('Time for building MCP: ', time.time() - time_temp)
         if debug_print:
             # print paths
             for i,p in enumerate(paths):
