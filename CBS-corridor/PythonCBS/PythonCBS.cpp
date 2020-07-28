@@ -884,11 +884,12 @@ void PythonCBS<Map>::updateMCP(p::list agent_location, p::dict agent_action)
 {
     for (int i = 0; i < al->getNumOfAllAgents(); i++)
     {
-        if (agent_time[i] == al->paths_all[i].size() - 1 && 
-            !mcp[al->paths_all[i][agent_time[i]].location].empty() && 
-            get<0>(mcp[al->paths_all[i][agent_time[i]].location].front()) == i)
+        // Reach Goal
+        if (agent_time[i] == al->paths_all[i].size() && 
+            !mcp[al->paths_all[i][agent_time[i]-1].location].empty() && 
+            get<0>(mcp[al->paths_all[i][agent_time[i]-1].location].front()) == i)
         {
-            mcp[al->paths_all[i][agent_time[i]].location].pop_front();
+            mcp[al->paths_all[i][agent_time[i]-1].location].pop_front();
         }
 
         else if (agent_location[i] != -1 && agent_location[i] == al->paths_all[i][agent_time[i]].location)
@@ -902,7 +903,7 @@ void PythonCBS<Map>::updateMCP(p::list agent_location, p::dict agent_action)
                 mcp[al->paths_all[i][agent_time[i]-1].location].pop_front();
             }
 
-            if (agent_time[i] < al->paths_all[i].size() - 1)
+            if (agent_time[i] < al->paths_all[i].size())
                 agent_time[i] ++;
         }
     }
@@ -982,8 +983,9 @@ BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final
 		.def("updateFw", &PythonCBS<FlatlandLoader>::updateFw)
         .def("buildMCP", &PythonCBS<FlatlandLoader>::buildMCP)
         .def("getNextLoc", &PythonCBS<FlatlandLoader>::getNextLoc)
+        .def("updateMCP", &PythonCBS<FlatlandLoader>::updateMCP)
+        .def("clearMCP", &PythonCBS<FlatlandLoader>::clearMCP)
         .def("printAllMCP", &PythonCBS<FlatlandLoader>::printAllMCP)
         .def("printMCP", &PythonCBS<FlatlandLoader>::printMCP)
-        .def("printAgentTime", &PythonCBS<FlatlandLoader>::printAgentTime)
-        .def("updateMCP", &PythonCBS<FlatlandLoader>::updateMCP);
+        .def("printAgentTime", &PythonCBS<FlatlandLoader>::printAgentTime);
 }

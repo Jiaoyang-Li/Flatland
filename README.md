@@ -1,6 +1,86 @@
 # Flatland 2
 
 ---
+## Evaluation Track  (NO THREAD VERSION)
+### 1st working evalution:
+CBS parameter: 
+
+    framework = "LNS"
+    
+    f_w = 1
+    
+    debug = False
+    
+    remaining_time = total_time_limit - (time.time() - global_time_start)
+    
+    time_limit = remaining_time / (num_of_evaluations - evaluation_number + 1)
+    
+    default_group_size = 16  # max number of agents in a group
+    
+    corridor_method = 1  # or "corridor2" or ""
+    
+    chasing = True
+    
+    accept_partial_solution = True
+    
+    agent_priority_strategy = 0
+    
+    neighbor_generation_strategy = 2
+    
+    prirority_ordering_strategy = 0
+    
+    replan_strategy = 1
+    
+
+Result:
+
+  Total Execution Time ⌛ : 22884s
+  
+  Mean percentage of done-Agents : -13.15%
+  
+  Mean Reward : 1.00
+  
+  Mean Normalized Reward : -0.13
+  
+  
+### 2nd Working evaluation:
+CBS parameter: 
+
+    framework = "LNS"
+    
+    f_w = 1
+    
+    debug = False
+    
+    remaining_time = total_time_limit - (time.time() - global_time_start)
+    
+    time_limit = remaining_time / (num_of_evaluations - evaluation_number + 1)
+    
+    default_group_size = 16  # max number of agents in a group
+    
+    corridor_method = 1  # or "corridor2" or ""
+    
+    chasing = True
+    
+    accept_partial_solution = True
+    
+    agent_priority_strategy = 3
+    
+    neighbor_generation_strategy = 2
+    
+    prirority_ordering_strategy = 0
+    
+    replan_strategy = 1
+
+
+Result:
+
+
+
+---
+
+
+---
 ## How to install the CBS solver
 
 The CBS solver is in the CBS-corridor folder. Go to the folder and follow the instruction there to compile the code. 
