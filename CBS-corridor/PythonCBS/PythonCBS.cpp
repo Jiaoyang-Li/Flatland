@@ -816,7 +816,7 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
 template class PythonCBS<FlatlandLoader>;
 
 template <class Map>
-void PythonCBS<Map>::buildMCP(void)
+void PythonCBS<Map>::buildMCP(void)  // TODO: Ignore wait actions
 {
     cout << "Start MCP ..." << endl;
     size_t map_size = ml->cols * ml->rows;
@@ -867,10 +867,48 @@ p::list PythonCBS<Map>::getNextLoc(int timestep)
         if (!al->paths_all[i].empty() &&
             appear_time[i] <= timestep &&
             agent_time[i] < al->paths_all[i].size() &&
-            !mcp[al->paths_all[i][agent_time[i]].location].empty() &&
-            get<0>(mcp[al->paths_all[i][agent_time[i]].location].front()) == i)
+            !mcp[al->paths_all[i][agent_time[i]].location].empty())
         {
-            to_go[i] = al->paths_all[i][agent_time[i]].location;
+            int first_agent = get<0>(mcp[al->paths_all[i][agent_time[i]].location].front());
+            int first_time = get<1>(mcp[al->paths_all[i][agent_time[i]].location].front());
+
+            if (get<0>(mcp[al->paths_all[i][agent_time[i]].location].front()) == i || agent_time[i] == al->paths_all[i].size() - 1)
+                to_go[i] = al->paths_all[i][agent_time[i]].location;
+            
+            else if (first_agent < i && mcp[al->paths_all[i][agent_time[i]].location].size() > 1)
+            {
+                int next_agent = get<0>(*std::next(mcp[al->paths_all[i][agent_time[i]].location].begin()));
+                int next_time = get<1>(*std::next(mcp[al->paths_all[i][agent_time[i]].location].begin()));  // equal to agent_time[next_agent]
+                if (next_agent == i && 
+                    appear_time[next_agent] < agent_time[next_agent] && 
+                    al->paths_all[i][next_time-1].heading == al->paths_all[first_agent][first_time-1].heading)
+                {
+                    if (abs(ml->row_coordinate(al->paths_all[i][next_time-1].location) - ml->row_coordinate(al->paths_all[first_agent][first_time-1].location)) + 
+                        abs(ml->col_coordinate(al->paths_all[i][next_time-1].location) - ml->col_coordinate(al->paths_all[first_agent][first_time-1].location)) <= 1)
+                    {
+                        assert(agent_time[next_agent] == next_time);
+                        to_go[i] = al->paths_all[i][agent_time[i]].location;
+                    }
+                    // else
+                    // {
+                    //     cout << "First agent: " << first_agent << endl;
+                    //     cout << "First time: " << first_time << endl;
+                    //     cout << "First time - 1 -> loc: " << ml->row_coordinate(al->paths_all[first_agent][first_time-1].location) << ", " << ml->col_coordinate(al->paths_all[first_agent][first_time-1].location) << endl;
+
+                    //     cout << "Next agent: " << next_agent << endl;
+                    //     cout << "Next time: " << next_time << endl;
+                    //     cout << "Next time - 1 -> loc: " << ml->row_coordinate(al->paths_all[next_agent][next_time-1].location) << ", " << ml->col_coordinate(al->paths_all[next_agent][next_time-1].location) << endl;
+
+                    //     cout << "Current Heading: " << al->paths_all[i][agent_time[i]-1].heading << endl;
+                    //     cout << "Current location: " << ml->row_coordinate(al->paths_all[i][agent_time[i]].location) << ", " << ml->col_coordinate(al->paths_all[i][agent_time[i]].location) << endl;
+                    //     cout << "Map size: " << ml->map_size() << endl;
+                    //     cout << "Map size: " << ml->rows << ", " << ml->cols << endl;
+                    //     cout << endl;
+                    //     sleep(60);
+                    //     assert(0);
+                    // }
+                }
+            }
         }
     }
 
@@ -896,6 +934,13 @@ void PythonCBS<Map>::updateMCP(p::list agent_location, p::dict agent_action)
 
         else if (agent_location[i] != -1 && agent_location[i] == al->paths_all[i][agent_time[i]].location)
         {
+            cout << "agent " << i << endl;
+            cout << "agent_time[i]: " << agent_time[i] << endl;
+            cout << "MCP: a->" << get<0>(mcp[al->paths_all[i][agent_time[i]].location].front());
+            cout << "  t->" << get<1>(mcp[al->paths_all[i][agent_time[i]].location].front()) <<endl;
+            // if (agent_action[i] != 4)
+            //     assert(agent_time[i] == get<1>(mcp[al->paths_all[i][agent_time[i]].location].front()));
+
             if (agent_time[i] > 0 && 
                 al->paths_all[i][agent_time[i]-1].location != -1 && 
                 !mcp[al->paths_all[i][agent_time[i]-1].location].empty() && 
@@ -906,7 +951,7 @@ void PythonCBS<Map>::updateMCP(p::list agent_location, p::dict agent_action)
             }
 
             if (agent_time[i] < al->paths_all[i].size())
-                agent_time[i] ++;
+                agent_time[i] ++;  // TODO: Change to next time step different from current location
         }
     }
     return;

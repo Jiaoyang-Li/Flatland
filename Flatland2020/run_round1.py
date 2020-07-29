@@ -30,7 +30,7 @@ debug_print = True
 remote_test = False
 env_renderer_enable = True
 input_pause_renderer = False
-timelimit = 200  # unit: seconds
+timelimit = 0  # unit: seconds
 default_group_size = 16 # max number of agents in a group. Suggest 8
 corridor_method = 1 # or 0/off or 2/reasonable corridor. Suggest 1
 chasing = True # helps when speed =1, however takes more time on corridor reasoning.
@@ -63,7 +63,8 @@ max_duration = 20
 
 evaluation_number = 0 # evaluation counter
 
-path = '/mnt/d/Flatland/test-neurips2020-round1-v1/'
+# path = '/mnt/d/Flatland/test-neurips2020-round1-v1/'
+path = '/home/rdaneel/Flatland/test-neurips2020-round1-v1/'
 import os
 import json
 results = []
@@ -88,7 +89,7 @@ def linearize_loc(in_env, loc):
     return loc[0]*in_env.width + loc[1]
 
 
-for folder in os.listdir(path):
+for folder in sorted(os.listdir(path)):
     if os.path.isfile(path + folder):
         continue
     for filename in os.listdir(path+folder):
