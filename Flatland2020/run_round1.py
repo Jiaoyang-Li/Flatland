@@ -24,13 +24,13 @@ import subprocess
 import numpy as np
 import time
 
-framework = "LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning
+framework = "Parallel-LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning
 f_w = 1
-debug_print = True
+debug_print = False
 remote_test = False
 env_renderer_enable = True
 input_pause_renderer = False
-timelimit = 0  # unit: seconds
+timelimit = 240  # unit: seconds
 default_group_size = 16 # max number of agents in a group. Suggest 8
 corridor_method = 1 # or 0/off or 2/reasonable corridor. Suggest 1
 chasing = True # helps when speed =1, however takes more time on corridor reasoning.
@@ -64,7 +64,7 @@ max_duration = 20
 evaluation_number = 0 # evaluation counter
 
 # path = '/mnt/d/Flatland/test-neurips2020-round1-v1/'
-path = '/home/rdaneel/Flatland/test-neurips2020-round1-v1/'
+path = '/home/rdaneel/Flatland/test-neurips2020-round1-v2/'
 import os
 import json
 results = []
@@ -162,8 +162,11 @@ for folder in sorted(os.listdir(path)):
         #####################################################################
 
         if env_renderer_enable:
-            env_renderer = RenderTool(local_env, screen_height=4000,
-                                    screen_width=4000)
+            env_renderer = RenderTool(local_env, gl="PGL", 
+                agent_render_variant=AgentRenderVariant.ONE_STEP_BEHIND,
+                show_debug=True, 
+                screen_height=1000, 
+                screen_width=1000)
             env_renderer.render_env(show=True, show_observations=False, show_predictions=False)
 
 
