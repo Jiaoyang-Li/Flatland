@@ -180,10 +180,11 @@ bool LNS::getInitialSolution()
         {
             return false;
         }
+        al.agents[0] = &al.agents_all[agent];
         if (options1.debug)
             cout << "Remaining agents = " << remaining_agents <<
-             ", remaining time = " << hard_time_limit - runtime << " seconds. " << endl;
-        al.agents[0] = &al.agents_all[agent];
+             ", remaining time = " << hard_time_limit - runtime << " seconds. " << endl
+                    << "Agent " << al.agents[0]->agent_id << endl;
         MultiMapICBSSearch<FlatlandLoader> icbs(&ml, &al, f_w, c, 0, options1.debug? 3 : 0, options1);
         icbs.runICBSSearch();
         updateCBSResults(icbs);
@@ -479,6 +480,7 @@ void LNS::updateNeighborPathsCosts()
 
 void LNS::addAgentPath(int agent, const Path& path)
 {
+    assert(agent == al.agents_all[agent].agent_id);
     if(!al.constraintTable.insert_path(agent, path))
         exit(10);
     al.paths_all[agent] = path;
@@ -488,6 +490,7 @@ void LNS::deleteNeighborPaths()
 {
     for (auto i : neighbors)
     {
+        assert(i == al.agents_all[i].agent_id);
         al.constraintTable.delete_path(i, al.paths_all[i]);
     }
 }
@@ -657,7 +660,8 @@ void LNS::randomWalk(int agent_id, const PathEntry& start, int start_timestep,
                 exit_heading = it->exit_heading;
                 exit_loc = it->exit_loc;
                 h_val = next_h_val;
-                al.constraintTable.get_conflicting_agents(conflicting_agents, loc, t + 1);
+                assert(agent_id == al.agents_all[agent_id].agent_id);
+                al.constraintTable.get_conflicting_agents(agent_id, conflicting_agents, loc, t + 1);
                 break;
             }
             transitions.erase(it);

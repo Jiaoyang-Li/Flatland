@@ -7,7 +7,7 @@ class ConstraintTable
 {
 public:
 	int length_max = INT_MAX;
-
+    int kRobust = 1;
 	void clear()
 	{
 		CT.clear();
@@ -15,12 +15,12 @@ public:
 	}
 
 	void insert(int loc, int t_min, int t_max); // insert a constraint
-	bool insert_path(int agent_id, const Path& path, int kRobust = 1);
-    void delete_path(int agent_id, const Path& path, int kRobust = 1);
-	bool is_constrained(int loc, int t, int kRobust = 1) const;
+	bool insert_path(int agent_id, const Path& path);
+    void delete_path(int agent_id, const Path& path);
+	bool is_constrained(int agent_id, int loc, int t) const;
 	// bool is_good_malfunction_location(int loc, int t);
     void get_agents(set<int>& conflicting_agents, int loc) const;
-	void get_conflicting_agents(set<int>& conflicting_agents, int loc, int t, int kRobust = 1) const;
+	void get_conflicting_agents(int agent_id, set<int>& conflicting_agents, int loc, int t) const;
 
     void init(size_t map_size)
     {

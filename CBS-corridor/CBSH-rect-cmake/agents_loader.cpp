@@ -84,7 +84,7 @@ AgentsLoader::AgentsLoader(p::object agents) {
 			exit_heading = -1;
 		}
 
-
+        this->agents_all[i].agent_id = i;
         this->agents_all[i].initial_location = initial;
         this->agents_all[i].goal_location = goal;
         this->agents_all[i].position = initial;
@@ -148,6 +148,7 @@ void AgentsLoader::updateAgents(p::object agents) {
 		}
 
 		Agent a;
+		a.agent_id = i;
 		a.initial_location = initial;
 		a.goal_location = goal;
 		a.position = initial;

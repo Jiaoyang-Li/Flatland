@@ -36,7 +36,7 @@ struct wrap {
 
 extern "C" void* call_func( void *f )
 {
-    std::auto_ptr< wrap > w( static_cast< wrap* >( f ) );
+    std::unique_ptr< wrap > w( static_cast< wrap* >( f ) );
     w->ins.run(w->hard_time_limit, w->soft_time_limit);
 
     return 0;
@@ -189,8 +189,7 @@ private:
         statistic_list[thread_id].num_chasing += cbs.num_chasing;
     }
 
-    bool hasConflicts(const vector<Path>& paths) const;
-
+    bool hasConflicts() const;
 };
 
 

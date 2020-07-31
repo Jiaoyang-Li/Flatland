@@ -257,7 +257,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			int next_timestep = curr->timestep + 1;
 
 
-			if (!constraint_table.is_constrained(next_id, next_timestep)) //&&
+			if (!constraint_table.is_constrained(al->agents[agent_id]->agent_id, next_id, next_timestep)) //&&
 				//!constraint_table.is_constrained(curr->loc * map_size + next_id, next_timestep)) // TODO:: for k-robust cases, we do not need to check edge constraint?
 			{
 
@@ -394,7 +394,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			break;
 		LLNode* open_head = open_list.top();
 
-        assert(open_head->getFVal() >= min_f_val);
+        //assert(open_head->getFVal() >= min_f_val);
 		if (open_head->getFVal() > min_f_val) 
 		{
 			min_f_val = open_head->getFVal();

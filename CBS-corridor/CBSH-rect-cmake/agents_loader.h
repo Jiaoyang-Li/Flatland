@@ -20,6 +20,7 @@ struct Agent {
 	pair<int, int> goal_location;
 	pair<int, int> position;
     vector<hvals> heuristics;
+    int agent_id;
 	bool activate = true;
 	int heading = -1;
 	int malfunction_left = 0;
