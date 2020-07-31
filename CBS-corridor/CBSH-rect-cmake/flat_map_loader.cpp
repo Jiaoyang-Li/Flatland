@@ -158,8 +158,6 @@ int FlatlandLoader::getDegree(int loc,int heading) const{
 }
 
 FlatlandLoader::~FlatlandLoader(){
-	delete[] this->my_map;
-	delete[] this->moves_offset;
-	delete[] this->railMap;
+    delete[] this->railMap;
 }
 

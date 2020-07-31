@@ -49,6 +49,19 @@ public:
               int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
               int agent_priority_strategy, int neighbor_generation_strategy,
               int prirority_ordering_strategy, int replan_strategy);
+	~PythonCBS(){
+	    delete this->al;
+
+        for (int i =0;  i< al_pool.size();i++){
+            delete lns_pool[i];
+	        if (i == this->best_thread_id)
+	            continue;
+	        delete al_pool[i];
+	    }
+
+        delete ml;
+
+    }
 
 	p::list getResult();
 
@@ -177,6 +190,7 @@ private:
     }
 
     bool hasConflicts(const vector<Path>& paths) const;
+
 };
 
 

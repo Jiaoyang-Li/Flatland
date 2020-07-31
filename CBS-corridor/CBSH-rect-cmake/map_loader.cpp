@@ -195,7 +195,7 @@ bool* MapLoader::get_map() const {
 }
 
 MapLoader::~MapLoader() {
-  //delete[] this->my_map;
+  delete[] this->my_map;
   delete[] this->moves_offset;
 }
 

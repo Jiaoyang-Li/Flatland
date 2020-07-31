@@ -174,6 +174,11 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 		open_list.erase(curr->open_handle);
 
 // 		assert(curr->h_val >=0);
+//        cout<<"Current: "<<curr->h_val<< ": "<<curr->loc/num_col <<", "<<curr->loc%num_col << ", heading: "<<curr->heading<< endl;
+//        for (auto heading : my_heuristic[curr->loc].heading){
+//            cout << heading<< ",";
+//        }
+//        cout <<endl;
 
 		curr->in_openlist = false;
 		num_expanded++;
@@ -287,8 +292,14 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 				if (next_g_val + next_h_val*al->agents[agent_id]->speed > constraint_table.length_max)
 					continue;
 
+//                cout<<"Next: "<<next_h_val<<","<< next_id/num_col <<", "<<next_id%num_col<<", heading: "<<next_heading<< endl;
+//                for (auto heading : my_heuristic[next_id].heading){
+//                    cout << heading<< ",";
+//                }
+//                cout <<endl;
 
-				int next_internal_conflicts = res_table->countConflict(agent_id, curr->loc, next_id, curr->timestep, kRobust);
+
+                int next_internal_conflicts = res_table->countConflict(agent_id, curr->loc, next_id, curr->timestep, kRobust);
 
 
 
