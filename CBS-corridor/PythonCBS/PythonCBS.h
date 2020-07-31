@@ -75,7 +75,7 @@ public:
     p::list benchmarkSingleGroup(int group_size,int iterations, int time_limit);
     p::list benchmarkSingleGroupLNS(int group_size,int iterations, int time_limit);
     bool findConflicts() const;
-    p::list getNextLoc(int timestep);
+    p::list getNextLoc(p::list agent_location, int timestep);
     void updateMCP(p::list agent_location, p::dict agent_action);
     void buildMCP(void);
     void clearMCP(void) { mcp.clear(); };

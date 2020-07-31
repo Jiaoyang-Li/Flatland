@@ -859,7 +859,7 @@ void PythonCBS<Map>::buildMCP(void)  // TODO: Ignore wait actions
 }
 
 template<class Map>
-p::list PythonCBS<Map>::getNextLoc(int timestep)
+p::list PythonCBS<Map>::getNextLoc(p::list agent_location, int timestep)
 {
     for (int i = 0; i < al->getNumOfAllAgents(); i++)
     {
@@ -875,22 +875,32 @@ p::list PythonCBS<Map>::getNextLoc(int timestep)
             agent_time[i] < al->paths_all[i].size() &&
             !mcp[al->paths_all[i][agent_time[i]].location].empty())
         {
-            int first_agent = get<0>(mcp[al->paths_all[i][agent_time[i]].location].front());
-            int first_time = get<1>(mcp[al->paths_all[i][agent_time[i]].location].front());
+            int loc = al->paths_all[i][agent_time[i]].location;
+            int first_agent = get<0>(mcp[loc].front());
+            int first_time = get<1>(mcp[loc].front());
 
-            if (get<0>(mcp[al->paths_all[i][agent_time[i]].location].front()) == i || agent_time[i] == al->paths_all[i].size() - 1)
+            if (get<0>(mcp[loc].front()) == i || agent_time[i] == al->paths_all[i].size() - 1)
                 to_go[i] = al->paths_all[i][agent_time[i]].location;
             
-            else if (first_agent < i && mcp[al->paths_all[i][agent_time[i]].location].size() > 1)
+            else if (first_agent < i && mcp[loc].size() > 1)
             {
-                int next_agent = get<0>(*std::next(mcp[al->paths_all[i][agent_time[i]].location].begin()));
-                int next_time = get<1>(*std::next(mcp[al->paths_all[i][agent_time[i]].location].begin()));  // equal to agent_time[next_agent]
+                int next_agent = get<0>(*std::next(mcp[loc].begin()));
+                int next_time = get<1>(*std::next(mcp[loc].begin()));  // equal to agent_time[next_agent]
                 if (next_agent == i && 
-                    appear_time[next_agent] < agent_time[next_agent] && 
+                    appear_time[first_agent] < agent_time[first_agent] &&
                     al->paths_all[i][next_time-1].heading == al->paths_all[first_agent][first_time-1].heading)
                 {
-                    if (abs(ml->row_coordinate(al->paths_all[i][next_time-1].location) - ml->row_coordinate(al->paths_all[first_agent][first_time-1].location)) + 
-                        abs(ml->col_coordinate(al->paths_all[i][next_time-1].location) - ml->col_coordinate(al->paths_all[first_agent][first_time-1].location)) <= 1)
+                    if (al->paths_all[next_agent][next_agent-1].location < 0)
+                    {
+                        if(agent_location[first_agent] == loc)
+                        {
+                            to_go[i] = al->paths_all[i][agent_time[i]].location;
+                        }
+                    }
+                    else if (abs(ml->row_coordinate(al->paths_all[i][next_time-1].location) -
+                        ml->row_coordinate(al->paths_all[first_agent][first_time-1].location)) +
+                        abs(ml->col_coordinate(al->paths_all[i][next_time-1].location) -
+                        ml->col_coordinate(al->paths_all[first_agent][first_time-1].location)) <= 1)
                     {
                         assert(agent_time[next_agent] == next_time);
                         to_go[i] = al->paths_all[i][agent_time[i]].location;
