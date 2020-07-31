@@ -184,7 +184,7 @@ for folder in sorted(os.listdir(path)):
             if debug_print:
                 CBS.printAgentTime()
             time_temp = time.time()
-            next_locs = CBS.getNextLoc(steps + 1)
+
             if debug_print:
                 print('TIme for get next location: ', time.time() - time_temp)
 
@@ -199,6 +199,7 @@ for folder in sorted(os.listdir(path)):
                 else:
                     curr_locs.append(linearize_loc(local_env, a.position))
 
+            next_locs = CBS.getNextLoc(curr_locs, steps + 1)
             action = my_controller.get_actions(prev_locs, next_locs, curr_locs)
 
             if debug_print:
