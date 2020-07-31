@@ -877,16 +877,22 @@ p::list PythonCBS<Map>::getNextLoc(p::list agent_location, int timestep)
         {
             int loc = al->paths_all[i][agent_time[i]].location;
             int first_agent = get<0>(mcp[loc].front());
-            int first_time = get<1>(mcp[loc].front());
+            // int first_time = get<1>(mcp[loc].front());
 
             if (get<0>(mcp[loc].front()) == i || agent_time[i] == al->paths_all[i].size() - 1)
                 to_go[i] = al->paths_all[i][agent_time[i]].location;
             
             else if (first_agent < i && mcp[loc].size() > 1)
             {
-                int next_agent = get<0>(*std::next(mcp[loc].begin()));
+                if (get<0>(*std::next(mcp[loc].begin())) == i && // the second agent is i
+                    agent_location[first_agent] == loc)  // the fist agent is already at loc
+                    // agent_location[i] != al->paths_all[first_agent][agent_time[first_agent]].location) // not edge conflict
+                {
+                    to_go[i] = al->paths_all[i][agent_time[i]].location;
+                }
+                /*int next_agent = get<0>(*std::next(mcp[loc].begin()));
                 int next_time = get<1>(*std::next(mcp[loc].begin()));  // equal to agent_time[next_agent]
-                if (next_agent == i && 
+                if (next_agent == i &&
                     appear_time[first_agent] < agent_time[first_agent] &&
                     al->paths_all[i][next_time-1].heading == al->paths_all[first_agent][first_time-1].heading)
                 {
@@ -923,7 +929,7 @@ p::list PythonCBS<Map>::getNextLoc(p::list agent_location, int timestep)
                     //     sleep(60);
                     //     assert(0);
                     // }
-                }
+                }*/
             }
         }
     }
