@@ -188,7 +188,7 @@ while True:
     #
     #####################################################################
 
-    framework = "LNS"
+    framework = "Parallel-LNS"
     f_w = 1
     debug = False
     remaining_time = total_time_limit - (time.time() - global_time_start)
@@ -197,8 +197,8 @@ while True:
     corridor_method = 1  # or "corridor2" or ""
     chasing = True
     accept_partial_solution = True
-    agent_priority_strategy = 0
-    neighbor_generation_strategy = 2
+    agent_priority_strategy = 3
+    neighbor_generation_strategy = 3
     prirority_ordering_strategy = 0
     replan_strategy = 1
 
@@ -260,7 +260,7 @@ while True:
         if debug_print:
             CBS.printAgentTime()
         time_temp = time.time()
-        next_locs = CBS.getNextLoc(steps + 1)
+        
         if debug_print:
             print('TIme for get next location: ', time.time() - time_temp)
 
@@ -274,7 +274,7 @@ while True:
                 curr_locs.append(-1)
             else:
                 curr_locs.append(linearize_loc(local_env, a.position))
-
+        next_locs = CBS.getNextLoc(curr_locs, steps + 1)
         action = my_controller.get_actions(prev_locs, next_locs, curr_locs)
 
         if debug_print:
