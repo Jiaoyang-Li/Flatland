@@ -232,7 +232,10 @@ bool LNS::generateNeighborByStart()
         (replan_strategy == 0 && neighbors.size() > group_size)) // resize the group for CBS
     {
         sortNeighborsRandomly();
-        neighbors.resize(group_size);
+        if (replan_strategy == 0)
+            neighbors.resize(group_size);
+        else
+            neighbors.resize(max_group_size);
     }
     if (options1.debug)
         cout << "Generate " << neighbors.size() << " neighbors by start location " << it->first << endl;
@@ -259,7 +262,10 @@ bool LNS::generateNeighborByIntersection()
     if (neighbors.size() > max_group_size || (replan_strategy == 0 && neighbors.size() > group_size)) // resize the group for CBS
     {
         sortNeighborsRandomly();
-        neighbors.resize(group_size);
+        if (replan_strategy == 0)
+            neighbors.resize(group_size);
+        else
+            neighbors.resize(max_group_size);
     }
     if (options1.debug)
         cout << "Generate " << neighbors.size() << " neighbors by intersection " << location << endl;
