@@ -8,8 +8,7 @@ CBS-corridor/Makefile
 CBS-corridor/CMakeFiles/**
 CBS-corridor/.idea
 Flatland2019
-CBS-corridor/data_analysis/.idea
-CBS-corridor/data_analysis/venv
+CBS-corridor/data_analysis
 /.idea/
 /.vscode/
 Flatland2020/cmake_install.cmake

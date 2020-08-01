@@ -28,8 +28,8 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
         }
     }
     runtime = ((fsec)(Time::now() - start_time)).count();
-    //if (options1.debug)
-    cout << "Initial solution cost = " << solution_cost << ", "
+    if (options1.debug)
+        cout << "Initial solution cost = " << solution_cost << ", "
          << "travel time = " << solution_cost - sum_of_showup_time << ", "
          << "makespan = " << makespan << ", "
          << "runtime = " << runtime << endl;
@@ -52,7 +52,7 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
     boost::unordered_set<int> tabu_list;
     bool succ;
     auto old_runtime = runtime;
-    while (runtime < soft_time_limit && iteration_stats.size() < 10000)
+    while (runtime < soft_time_limit && iteration_stats.size() < 5000)
     {
         runtime =((fsec)(Time::now() - start_time)).count();
         if (adaptive_destroy)
@@ -60,9 +60,12 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
             double sum = 0;
             for (const auto& h : destroy_heuristics)
                 sum += h;
-            cout << "destroy heuristics = ";
-            for (const auto& h : destroy_heuristics)
-                cout << h / sum << ",";
+            if (options1.debug)
+            {
+                cout << "destroy heuristics = ";
+                for (const auto& h : destroy_heuristics)
+                    cout << h / sum << ",";
+            }
             double r = (double) rand() / RAND_MAX;
             if (r * sum < destroy_heuristics[0])
                 destroy_strategy = 0;
@@ -70,7 +73,8 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
                 destroy_strategy = 1;
             else
                 destroy_strategy = 2;
-            cout << "Choose destroy strategy " << destroy_strategy << endl;
+            if (options1.debug)
+                cout << "Choose destroy strategy " << destroy_strategy << endl;
         }
         switch (destroy_strategy)
         {
@@ -136,7 +140,7 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
         }
         runtime = ((fsec)(Time::now() - start_time)).count();
         solution_cost += delta_costs;
-        // if (options1.debug)
+        if (options1.debug)
             cout << "Iteration " << iteration_stats.size() << ", "
              << "group size = " << neighbors.size() << ", "
              << "solution cost = " << solution_cost << ", "

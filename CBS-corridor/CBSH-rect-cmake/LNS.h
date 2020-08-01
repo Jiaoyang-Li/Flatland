@@ -62,7 +62,7 @@ private:
     int neighbor_makespan = 0;
     int delta_costs = 0;
     int group_size = DEFAULT_GROUP_SIZE; // this is useful only when we use CBS to replan
-    int max_group_size = 20;
+    int max_group_size = 10;
 
     vector<int> intersections;
     map<int, list<int>> start_locations;  // <start location, corresponding agents>
