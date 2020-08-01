@@ -24,7 +24,7 @@ public:
 
     //stats about each iteration
     typedef tuple<int, double, double, double, int,
-            int, int, int, int, int, int> IterationStats;
+            int, int, double, int, int, int> IterationStats;
     list<IterationStats> iteration_stats;
 
     LNS(AgentsLoader& al, FlatlandLoader& ml, double f_w, const constraint_strategy c,
@@ -62,7 +62,7 @@ private:
     int neighbor_makespan = 0;
     int delta_costs = 0;
     int group_size = DEFAULT_GROUP_SIZE; // this is useful only when we use CBS to replan
-    int max_group_size = 50;
+    int max_group_size = 20;
 
     vector<int> intersections;
     map<int, list<int>> start_locations;  // <start location, corresponding agents>

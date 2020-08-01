@@ -95,7 +95,7 @@ public:
                "total makespan," <<
                "solution cost," <<
                "destroy heuristic," <<
-               "planned agents," <<
+               "normalized cost," <<
                "dead agents," <<
                "HL nodes," <<
                "LL nodes," <<
@@ -130,7 +130,7 @@ private:
 	vector<LNS*> lns_pool;
 	constraint_strategy s;
 	options options1;
-    float hard_time_limit = 240;
+    float hard_time_limit = 300;
     float soft_time_limit;
 	int kRobust;
 	int max_malfunction;
@@ -158,7 +158,7 @@ private:
 
     //stats about each iteration
     typedef tuple<int, double, double, double, int,
-                    int, int, int, int, int, int> IterationStats;
+                    int, int, double, int, int, int> IterationStats;
     vector<list<IterationStats>> iteration_stats;
 
     bool PrioritizedPlaning(AgentsLoader* al = NULL, int thread_id = 0, int priority_strategy = -1);

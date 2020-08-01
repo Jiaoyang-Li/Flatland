@@ -228,13 +228,13 @@ p::dict PythonCBS<Map>::getResultDetail() {
     result["best_initial_priority_strategy"] = this->bset_initisl_priority_strategy;
 
 
-    size_t solution_cost = 0;
+    int solution_cost = 0;
     int finished_agents = 0;
-    size_t makespan = 0;
+    int makespan = 0;
     for (const auto& path : al->paths_all)
     {
-        solution_cost += path.size();
-        makespan = max(path.size(), makespan);
+        solution_cost += (int)path.size() - 1;
+        makespan = max((int)path.size() - 1, makespan);
         if (!path.empty())
             finished_agents++;
     }
