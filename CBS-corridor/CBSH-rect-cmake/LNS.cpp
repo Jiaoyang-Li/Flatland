@@ -252,7 +252,7 @@ bool LNS::generateNeighborByIntersection()
     if (neighbors_set.size() <= 1)
         return false;
     neighbors.assign(neighbors_set.begin(), neighbors_set.end());
-    if (replan_strategy == 0 && neighbors.size() > group_size) // resize the group for CBS
+    if (neighbors.size() > max_group_size || (replan_strategy == 0 && neighbors.size() > group_size)) // resize the group for CBS
     {
         sortNeighborsRandomly();
         neighbors.resize(group_size);
