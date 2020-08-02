@@ -45,10 +45,20 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
     if (destroy_strategy == 3)
     {
         adaptive_destroy = true;
+        iterative_destroy = false;
         destroy_heuristics.assign(3, 1);
     }
-    else
+    else if (destroy_strategy == 4)
+    {
         adaptive_destroy = false;
+        iterative_destroy = true;
+    }
+    else // fixed destroy strategy
+    {
+        adaptive_destroy = false;
+        iterative_destroy = false;
+    }
+
     boost::unordered_set<int> tabu_list;
     bool succ;
     auto old_runtime = runtime;
@@ -76,6 +86,11 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
             if (options1.debug)
                 cout << "Choose destroy strategy " << destroy_strategy << endl;
         }
+        else if (iterative_destroy)
+        {
+            destroy_strategy = (destroy_strategy + 1) % 3;
+        }
+
         switch (destroy_strategy)
         {
             case 0:
