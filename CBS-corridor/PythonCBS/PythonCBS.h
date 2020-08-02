@@ -130,7 +130,7 @@ private:
 	vector<LNS*> lns_pool;
 	constraint_strategy s;
 	options options1;
-    float hard_time_limit = 240;
+    float hard_time_limit = 270;
     float soft_time_limit;
 	int kRobust;
 	int max_malfunction;

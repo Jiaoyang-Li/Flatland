@@ -52,7 +52,7 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
     boost::unordered_set<int> tabu_list;
     bool succ;
     auto old_runtime = runtime;
-    while (runtime < soft_time_limit && iteration_stats.size() < 5000)
+    while (runtime < soft_time_limit && iteration_stats.size() < 10000)
     {
         runtime =((fsec)(Time::now() - start_time)).count();
         if (adaptive_destroy)
