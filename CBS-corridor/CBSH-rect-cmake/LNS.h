@@ -78,6 +78,7 @@ private:
     int replan_strategy = 0; // 0: CBS; 1: prioritized planning
 
     bool adaptive_destroy = false;
+    bool iterative_destroy = false;
     double decay_factor = 0.01;
     double reaction_factor = 0.1;
     vector<double> destroy_heuristics;
