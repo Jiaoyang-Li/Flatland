@@ -82,6 +82,7 @@ public:
     void printAllMCP(void);
     void printMCP(int loc);
     void printAgentTime(void);
+    void printAgentNoWaitTime(void);
 
     void writeResultsToFile(const string& fileName) const
     {
@@ -174,6 +175,7 @@ private:
     vector<int> agent_time;
     vector<int> to_go;
     vector<int> appear_time;
+    vector<vector<int>> no_wait_time;
 
     void updateCBSResults(const MultiMapICBSSearch<Map>& cbs, int thread_id = 0)
     {
