@@ -837,23 +837,113 @@ void PythonCBS<Map>::buildMCP(void)  // TODO: Ignore wait actions
             max_timestep = al->paths_all[i].size();
     cout << "max_timestep = " << max_timestep << endl;
 
+    // Build no wait timestep
+    // no_wait_time.clear();
+    // for (size_t i = 0; i < al->getNumOfAllAgents(); i++)
+    // {
+    //     vector<int> tmp_timestep;
+    //     int cur_loc = ml->linearize_coordinate(al->getAgent(i).initial_location);
+    //     if (!al->paths_all[i].empty())
+    //     {
+    //         for (int t = 0; t < (int) al->paths_all[i].size()-1; t++)
+    //         {
+    //             if (al->paths_all[i][t].location == -1)
+    //             {
+    //                 tmp_timestep.push_back(t);
+    //             }
+
+    //             else if (al->paths_all[i][t].location != -1 && al->paths_all[i][t-1].location == -1)  // Start state
+    //             {
+    //                 tmp_timestep.push_back(t);
+    //             }
+
+    //             else if (cur_loc != al->paths_all[i][t].location)
+    //             {
+    //                 tmp_timestep.push_back(t);
+    //                 cur_loc = al->paths_all[i][t].location;
+    //             }
+    //             // else
+    //             // {
+    //             //     cout << "wait action happens at time " << t << " for agent " << i << endl;
+    //             // }
+    //         }
+
+    //         // Goal state
+    //         if (al->paths_all[i][al->paths_all[i].size()-1].location != al->paths_all[i][al->paths_all[i].size()-2].location)
+    //             tmp_timestep.push_back(al->paths_all[i].size()-1);
+
+    //         cout << endl;
+    //         no_wait_time.push_back(tmp_timestep);
+    //     }
+    // }
+
+    // Debug for no_wait_time
+    // cout << endl;
+    // al->printPaths();
+    // cout << "no_wait_time" << endl;
+    // for (int i = 0; i < al->getNumOfAllAgents(); i++)
+    // {
+    //     cout << "Size: " << al->paths_all[i].size() << endl;
+    //     cout << "Size: " << no_wait_time[i].size() << endl;
+    //     cout << "[ ";
+    //     for (int t = 0; t < no_wait_time[i].size(); t++)
+    //     {
+    //         cout << no_wait_time[i][t] << ", ";
+    //     }
+    //     cout << " ]" << endl;
+    // }
+
+    // Push nodes to MCP
+    no_wait_time.resize(al->getNumOfAllAgents());
     for (size_t t = 0; t < max_timestep; t++)
     {
         for (int i = 0; i < al->getNumOfAllAgents(); i++)
-        {
-            if (!al->paths_all[i].empty() && t < al->paths_all[i].size() && al->paths_all[i][t].location != -1)
+        {    
+            if (!al->paths_all[i].empty() && t < al->paths_all[i].size())
             {
-                mcp[al->paths_all[i][t].location].push_back(make_tuple(i, t));
+                if (al->paths_all[i][t].location != -1)
+                {
+                    if (get<0>(mcp[al->paths_all[i][t].location].back()) != i || 
+                        mcp[al->paths_all[i][t].location].empty())  // don't wait
+                    {
+                        mcp[al->paths_all[i][t].location].push_back(make_tuple(i, t));
+                        no_wait_time[i].push_back(t);
+                    }
 
-                if (agent_time[i] == -1)
-                    agent_time[i] = t;
+                    if (agent_time[i] == -1)
+                        agent_time[i] = no_wait_time[i].size() - 1;
 
-                appear_time[i] = min(appear_time[i], (int)t);
-                // cout << "Agent, time = " << get<0>(mcp[al->paths_all[i][t].location].back()) << ", "
-                //     << get<1>(mcp[al->paths_all[i][t].location].back()) << endl;
+                    appear_time[i] = min(appear_time[i], (int)t);
+                }
+
+                else
+                {
+                    no_wait_time[i].push_back(t);
+                }
             }
         }
     }
+
+    // for (int i = 0; i < al->getNumOfAllAgents(); i++)  // This is for reach goal situation in updateMCP (Termination)
+    //     no_wait_time[i].push_back(al->paths_all[i].size());
+
+    // Debug for no_wait_time
+    cout << endl;
+    al->printPaths();
+    for (int i = 0; i < al->getNumOfAllAgents(); i++)
+    {
+        cout << "Size: " << al->paths_all[i].size() << endl;
+        cout << "Size: " << no_wait_time[i].size() << endl;
+        cout << "[ ";
+        for (int t = 0; t < no_wait_time[i].size(); t++)
+        {
+            cout << no_wait_time[i][t] << ", ";
+        }
+        cout << " ]" << endl;
+    }
+    // printMCP(280);
+    printAgentTime();
+
     cout << "End building MCP ..." << endl;
     return;
 }
@@ -863,24 +953,42 @@ p::list PythonCBS<Map>::getNextLoc(p::list agent_location, int timestep)
 {
     for (int i = 0; i < al->getNumOfAllAgents(); i++)
     {
-        // cout << "********************************************" << endl;
-        // cout << "Agent: " << i << endl;
-        // cout << "Next location: " << al->paths_all[i][agent_time[i]].location << endl;
-        // cout << "MCP at location: " << get<0>(mcp[al->paths_all[i][agent_time[i]].location].front()) << ", " << 
-        //     get<1>(mcp[al->paths_all[i][agent_time[i]].location].front()) << endl;
-        // cout << "********************************************" << endl;
+        // if (i == 85 && agent_location[i] == 5463)
+        // {
+        //     cout << "********************************************" << endl;
+        //     cout << "Agent: " << i << endl;
+        //     cout << "agent_time: " << agent_time[i] << endl;
+        //     cout << "no_wait_time: " << no_wait_time[i][agent_time[i]] << endl;
+        //     cout << "Next location: " << al->paths_all[i][no_wait_time[i][agent_time[i]]].location << endl;
+        //     cout << "MCP at next location: " << get<0>(mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].front()) << ", " << 
+        //         get<1>(mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].front()) << endl;
+        //     cout << "********************************************" << endl;
 
+        //     for (int j = 0; j < al->paths_all[i].size(); j++)
+        //     {
+        //         cout << al->paths_all[i][j].location << ", ";
+        //     }
+        //     cout << "++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
+
+        //     for (int j=0; j < no_wait_time[85].size() ; j++)
+        //     {
+        //         cout << no_wait_time[85][j] << ", ";
+        //     }
+        //     cout << endl;
+
+        //     sleep(10);
+        // }
         if (!al->paths_all[i].empty() &&
             appear_time[i] <= timestep &&
-            agent_time[i] < al->paths_all[i].size() &&
-            !mcp[al->paths_all[i][agent_time[i]].location].empty())
+            agent_time[i] < no_wait_time[i].size() &&
+            !mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].empty())
         {
-            int loc = al->paths_all[i][agent_time[i]].location;
+            int loc = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
             int first_agent = get<0>(mcp[loc].front());
             // int first_time = get<1>(mcp[loc].front());
 
-            if (get<0>(mcp[loc].front()) == i || agent_time[i] == al->paths_all[i].size() - 1)
-                to_go[i] = al->paths_all[i][agent_time[i]].location;
+            if (get<0>(mcp[loc].front()) == i || agent_time[i] == no_wait_time[i].size() - 1)
+                to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
             
             else if (first_agent < i && mcp[loc].size() > 1)
             {
@@ -888,7 +996,7 @@ p::list PythonCBS<Map>::getNextLoc(p::list agent_location, int timestep)
                     agent_location[first_agent] == loc)  // the fist agent is already at loc
                     // agent_location[i] != al->paths_all[first_agent][agent_time[first_agent]].location) // not edge conflict
                 {
-                    to_go[i] = al->paths_all[i][agent_time[i]].location;
+                    to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
                 }
                 /*int next_agent = get<0>(*std::next(mcp[loc].begin()));
                 int next_time = get<1>(*std::next(mcp[loc].begin()));  // equal to agent_time[next_agent]
@@ -947,37 +1055,49 @@ void PythonCBS<Map>::updateMCP(p::list agent_location, p::dict agent_action)
     for (int i = 0; i < al->getNumOfAllAgents(); i++)
     {
         // Reach Goal
-        if (agent_time[i] == al->paths_all[i].size() && 
-            !mcp[al->paths_all[i][agent_time[i]-1].location].empty() && 
-            get<0>(mcp[al->paths_all[i][agent_time[i]-1].location].front()) == i)
+        if (agent_time[i] == no_wait_time[i].size() && 
+            !mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].empty() && 
+            get<0>(mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].front()) == i)
         {
-            mcp[al->paths_all[i][agent_time[i]-1].location].pop_front();
+            mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].pop_front();
+
+            for (const auto& m: mcp)
+            {
+                for (const  auto& a: m)
+                {
+                    if (get<0>(a) == i)
+                    {
+                        cout << "Error in agent " << get<0>(a) << "at timestep " << get<1>(a) << endl;
+                        sleep(3);
+                    }
+                }
+            }
         }
 
-        else if (agent_location[i] != -1 && agent_location[i] == al->paths_all[i][agent_time[i]].location)
+        else if (agent_time[i] < no_wait_time[i].size() &&
+                 agent_location[i] != -1 && 
+                 agent_location[i] == al->paths_all[i][no_wait_time[i][agent_time[i]]].location)
         {
             if (options1.debug)
             {
                 cout << "agent " << i << endl;
-                cout << "agent_time[i]: " << agent_time[i] << endl;
-                cout << "MCP: a->" << get<0>(mcp[al->paths_all[i][agent_time[i]].location].front());
-                cout << "  t->" << get<1>(mcp[al->paths_all[i][agent_time[i]].location].front()) <<endl;
+                cout << "agent_time[i]: " << no_wait_time[i][agent_time[i]] << endl;
+                cout << "MCP: a->" << get<0>(mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].front());
+                cout << "  t->" << get<1>(mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].front()) <<endl;
             }
-            // if (agent_action[i] != 4)
-            //     assert(agent_time[i] == get<1>(mcp[al->paths_all[i][agent_time[i]].location].front()));
 
-            if (agent_time[i] > 0 && 
-                al->paths_all[i][agent_time[i]-1].location != -1 && 
-                !mcp[al->paths_all[i][agent_time[i]-1].location].empty() && 
-                get<0>(mcp[al->paths_all[i][agent_time[i]-1].location].front()) == i)
+            // Remove previous location from MCP after reach time no_wait_time[agent_time[i]]
+            if (no_wait_time[i][agent_time[i]] > 0 && 
+                al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location != -1 && 
+                !mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].empty() && 
+                get<0>(mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].front()) == i)
             {
                 // cout << "Pop mcp: " << al->paths_all[i][agent_time[i]-1].location << endl;
-                mcp[al->paths_all[i][agent_time[i]-1].location].pop_front();
+                mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].pop_front();
             }
 
-            if (agent_time[i] < al->paths_all[i].size())
-                agent_time[i] ++;  // TODO: Change to next time step different from current location
-        }
+            agent_time[i] ++;
+        }       
     }
     return;
 }
@@ -1038,6 +1158,19 @@ void PythonCBS<Map>::printAgentTime(void)
     cout << "================== End Time ==================" << endl;
 }
 
+template<class Map>
+void PythonCBS<Map>::printAgentNoWaitTime(void)
+{
+    cout << "==================== Time ====================" << endl;
+    for (int i = 0; i < al->getNumOfAllAgents(); i++)
+    {
+        cout << "Agent " << i << ": ";
+        for (int t = 0; t < no_wait_time[i].size(); t++)
+            cout << no_wait_time[i][t] << ", ";
+        cout << endl;
+    }
+    cout << "================== End Time ==================" << endl;
+}
 
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
 {
@@ -1059,5 +1192,6 @@ BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final
         .def("clearMCP", &PythonCBS<FlatlandLoader>::clearMCP)
         .def("printAllMCP", &PythonCBS<FlatlandLoader>::printAllMCP)
         .def("printMCP", &PythonCBS<FlatlandLoader>::printMCP)
-        .def("printAgentTime", &PythonCBS<FlatlandLoader>::printAgentTime);
+        .def("printAgentTime", &PythonCBS<FlatlandLoader>::printAgentTime)
+        .def("printAgentNoWaitTime", &PythonCBS<FlatlandLoader>::printAgentNoWaitTime);
 }

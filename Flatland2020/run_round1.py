@@ -26,11 +26,11 @@ import time
 
 framework = "Parallel-LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning
 f_w = 1
-debug_print = False
+debug_print = True
 remote_test = False
 env_renderer_enable = True
 input_pause_renderer = False
-timelimit = 240  # unit: seconds
+timelimit = 0  # unit: seconds
 default_group_size = 16 # max number of agents in a group. Suggest 8
 corridor_method = 1 # or 0/off or 2/reasonable corridor. Suggest 1
 chasing = True # helps when speed =1, however takes more time on corridor reasoning.
@@ -45,12 +45,12 @@ agent_priority_strategy = 0  #  choose a number between 0 and 5. Suggest 1
 neighbor_generation_strategy = 2    # 0: random walk; 1: start; 2: intersection;
 prirority_ordering_strategy = 0     # 0: random; 1: max regret;
 replan_strategy = 1                 # 0: CBS; 1: prioritized planning;
-
+no_wait = True
 
 #####################################################################
 # malfunction parameters
 #####################################################################
-malfunction_rate = 1/200          # fraction number, probability of having a stop.
+malfunction_rate = 1/200         # fraction number, probability of having a stop.
 min_duration = 3
 max_duration = 20
 
@@ -93,6 +93,7 @@ for folder in sorted(os.listdir(path)):
     if os.path.isfile(path + folder):
         continue
     for filename in os.listdir(path+folder):
+        print(os.listdir(path+folder))
         file_name,extension = os.path.splitext(filename)
         if extension != '.pkl' and extension != '.mpk':
             continue
@@ -129,7 +130,7 @@ for folder in sorted(os.listdir(path)):
                     record_steps=True)
         local_env.reset()
 
-        CBS = PythonCBS(local_env, framework, "CBSH", timelimit, default_group_size, False, f_w,
+        CBS = PythonCBS(local_env, framework, "CBSH", timelimit, default_group_size, True, f_w,
                 corridor_method, chasing, accept_partial_solution, agent_priority_strategy,
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
         success = CBS.search()
@@ -299,13 +300,17 @@ for folder in sorted(os.listdir(path)):
             time_taken = time.time() - time_start
             time_taken_per_step.append(time_taken)
 
+            # if debug_print and curr_locs[1] == 7364:
+                # CBS.printAgentTime()
+                # CBS.printAgentNoWaitTime()
+
             if done['__all__']:
                 print("Reward : ", sum(list(all_rewards.values())))
                 print("all arrived.")
                 CBS.clearMCP()
 
                 if debug_print:
-                    CBS.printAllMCP()
+                    time.sleep(2);
                 #
                 # When done['__all__'] == True, then the evaluation of this 
                 # particular Env instantiation is complete, and we can break out 
@@ -324,6 +329,6 @@ for folder in sorted(os.listdir(path)):
             print("Mean/Std of Time taken by Controller : ", np_time_taken_by_controller.mean(), np_time_taken_by_controller.std())
             print("Mean/Std of Time per Step : ", np_time_taken_per_step.mean(), np_time_taken_per_step.std())
             print("="*100)
-        else:
-            break
+        # else:
+        #     break
 
