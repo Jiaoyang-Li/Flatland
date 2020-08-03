@@ -828,7 +828,7 @@ void PythonCBS<Map>::buildMCP(void)  // TODO: Ignore wait actions
     size_t map_size = ml->cols * ml->rows;
     cout << "map_size: " << map_size << endl;
     mcp.resize(map_size);
-    agent_time.resize(al->getNumOfAllAgents(), -1);
+    agent_time.resize(al->getNumOfAllAgents(), 0);
     to_go.resize(al->getNumOfAllAgents(), -1);
     appear_time.resize(al->getNumOfAllAgents(), al->constraintTable.length_max + 1);
     size_t max_timestep = 0;
@@ -903,46 +903,45 @@ void PythonCBS<Map>::buildMCP(void)  // TODO: Ignore wait actions
             {
                 if (al->paths_all[i][t].location != -1)
                 {
-                    if (get<0>(mcp[al->paths_all[i][t].location].back()) != i || 
-                        mcp[al->paths_all[i][t].location].empty())  // don't wait
+                    if (mcp[al->paths_all[i][t].location].empty())
                     {
                         mcp[al->paths_all[i][t].location].push_back(make_tuple(i, t));
                         no_wait_time[i].push_back(t);
                     }
 
-                    if (agent_time[i] == -1)
-                        agent_time[i] = no_wait_time[i].size() - 1;
+                    else if (get<0>(mcp[al->paths_all[i][t].location].back()) != i)
+                    {
+                        mcp[al->paths_all[i][t].location].push_back(make_tuple(i, t));
+                        no_wait_time[i].push_back(t);
+                    }
+
+                    else if (al->paths_all[i][t].location != al->paths_all[i][t+1].location)
+                    {
+                        mcp[al->paths_all[i][t].location].push_back(make_tuple(i, t));
+                        no_wait_time[i].push_back(t);
+                    }
 
                     appear_time[i] = min(appear_time[i], (int)t);
-                }
-
-                else
-                {
-                    no_wait_time[i].push_back(t);
                 }
             }
         }
     }
 
-    // for (int i = 0; i < al->getNumOfAllAgents(); i++)  // This is for reach goal situation in updateMCP (Termination)
-    //     no_wait_time[i].push_back(al->paths_all[i].size());
-
     // Debug for no_wait_time
-    cout << endl;
-    al->printPaths();
-    for (int i = 0; i < al->getNumOfAllAgents(); i++)
-    {
-        cout << "Size: " << al->paths_all[i].size() << endl;
-        cout << "Size: " << no_wait_time[i].size() << endl;
-        cout << "[ ";
-        for (int t = 0; t < no_wait_time[i].size(); t++)
-        {
-            cout << no_wait_time[i][t] << ", ";
-        }
-        cout << " ]" << endl;
-    }
-    // printMCP(280);
-    printAgentTime();
+    // cout << endl;
+    // al->printPaths();
+    // for (int i = 0; i < al->getNumOfAllAgents(); i++)
+    // {
+    //     cout << "Size: " << al->paths_all[i].size() << endl;
+    //     cout << "Size: " << no_wait_time[i].size() << endl;
+    //     cout << "[ ";
+    //     for (int t = 0; t < no_wait_time[i].size(); t++)
+    //     {
+    //         cout << no_wait_time[i][t] << ", ";
+    //     }
+    //     cout << " ]" << endl;
+    // }
+    // printAgentTime();
 
     cout << "End building MCP ..." << endl;
     return;
@@ -953,36 +952,26 @@ p::list PythonCBS<Map>::getNextLoc(p::list agent_location, int timestep)
 {
     for (int i = 0; i < al->getNumOfAllAgents(); i++)
     {
-        // if (i == 85 && agent_location[i] == 5463)
-        // {
-        //     cout << "********************************************" << endl;
-        //     cout << "Agent: " << i << endl;
-        //     cout << "agent_time: " << agent_time[i] << endl;
-        //     cout << "no_wait_time: " << no_wait_time[i][agent_time[i]] << endl;
-        //     cout << "Next location: " << al->paths_all[i][no_wait_time[i][agent_time[i]]].location << endl;
-        //     cout << "MCP at next location: " << get<0>(mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].front()) << ", " << 
-        //         get<1>(mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].front()) << endl;
-        //     cout << "********************************************" << endl;
-
-        //     for (int j = 0; j < al->paths_all[i].size(); j++)
-        //     {
-        //         cout << al->paths_all[i][j].location << ", ";
-        //     }
-        //     cout << "++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-
-        //     for (int j=0; j < no_wait_time[85].size() ; j++)
-        //     {
-        //         cout << no_wait_time[85][j] << ", ";
-        //     }
-        //     cout << endl;
-
-        //     sleep(10);
-        // }
         if (!al->paths_all[i].empty() &&
             appear_time[i] <= timestep &&
-            agent_time[i] < no_wait_time[i].size() &&
-            !mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].empty())
+            agent_time[i] < no_wait_time[i].size())
         {
+            assert(!mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].empty());
+
+            // if (i == 3 && al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location == 6563)
+            // {
+            //     cout << "********************************************" << endl;
+            //     cout << "Agent: " << i << endl;
+            //     cout << "agent_time: " << agent_time[i] << endl;
+            //     cout << "no_wait_time: " << no_wait_time[i][agent_time[i]] << endl;
+            //     cout << "Next location: " << al->paths_all[i][no_wait_time[i][agent_time[i]]].location << endl;
+            //     cout << "MCP at next location: " << get<0>(mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].front()) << ", " << 
+            //         get<1>(mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].front()) << endl;
+            //     printMCP(6563);
+            //     cout << "********************************************" << endl;
+            //     sleep(10);
+            // }
+
             int loc = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
             int first_agent = get<0>(mcp[loc].front());
             // int first_time = get<1>(mcp[loc].front());
@@ -1061,17 +1050,17 @@ void PythonCBS<Map>::updateMCP(p::list agent_location, p::dict agent_action)
         {
             mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].pop_front();
 
-            for (const auto& m: mcp)
-            {
-                for (const  auto& a: m)
-                {
-                    if (get<0>(a) == i)
-                    {
-                        cout << "Error in agent " << get<0>(a) << "at timestep " << get<1>(a) << endl;
-                        sleep(3);
-                    }
-                }
-            }
+            // for (const auto& m: mcp)
+            // {
+            //     for (const  auto& a: m)
+            //     {
+            //         if (get<0>(a) == i)
+            //         {
+            //             cout << "Error in agent " << get<0>(a) << "at timestep " << get<1>(a) << endl;
+            //             sleep(3);
+            //         }
+            //     }
+            // }
         }
 
         else if (agent_time[i] < no_wait_time[i].size() &&
@@ -1089,9 +1078,9 @@ void PythonCBS<Map>::updateMCP(p::list agent_location, p::dict agent_action)
             // Remove previous location from MCP after reach time no_wait_time[agent_time[i]]
             if (no_wait_time[i][agent_time[i]] > 0 && 
                 al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location != -1 && 
-                !mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].empty() && 
-                get<0>(mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].front()) == i)
+                !mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].empty())
             {
+                assert(get<0>(mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].front()) == i);
                 // cout << "Pop mcp: " << al->paths_all[i][agent_time[i]-1].location << endl;
                 mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].pop_front();
             }

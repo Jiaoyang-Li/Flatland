@@ -26,7 +26,7 @@ import time
 
 framework = "Parallel-LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning
 f_w = 1
-debug_print = True
+debug_print = False
 remote_test = False
 env_renderer_enable = True
 input_pause_renderer = False
@@ -130,7 +130,7 @@ for folder in sorted(os.listdir(path)):
                     record_steps=True)
         local_env.reset()
 
-        CBS = PythonCBS(local_env, framework, "CBSH", timelimit, default_group_size, True, f_w,
+        CBS = PythonCBS(local_env, framework, "CBSH", timelimit, default_group_size, False, f_w,
                 corridor_method, chasing, accept_partial_solution, agent_priority_strategy,
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
         success = CBS.search()
@@ -308,9 +308,7 @@ for folder in sorted(os.listdir(path)):
                 print("Reward : ", sum(list(all_rewards.values())))
                 print("all arrived.")
                 CBS.clearMCP()
-
-                if debug_print:
-                    time.sleep(2);
+                time.sleep(2);
                 #
                 # When done['__all__'] == True, then the evaluation of this 
                 # particular Env instantiation is complete, and we can break out 
