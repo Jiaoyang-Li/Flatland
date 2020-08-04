@@ -123,9 +123,9 @@ protected:
 	//void findTargetConflicts(int a1, int a2, ICBSNode& curr);
 
 	// high level search
-	bool generateChild(ICBSNode* child, ICBSNode* curr);
+	virtual bool generateChild(ICBSNode* child, ICBSNode* curr);
 	//conflicts
-	void findConflicts(ICBSNode& curr);
+	virtual void findConflicts(ICBSNode& curr);
 	std::shared_ptr<Conflict> chooseConflict(ICBSNode &parent) const;
 	static void copyConflicts(const std::list<std::shared_ptr<Conflict>>& conflicts,
 		std::list<std::shared_ptr<Conflict>>& copy, const list<int>& excluded_agent) ;
@@ -187,9 +187,9 @@ public:
 //	    }
 //	}
 
-	bool findPathForSingleAgent(ICBSNode*  node, int ag, double lowerbound = 0);
+	virtual bool findPathForSingleAgent(ICBSNode*  node, int ag, double lowerbound = 0);
 	// Runs the algorithm until the problem is solved or time is exhausted 
-	bool runICBSSearch();
+	virtual bool runICBSSearch();
 
 	// bool updateAndReplan();
 	void cleanAll();
@@ -234,4 +234,35 @@ protected:
     // void addPathsToInitialCT(const vector<Path>& paths);
 };
 
+
+template<class Map>
+class PBSSearch :public MultiMapICBSSearch<Map>
+{
+public:
+
+	PBSSearch(Map * ml, AgentsLoader* al, double f_w, constraint_strategy c, int time_limit, int screen,
+            options options1);
+
+	virtual bool runICBSSearch();
+
+	~PBSSearch(){
+    this->MultiMapICBSSearch<Map>::~MultiMapICBSSearch<Map>();
+  }
+
+  void updatePriorities(ICBSNode* node);
+
+	void updateConstraintTable(ICBSNode* curr, int agent_id) override;
+
+protected:
+  virtual bool generateChild(ICBSNode* child, ICBSNode* curr) override ;
+  virtual bool findPathForSingleAgent(ICBSNode* node, int id, double lowerbound);
+
+	vector<vector<bool>> trans_priorities;
+	vector<vector<bool>> priorities;
+
+  // bool update_priority_list(ICBSNode* node);
+
+	virtual void findConflicts(ICBSNode& curr) override;
+
+};
 

@@ -10,14 +10,14 @@
 #include <memory>  // std::shared_ptr
 
 #define MAX_COST INT_MAX/2
-enum conflict_type { CORRIDOR2, CORRIDOR4, STANDARD,CHASING,CORRIDOR,START, TYPE_COUNT };
+enum conflict_type { CORRIDOR2, CORRIDOR4, STANDARD,CHASING,CORRIDOR,START, PBS_CONF, TYPE_COUNT };
 enum conflict_priority { CARDINAL, SEMI, NON, UNKNOWN, PRIORITY_COUNT };
 
-enum constraint_type { RANGE, VERTEX, EDGE, CONSTRAINT_COUNT };
+enum constraint_type { RANGE, VERTEX, EDGE, PRIORITY_LT ,CONSTRAINT_COUNT };
 typedef std::tuple<int, int, int, constraint_type> Constraint;
 typedef std::list<std::shared_ptr<std::tuple<int, int, int, int, int,int>>> OldConfList;
 
-enum constraint_strategy { CBS, ICBS, CBSH, STRATEGY_COUNT };
+enum constraint_strategy { CBS, ICBS, CBSH, PBS, STRATEGY_COUNT };
 
 using std::pair;
 using std::make_pair;

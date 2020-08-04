@@ -18,6 +18,7 @@ using namespace std;
 // <loc, agent_id, t, TARGET>: path of agent_id should be of length at most t, and any other agent cannot be at loc at or after timestep t
 // <-1, agent_id, t>: path of agent_id should be of length at least t + 1 
 
+// <a1, a2, -1, PRIORITY_LT> a1 priority larger than a2 (PBS)
 
 std::ostream& operator<<(std::ostream& os, const Constraint& constraint);
 
@@ -115,7 +116,19 @@ public:
 		}
 		type = conflict_type::STANDARD;
 	}
-		
+
+  void priorityConflict(int a1, int a2)
+  {
+    assert(a1!=a2);
+		this->a1 = a1;
+		this->a2 = a2;
+    this->constraint1.emplace_back(a1, a2, -1, constraint_type::PRIORITY_LT);
+    this->constraint2.emplace_back(a2, a1, -1, constraint_type::PRIORITY_LT);
+    type = conflict_type::PBS_CONF;
+
+  }
+
+
 	/*void edgeConflict(int a1, int a2, int v1, int v2, int t)
 	{
 		this->a1 = a1;
