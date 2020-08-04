@@ -51,6 +51,8 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, string algo, int
 		s = constraint_strategy::CBS;
 	else if (algo == "CBSH")
 		s = constraint_strategy::CBSH;
+	else if (algo == "PBS")
+		s = constraint_strategy::PBS;
 	else
 	{
 		std::cout << "WRONG SOLVER NAME! Use CBSH as default" << std::endl;
@@ -321,15 +323,21 @@ bool PythonCBS<Map>::GroupPrioritizedPlaning()
 
         if (options1.debug)
             cout << "Time limit = " << time_limit << "second." << endl;
-        MultiMapICBSSearch <Map> icbs(ml, al, f_w, s, time_limit * CLOCKS_PER_SEC, screen, options1);
-        icbs.corridor2 = corridor2;
-        icbs.trainCorridor1 = trainCorridor1;
-        icbs.ignoreFinishedAgent = true;
-        icbs.chasing_reasoning = chasing;
+        std::unique_ptr<MultiMapICBSSearch <Map>> icbs;
+        if (s == constraint_strategy::PBS){
+          icbs = std::unique_ptr<MultiMapICBSSearch <Map>>( new PBSSearch <Map> (ml, al, f_w, constraint_strategy::CBSH, time_limit * CLOCKS_PER_SEC, screen, options1) );
+        }else{
+          icbs = std::unique_ptr<MultiMapICBSSearch <Map>>( new MultiMapICBSSearch <Map> (ml, al, f_w, s, time_limit * CLOCKS_PER_SEC, screen, options1) );
+        }
+        // MultiMapICBSSearch <Map> icbs(ml, al, f_w, s, time_limit * CLOCKS_PER_SEC, screen, options1);
+        icbs->corridor2 = corridor2;
+        icbs->trainCorridor1 = trainCorridor1;
+        icbs->ignoreFinishedAgent = true;
+        icbs->chasing_reasoning = chasing;
         if (options1.debug)
             cout << "start search engine" << endl;
-        bool res = icbs.runICBSSearch();
-        updateCBSResults(icbs);
+        bool res = icbs->runICBSSearch();
+        updateCBSResults(*icbs);
         int giveup_agents = 0;
         if (res) {
             groupSize = min(defaultGroupSize, al->num_of_agents * 2);
@@ -338,14 +346,14 @@ bool PythonCBS<Map>::GroupPrioritizedPlaning()
         {
             if (accept_partial_solution)
             {
-                giveup_agents = icbs.getBestSolutionSoFar();
+                giveup_agents = icbs->getBestSolutionSoFar();
                 cout << "Accept paths for " << al->num_of_agents - giveup_agents << " agents" << endl;
             }
             groupSize = max(1, al->num_of_agents / 2);
             if (options1.debug)
                 cout << "Decreasing the group size to " << groupSize << endl;
         }
-        if(!al->addPaths(icbs.paths))
+        if(!al->addPaths(icbs->paths))
         {
             cout << "The solution so far has conflicts!" << endl;
             hasConflicts(al->paths_all); // to print the conflict
@@ -358,12 +366,12 @@ bool PythonCBS<Map>::GroupPrioritizedPlaning()
         iteration_stats.emplace_back(al->num_of_agents, time_limit,
                                      runtime, runtime - old_runtime,
                                      al->makespan,
-                                     icbs.solution_cost,
-                                     icbs.getSumOfHeuristicsAtStarts(),
+                                     icbs->solution_cost,
+                                     icbs->getSumOfHeuristicsAtStarts(),
                                      al->num_of_agents - giveup_agents,
                                      al->getNumOfDeadAgents(),
-                                     icbs.HL_num_expanded,
-                                     icbs.LL_num_expanded);
+                                     icbs->HL_num_expanded,
+                                     icbs->LL_num_expanded);
     }
 
     runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
