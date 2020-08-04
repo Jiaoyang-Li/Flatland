@@ -152,7 +152,7 @@ private:
     std::clock_t start_time;
     double runtime;
     vector<statistics> statistic_list;
-    int strategies[4] = {0,1,2,3};
+    int strategies[4] = {0,1,3,5};
 
 
 
