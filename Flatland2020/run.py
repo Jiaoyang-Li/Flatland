@@ -89,7 +89,7 @@ my_observation_builder = GlobalObsForRailEnv()
 
 evaluation_number = 0  # evaluation counter
 num_of_evaluations = 400  # total number of evaluations
-total_time_limit = 8 * 60 * 60 - 5 * 60
+total_time_limit = 8 * 60 * 60
 global_time_start = time.time()
 
 while True:
