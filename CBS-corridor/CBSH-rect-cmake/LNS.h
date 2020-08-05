@@ -5,7 +5,7 @@ using namespace std::chrono;
 typedef std::chrono::high_resolution_clock Time;
 typedef std::chrono::duration<float> fsec;
 
-#define DEFAULT_GROUP_SIZE 5
+#define DEFAULT_GROUP_SIZE 10
 class LNS
 {
 public:
