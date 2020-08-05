@@ -105,6 +105,10 @@ public:
         {
             if (a1.speed == a2.speed)
             {
+                if (a1.distance_to_goal == a2.distance_to_goal)
+                {
+                    return a1.agent_id <= a2.agent_id;
+                }
                 return a1.distance_to_goal >= a2.distance_to_goal;
             }
             return a1.speed >= a2.speed;
@@ -125,6 +129,10 @@ public:
         {
             if (a1.speed == a2.speed)
             {
+                if (a1.distance_to_goal == a2.distance_to_goal)
+                {
+                    return a1.agent_id <= a2.agent_id;
+                }
                 return a1.distance_to_goal <= a2.distance_to_goal;
             }
             return a1.speed >= a2.speed;
@@ -133,6 +141,10 @@ public:
         {
             if (a1.speed == a2.speed)
             {
+                if (a1.distance_to_goal == a2.distance_to_goal)
+                {
+                    return a1.agent_id <= a2.agent_id;
+                }
                 return a1.distance_to_goal <= a2.distance_to_goal;
             }
             return a1.speed <= a2.speed;
@@ -143,6 +155,10 @@ public:
             {
                 if (a1.speed == a2.speed)
                 {
+                    if (a1.distance_to_goal == a2.distance_to_goal)
+                    {
+                        return a1.agent_id <= a2.agent_id;
+                    }
                     return a1.distance_to_goal >= a2.distance_to_goal;
                 }
                 return a1.speed >= a2.speed;
