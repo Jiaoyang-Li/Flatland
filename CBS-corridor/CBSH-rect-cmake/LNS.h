@@ -5,7 +5,7 @@ using namespace std::chrono;
 typedef std::chrono::high_resolution_clock Time;
 typedef std::chrono::duration<float> fsec;
 
-#define DEFAULT_GROUP_SIZE 10
+#define DEFAULT_GROUP_SIZE 5
 class LNS
 {
 public:
@@ -62,7 +62,7 @@ private:
     int neighbor_makespan = 0;
     int delta_costs = 0;
     int group_size = DEFAULT_GROUP_SIZE; // this is useful only when we use CBS to replan
-    int max_group_size = 10;
+    int max_group_size = DEFAULT_GROUP_SIZE;
 
     vector<int> intersections;
     map<int, list<int>> start_locations;  // <start location, corresponding agents>

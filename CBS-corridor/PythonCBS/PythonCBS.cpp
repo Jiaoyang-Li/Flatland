@@ -837,62 +837,6 @@ void PythonCBS<Map>::buildMCP(void)  // TODO: Ignore wait actions
             max_timestep = al->paths_all[i].size();
     cout << "max_timestep = " << max_timestep << endl;
 
-    // Build no wait timestep
-    // no_wait_time.clear();
-    // for (size_t i = 0; i < al->getNumOfAllAgents(); i++)
-    // {
-    //     vector<int> tmp_timestep;
-    //     int cur_loc = ml->linearize_coordinate(al->getAgent(i).initial_location);
-    //     if (!al->paths_all[i].empty())
-    //     {
-    //         for (int t = 0; t < (int) al->paths_all[i].size()-1; t++)
-    //         {
-    //             if (al->paths_all[i][t].location == -1)
-    //             {
-    //                 tmp_timestep.push_back(t);
-    //             }
-
-    //             else if (al->paths_all[i][t].location != -1 && al->paths_all[i][t-1].location == -1)  // Start state
-    //             {
-    //                 tmp_timestep.push_back(t);
-    //             }
-
-    //             else if (cur_loc != al->paths_all[i][t].location)
-    //             {
-    //                 tmp_timestep.push_back(t);
-    //                 cur_loc = al->paths_all[i][t].location;
-    //             }
-    //             // else
-    //             // {
-    //             //     cout << "wait action happens at time " << t << " for agent " << i << endl;
-    //             // }
-    //         }
-
-    //         // Goal state
-    //         if (al->paths_all[i][al->paths_all[i].size()-1].location != al->paths_all[i][al->paths_all[i].size()-2].location)
-    //             tmp_timestep.push_back(al->paths_all[i].size()-1);
-
-    //         cout << endl;
-    //         no_wait_time.push_back(tmp_timestep);
-    //     }
-    // }
-
-    // Debug for no_wait_time
-    // cout << endl;
-    // al->printPaths();
-    // cout << "no_wait_time" << endl;
-    // for (int i = 0; i < al->getNumOfAllAgents(); i++)
-    // {
-    //     cout << "Size: " << al->paths_all[i].size() << endl;
-    //     cout << "Size: " << no_wait_time[i].size() << endl;
-    //     cout << "[ ";
-    //     for (int t = 0; t < no_wait_time[i].size(); t++)
-    //     {
-    //         cout << no_wait_time[i][t] << ", ";
-    //     }
-    //     cout << " ]" << endl;
-    // }
-
     // Push nodes to MCP
     no_wait_time.resize(al->getNumOfAllAgents());
     for (size_t t = 0; t < max_timestep; t++)
@@ -915,7 +859,7 @@ void PythonCBS<Map>::buildMCP(void)  // TODO: Ignore wait actions
                         no_wait_time[i].push_back(t);
                     }
 
-                    else if (al->paths_all[i][t].location != al->paths_all[i][t+1].location)
+                    else if (al->paths_all[i][t].location != al->paths_all[i][t-1].location)  // Detect cycle in paths
                     {
                         mcp[al->paths_all[i][t].location].push_back(make_tuple(i, t));
                         no_wait_time[i].push_back(t);
