@@ -3,8 +3,8 @@ import pandas as pd
 import random
 
 
-lns_folder = "/Users/zche0040/Codes/challenge/0801/"
-param = "LNS301"
+lns_folder = "/Users/zche0040/Codes/challenge/0805/"
+param = "LNS301groupsize=5"
 exe_time_file = "./execuation_time.csv"
 total_time_limit = 28800
 test_num = [50,50,50,40,30,30,30,30,20,20,20,10,10,10]
@@ -135,7 +135,7 @@ def optimize_time():
 
         time_change = 1
         new_time = [selected_time[0]+time_change, selected_time[1]-time_change*time_ratio]
-        while new_time[0] > 0 and new_time[0]<260 and new_time[1] > 0 and new_time[1]<260:
+        while new_time[0] > 1 and new_time[0]<280 and new_time[1] > 1 and new_time[1]<280:
             new_cost = get_new_cost(sel_tests,new_time)
             if sum(new_cost) < test_cost:
                 best_time = new_time[:]
