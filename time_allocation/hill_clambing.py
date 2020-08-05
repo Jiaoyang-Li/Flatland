@@ -135,7 +135,7 @@ def optimize_time():
 
         time_change = 1
         new_time = [selected_time[0]+time_change, selected_time[1]-time_change*time_ratio]
-        while new_time[0] > 1 and new_time[0]<280 and new_time[1] > 1 and new_time[1]<280:
+        while new_time[0] > 5 and new_time[0]<280 and new_time[1] > 5 and new_time[1]<280:
             new_cost = get_new_cost(sel_tests,new_time)
             if sum(new_cost) < test_cost:
                 best_time = new_time[:]
