@@ -10,6 +10,10 @@
 #include "MDD.h"
 #include <unordered_map>
 #include <boost/python.hpp>
+#include <chrono>
+using namespace std::chrono;
+typedef std::chrono::high_resolution_clock Time;
+typedef std::chrono::duration<float> fsec;
 
 struct options {
 	bool asymmetry_constraint=false;
@@ -24,14 +28,14 @@ struct options {
 class ICBSSearch
 {
 public:
-	double runtime = 0;
-	double runtime_lowlevel;
-	double runtime_conflictdetection;
-	double runtime_computeh;
-	double runtime_listoperation;
-	double runtime_updatepaths;
-	double runtime_updatecons;
-    double runtime_corridor=0;
+	fsec runtime = fsec::zero();
+    fsec runtime_lowlevel;
+    fsec runtime_conflictdetection;
+    fsec runtime_computeh;
+    fsec runtime_listoperation;
+    fsec runtime_updatepaths;
+    fsec runtime_updatecons;
+    fsec runtime_corridor = fsec::zero();
 
     double RMTime = 0;
 
@@ -78,7 +82,7 @@ public:
 	bool debug_mode=false;
 	bool ignore_t0=false;
 	bool shortBarrier = false;
-	std::clock_t start;
+    Time::time_point start;
 	bool ignoreFinishedAgent = true;
 	int max_malfunction = 5;
 
@@ -168,7 +172,7 @@ public:
 	void collectConstraints(ICBSNode* curr);
 
     int getBestSolutionSoFar(); // return the number of dead agents, and the paths are stored in paths
-	MultiMapICBSSearch(Map * ml, AgentsLoader* al, double f_w, constraint_strategy c, int time_limit, int screen,
+	MultiMapICBSSearch(const Map * ml, AgentsLoader* al, double f_w, constraint_strategy c, int time_limit, int screen,
 	        options options1);
 	// build MDD
 	MDD<Map>* buildMDD(ICBSNode& node, int id);
@@ -224,11 +228,23 @@ public:
         return h;
     }
 
+    bool compare_start(int a1, int a2){
+        if (al.agents[a1]->heading  == al.agents[a2]->heading){
+            if (al.agents[a1]->speed == al.agents[a2]->speed){
+                return al.agents[a1]->distance_to_goal > al.agents[a2]->distance_to_goal;
+            }
+            else
+                return al.agents[a1]->speed > al.agents[a2]->speed;
+        }
+        return al.agents[a1]->heading  > al.agents[a2]->heading;
+
+    }
+
 protected:
 	std::vector<std::unordered_map<ConstraintsHasher, MDD<Map>*>> mddTable;
 	options option;
 	vector<SingleAgentICBS<Map> *> search_engines;  // used to find (single) agents' paths and mdd
-	Map* ml;
+	const Map* ml;
 	ICBSNode* goalNode = nullptr;
 
     // void addPathsToInitialCT(const vector<Path>& paths);

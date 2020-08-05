@@ -15,7 +15,7 @@ void ConstraintTable::insert(int loc, int t_min, int t_max)
 	}
 }
 
-bool ConstraintTable::is_constrained(int loc, int timestep, int kRobust) const
+bool ConstraintTable::is_constrained(int agent_id, int loc, int timestep) const
 {
     if (loc < 0)
         return false;
@@ -25,10 +25,15 @@ bool ConstraintTable::is_constrained(int loc, int timestep, int kRobust) const
 
     if (CT_paths[loc].empty())
         return false;
-    for (int t = timestep - kRobust; t <= timestep; t++)
+    for (int t = timestep - kRobust; t <= timestep + kRobust; t++)
     {
         if (CT_paths[loc][t] >= 0)
-            return true;
+        {
+            assert(agent_id != CT_paths[loc][t]);
+            if ((agent_id > CT_paths[loc][t] && timestep <= t) || // This agent reaches loc earlier than the second agent with smaller id
+                (agent_id < CT_paths[loc][t] && timestep >= t))   // This agent reaches loc later than the second agent with larger id
+                return true;
+        }
     }
 	return false;
 }
@@ -45,19 +50,24 @@ void ConstraintTable::get_agents(set<int>& conflicting_agents, int loc) const
     }
 }
 
-void ConstraintTable::get_conflicting_agents(set<int>& conflicting_agents, int loc, int timestep, int kRobust) const
+void ConstraintTable::get_conflicting_agents(int agent_id, set<int>& conflicting_agents, int loc, int timestep) const
 {
     if (loc < 0 || CT_paths[loc].empty())
         return;
 
-    for (int t = timestep - kRobust; t <= timestep; t++)
+    for (int t = timestep - kRobust; t <= timestep + kRobust; t++)
     {
         if (CT_paths[loc][t] >= 0)
-            conflicting_agents.insert(CT_paths[loc][t]);
+        {
+            if ((agent_id > CT_paths[loc][t] && timestep <= t) || // This agent reaches loc earlier than the second agent with smaller id
+                (agent_id < CT_paths[loc][t] && timestep >= t))   // This agent reaches loc later than the second agent with larger id
+                conflicting_agents.insert(CT_paths[loc][t]);
+        }
+
     }
 }
 
-bool ConstraintTable::insert_path(int agent_id, const Path& path, int kRobust)
+bool ConstraintTable::insert_path(int agent_id, const Path& path)
 {
     for (int timestep = 0; timestep < (int)path.size(); timestep++)
     {
@@ -65,8 +75,8 @@ bool ConstraintTable::insert_path(int agent_id, const Path& path, int kRobust)
         if (loc == -1)
             continue;
         if (CT_paths[loc].empty())
-            CT_paths[loc].resize(length_max + 1, -1);
-        for (int t = timestep - kRobust; t <= timestep; t++)
+            CT_paths[loc].resize(length_max + kRobust + 1, -1);
+        for (int t = timestep; t <= timestep; t++)
         {
             if(CT_paths[loc][t] != -1 && CT_paths[loc][t] != agent_id) //TODO:: can be removed in the submission version
             {
@@ -80,14 +90,14 @@ bool ConstraintTable::insert_path(int agent_id, const Path& path, int kRobust)
     return true;
 }
 
-void ConstraintTable::delete_path(int agent_id, const Path& path, int kRobust)
+void ConstraintTable::delete_path(int agent_id, const Path& path)
 {
     for (int timestep = 0; timestep < (int)path.size(); timestep++)
     {
         int loc = path[timestep].location;
         if (loc == -1)
             continue;
-        for (int t = timestep - kRobust; t <= timestep; t++)
+        for (int t = timestep; t <= timestep; t++)
         {
             assert(CT_paths[loc][t] == -1 || CT_paths[loc][t] == agent_id);
             CT_paths[loc][t] = -1;

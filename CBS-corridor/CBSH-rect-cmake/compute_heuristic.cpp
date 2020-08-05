@@ -144,10 +144,10 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 				}
 			}
 
-			int heading = (s->heading + 2) % 4;
-			if (s->g_val < res[s->loc].heading[heading]) {
-				res[s->loc].heading[heading] = s->g_val;
-			}
+//			int heading = (s->heading + 2) % 4;
+//			if (s->g_val < res[s->loc].heading[heading]) {
+//				res[s->loc].heading[heading] = s->g_val;
+//			}
 		//}
 
 		delete (s);

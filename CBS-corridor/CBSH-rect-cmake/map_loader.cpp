@@ -46,10 +46,10 @@ void MapLoader::get_exits(list<Transition>& transitions, int loc, int heading, f
 	}
 }
 
-bool MapLoader::getLoc(int loc)  {
+bool MapLoader::getLoc(int loc) const  {
 	return my_map[loc];
 }
-int MapLoader::getDegree(int loc)
+int MapLoader::getDegree(int loc) const
 {
 	if (loc < 0 || loc >= map_size() || getLoc(loc))
 		return -1;
@@ -195,7 +195,7 @@ bool* MapLoader::get_map() const {
 }
 
 MapLoader::~MapLoader() {
-  //delete[] this->my_map;
+  delete[] this->my_map;
   delete[] this->moves_offset;
 }
 

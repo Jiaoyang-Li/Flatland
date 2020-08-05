@@ -8,6 +8,8 @@
 #include <vector>
 #include <unordered_set>
 #include <memory>  // std::shared_ptr
+#include <chrono>
+
 
 #define MAX_COST INT_MAX/2
 enum conflict_type { CORRIDOR2, CORRIDOR4, STANDARD,CHASING,CORRIDOR,START, PBS_CONF, TYPE_COUNT };

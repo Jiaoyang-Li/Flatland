@@ -1,34 +1,99 @@
 # Flatland 2
 
 ---
+## Evaluation Track  (NO THREAD VERSION)
+### 1st working evalution:
+CBS parameter: 
+
+    framework = "LNS"
+    
+    f_w = 1
+    
+    debug = False
+    
+    remaining_time = total_time_limit - (time.time() - global_time_start)
+    
+    time_limit = remaining_time / (num_of_evaluations - evaluation_number + 1)
+    
+    default_group_size = 16  # max number of agents in a group
+    
+    corridor_method = 1  # or "corridor2" or ""
+    
+    chasing = True
+    
+    accept_partial_solution = True
+    
+    agent_priority_strategy = 0
+    
+    neighbor_generation_strategy = 2
+    
+    prirority_ordering_strategy = 0
+    
+    replan_strategy = 1
+    
+
+Result:
+
+  Total Execution Time ⌛ : 22884s
+  
+  Mean percentage of done-Agents : -13.15%
+  
+  Mean Reward : 1.00
+  
+  Mean Normalized Reward : -0.13
+  
+  
+### 2nd Working evaluation:
+CBS parameter: 
+
+    framework = "LNS"
+    
+    f_w = 1
+    
+    debug = False
+    
+    remaining_time = total_time_limit - (time.time() - global_time_start)
+    
+    time_limit = remaining_time / (num_of_evaluations - evaluation_number + 1)
+    
+    default_group_size = 16  # max number of agents in a group
+    
+    corridor_method = 1  # or "corridor2" or ""
+    
+    chasing = True
+    
+    accept_partial_solution = True
+    
+    agent_priority_strategy = 3
+    
+    neighbor_generation_strategy = 2
+    
+    prirority_ordering_strategy = 0
+    
+    replan_strategy = 1
+
+
+Result:
+
+
+
+---
+
+
+---
 ## How to install the CBS solver
 
 The CBS solver is in the CBS-corridor folder. Go to the folder and follow the instruction there to compile the code. 
 Make sure the generated libPythonCBS.xx is compiled at the folder where your python codes are.
 
-## How to use for CBS solver development
+---
+## How to run evaluation
 
-The run.py in Flatland2020 folder is the python file for local testing. 
-
-It has two ways to exchange information with C++ solver:
-
-1. via boost API. (hasn't been implemented yet) 
-
-   I left several arrays containing the map & agent information that is required by the C++ solver.
-
-   (Line 168 - Line 294 of run.py)
-
-2. via local .txt files
-
-   They are saved in config folder. There is a boolean flag in the run.py triggering the saving function. 
-
-   If the boost API hasn't been used, you can use the local .txt files for testing algorithms
-
-For now, I am not sure how C++ solver sends the solution (paths) to the python code. By default, if you save the paths of agents in a "paths.txt" file in the Flatland2020/config folder. The run.py will read it automatically and convert them to actions. 
-
-In the beginning of the run.py, there is a list of parameters that can change map structure, the number of agents etc. 
-
-For visualization, you can change Line 403 for a different wait time for visualizing each timestep. or uncomment the code on Line 399 to hit the enter for next step visualization.  
+1. Go to Flatland2020 folder. 
+2. Make sure that CBS solver is correctly compiled and libPythonCBS.xx is copied into the Flatland2020 Folder
+3. conda activate flatland-rl
+4. python run.py
+5. hit enter to go to next time step
 
 ---
 
@@ -64,41 +129,19 @@ malfunction_generator_and_process_data=malfunction_from_params(malfunction_rate=
 
 **Timeline:** 
 
-- **June 1st - June 30th:** Warm-Up Round
-- **July 1st - July 31st:** Round 1
+- **June 1st - July 7th:** Warm-Up Round
+- **July 7st - July 31st:** Round 1
 - **August 1st - October 19th:** Round 2
 - **October 20th - October 25th:** Post Challenge Analysis
 - **October 25th:** Final Results Announced
 - **October 16th - November 10th:** Post Challenge Wrap-Up
 
----
-
-## Warm-Up Round Plan
-
-  ### 6/23 -6/24  pick up the old solution and clean up the code
-
-**6/24 - ...  ECBS, K-robust CBS, STN**
-
 ----
 
 ## Current Solution Structure
 
-https://app.lucidchart.com/invitations/accept/124716bf-f839-4383-9f15-0a578ddbcd8e
+https://app.lucidchart.com/invitations/accept/156887d6-7e9f-43ca-af22-f24000d166d1
 
 ![image](Structure.png)
 
----
 
-## Round 1 Plan
-
-  ### ...
-
-
-## sample paths.txt
--1,283,281,297,295,317,315,348,346,343,340,338,312,292,278,270,260,250,241,240,
-
--1,144,142,140,138,135,132,88,87,85,62,54,46,37,29,21,15,14,12,10,8,6,
-
--1,-1,-1,-1,78,56,48,39,39,39,39,39,39,39,39,31,31,31,31,31,31,31,31,
-
--1 means that the train stays in a invisible locaiton (start location).

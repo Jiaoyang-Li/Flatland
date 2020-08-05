@@ -20,6 +20,7 @@ struct Agent {
 	pair<int, int> goal_location;
 	pair<int, int> position;
     vector<hvals> heuristics;
+    int agent_id;
 	bool activate = true;
 	int heading = -1;
 	int malfunction_left = 0;
@@ -69,6 +70,7 @@ public:
     int getNumOfDeadAgents() const { return num_of_dead_agents; }
     void sampleAgents(int _num_of_agents, int iteration, int num_instances, bool deletePath = false);
     void recoverAgents(int _num_of_agents, int iteration, int num_instances);
+    AgentsLoader* clone();
 
 
     boost::python::list outputPaths()   {
@@ -111,6 +113,10 @@ public:
         {
             if (a1.speed == a2.speed)
             {
+                if (a1.distance_to_goal == a2.distance_to_goal)
+                {
+                    return a1.agent_id <= a2.agent_id;
+                }
                 return a1.distance_to_goal >= a2.distance_to_goal;
             }
             return a1.speed <= a2.speed;

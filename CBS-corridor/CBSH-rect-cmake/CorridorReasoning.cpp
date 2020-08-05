@@ -55,7 +55,7 @@ int getCorridorLength(const std::vector<PathEntry>& path, int t_start, int loc_e
 
 template<class Map>
 int CorridorReasoning<Map>::getEnteringTimeForCorridor(const std::vector<PathEntry>& path,
-        const std::vector<PathEntry>& path2, int t, Map* map)
+        const std::vector<PathEntry>& path2, int t, const Map* map)
 {
     assert(t < path.size() && path[0].location < 0);
 	int loc = path[t].location;
@@ -83,7 +83,7 @@ int CorridorReasoning<Map>::getEnteringTimeForCorridor(const std::vector<PathEnt
 
 template<class Map>
 void CorridorReasoning<Map>::getEnteringTimeForChasing(int enter_time[2], const std::vector<PathEntry>& path1,
-        const std::vector<PathEntry>& path2, int t1, int t2, Map* map)
+        const std::vector<PathEntry>& path2, int t1, int t2, const Map* map)
 {
     assert(t1 < path1.size() && path1[0].location < 0 &&
            t2 < path2.size() && path2[0].location < 0 &&
@@ -106,7 +106,7 @@ void CorridorReasoning<Map>::getEnteringTimeForChasing(int enter_time[2], const 
 
 template<class Map>
 int CorridorReasoning<Map>::getExitTimeForChasing(const std::vector<PathEntry>& path,
-        const std::vector<PathEntry>& path2, int t, Map* map)
+        const std::vector<PathEntry>& path2, int t, const Map* map)
 {
     assert(t < path.size());
     int loc = path[t].location;
@@ -133,7 +133,7 @@ int CorridorReasoning<Map>::getExitTimeForChasing(const std::vector<PathEntry>& 
 
 //with heading info. not using
 template<class Map>
-int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, int> blocked,  Map* my_map, int num_col, int map_size,int start_heading)
+int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, int> blocked,  const Map* my_map, int num_col, int map_size,int start_heading)
 {
 	int length = INT_MAX;
 	// generate a heap that can save nodes (and a open_handle)
@@ -209,7 +209,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 
 //with heuristics table. not using
 template<class Map>
-int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, int> blocked,  Map* my_map, int num_col, int map_size, ConstraintTable& constraint_table, int upper_bound, std::vector<hvals> restable, int start_heading)
+int CorridorReasoning<Map>::getBypassLength(int agent_id, int start, int end, std::pair<int, int> blocked,  const Map* my_map, int num_col, int map_size, ConstraintTable& constraint_table, int upper_bound, std::vector<hvals> restable, int start_heading)
 {
 	int length = INT_MAX;
 	// generate a heap that can save nodes (and a open_handle)
@@ -247,8 +247,8 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 			time_generated += 1;
 
 			int next_timestep = curr->timestep + 1;
-			if ( !constraint_table.is_constrained(next_loc, next_timestep) &&
-				!constraint_table.is_constrained(curr->loc * map_size + next_loc, next_timestep))
+			if ( !constraint_table.is_constrained(agent_id, next_loc, next_timestep)) //&&
+				//!constraint_table.is_constrained(al->agents[agent_id].agent_id, curr->loc * map_size + next_loc, next_timestep))
 			{  // if that grid is not blocked
 				if ((curr->loc == blocked.first && next_loc == blocked.second) ||
 					(curr->loc == blocked.second && next_loc == blocked.first)) // use the prohibited edge
@@ -295,7 +295,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 
 //for corridor2, using for flatland
 template<class Map>
-int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading,int end_heading, std::pair<int, int> blocked, Map* my_map, int num_col, int map_size,
+int CorridorReasoning<Map>::getBypassLength(int agent_id, int start, int end,int start_heading,int end_heading, std::pair<int, int> blocked, const Map* my_map, int num_col, int map_size,
         ConstraintTable& constraint_table, const std::vector<hvals>& goalHeuTable, int upper_bound, PathEntry& start_entry,float speed)
 {
     if(upper_bound < 0)
@@ -405,7 +405,7 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end,int start_heading
 
 			int next_timestep = curr->timestep + 1;
 
-			if (!constraint_table.is_constrained(next_loc, next_timestep))  // &&
+			if (!constraint_table.is_constrained(agent_id, next_loc, next_timestep))  // &&
 				// !constraint_table.is_constrained(curr->loc * map_size + next_loc, next_timestep))
 			{  // if that grid is not blocked
 

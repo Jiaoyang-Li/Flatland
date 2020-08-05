@@ -16,6 +16,9 @@
 #include "compute_heuristic.h"
 #include <boost/heap/fibonacci_heap.hpp>
 #include <boost/unordered_set.hpp>
+using namespace std::chrono;
+typedef std::chrono::high_resolution_clock Time;
+typedef std::chrono::duration<float> fsec;
 
 template<class Map>
 class SingleAgentICBS
@@ -36,7 +39,7 @@ public:
 	int max_malfunction=5;
 
 	AgentsLoader* al;
-	Map* ml;
+	const Map* ml;
 	int map_size;
 	int num_col;
 	const std::vector<hvals>& my_heuristic;  // this is the precomputed heuristic for this agent
@@ -90,14 +93,14 @@ public:
 	bool findPath(std::vector<PathEntry> &path, double f_weight, int focal_makespan,
                   ConstraintTable& constraints, ReservationTable* res_table,
                   size_t max_plan_len, double lowerbound,
-                  std::clock_t start = 0, int time_limit = 0);
+                  Time::time_point start=Time::time_point::min(), int time_limit = 0);
 	bool validMove(int curr, int next) const; // whetehr curr->next is a valid move
 
 	inline void releaseClosedListNodes(hashtable_t* allNodes_table);
 
 	int getHeuristicAtStart() const {return (int)(my_heuristic[start_location].get_hval(start_heading) / al->agents[agent_id]->speed); }
 
-	SingleAgentICBS(int start_location, int goal_location, Map* ml, AgentsLoader* al, int agent_id, int start_heading = -1, int kRobust = 0);
+	SingleAgentICBS(int start_location, int goal_location, const Map* ml, AgentsLoader* al, int agent_id, int start_heading = -1, int kRobust = 0);
 	~SingleAgentICBS();
 
 };

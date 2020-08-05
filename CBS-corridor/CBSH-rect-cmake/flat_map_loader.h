@@ -21,8 +21,8 @@ public:
 	FlatlandLoader(boost::python::object rail1, int rows, int cols);
 	railCell get_full_cell(int location);
 	FlatlandLoader();
-	int getDegree(int loc);
-    int getDegree(int loc,int heading);
+	int getDegree(int loc) const;
+    int getDegree(int loc,int heading) const;
 
 	boost::python::object rail;
 	railCell* railMap;

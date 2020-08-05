@@ -101,7 +101,7 @@ bool SingleAgentICBS<Map>::validMove(int curr, int next) const
 template<class Map>
 bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weight, int focal_makespan,
         ConstraintTable& constraint_table,
-	ReservationTable* res_table, size_t max_plan_len, double lowerbound, std::clock_t start_clock ,int time_limit)
+	ReservationTable* res_table, size_t max_plan_len, double lowerbound, Time::time_point start_clock ,int time_limit)
 {
 
 	num_expanded = 0;
@@ -154,7 +154,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 	int time_generated = 0;
 	int time_check_count = 0;
-	std:clock_t runtime;
+    fsec runtime;
 	/*for (int h = 0; h < my_heuristic.size();h++) {
 		for (int heading = 0; heading<5;heading++)
 			std::cout << "(" << h << ": heading:"<<-1 <<": "<< my_heuristic[h].heading[-1] << ")";
@@ -163,9 +163,9 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 	while (!focal_list.empty()) 
 	{
 		if (num_generated / 10000 > time_check_count && time_limit != 0) {
-			runtime = std::clock() - start_clock;
+			runtime = Time::now() - start_clock;
 			time_check_count = num_generated / 10000;
-			if (runtime > time_limit) {
+			if (runtime.count() > time_limit) {
 				return false;
 			}
 		}
@@ -174,6 +174,11 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 		open_list.erase(curr->open_handle);
 
 // 		assert(curr->h_val >=0);
+//        cout<<"Current: "<<curr->h_val<< ": "<<curr->loc/num_col <<", "<<curr->loc%num_col << ", heading: "<<curr->heading<< endl;
+//        for (auto heading : my_heuristic[curr->loc].heading){
+//            cout << heading<< ",";
+//        }
+//        cout <<endl;
 
 		curr->in_openlist = false;
 		num_expanded++;
@@ -252,7 +257,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			int next_timestep = curr->timestep + 1;
 
 
-			if (!constraint_table.is_constrained(next_id, next_timestep)) //&&
+			if (!constraint_table.is_constrained(al->agents[agent_id]->agent_id, next_id, next_timestep)) //&&
 				//!constraint_table.is_constrained(curr->loc * map_size + next_id, next_timestep)) // TODO:: for k-robust cases, we do not need to check edge constraint?
 			{
 
@@ -265,25 +270,36 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 					next_heading = move.heading;
 				float next_position_fraction = move.position_fraction;
 
-				
-                int next_h_val;
+                int next_h_val, next_show_time;
+                if (curr->loc == -1 and next_id!=-1)
+                    next_show_time = next_timestep;
+                else
+                    next_show_time = curr->show_time;
+
                 if (next_id!=-1)
-                    next_h_val = my_heuristic[next_id].get_hval(next_heading)/al->agents[agent_id]->speed;
+                    next_h_val = my_heuristic[next_id].get_hval(next_heading);
                 else
                     next_h_val = curr->h_val;
 
 				if (next_id!=-1 && move.exit_loc >= 0 && al->agents[agent_id]->speed<1) {
 					int h1 = my_heuristic[next_id].get_hval(next_heading);
 					int h2 = my_heuristic[move.exit_loc].get_hval(move.exit_heading);
-					next_h_val = h1 / al->agents[agent_id]->speed
-						- (h2-h1)*(move.position_fraction/al->agents[agent_id]->speed);
+					next_h_val = h1
+						+ (h2-h1)*(move.position_fraction/1);
+                    next_h_val = round( next_h_val * 10000.0 ) / 10000.0;
 
 				}
 				if (next_g_val + next_h_val*al->agents[agent_id]->speed > constraint_table.length_max)
 					continue;
 
+//                cout<<"Next: "<<next_h_val<<","<< next_id/num_col <<", "<<next_id%num_col<<", heading: "<<next_heading<< endl;
+//                for (auto heading : my_heuristic[next_id].heading){
+//                    cout << heading<< ",";
+//                }
+//                cout <<endl;
 
-				int next_internal_conflicts = res_table->countConflict(agent_id, curr->loc, next_id, curr->timestep, kRobust);
+
+                int next_internal_conflicts = res_table->countConflict(agent_id, curr->loc, next_id, curr->timestep, kRobust);
 
 
 
@@ -295,6 +311,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 				next->position_fraction = next_position_fraction;
 				next->exit_heading = move.exit_heading;
 				next->exit_loc = move.exit_loc;
+				next->show_time = next_show_time;
 
 				// try to retrieve it from the hash table
 				it = allNodes_table.find(next);
@@ -377,7 +394,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			break;
 		LLNode* open_head = open_list.top();
 
-        assert(open_head->getFVal() >= min_f_val);
+        //assert(open_head->getFVal() >= min_f_val);
 		if (open_head->getFVal() > min_f_val) 
 		{
 			min_f_val = open_head->getFVal();
@@ -420,7 +437,7 @@ inline void SingleAgentICBS<Map>::releaseClosedListNodes(hashtable_t* allNodes_t
 }
 
 template<class Map>
-SingleAgentICBS<Map>::SingleAgentICBS(int start_location, int goal_location,  Map* ml1, AgentsLoader* al,int agent_id, int start_heading, int kRobust):
+SingleAgentICBS<Map>::SingleAgentICBS(int start_location, int goal_location,  const Map* ml1, AgentsLoader* al,int agent_id, int start_heading, int kRobust):
     ml(ml1), my_heuristic(al->agents[agent_id]->heuristics)
 {
 	this->al = al;

@@ -32,7 +32,7 @@ inline void ICBSSearch::updatePaths(ICBSNode* curr)
 
 /*std::vector <std::list< std::pair<int, int> > >* ICBSSearch::collectConstraints(ICBSNode* curr, int agent_id)
 {
-	std::clock_t t1 = std::clock();
+	std::clock_t t1 = Time::now();
 	// extract all constraints on agent_id
 	list < tuple<int, int, int> > constraints;
 	int max_timestep = -1;
@@ -93,7 +93,7 @@ inline void ICBSSearch::updatePaths(ICBSNode* curr)
 			cons_vec->at(get<2>(*it)).push_back(make_pair(get<0>(*it), get<1>(*it)));
 	}
 	
-	runtime_updatecons += std::clock() - t1;
+	runtime_updatecons += Time::now() - t1;
 	return cons_vec;
 }*/
 
@@ -212,8 +212,8 @@ int ICBSSearch::minimumVertexCover(const vector<vector<bool>>& CG)
                     rst += k;
                     break;
                 }
-                runtime = (double)(std::clock() - start);
-                if (runtime > time_limit)
+                runtime = Time::now() - start;
+                if (runtime.count() > time_limit)
                     return -1; // run out of time
             }
         }
@@ -835,9 +835,9 @@ bool ICBSSearch::generateChild(ICBSNode*  node, ICBSNode* curr)
 	node->makespan = curr->makespan;
 	node->depth = curr->depth + 1;
 	node->num_of_dead_agents = curr->num_of_dead_agents;
-	std::clock_t t1;
+    Time::time_point t1;
 
-	t1 = std::clock();
+	t1 = Time::now();
     double lowerbound = (int)paths[node->agent_id]->size() - 1;
     // if (curr->conflict->p == conflict_priority::CARDINAL && curr->conflict->type != conflict_type::CORRIDOR2)
     //	lowerbound += 1;
@@ -851,7 +851,7 @@ bool ICBSSearch::generateChild(ICBSNode*  node, ICBSNode* curr)
 	
 
 	
-	runtime_lowlevel += (double)(std::clock() - t1) * 1000.0 / CLOCKS_PER_SEC;
+	runtime_lowlevel +=(Time::now() - t1);
 	
 	//Estimate h value
 	if (node->parent->g_val == node->g_val)
@@ -870,9 +870,9 @@ bool ICBSSearch::generateChild(ICBSNode*  node, ICBSNode* curr)
 		node->h_val = 0;
 	node->f_val = node->g_val + node->h_val;
     assert(node->num_of_dead_agents > curr->num_of_dead_agents || node->f_val >= curr->f_val);
-	t1 = std::clock();
+	t1 = Time::now();
 	findConflicts(*node);
-	runtime_conflictdetection += (double)(std::clock() - t1)  * 1000.0 / CLOCKS_PER_SEC;
+	runtime_conflictdetection += (fsec)(Time::now() - t1) ;
 
 	node->num_of_collisions = node->unknownConf.size() + node->conflicts.size();
 
@@ -1046,15 +1046,15 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 {
     printStrategy();
     // set timer
-    start = std::clock();
-    std::clock_t t1;
+    start = Time::now();
+    Time::time_point t1;
 
-	runtime_computeh = 0;
-	runtime_lowlevel = 0;
-	runtime_listoperation = 0;
-	runtime_conflictdetection = 0;
-	runtime_updatepaths = 0;
-	runtime_updatecons = 0;
+	runtime_computeh = fsec::zero();
+	runtime_lowlevel = fsec::zero();
+	runtime_listoperation = fsec::zero();
+	runtime_conflictdetection = fsec::zero();
+	runtime_updatepaths = fsec::zero();
+	runtime_updatecons = fsec::zero();
 
     initializeDummyStart();
 
@@ -1064,23 +1064,23 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 		al.printCurrentAgentsInitGoal();
 	while (!open_list.empty() && !solution_found)
 	{
-		runtime = (std::clock() - start);
-		if (runtime > time_limit)
+		runtime = (Time::now() - start);
+		if (runtime.count() > time_limit)
 		{  // timeout
 			break;
 		}
-        t1 = std::clock();
+        t1 = Time::now();
         updateFocalList();
-        runtime_listoperation += std::clock() - t1;
-		t1 = std::clock();
+        runtime_listoperation += Time::now() - t1;
+		t1 = Time::now();
 		ICBSNode* curr = focal_list.top();
 		focal_list.pop();
 		open_list.erase(curr->open_handle);
-		runtime_listoperation += std::clock() - t1;
+		runtime_listoperation += Time::now() - t1;
 		// takes the paths_found_initially and UPDATE all constrained paths found for agents from curr to dummy_start (and lower-bounds)
-		t1 = std::clock();
+		t1 = Time::now();
 		updatePaths(curr);
-		runtime_updatepaths += std::clock() - t1;
+		runtime_updatepaths += Time::now() - t1;
 		if(debug_mode){
             cout << "Child #" << curr->time_generated << " f:" <<curr->f_val <<endl;
 
@@ -1088,37 +1088,37 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 
 		if (cons_strategy == constraint_strategy::CBS)
 		{
-			t1 = std::clock();
+			t1 = Time::now();
 			curr->conflict = chooseConflict(*curr);
-			runtime_conflictdetection += std::clock() - t1;
+			runtime_conflictdetection += Time::now() - t1;
 		}
 		else if (cons_strategy == constraint_strategy::ICBS) // No heuristics
 		{
-			t1 = std::clock();
+			t1 = Time::now();
 			classifyConflicts(*curr);
 			curr->conflict = chooseConflict(*curr);
-			runtime_conflictdetection += std::clock() - t1;
+			runtime_conflictdetection += Time::now() - t1;
 		}
 		else if(curr->conflict == nullptr) //CBSH based, and h value has not been computed yet
 		{
-			t1 = std::clock();
+			t1 = Time::now();
 			classifyConflicts(*curr);
 			curr->conflict = chooseConflict(*curr);
-			runtime_conflictdetection += std::clock() - t1;
+			runtime_conflictdetection += Time::now() - t1;
 
-			t1 = std::clock();
+			t1 = Time::now();
 			int h = computeHeuristics(*curr);
             curr->h_val = max(curr->h_val, h);
-			runtime_computeh += std::clock() - t1;
+			runtime_computeh += Time::now() - t1;
 			curr->f_val = curr->g_val + curr->h_val;
 
             if (curr->num_of_dead_agents > get<0>(focal_list_threshold) ||
                 curr->makespan > get<1>(focal_list_threshold) ||
                 curr->f_val > get<2>(focal_list_threshold))
 			{
-				t1 = std::clock();
+				t1 = Time::now();
 				curr->open_handle = open_list.push(curr);
-				runtime_listoperation += std::clock() - t1;
+				runtime_listoperation += Time::now() - t1;
                 if(debug_mode){
                     cout << "Reinsert Node #" << curr->time_generated << endl;
                 }
@@ -1131,7 +1131,7 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 
 		if (curr->conflict == nullptr) //Fail to find a conflict => no conflicts
 		{  // found a solution (and finish the while look)
-			runtime = (std::clock() - start);
+			runtime = Time::now() - start;
 			solution_found = true;
 			solution_cost = curr->g_val;
             goal_node = curr;
@@ -1143,10 +1143,11 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 				printPaths();
 			assert(solution_cost >= dummy_start->g_val);
             if (num_of_agents > 1)
-			    cout << solution_cost << " (" << goal_node->num_of_dead_agents << ") ; " << goal_node->makespan << " ; " <<
+                if (debug_mode)
+                    cout << solution_cost << " (" << goal_node->num_of_dead_agents << ") ; " << goal_node->makespan << " ; " <<
 			        solution_cost - dummy_start->g_val << " ; " <<
 				    HL_num_expanded << " ; " << HL_num_generated << " ; " <<
-				    LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime / CLOCKS_PER_SEC << ";"<<
+				    LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime.count() << ";"<<
 				    num_standard << ";" << num_start << "," <<
 				    num_corridor2 << ";" << num_chasing << "," << num_corridor << endl;
 			
@@ -1254,12 +1255,26 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 		}
 		else // 2-way branching
 		{
-			
-			children.resize(2);
-			children[0] = new ICBSNode(curr->conflict->a1);
-			children[0]->constraints = curr->conflict->constraint1;
-			children[1] = new ICBSNode(curr->conflict->a2);
-			children[1]->constraints = curr->conflict->constraint2;
+		    if (curr->conflict->type == conflict_type::START){
+                if (compare_start(curr->conflict->a1,curr->conflict->a2)){
+                    children.resize(1);
+                    children[0] = new ICBSNode(curr->conflict->a2);
+                    children[0]->constraints = curr->conflict->constraint2;
+                }
+                else{
+                    children.resize(1);
+                    children[0] = new ICBSNode(curr->conflict->a1);
+                    children[0]->constraints = curr->conflict->constraint1;
+                }
+		    }
+		    else{
+                children.resize(2);
+                children[0] = new ICBSNode(curr->conflict->a1);
+                children[0]->constraints = curr->conflict->constraint1;
+                children[1] = new ICBSNode(curr->conflict->a2);
+                children[1]->constraints = curr->conflict->constraint2;
+		    }
+
 			if (curr->conflict->type == conflict_type::CORRIDOR2)
             {
                 num_corridor2++;
@@ -1315,7 +1330,7 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 			if (i < children.size() - 1)
 				paths = copy;
 		}
-		if (std::clock() - start > time_limit)
+		if (((fsec)(Time::now() - start)).count() > time_limit)
         {
             curr->open_handle = open_list.push(curr); // to make sure that the open list has at least one node
             focal_list.push(curr);
@@ -1348,8 +1363,8 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
 	{
         if (screen>=1)
             printHLTree();
-        runtime = (std::clock() - start);
-	    if (runtime > time_limit)
+        runtime = (Time::now() - start);
+	    if ((float)runtime.count() > time_limit)
         {
             if (num_of_agents > 1)
                 cout << "TIMEOUT  ; ";
@@ -1364,9 +1379,10 @@ bool MultiMapICBSSearch<Map>::runICBSSearch()
         }
         updateFocalList();
         if (num_of_agents > 1)
-            cout << solution_cost << " (" << get<0>(min_f_val) << ") ; " << get<1>(min_f_val) << " ; " << get<2>(min_f_val) - dummy_start->g_val << " ; " <<
+            if (debug_mode)
+                cout << solution_cost << " (" << get<0>(min_f_val) << ") ; " << get<1>(min_f_val) << " ; " << get<2>(min_f_val) - dummy_start->g_val << " ; " <<
                 HL_num_expanded << " ; " << HL_num_generated << " ; " <<
-                LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime / CLOCKS_PER_SEC << " ; "
+                LL_num_expanded << " ; " << LL_num_generated << " ; " << runtime.count() << " ; "
                 << num_standard << ";" << num_start << "," <<
                      num_corridor2 << ";" << num_chasing << "," << num_corridor << endl;
         if(debug_mode)
@@ -1423,7 +1439,7 @@ MultiMapICBSSearch<Map>::~MultiMapICBSSearch()
 }
 
 template<class Map>
-MultiMapICBSSearch<Map>::MultiMapICBSSearch(Map* ml, AgentsLoader* al0, double f_w, constraint_strategy c,
+MultiMapICBSSearch<Map>::MultiMapICBSSearch(const Map* ml, AgentsLoader* al0, double f_w, constraint_strategy c,
         int time_limit, int screen, options options1): ICBSSearch(*al0)
 {
 	this->option = options1;
@@ -1672,7 +1688,7 @@ bool MultiMapICBSSearch<Map>::findPathForSingleAgent(ICBSNode*  node, int ag, do
 
 	LL_num_expanded += search_engines[ag]->num_expanded;
 	LL_num_generated += search_engines[ag]->num_generated;
-    if ((std::clock() - start) > time_limit) // run out of time
+    if (((fsec)(Time::now() - start)).count() > time_limit) // run out of time
     {
         return false;
     }
@@ -1831,7 +1847,7 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
 	}
     if (!(corridor2||trainCorridor1))
         return;
-    double corridorT = std::clock();
+    Time::time_point corridorT = Time::now();
     bool found = false;
     while ( !parent.cardinal_wating.empty()){
         std::shared_ptr<Conflict> conflict  = parent.cardinal_wating.front();
@@ -1863,7 +1879,7 @@ void MultiMapICBSSearch<Map>::classifyConflicts(ICBSNode &parent)
             break;
         }
     }
-    runtime_corridor += std::clock() - corridorT;
+    runtime_corridor += Time::now() - corridorT;
 
 
     // remove conflicts that cannot be chosen, to save some memory

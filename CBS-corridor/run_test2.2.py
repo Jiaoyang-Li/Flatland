@@ -18,7 +18,7 @@ from libPythonCBS import PythonCBS
 
 width = 50  # With of map
 height = 50  # Height of map
-nr_trains = 4  # Number of trains that have an assigned task in the env
+nr_trains = 14  # Number of trains that have an assigned task in the env
 cities_in_map = 2  # Number of cities where agents can start or end
 seed = 12  # Random seed
 grid_distribution_of_cities = False  # Type of city distribution, if False cities are randomly placed
@@ -80,7 +80,7 @@ env.reset()
 #                           screen_height=800,  # Adjust these parameters to fit your resolution
 #                           screen_width=800)  # Adjust these parameters to fit your resolution
 
-framework = "LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning
+framework = "LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning or "Parallel-LNS" for parallel lns
 f_w = 1
 debug = True
 timelimit = 240  # unit: seconds
@@ -98,7 +98,7 @@ agent_priority_strategy = 0  #  choose a number between 0 and 5
 neighbor_generation_strategy = 2    # 0: random walk; 1: start; 2: intersection;
 prirority_ordering_strategy = 0     # 0: random; 1: max regret;
 replan_strategy = 1                 # 0: CBS; 1: prioritized planning;
-CBS = PythonCBS(env, framework, "CBSH", timelimit, default_group_size, debug, f_w,
+CBS = PythonCBS(env, framework, "PBS", timelimit, default_group_size, debug, f_w,
                 corridor_method, chasing, accept_partial_solution, agent_priority_strategy,
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
 success = CBS.search()

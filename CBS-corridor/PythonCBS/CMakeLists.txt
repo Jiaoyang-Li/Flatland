@@ -4,6 +4,11 @@
 cmake_minimum_required (VERSION 3.8)
 project ("CBS-K")
 
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -g -Wall")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -undefined dynamic_lookup")
+set(CMAKE_CXX_STANDARD 14)
+
+
 IF(NOT CMAKE_BUILD_TYPE)
   #SET(CMAKE_BUILD_TYPE "DEBUG")
   SET(CMAKE_BUILD_TYPE "RELEASE")
@@ -11,40 +16,43 @@ IF(NOT CMAKE_BUILD_TYPE)
   #SET(CMAKE_BUILD_TYPE "MINSIZEREL")
 ENDIF()
 
-
 ADD_LIBRARY(PythonCBS SHARED
-	PythonCBS.cpp
-	PythonCBS.h
-	../CBSH-rect-cmake/flat_map_loader.h
-	../CBSH-rect-cmake/flat_map_loader.cpp
-	../CBSH-rect-cmake/agents_loader.h
-    ../CBSH-rect-cmake/compute_heuristic.h
-	../CBSH-rect-cmake/ICBSNode.h
-	../CBSH-rect-cmake/ICBSSearch.h
-	../CBSH-rect-cmake/LLNode.h
-	../CBSH-rect-cmake/map_loader.h
-	../CBSH-rect-cmake/MDD.h
-	../CBSH-rect-cmake/SingleAgentICBS.h
-	../CBSH-rect-cmake/agents_loader.cpp
-    ../CBSH-rect-cmake/compute_heuristic.cpp
-	../CBSH-rect-cmake/ICBSNode.cpp
-	../CBSH-rect-cmake/ICBSSearch.cpp
-	../CBSH-rect-cmake/LLNode.cpp
-	../CBSH-rect-cmake/map_loader.cpp
-	../CBSH-rect-cmake/MDD.cpp
-	../CBSH-rect-cmake/SingleAgentICBS.cpp
-	../CBSH-rect-cmake/ReservationTable.h
-	../CBSH-rect-cmake/ReservationTable.cpp
-	../CBSH-rect-cmake/Conflict.h
-	../CBSH-rect-cmake/Conflict.cpp
-	../CBSH-rect-cmake/ConstraintTable.cpp
-	../CBSH-rect-cmake/ConstraintTable.h
-	../CBSH-rect-cmake/CorridorReasoning.cpp
-	../CBSH-rect-cmake/CorridorReasoning.h
-	../CBSH-rect-cmake/common.h
-	../CBSH-rect-cmake/common.cpp
-	../CBSH-rect-cmake/LNS.h
-	../CBSH-rect-cmake/LNS.cpp)
+		PythonCBS.cpp
+		PythonCBS.h
+		../CBSH-rect-cmake/flat_map_loader.h
+		../CBSH-rect-cmake/flat_map_loader.cpp
+		../CBSH-rect-cmake/agents_loader.h
+		../CBSH-rect-cmake/compute_heuristic.h
+		../CBSH-rect-cmake/ICBSNode.h
+		../CBSH-rect-cmake/ICBSSearch.h
+		../CBSH-rect-cmake/LLNode.h
+		../CBSH-rect-cmake/map_loader.h
+		../CBSH-rect-cmake/MDD.h
+		../CBSH-rect-cmake/SingleAgentICBS.h
+		../CBSH-rect-cmake/agents_loader.cpp
+	   ../CBSH-rect-cmake/compute_heuristic.cpp
+		../CBSH-rect-cmake/ICBSNode.cpp
+		../CBSH-rect-cmake/ICBSSearch.cpp
+		../CBSH-rect-cmake/LLNode.cpp
+		../CBSH-rect-cmake/map_loader.cpp
+		../CBSH-rect-cmake/MDD.cpp
+		../CBSH-rect-cmake/SingleAgentICBS.cpp
+		../CBSH-rect-cmake/ReservationTable.h
+		../CBSH-rect-cmake/ReservationTable.cpp
+		../CBSH-rect-cmake/Conflict.h
+		../CBSH-rect-cmake/Conflict.cpp
+		../CBSH-rect-cmake/ConstraintTable.cpp
+		../CBSH-rect-cmake/ConstraintTable.h
+		../CBSH-rect-cmake/CorridorReasoning.cpp
+		../CBSH-rect-cmake/CorridorReasoning.h
+		../CBSH-rect-cmake/common.h
+		../CBSH-rect-cmake/common.cpp
+		../CBSH-rect-cmake/LNS.h
+		../CBSH-rect-cmake/LNS.cpp
+		../CBSH-rect-cmake/LLNode.h
+		../CBSH-rect-cmake/LLNode.cpp
+    ../CBSH-rect-cmake/PBS.cpp
+)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY  "./bin")
 
 
@@ -95,10 +103,10 @@ if (WIN32)
 	SET(Boost_NO_BOOST_CMAKE ON)
 	set(BOOST_ROOT "C:/Users/czcz2/Google Drive/MIT/GCITR/boost_1_61_0/")
 	set(BOOST_LIBRARYDIR "C:/Users/czcz2/Google Drive/MIT/GCITR/boost_1_61_0/lib64-msvc-14.0")
-	FIND_PACKAGE(Boost 1.61.0 COMPONENTS system program_options python)
+	FIND_PACKAGE(Boost 1.61.0 COMPONENTS system program_options python3)
 	IF(Boost_FOUND)
 		SET(Boost_USE_STATIC_LIBS ON)
-		SET(Boost_USE_MULTITHREADED ON)
+		# SET(Boost_USE_MULTITHREADED ON)
 		SET(Boost_USE_STATIC_RUNTIME OFF)
 		include_directories(${Boost_INCLUDEDIR} )
 
@@ -109,26 +117,31 @@ if (WIN32)
 	ELSEIF(NOT Boost_FOUND)
 	  MESSAGE(FATAL_ERROR "Unable to find all boost libs")
 	ENDIF()
-else()
-	file(READ "/etc/issue" ETC_ISSUE)
-	string(REGEX MATCH "Ubuntu|Manjaro" DIST ${ETC_ISSUE})
-	if(DIST STREQUAL "Ubuntu")
-		message(STATUS ">>>> Found Ubuntu <<<<")
-		set(boostPython python3)
-		find_package(PythonInterp 3.6 REQUIRED)
-		find_package(PythonLibs 3.6 REQUIRED)
-	elseif(DIST STREQUAL "Manjaro")
-		message(STATUS ">>>> Found Manjaro <<<<")
-		set(boostPython python3)
-		find_package(PythonInterp 3.6 REQUIRED)
-		find_package(PythonLibs 3.6 REQUIRED)
-	else()
-		message(STATUS ">>>> Found unknown distribution <<<<")
-		set(boostPython python3)
-		find_package(PythonInterp 3.6 REQUIRED)
-		find_package(PythonLibs 3.6 REQUIRED)
-	endif()
 
+else()
+	# file(READ "/etc/issue" ETC_ISSUE)
+	# string(REGEX MATCH "Ubuntu|Manjaro" DIST ${ETC_ISSUE})
+	# if(DIST STREQUAL "Ubuntu")
+	# 	message(STATUS ">>>> Found Ubuntu <<<<")
+	# 	set(boostPython python3)
+	# 	find_package(PythonInterp 3.6 REQUIRED)
+	# 	find_package(PythonLibs 3.6 REQUIRED)
+	# elseif(DIST STREQUAL "Manjaro")
+	# 	message(STATUS ">>>> Found Manjaro <<<<")
+	# 	set(boostPython python3)
+	# 	find_package(PythonInterp 3.6 REQUIRED)
+	# 	find_package(PythonLibs 3.6 REQUIRED)
+	# else()
+	# 	message(STATUS ">>>> Found unknown distribution <<<<")
+	# 	set(boostPython python3)
+	# 	find_package(PythonInterp 3.6 REQUIRED)
+	# 	find_package(PythonLibs 3.6 REQUIRED)
+	# endif()
+
+	set(boostPython python)
+  set(Boost_Python_lib "Boost::python38")
+	find_package(PythonInterp 3.8 REQUIRED)
+	# find_package(PythonLibs 3.8 REQUIRED)
 
 	# find_path(SPARSEHASH_INCLUDE_DIRS sparsehash/dense_hash_map)
 	# if (NOT SPARSEHASH_INCLUDE_DIRS)
@@ -141,7 +154,7 @@ else()
 	include_directories(${PYTHON_INCLUDE_DIRS})
 
 	set(Boost_USE_STATIC_LIBS OFF)
-	set(Boost_USE_MULTITHREADED ON)  
+	# set(Boost_USE_MULTITHREADED ON)  
 	set(Boost_USE_STATIC_RUNTIME OFF)
 	FIND_PACKAGE(Boost REQUIRED COMPONENTS system program_options ${boostPython})
 
@@ -157,7 +170,7 @@ else()
 
 	if(Boost_FOUND)
 		include_directories(${Boost_INCLUDE_DIRS})
-		target_link_libraries(PythonCBS ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
+		target_link_libraries(PythonCBS PRIVATE ${Boost_LIBRARIES} ${PYTHON_LIBRARIES})
 	else()
 		 message(FATAL_ERROR "Could not find boost.")
 	endif()

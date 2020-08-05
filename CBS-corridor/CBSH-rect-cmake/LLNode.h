@@ -19,13 +19,14 @@ public:
 
 	int loc;
 	int g_val;
-	int h_val = 0;
+	float h_val = 0;
 	int heading;
 	int actionToHere = 4;
 	std::vector<int> possible_next_heading;
 	LLNode* parent=nullptr;
 	int timestep = 0;
 	int time_generated=0;
+	int show_time = 0;
 	int num_internal_conf = 0; 
 	bool in_openlist = false;
 	// bool in_focallist = false;
@@ -60,16 +61,18 @@ public:
 		{
 			if (n1->num_internal_conf == n2->num_internal_conf)
 			{
-				if (n1->h_val == n2->h_val)
-				{
-				    return (n1->g_val <= n2->g_val);
+			    if (n1->show_time == n2->show_time) {
+                    if (n1->h_val == n2->h_val) {
+                        return (n1->g_val <= n2->g_val);
 //                    if (rand() % 2 == 0)
 //                        return true;
 //                    else
 //                        return false;
 
-				}
-				return n1->h_val >= n2->h_val;
+                    }
+                    return n1->h_val >= n2->h_val;
+                }
+			    return n1->show_time <= n2->show_time;
 			}
 			return n1->num_internal_conf >= n2->num_internal_conf;  // n1 > n2 if it has more conflicts
 		}

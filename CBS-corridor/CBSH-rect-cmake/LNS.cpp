@@ -1,41 +1,97 @@
 #include "LNS.h"
 
 
-bool LNS::run(double _time_limit)
-{
-    start_time = std::clock();
-    time_limit = _time_limit;
 
+
+bool LNS::run(float _hard_time_limit, float _soft_time_limit)
+{
+    start_time = Time::now();
+    hard_time_limit = _hard_time_limit;
+    soft_time_limit = min(_soft_time_limit, hard_time_limit);
     if (!getInitialSolution()) // get initial solution
         return false;
 
     size_t solution_cost = 0;
+    int sum_of_showup_time = 0;
     size_t makespan = 0;
     for (const auto& path : al.paths_all)
     {
         solution_cost += path.size() - 1;
         makespan = max(path.size() - 1, makespan);
+        for (int t  = 0; t < (int)path.size(); t++)
+        {
+            if (path[t].location >= 0)
+            {
+                sum_of_showup_time += t;
+                break;
+            }
+        }
     }
-    runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
-    cout << "Initial solution cost = " << solution_cost << ", "
+    runtime = ((fsec)(Time::now() - start_time)).count();
+    if (options1.debug)
+        cout << "Initial solution cost = " << solution_cost << ", "
+         << "travel time = " << solution_cost - sum_of_showup_time << ", "
          << "makespan = " << makespan << ", "
-         << "remaining time = " << time_limit - runtime << endl;
+         << "runtime = " << runtime << endl;
     iteration_stats.emplace_back(al.agents_all.size(), 0,
                                  runtime, runtime,
                                  makespan,
                                  solution_cost,
-                                 0,
-                                 0,
+                                 destroy_strategy,
+                                 (double)(solution_cost) / max_timestep / al.agents_all.size(),
                                  0,
                                  0,
                                  0);
+    if (destroy_strategy == 3)
+    {
+        adaptive_destroy = true;
+        iterative_destroy = false;
+        destroy_heuristics.assign(3, 1);
+    }
+    else if (destroy_strategy == 4)
+    {
+        adaptive_destroy = false;
+        iterative_destroy = true;
+    }
+    else // fixed destroy strategy
+    {
+        adaptive_destroy = false;
+        iterative_destroy = false;
+    }
+
     boost::unordered_set<int> tabu_list;
     bool succ;
-    int old_runtime = runtime;
-    while (runtime < time_limit && iteration_stats.size() < 10000)
+    auto old_runtime = runtime;
+    while (runtime < soft_time_limit && iteration_stats.size() < 10000)
     {
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
-        switch (neighbor_generation_strategy)
+        runtime =((fsec)(Time::now() - start_time)).count();
+        if (adaptive_destroy)
+        {
+            double sum = 0;
+            for (const auto& h : destroy_heuristics)
+                sum += h;
+            if (options1.debug)
+            {
+                cout << "destroy heuristics = ";
+                for (const auto& h : destroy_heuristics)
+                    cout << h / sum << ",";
+            }
+            double r = (double) rand() / RAND_MAX;
+            if (r * sum < destroy_heuristics[0])
+                destroy_strategy = 0;
+            else if (r * sum < destroy_heuristics[0] + destroy_heuristics[1])
+                destroy_strategy = 1;
+            else
+                destroy_strategy = 2;
+            if (options1.debug)
+                cout << "Choose destroy strategy " << destroy_strategy << endl;
+        }
+        else if (iterative_destroy)
+        {
+            destroy_strategy = (destroy_strategy + 1) % 3;
+        }
+
+        switch (destroy_strategy)
         {
             case 0:
                 generateNeighborByRandomWalk(tabu_list);
@@ -89,17 +145,27 @@ bool LNS::run(double _time_limit)
                 exit(0);
         }
 
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
+        if (adaptive_destroy) // update destroy heuristics
+        {
+            if (delta_costs < 0)
+                destroy_heuristics[destroy_strategy] = reaction_factor * (-delta_costs)
+                                                   + (1 - reaction_factor) * destroy_heuristics[destroy_strategy];
+            else
+                destroy_heuristics[destroy_strategy] = (1 - decay_factor) * destroy_heuristics[destroy_strategy];
+        }
+        runtime = ((fsec)(Time::now() - start_time)).count();
         solution_cost += delta_costs;
-        cout << "Iteration " << iteration_stats.size() << ", "
+        if (options1.debug)
+            cout << "Iteration " << iteration_stats.size() << ", "
+             << "group size = " << neighbors.size() << ", "
              << "solution cost = " << solution_cost << ", "
-             << "remaining time = " << time_limit - runtime << endl;
+             << "remaining time = " << soft_time_limit - runtime << endl;
         iteration_stats.emplace_back(neighbors.size(), 0,
                                      runtime, runtime - old_runtime,
                                      makespan,
                                      solution_cost,
-                                     0,
-                                     0,
+                                     destroy_strategy,
+                                     (double)(solution_cost) / max_timestep / al.agents_all.size(),
                                      0,
                                      0,
                                      0);
@@ -128,14 +194,16 @@ bool LNS::getInitialSolution()
     int remaining_agents = (int)neighbors.size();
     for (auto agent : neighbors)
     {
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
-        if (runtime >= time_limit)
+        runtime = ((fsec)(Time::now() - start_time)).count();
+        if (runtime >= hard_time_limit)
         {
             return false;
         }
-        cout << "Remaining agents = " << remaining_agents <<
-             ", remaining time = " << time_limit - runtime << " seconds. " << endl;
         al.agents[0] = &al.agents_all[agent];
+        if (options1.debug)
+            cout << "Remaining agents = " << remaining_agents <<
+             ", remaining time = " << hard_time_limit - runtime << " seconds. " << endl
+                    << "Agent " << al.agents[0]->agent_id << endl;
         MultiMapICBSSearch<FlatlandLoader> icbs(&ml, &al, f_w, c, 0, options1.debug? 3 : 0, options1);
         icbs.runICBSSearch();
         updateCBSResults(icbs);
@@ -143,8 +211,9 @@ bool LNS::getInitialSolution()
         remaining_agents--;
     }
 
-    runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
-    cout << endl << endl << "Find a solution for " << al.getNumOfAllAgents() - al.getNumOfUnplannedAgents()
+    runtime = ((fsec)(Time::now() - start_time)).count();
+    if (options1.debug)
+        cout << endl << endl << "Find a solution for " << al.getNumOfAllAgents() - al.getNumOfUnplannedAgents()
          << " agents (including " << al.getNumOfDeadAgents() << " dead agents) in " << runtime << " seconds!" << endl;
 
     return true;
@@ -174,12 +243,17 @@ bool LNS::generateNeighborByStart()
     auto it = start_locations.begin();
     advance(it, step);
     neighbors.assign(it->second.begin(), it->second.end());
-    if (replan_strategy == 0 && neighbors.size() > group_size) // resize the group for CBS
+    if (neighbors.size() > max_group_size ||
+        (replan_strategy == 0 && neighbors.size() > group_size)) // resize the group for CBS
     {
         sortNeighborsRandomly();
-        neighbors.resize(group_size);
+        if (replan_strategy == 0)
+            neighbors.resize(group_size);
+        else
+            neighbors.resize(max_group_size);
     }
-    cout << "Generate " << neighbors.size() << " neighbors by start location " << it->first << endl;
+    if (options1.debug)
+        cout << "Generate " << neighbors.size() << " neighbors by start location " << it->first << endl;
     return true;
 }
 
@@ -200,12 +274,16 @@ bool LNS::generateNeighborByIntersection()
     if (neighbors_set.size() <= 1)
         return false;
     neighbors.assign(neighbors_set.begin(), neighbors_set.end());
-    if (replan_strategy == 0 && neighbors.size() > group_size) // resize the group for CBS
+    if (neighbors.size() > max_group_size || (replan_strategy == 0 && neighbors.size() > group_size)) // resize the group for CBS
     {
         sortNeighborsRandomly();
-        neighbors.resize(group_size);
+        if (replan_strategy == 0)
+            neighbors.resize(group_size);
+        else
+            neighbors.resize(max_group_size);
     }
-    cout << "Generate " << neighbors.size() << " neighbors by intersection " << location << endl;
+    if (options1.debug)
+        cout << "Generate " << neighbors.size() << " neighbors by intersection " << location << endl;
     return true;
 }
 
@@ -253,7 +331,8 @@ void LNS::generateNeighborByRandomWalk(boost::unordered_set<int>& tabu_list)
     }
 
     neighbors.assign(neighbors_set.begin(), neighbors_set.end());
-    cout << "Generate " << neighbors.size() << " neighbors by random walks of agent " << a
+    if (options1.debug)
+        cout << "Generate " << neighbors.size() << " neighbors by random walks of agent " << a
         << "(" << al.agents_all[a].distance_to_goal << "->" << al.paths_all[a].size() - 1 << ")" << endl;
 }
 
@@ -266,14 +345,15 @@ void LNS::replanByPP()
     al.agents.resize(1);
     list<Path> new_paths;
     int sum_of_costs = 0;
-
-    for (auto agent : neighbors)
+    int sum_of_showup_time = 0;
+    int makespan = 0;
+    for (const auto& agent : neighbors)
     {
-        runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
-        if (runtime >= time_limit)
+        runtime = ((fsec)(Time::now() - start_time)).count();
+        if (runtime >= soft_time_limit)
         { // change back to the original paths
             auto path = neighbor_paths.begin();
-            for (auto agent : neighbors)
+            for (const auto& agent : neighbors)
             {
                 al.paths_all[agent] = *path;
                 ++path;
@@ -286,10 +366,32 @@ void LNS::replanByPP()
         updateCBSResults(icbs);
         assert(icbs.paths[0]->back().location == al.paths_all[agent].back().location);
         addAgentPath(agent, *icbs.paths[0]);
-        sum_of_costs += (int)icbs.paths[0]->size() - 1;
+        if (icbs.paths[0]->empty())
+        {
+            sum_of_costs += max_timestep;
+            makespan = max_timestep;
+        }
+        else
+        {
+            sum_of_costs += (int)icbs.paths[0]->size() - 1;
+            makespan = max(makespan, (int)icbs.paths[0]->size() - 1);
+            for (int t  = 0; t < (int)icbs.paths[0]->size(); t++)
+            {
+                if (icbs.paths[0]->at(t).location >= 0)
+                {
+                    sum_of_showup_time += t;
+                    break;
+                }
+            }
+        }
     }
-
-    if (sum_of_costs > neighbor_sum_of_costs)
+    if (sum_of_costs < neighbor_sum_of_costs ||
+        (sum_of_costs == neighbor_sum_of_costs && sum_of_showup_time > neighbor_sum_of_showup_time) ||
+        (sum_of_costs == neighbor_sum_of_costs && sum_of_showup_time == neighbor_sum_of_showup_time && makespan < neighbor_makespan))
+    {
+        delta_costs = sum_of_costs - neighbor_sum_of_costs;
+    }
+    else
     { // change back to the original paths
         deleteNeighborPaths();
         auto path = neighbor_paths.begin();
@@ -300,8 +402,6 @@ void LNS::replanByPP()
         }
         delta_costs = 0;
     }
-    else
-        delta_costs = sum_of_costs - neighbor_sum_of_costs;
 }
 
 bool LNS::replanByCBS()
@@ -314,9 +414,9 @@ bool LNS::replanByCBS()
     {
         al.agents.push_back(&al.agents_all[i]);
     }
-    runtime = (double)(std::clock() - start_time) / CLOCKS_PER_SEC;
-    double cbs_time_limit = min(time_limit - runtime, 10.0);
-    MultiMapICBSSearch<FlatlandLoader> icbs(&ml, &al, f_w, c, cbs_time_limit * CLOCKS_PER_SEC, options1.debug? 3 : 0, options1);
+    runtime = ((fsec)(Time::now() - start_time)).count();
+    double cbs_time_limit = min((double)soft_time_limit - runtime, 10.0);
+    MultiMapICBSSearch<FlatlandLoader> icbs(&ml, &al, f_w, c, cbs_time_limit, options1.debug? 3 : 0, options1);
     icbs.trainCorridor1 = trainCorridor1;
     icbs.corridor2 = corridor2;
     icbs.chasing_reasoning = chasing;
@@ -351,37 +451,61 @@ bool LNS::replanByCBS()
 
 void LNS::updateNeighborPaths()
 {
-    cout << "Agents ids: ";
+    if (options1.debug)
+        cout << "Agents ids: ";
     neighbor_sum_of_costs = 0;
+    neighbor_sum_of_showup_time = 0;
     neighbor_makespan = 0;
     neighbor_paths.clear();
     for (auto i : neighbors)
     {
-        cout << i << ",";
-        neighbor_sum_of_costs += (int)al.paths_all[i].size() - 1;
-        neighbor_makespan = max(neighbor_makespan, (int)al.paths_all[i].size() - 1);
+        if (options1.debug)
+            cout << i << ",";
         neighbor_paths.emplace_back(al.paths_all[i]);
+        if (al.paths_all[i].empty())
+        {
+            neighbor_sum_of_costs += max_timestep;
+            neighbor_makespan = max_timestep;
+        }
+        else
+        {
+            neighbor_sum_of_costs += (int)al.paths_all[i].size() - 1;
+            neighbor_makespan = max(neighbor_makespan, (int)al.paths_all[i].size() - 1);
+            for (int t  = 0; t < (int)al.paths_all[i].size(); t++)
+            {
+                if (al.paths_all[i][t].location >= 0)
+                {
+                    neighbor_sum_of_showup_time += t;
+                    break;
+                }
+            }
+        }
     }
-    cout << endl;
+    if (options1.debug)
+        cout << endl;
 }
 
 void LNS::updateNeighborPathsCosts()
 {
-    cout << "Agents ids: ";
+    if (options1.debug)
+        cout << "Agents ids: ";
     neighbor_sum_of_costs = 0;
     neighbor_makespan = 0;
     neighbor_paths.clear();
     for (auto i : neighbors)
     {
-        cout << i << ",";
+        if (options1.debug)
+            cout << i << ",";
         neighbor_sum_of_costs += (int)al.paths_all[i].size() - 1;
         neighbor_makespan = max(neighbor_makespan, (int)al.paths_all[i].size() - 1);
     }
-    cout << endl;
+    if (options1.debug)
+        cout << endl;
 }
 
 void LNS::addAgentPath(int agent, const Path& path)
 {
+    assert(agent == al.agents_all[agent].agent_id);
     if(!al.constraintTable.insert_path(agent, path))
         exit(10);
     al.paths_all[agent] = path;
@@ -391,6 +515,7 @@ void LNS::deleteNeighborPaths()
 {
     for (auto i : neighbors)
     {
+        assert(i == al.agents_all[i].agent_id);
         al.constraintTable.delete_path(i, al.paths_all[i]);
     }
 }
@@ -398,21 +523,25 @@ void LNS::deleteNeighborPaths()
 void LNS::sortNeighborsRandomly()
 {
     std::random_shuffle(neighbors.begin(), neighbors.end());
-    for (auto agent : neighbors)
-    {
-        cout << agent << "(" << al.agents_all[agent].distance_to_goal << "->" << al.paths_all[agent].size() - 1<< "), ";
+    if (options1.debug) {
+        for (auto agent : neighbors) {
+            cout << agent << "(" << al.agents_all[agent].distance_to_goal << "->" << al.paths_all[agent].size() - 1
+                 << "), ";
+        }
+        cout << endl;
     }
-    cout << endl;
 }
 
 void LNS::sortNeighborsByRegrets()
 {
     quickSort(neighbors, 0, neighbors.size() - 1, true);
-    for (auto agent : neighbors)
-    {
-        cout << agent << "(" << al.agents_all[agent].distance_to_goal << "->" << al.paths_all[agent].size() - 1<< "), ";
+    if (options1.debug) {
+        for (auto agent : neighbors) {
+            cout << agent << "(" << al.agents_all[agent].distance_to_goal << "->" << al.paths_all[agent].size() - 1
+                 << "), ";
+        }
+        cout << endl;
     }
-    cout << endl;
 }
 
 void LNS::sortNeighborsByStrategy()
@@ -556,7 +685,8 @@ void LNS::randomWalk(int agent_id, const PathEntry& start, int start_timestep,
                 exit_heading = it->exit_heading;
                 exit_loc = it->exit_loc;
                 h_val = next_h_val;
-                al.constraintTable.get_conflicting_agents(conflicting_agents, loc, t + 1);
+                assert(agent_id == al.agents_all[agent_id].agent_id);
+                al.constraintTable.get_conflicting_agents(agent_id, conflicting_agents, loc, t + 1);
                 break;
             }
             transitions.erase(it);
