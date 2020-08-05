@@ -4,10 +4,11 @@ import random
 
 
 lns_folder = "/Users/zche0040/Codes/challenge/0801/"
-param = "LNS201"
+param = "LNS301"
 exe_time_file = "./execuation_time.csv"
 total_time_limit = 28800
 test_num = [50,50,50,40,30,30,30,30,20,20,20,10,10,10]
+mcp_build_time = 2
 
 #load data from execuation_time.csv
 def get_mean_exe_time(exe_time_file):
@@ -109,8 +110,7 @@ def optimize_time():
     #get total execuation/build mcp time
     total_exe_time = 0
     for i in range(0,len(mean_exe_time)):
-        total_exe_time += (mean_exe_time[i] + 15) * test_num[i]
-    exit(0)
+        total_exe_time += (mean_exe_time[i] + mcp_build_time) * test_num[i]
 
     
     # remaining_time for lns
