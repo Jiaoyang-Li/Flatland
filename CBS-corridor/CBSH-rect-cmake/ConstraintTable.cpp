@@ -50,6 +50,37 @@ void ConstraintTable::get_agents(set<int>& conflicting_agents, int loc) const
     }
 }
 
+void ConstraintTable::get_agents(set<int>& conflicting_agents, int groupsize, int loc) const
+{
+    if (loc < 0 || CT_paths[loc].empty())
+        return;
+    int t_max = (int) CT_paths[loc].size() - 1;
+    while (CT_paths[loc][t_max] < 0 && t_max > 0)
+        t_max--;
+    if (t_max == 0)
+        return;
+    int t0 = rand() % t_max;
+    if (CT_paths[loc][t0] >= 0)
+        conflicting_agents.insert(CT_paths[loc][t0]);
+    int delta = 1;
+    while (t0 - delta >= 0 || t0 + delta <= t_max)
+    {
+        if (t0 - delta >= 0 && CT_paths[loc][t0 - delta] >= 0)
+        {
+            conflicting_agents.insert(CT_paths[loc][t0 - delta]);
+            if((int)conflicting_agents.size() == groupsize)
+                return;
+        }
+        if (t0 + delta <= t_max && CT_paths[loc][t0 + delta] >= 0)
+        {
+            conflicting_agents.insert(CT_paths[loc][t0 + delta]);
+            if((int)conflicting_agents.size() == groupsize)
+                return;
+        }
+        delta++;
+    }
+}
+
 void ConstraintTable::get_conflicting_agents(int agent_id, set<int>& conflicting_agents, int loc, int timestep) const
 {
     if (loc < 0 || CT_paths[loc].empty())

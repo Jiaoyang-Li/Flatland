@@ -93,6 +93,7 @@ private:
     void generateNeighborByRandomWalk(boost::unordered_set<int>& tabu_list);
     bool generateNeighborByStart();
     bool generateNeighborByIntersection();
+    bool generateNeighborByTemporalIntersection();
 
     void sortNeighborsRandomly();
     void sortNeighborsByRegrets();
