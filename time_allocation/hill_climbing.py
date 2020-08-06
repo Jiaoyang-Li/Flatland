@@ -1,9 +1,10 @@
 import glob, os
 import pandas as pd 
-import random
+import random, sys
 
 
-lns_folder = "/Users/zche0040/Codes/challenge/0805/"
+lns_folder = "/Users/zche0040/Codes/challenge/agent=10/"
+params = ["LNS301","LNS201","LNS001","LNS401"]
 param = "LNS301groupsize=5"
 exe_time_file = "./execuation_time.csv"
 total_time_limit = 28800
@@ -67,41 +68,45 @@ def get_total_time(time_setting):
 def get_cost(time_setting,cost_list):
     for i in range(0,len(time_setting)):
         t = time_setting[i]
-        level0 = lns_data[i][0][param]
-        level0 = level0.loc[level0["total runtime"]<= t]
-        if len(level0.index) >0:
-            level0 = min(level0["normalized cost"])
-        else:
-            level0 = 100
-        level1 = lns_data[i][1][param]
-        level1 = level1.loc[level1["total runtime"]<= t]
-        if len(level1.index) >0:
-            level1 = min(level1["normalized cost"])
-        else:
-            level1 = 100
-        mean = (level0+level1)/2
-        cost_list[i] = mean * test_num[i]
+        for param in params:
+            level0 = lns_data[i][0][param]
+            level0 = level0.loc[level0["total runtime"]<= t]
+            if len(level0.index) >0:
+                level0 = min(level0["normalized cost"])
+            else:
+                level0 = 100
+            level1 = lns_data[i][1][param]
+            level1 = level1.loc[level1["total runtime"]<= t]
+            if len(level1.index) >0:
+                level1 = min(level1["normalized cost"])
+            else:
+                level1 = 100
+            mean = (level0+level1)/2
+            if cost_list[i] > mean * test_num[i]:
+                cost_list[i] = mean * test_num[i]
 
 # get new_cost for new time limit.
 def get_new_cost(sel_test,new_time):
-    new_cost = [0,0]
+    new_cost = [sys.maxsize] * 2
     for i in range(0,len(sel_test)) :
         t = new_time[i]
         test = sel_test[i]
-        level0 = lns_data[test][0][param]
-        level0 = level0.loc[level0["total runtime"]<= t]
-        if len(level0.index) >0:
-            level0 = min(level0["normalized cost"])
-        else:
-            level0 = 100
-        level1 = lns_data[test][1][param]
-        level1 = level1.loc[level1["total runtime"]<= t]
-        if len(level1.index) >0:
-            level1 = min(level1["normalized cost"])
-        else:
-            level1 = 100
-        mean = (level0+level1)/2
-        new_cost[i] = mean * test_num[test]
+        for param in params:
+            level0 = lns_data[test][0][param]
+            level0 = level0.loc[level0["total runtime"]<= t]
+            if len(level0.index) >0:
+                level0 = min(level0["normalized cost"])
+            else:
+                level0 = 100
+            level1 = lns_data[test][1][param]
+            level1 = level1.loc[level1["total runtime"]<= t]
+            if len(level1.index) >0:
+                level1 = min(level1["normalized cost"])
+            else:
+                level1 = 100
+            mean = (level0+level1)/2
+            if new_cost[i] > mean * test_num[test]:
+                new_cost[i] = mean * test_num[test]
     return new_cost
 
 # start hill clambing
@@ -119,7 +124,7 @@ def optimize_time():
     #initial setting for each test
     initial_time = remaining_time/400
     time_setting = [initial_time]*14
-    cost_list = [0]*14
+    cost_list = [sys.maxsize]*14
     get_cost(time_setting,cost_list)
     sum_norm_cost = sum(cost_list)
 
