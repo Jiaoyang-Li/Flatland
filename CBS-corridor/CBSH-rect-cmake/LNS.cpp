@@ -102,7 +102,10 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
                     return true;
                 break;
             case 2:
-                succ = generateNeighborByIntersection();
+                //if (rand() % 2)
+                //    succ = generateNeighborByIntersection();
+                //else
+                succ = generateNeighborByTemporalIntersection();
                 if(!succ) // the selected intersection has fewer than 2 agents
                     continue;
                 break;
@@ -254,6 +257,28 @@ bool LNS::generateNeighborByStart()
     }
     if (options1.debug)
         cout << "Generate " << neighbors.size() << " neighbors by start location " << it->first << endl;
+    return true;
+}
+
+bool LNS::generateNeighborByTemporalIntersection()
+{
+    if (intersections.empty())
+    {
+        for (int i = 0; i < ml.map_size(); i++)
+        {
+            if (ml.getDegree(i) > 2)
+                intersections.push_back(i);
+        }
+    }
+
+    set<int> neighbors_set;
+    int location = intersections[rand() % intersections.size()];
+    al.constraintTable.get_agents(neighbors_set, group_size, location);
+    if (neighbors_set.size() <= 1)
+        return false;
+    neighbors.assign(neighbors_set.begin(), neighbors_set.end());
+    if (options1.debug)
+        cout << "Generate " << neighbors.size() << " neighbors by intersection " << location << endl;
     return true;
 }
 
