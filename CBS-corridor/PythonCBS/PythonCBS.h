@@ -99,9 +99,14 @@ public:
                "normalized cost," <<
                "dead agents," <<
                "HL nodes," <<
-               "LL nodes," <<
-               "Initial agent priority"<<
-               endl;
+               "LL nodes,";
+        if (framework == "Parallel-LNS")
+            output << "Initial agent priority" << endl;
+        else if(framework == "Parallel-Neighbour-LNS")
+            output <<"Neighbour strategy"<< endl;
+        else
+            output<<endl;
+
         for (int i = 0 ; i<iteration_stats.size(); i++) {
             for (const auto &data : iteration_stats[i]) {
                 output << get<0>(data) << "," <<
@@ -114,8 +119,11 @@ public:
                        get<7>(data) << "," <<
                        get<8>(data) << "," <<
                        get<9>(data) << "," <<
-                       get<10>(data) <<"," <<
-                       strategies[i] << endl;
+                       get<10>(data) <<"," ;
+                if (framework == "Parallel-LNS")
+                    output << strategies[i] << ","<< endl;
+                else if(framework == "Parallel-Neighbour-LNS")
+                    output << neighbours[i] <<","<<endl;
             }
         }
         output.close();
@@ -144,7 +152,8 @@ private:
 	bool trainCorridor2 = false;
 	bool chasing = false;
 	int best_thread_id = 0;
-	int bset_initisl_priority_strategy = -1;
+	int best_initisl_priority_strategy = -1;
+    int best_neighbour_strategy = -1;
     int neighbor_generation_strategy;
     int prirority_ordering_strategy;
     int replan_strategy;
@@ -154,6 +163,7 @@ private:
     double runtime;
     vector<statistics> statistic_list;
     int strategies[4] = {0,1,3,5};
+    int neighbours[4] = {0,2,3,4};
 
 
 
@@ -165,6 +175,7 @@ private:
     bool PrioritizedPlaning(AgentsLoader* al = NULL, int thread_id = 0, int priority_strategy = -1);
     bool GroupPrioritizedPlaning();
     bool parallel_LNS(int no_threads = 4);
+    bool parallel_neighbour_LNS(int no_threads = 4);
 
     void generateNeighbor(int agent_id, const PathEntry& start, int start_time,
             set<int>& neighbor, int neighbor_size, int upperbound);

@@ -8,8 +8,10 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
     start_time = Time::now();
     hard_time_limit = _hard_time_limit;
     soft_time_limit = min(_soft_time_limit, hard_time_limit);
-    if (!getInitialSolution()) // get initial solution
-        return false;
+    if(! skip_pp) {
+        if (!getInitialSolution()) // get initial solution
+            return false;
+    }
 
     size_t solution_cost = 0;
     int sum_of_showup_time = 0;
@@ -42,6 +44,8 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
                                  0,
                                  0,
                                  0);
+    if(pp_only)
+        return true;
     if (destroy_strategy == 3)
     {
         adaptive_destroy = true;

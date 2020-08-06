@@ -20,6 +20,8 @@ public:
     int num_corridor = 0;
     int num_start = 0;
     int num_chasing = 0;
+    bool pp_only = false;
+    bool skip_pp = false;
     
 
     //stats about each iteration

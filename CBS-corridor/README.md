@@ -16,7 +16,7 @@ Then, in python codes:
 
 ```python
 from libPythonCBS import PythonCBS
-framework = "LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning or "Parallel-LNS" for parallel LNS.
+framework = "LNS"  # "LNS" for large neighborhood search or "GPP" for group prioritized planning or "Parallel-LNS" for parallel LNS or "Parallel-Neighbour-LNS" for parallel neighbour LNS.
 f_w = 1
 debug = True
 timelimit = 240  # unit: seconds
