@@ -141,6 +141,8 @@ bool PythonCBS<Map>::search() {
     }
     else if(framework == "Parallel-LNS")
         return parallel_LNS(4);
+    else if(framework == "Parallel-Neighbour-LNS")
+        return parallel_neighbour_LNS(4);
     else
 	    return GroupPrioritizedPlaning();
 }
@@ -225,7 +227,10 @@ p::dict PythonCBS<Map>::getResultDetail() {
     result["num_corridor"] = statistic_list[thread_id].num_corridor;
     result["num_corridor2"] = statistic_list[thread_id].num_corridor2;
     result["runtime_corridor"] = statistic_list[thread_id].runtime_corridor;
-    result["best_initial_priority_strategy"] = this->bset_initisl_priority_strategy;
+
+    result["best_initial_priority_strategy"] = this->best_initisl_priority_strategy;
+    result["best_neighboour_strategy"] = this->best_neighbour_strategy;
+
 
 
     int solution_cost = 0;
@@ -808,7 +813,7 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
     delete this->al;
     this->al = this->al_pool[best_al];
     this->best_thread_id = best_al;
-    this->bset_initisl_priority_strategy = strategies[best_al];
+    this->best_initisl_priority_strategy = strategies[best_al];
     runtime = (double)(time(NULL) - start_time);
     if (options1.debug) {
         cout << "Best PP strategy = " << strategies[best_al] << ", "
@@ -816,6 +821,145 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
              << "Final makespan = " << best_makespan << ", "
              << "Final runtime = " << runtime << endl;
     }
+    return true;
+}
+
+template <class Map>
+bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads){
+    al->constraintTable.init(ml->map_size());
+    al->computeHeuristics(ml);
+    this->al_pool.resize(no_threads);
+    this->lns_pool.resize(no_threads);
+    this->statistic_list.resize(no_threads);
+    this->iteration_stats.resize(no_threads);
+    pthread_t threads[no_threads];
+    vector<wrap*> wrap_handle;
+    if (no_threads>4){
+        cout<<"Max threads number: 4"<<endl;
+        exit(1);
+    }
+    //run pp only
+    for (int i = 0; i<no_threads;i++){
+        AgentsLoader* temp = this->al->clone();
+        this->al_pool[i] = temp;
+        this->lns_pool[i] = new LNS(*al_pool[i], *ml, f_w, s, strategies[i], options1, corridor2, trainCorridor1, chasing,
+                                    3, prirority_ordering_strategy, replan_strategy);
+        this->lns_pool[i]->pp_only = true;
+        runtime = (double)(time(NULL) - start_time);
+        wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,*this->lns_pool[i]);
+        wrap_handle.push_back(w);
+        pthread_create( &threads[i], NULL, call_func, w );
+    }
+    // wait until all pp finish
+    for (int i = 0; i<no_threads;i++){
+        pthread_join(threads[i], NULL);
+    }
+
+    int best_pp_cost = INT_MAX;
+    int best_pp_al = 0;
+
+    for (int i=0; i<no_threads; i++){
+
+        size_t solution_cost = 0;
+        int finished_agents = 0;
+        size_t makespan = 0;
+        for (const auto& path : this->al_pool[i]->paths_all)
+        {
+            solution_cost += path.size();
+            makespan = max(path.size(), makespan);
+            if (!path.empty())
+                finished_agents++;
+        }
+        if (options1.debug){
+            cout <<"Initial PP strategy = "<<strategies[i]<<", "
+                 << "Final Solution cost = " << solution_cost << ", "
+                 << "Final makespan = " << makespan  << ", "
+                 << endl;
+        }
+        if (solution_cost < best_pp_cost){
+            best_pp_cost = solution_cost;
+            best_pp_al = i;
+        }
+    }
+    this->best_initisl_priority_strategy = strategies[best_pp_al];
+
+    //copy best pp al
+    for (int i = 0; i<no_threads;i++) {
+        if (i ==best_pp_al)
+            continue;
+        AgentsLoader *temp = this->al_pool[best_pp_al]->clone();
+        delete this->al_pool[best_pp_al];
+        this->al_pool[best_pp_al] = temp;
+    }
+
+    //run lns skip pp
+    for (int i = 0; i<no_threads;i++){
+        delete this->lns_pool[i];
+        this->lns_pool[i] = new LNS(*al_pool[i], *ml, f_w, s, 0, options1, corridor2, trainCorridor1, chasing,
+                                    neighbours[i], prirority_ordering_strategy, replan_strategy);
+        this->lns_pool[i]->skip_pp = true;
+        runtime = (double)(time(NULL) - start_time);
+        wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,*this->lns_pool[i]);
+        wrap_handle.push_back(w);
+        pthread_create( &threads[i], NULL, call_func, w );
+    }
+    // wait until all finish
+    for (int i = 0; i<no_threads;i++){
+        pthread_join(threads[i], NULL);
+    }
+
+    int best_cost = INT_MAX;
+    int best_al = -1;
+    int best_makespan = -1;
+    int best_finished_agents = -1;
+    for (int i=0; i<no_threads; i++){
+        statistic_list[i].HL_num_expanded = lns_pool[i]->HL_num_expanded;
+        statistic_list[i].HL_num_generated = lns_pool[i]->HL_num_generated;
+        statistic_list[i].LL_num_expanded = lns_pool[i]->LL_num_expanded;
+        statistic_list[i].LL_num_generated = lns_pool[i]->LL_num_generated;
+        statistic_list[i].num_standard = lns_pool[i]->num_standard;
+        statistic_list[i].num_chasing = lns_pool[i]->num_chasing;
+        statistic_list[i].num_start = lns_pool[i]->num_start;
+        statistic_list[i].num_corridor = lns_pool[i]->num_corridor;
+        statistic_list[i].num_corridor2 = lns_pool[i]->num_corridor2;
+        statistic_list[i].runtime_corridor = lns_pool[i]->runtime_corridor;
+        iteration_stats[i] = lns_pool[i]->iteration_stats;
+
+        size_t solution_cost = 0;
+        int finished_agents = 0;
+        size_t makespan = 0;
+        for (const auto& path : this->al_pool[i]->paths_all)
+        {
+            solution_cost += path.size();
+            makespan = max(path.size(), makespan);
+            if (!path.empty())
+                finished_agents++;
+        }
+        if (options1.debug){
+            cout <<"Initial PP strategy = "<<strategies[i]<<", "
+                 << "Final Solution cost = " << solution_cost << ", "
+                 << "Final makespan = " << makespan  << ", "
+                 << endl;
+        }
+        if (solution_cost < best_cost){
+            best_cost = solution_cost;
+            best_al = i;
+            best_makespan = makespan;
+            best_finished_agents = finished_agents;
+        }
+    }
+    delete this->al;
+    this->al = this->al_pool[best_al];
+    this->best_thread_id = best_al;
+    this->best_neighbour_strategy = neighbours[best_al];
+    runtime = (double)(time(NULL) - start_time);
+    if (options1.debug) {
+        cout << "Best PP strategy = " << strategies[best_al] << ", "
+             << "Final Solution cost = " << best_cost << ", "
+             << "Final makespan = " << best_makespan << ", "
+             << "Final runtime = " << runtime << endl;
+    }
+
     return true;
 }
 
