@@ -50,6 +50,19 @@ void ConstraintTable::get_agents(set<int>& conflicting_agents, int loc) const
     }
 }
 
+void ConstraintTable::get_agents(list< pair<int, int> >& agents, int excluded_agent, const pair<int,int>& loc_time_pair) const
+{
+    int loc = loc_time_pair.first;
+    for (int t = loc_time_pair.second; t <= (int)CT_paths[loc].size(); t++)
+    {
+        int agent = CT_paths[loc][t];
+        if (agent >= 0 && agent != excluded_agent && (agents.empty() || agents.back().first != agent))
+        {
+            agents.emplace_back(agent, t);
+        }
+    }
+}
+
 void ConstraintTable::get_agents(set<int>& conflicting_agents, int groupsize, int loc) const
 {
     if (loc < 0 || CT_paths[loc].empty())

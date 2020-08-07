@@ -1,8 +1,6 @@
 #include "LNS.h"
 
 
-
-
 bool LNS::run(float _hard_time_limit, float _soft_time_limit)
 {
     start_time = Time::now();
@@ -182,6 +180,49 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
     }
     return true;
 }
+
+
+bool LNS::replan(float time_limit, const list<int>& malfunction_agents)
+{
+    start_time = Time::now();
+    set<int> tabu_list; // record the agents already been replanned
+    for (const auto& mal_agent : al.new_malfunction_agents)
+    {
+        // find the intersections in front of the mal_agent
+        list<pair<int, int> > future_intersections; // <location, timestep>
+        for (int t = 0; t < (int) al.paths_all[mal_agent].size(); t++) {
+            int loc = ml.getDegree(al.paths_all[mal_agent][t].location);
+            if (loc >= 3 && (future_intersections.empty() || future_intersections.back().first != loc)) {
+                future_intersections.emplace_back(loc, t);
+            }
+        }
+
+        for (const auto &intersection : future_intersections)
+        {
+            // get agents that pass through the intersection after the mal agent
+            list<pair<int, int>> agents; // <agent_id, timestep>
+            al.constraintTable.get_agents(agents, mal_agent, intersection);
+            for (const auto &agent : agents) // replan the agents one by one
+            {
+                runtime = ((fsec) (Time::now() - start_time)).count();
+                if (runtime >= soft_time_limit)
+                    return true;
+                int i = agent.first;
+                int t = agent.second;
+                if (tabu_list.count(i) > 0 || // the agent has already been replanned, or
+                    al.paths_all[i][t - 1].location == al.paths_all[mal_agent][intersection.second - 1].location)
+                        // the agent is following the mal_agent. We do not replan them for now
+                    continue;
+                al.constraintTable.delete_path(i, al.paths_all[i]);
+                // replan the path for agent i
+                // addAgentPath(i, new_path);
+                tabu_list.insert(i);
+            }
+        }
+    }
+    return true;
+}
+
 
 bool LNS::getInitialSolution()
 {

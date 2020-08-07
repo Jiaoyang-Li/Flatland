@@ -21,10 +21,10 @@ struct Agent {
 	pair<int, int> position;
     vector<hvals> heuristics;
     int agent_id;
-	bool activate = true;
+	int status = 0;
 	int heading = -1;
 	int malfunction_left = 0;
-	int next_malfuntion = 0;
+	int next_malfunction = 0;
 	float malfunction_rate = 0;
 	float speed = 1.0;
 	float position_fraction = 0.0;
@@ -42,6 +42,8 @@ public:
     vector<Agent> agents_all;
     vector<Path> paths_all;
     int makespan = 0; // the makepsan of the paths in paths_all
+
+    list<int> new_malfunction_agents; // agents that have just got malfunction
 
     //vector< pair<int, int> > initial_locations;
     //vector< pair<int, int> > goal_locations;

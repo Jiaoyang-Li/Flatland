@@ -20,6 +20,7 @@ public:
 	bool is_constrained(int agent_id, int loc, int t) const;
 	// bool is_good_malfunction_location(int loc, int t);
     void get_agents(set<int>& conflicting_agents, int loc) const;
+    void get_agents(list< pair<int, int> >& agents, int excluded_agent, const pair<int,int>& loc_time_pair) const;
     void get_agents(set<int>& conflicting_agents, int groupsize, int loc) const;
 	void get_conflicting_agents(int agent_id, set<int>& conflicting_agents, int loc, int t) const;
 
