@@ -1,10 +1,10 @@
-#include "SingleAgentICBS.h"
+#include "SinglePlanning.h"
 
 #include <iostream>
 #include <ctime>
 
-template<class Map>
-void SingleAgentICBS<Map>::updatePath(LLNode* goal, std::vector<PathEntry> &path,ReservationTable* res_table)
+
+void SinglePlanning::updatePath(LLNode* goal, std::vector<PathEntry> &path,ReservationTable* res_table)
 {
 	path.resize(goal->timestep + 1);
 	LLNode* curr = goal;
@@ -13,26 +13,19 @@ void SingleAgentICBS<Map>::updatePath(LLNode* goal, std::vector<PathEntry> &path
 	{
 
 		path[t].location = curr->loc;
-		path[t].actionToHere = curr->actionToHere;
+		path[t].actionToHere = curr->heading;
 		path[t].heading = curr->heading;
 		path[t].position_fraction = curr->position_fraction;
 		path[t].malfunction_left = curr->malfunction_left;
+		path[t].next_malfunction = curr->next_malfunction;
 		path[t].exit_heading = curr->exit_heading;
 		path[t].exit_loc = curr->exit_loc;
-		delete path[t].conflist;
-		if (t!=0)
-        {
-            path[t].conflist =  res_table->findConflict(agent_id, curr->parent->loc, curr->loc, t-1, kRobust);
-        }
-        else
-        {
-            path[t].conflist = nullptr;
-        }
+
+		path[t].conflist = nullptr;
         if (t == goal->timestep && curr->loc != goal_location) {
 			path[t].malfunction = true;
 		}
 
-		curr->conflist = nullptr;
 		curr = curr->parent;
 	}
 }
@@ -40,8 +33,8 @@ void SingleAgentICBS<Map>::updatePath(LLNode* goal, std::vector<PathEntry> &path
 
 // iterate over the constraints ( cons[t] is a list of all constraints for timestep t) and return the latest
 // timestep which has a constraint involving the goal location
-/*template<class Map>
-int SingleAgentICBS<Map>::extractLastGoalTimestep(int goal_location, const std::vector< std::list< std::pair<int, int> > >* cons) {
+/*
+int SinglePlanning::extractLastGoalTimestep(int goal_location, const std::vector< std::list< std::pair<int, int> > >* cons) {
 	if (cons != nullptr) {
 		for (int t = static_cast<int>(cons->size()) - 1; t > 0; t--) 
 		{
@@ -59,8 +52,8 @@ int SingleAgentICBS<Map>::extractLastGoalTimestep(int goal_location, const std::
 
 
 
-template<class Map>
-int SingleAgentICBS<Map>::numOfConflictsForStep(int curr_id, int next_id, int next_timestep, const bool* res_table, int max_plan_len) {
+
+int SinglePlanning::numOfConflictsForStep(int curr_id, int next_id, int next_timestep, const bool* res_table, int max_plan_len) {
 	int retVal = 0;
 	if (next_timestep >= max_plan_len) {
 		// check vertex constraints (being at an agent's goal when he stays there because he is done planning)
@@ -80,8 +73,8 @@ int SingleAgentICBS<Map>::numOfConflictsForStep(int curr_id, int next_id, int ne
 	return retVal;
 }
 
-template<class Map>
-bool SingleAgentICBS<Map>::validMove(int curr, int next) const
+
+bool SinglePlanning::validMove(int curr, int next) const
 {
 	if (next < 0 || next >= map_size)
 		return false;
@@ -97,8 +90,8 @@ bool SingleAgentICBS<Map>::validMove(int curr, int next) const
 // focal_makespan is the makespan threshold of the focal list used in the high-level.
 // When the path length is shorter than focal_makespan, the low-level performs a focal search;
 // When the path length exceeds focal_makespan, it performs an A* search.
-template<class Map>
-bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weight, int focal_makespan,
+
+bool SinglePlanning::findPath(std::vector<PathEntry> &path, double f_weight, int focal_makespan,
         ConstraintTable& constraint_table,
 	ReservationTable* res_table, size_t max_plan_len, double lowerbound, Time::time_point start_clock ,int time_limit)
 {
@@ -424,8 +417,8 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 	return false;
 }
 
-template<class Map>
-inline void SingleAgentICBS<Map>::releaseClosedListNodes(hashtable_t* allNodes_table)
+
+inline void SinglePlanning::releaseClosedListNodes(hashtable_t* allNodes_table)
 {
 
 	hashtable_t::iterator it;
@@ -435,17 +428,23 @@ inline void SingleAgentICBS<Map>::releaseClosedListNodes(hashtable_t* allNodes_t
 	}
 }
 
-template<class Map>
-SingleAgentICBS<Map>::SingleAgentICBS(int start_location, int goal_location,  const Map* ml1, AgentsLoader* al,int agent_id, int start_heading, int kRobust):
-    ml(ml1), my_heuristic(al->agents[agent_id]->heuristics)
-{
-	this->al = al;
-	this->agent_id = agent_id;
-	this->start_heading = start_heading;
 
-	this->start_location = start_location;
-	this->goal_location = goal_location;
-	
+SinglePlanning::SinglePlanning(const FlatlandLoader* ml, AgentsLoader* al, double f_w, int time_limit, options option):
+    ml(ml1), my_heuristic(al->agents[0]->heuristics)
+{
+    if(al->agents.size()!=1)
+        cout<<"Single Planning can only have 1 agent in al->agents"<<endl;
+
+    this->screen = screen;
+    this->thime_limit = time_limit;
+	this->al = al;
+	this->f_w = f_w;
+	this->agent_id = 0;
+	this->start_heading = al.agents[0]->heading;
+	this->malfunction_left = al.agents[0]->malfunction_left;
+	this->status = al.agents[0]->status;
+	this->start_location = ml->linearize_coordinate(al.agents[0]->position.first, al.agents[0]->position.second);
+	this->goal_location = ml->linearize_coordinate(al.agents[0]->goal_location.first, al.agents[0]->goal_location.second);
 
 	this->map_size = ml->cols*ml->rows;
 
@@ -457,12 +456,10 @@ SingleAgentICBS<Map>::SingleAgentICBS(int start_location, int goal_location,  co
 
 	this->num_col = ml->cols;
 
-	this->kRobust = kRobust;
 }
 
-template<class Map>
-SingleAgentICBS<Map>::~SingleAgentICBS()
+
+SinglePlanning::~SinglePlanning()
 = default;
 
-template class SingleAgentICBS<MapLoader>;
-template class SingleAgentICBS<FlatlandLoader>;
+template class SinglePlanning<FlatlandLoader>;
