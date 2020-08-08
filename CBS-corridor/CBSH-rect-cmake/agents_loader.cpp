@@ -44,10 +44,10 @@ AgentsLoader::AgentsLoader(p::object agents) {
 	for (int i = 0; i < num_of_agents_all; i++) {
 		pair<int, int> initial;
 		pair<int, int> goal;
-		bool activate = p::extract<int>(agents[i].attr("status")) == 1;
-			p::tuple iniTuple(agents[i].attr("initial_position"));
-			initial.first = p::extract<int>(p::long_(iniTuple[0]));
-			initial.second = p::extract<int>(p::long_(iniTuple[1]));
+		int status = p::extract<int>(agents[i].attr("status"));
+        p::tuple iniTuple(agents[i].attr("initial_position"));
+        initial.first = p::extract<int>(p::long_(iniTuple[0]));
+        initial.second = p::extract<int>(p::long_(iniTuple[1]));
 		
 		
 		p::tuple goalTuple(agents[i].attr("target"));
@@ -89,7 +89,7 @@ AgentsLoader::AgentsLoader(p::object agents) {
         this->agents_all[i].goal_location = goal;
         this->agents_all[i].position = initial;
         this->agents_all[i].heading = heading;
-        this->agents_all[i].status = activate;
+        this->agents_all[i].status = status;
         this->agents_all[i].malfunction_left = malfunction;
         this->agents_all[i].next_malfunction = next_malfunction;
         this->agents_all[i].malfunction_rate = malfunction_rate;
