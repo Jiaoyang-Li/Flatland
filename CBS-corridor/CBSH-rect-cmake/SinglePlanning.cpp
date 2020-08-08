@@ -91,20 +91,24 @@ bool SinglePlanning::validMove(int curr, int next) const
 // When the path length is shorter than focal_makespan, the low-level performs a focal search;
 // When the path length exceeds focal_makespan, it performs an A* search.
 
-bool SinglePlanning::findPath(std::vector<PathEntry> &path, double f_weight, int focal_makespan,
-        ConstraintTable& constraint_table,
-	ReservationTable* res_table, size_t max_plan_len, double lowerbound, Time::time_point start_clock ,int time_limit)
+bool SinglePlanning::search(int time_limit)
 {
+    Time::time_point start_clock = Time::now();
 
-	num_expanded = 0;
+    num_expanded = 0;
 	num_generated = 0;
 
 	hashtable_t::iterator it;  // will be used for find()
 
 
 	 // generate start and add it to the OPEN list
-	auto start = new LLNode(-1, 0, my_heuristic[start_location].get_hval(start_heading), nullptr, 0, 0, false); // TODO::Shouldn't the h value be divided by its speed?
-	start->heading = start_heading;
+	LLNode* start;
+	if (status == 0)
+	    start = new LLNode(-1, 0, my_heuristic[start_location].get_hval(start_heading)/al[0].agents, nullptr, 0, 0, false); // TODO::Shouldn't the h value be divided by its speed? Yes it should
+    else
+        start = new LLNode(start_location, 0, my_heuristic[start_location].get_hval(start_heading), nullptr, 0, 0, false);
+
+    start->heading = start_heading;
 	num_generated++;
 	start->open_handle = open_list.push(start);
 	start->focal_handle = focal_list.push(start);
@@ -430,7 +434,7 @@ inline void SinglePlanning::releaseClosedListNodes(hashtable_t* allNodes_table)
 
 
 SinglePlanning::SinglePlanning(const FlatlandLoader* ml, AgentsLoader* al, double f_w, int time_limit, options option):
-    ml(ml1), my_heuristic(al->agents[0]->heuristics)
+    ml(ml1), my_heuristic(al->agents[0]->heuristics),constraintTable(al.constraintTable)
 {
     if(al->agents.size()!=1)
         cout<<"Single Planning can only have 1 agent in al->agents"<<endl;

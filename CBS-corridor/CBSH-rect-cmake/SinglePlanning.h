@@ -45,8 +45,9 @@ public:
 	int map_size;
 	int num_col;
 	const std::vector<hvals>& my_heuristic;  // this is the precomputed heuristic for this agent
+    ConstraintTable& constraintTable;
 
-	int screen;
+    int screen;
 	int time_limit;
 	float f_w;
 

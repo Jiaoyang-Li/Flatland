@@ -1436,9 +1436,6 @@ MultiMapICBSSearch<Map>::~MultiMapICBSSearch()
 			}
 		}
 	}
-	for(auto path : paths){
-	    delete path;
-	}
 }
 
 template<class Map>
