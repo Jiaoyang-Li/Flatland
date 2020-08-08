@@ -679,13 +679,23 @@ void LNS::randomWalk(int agent_id, const PathEntry& start, int start_timestep,
     auto position_fraction = start.position_fraction;
     auto exit_heading = start.exit_heading;
     int exit_loc = start.exit_loc;
-    int h_val = heuristics[loc].get_hval(heading) / speed;
-    if (exit_loc >= 0 && speed < 1)
+    int h_val;
+    if (loc < 0)
     {
-        int h1 = heuristics[loc].get_hval(heading);
-        int h2 = heuristics[exit_loc].get_hval(exit_heading);
-        h_val = h1 / speed - (h2 - h1)*position_fraction;
+        int initial_location = ml.linearize_coordinate(al.agents_all[agent_id].initial_location);
+        h_val = heuristics[initial_location].get_hval(heading) / speed + 1;
     }
+    else
+    {
+        h_val = heuristics[loc].get_hval(heading) / speed;
+        if (exit_loc >= 0 && speed < 1)
+        {
+            int h1 = heuristics[loc].get_hval(heading);
+            int h2 = heuristics[exit_loc].get_hval(exit_heading);
+            h_val = h1 / speed - (h2 - h1)*position_fraction;
+        }
+    }
+
 
     for (int t = start_timestep; t < upperbound; t++)
     {
@@ -700,7 +710,7 @@ void LNS::randomWalk(int agent_id, const PathEntry& start, int start_timestep,
             transitions.push_back(move);
 
             Transition move2;
-            move2.location = ml.linearize_coordinate(al.agents_all[agent_id].position);
+            move2.location = ml.linearize_coordinate(al.agents_all[agent_id].initial_location);
             move2.heading = heading;
             move2.position_fraction = position_fraction;
             move2.exit_loc = exit_loc;
