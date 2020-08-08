@@ -182,7 +182,7 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
 }
 
 
-bool LNS::replan(float time_limit, const list<int>& malfunction_agents)
+bool LNS::replan(float time_limit)
 {
     start_time = Time::now();
     set<int> tabu_list; // record the agents already been replanned
@@ -214,8 +214,8 @@ bool LNS::replan(float time_limit, const list<int>& malfunction_agents)
                         // the agent is following the mal_agent. We do not replan them for now
                     continue;
                 al.constraintTable.delete_path(i, al.paths_all[i]);
-                // replan the path for agent i
-                // addAgentPath(i, new_path);
+                // TODO: replan the path for agent i
+                // TODO: addAgentPath(i, new_path);
                 tabu_list.insert(i);
             }
         }

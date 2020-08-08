@@ -70,7 +70,7 @@ public:
     int agent_priority_strategy;
 	bool search();
 	p::dict getResultDetail();
-	void updateAgents(p::object railEnv1);
+	void replan(p::object railEnv1, float time_limit);
 	void updateFw(float fw);
     p::list benchmarkSingleGroup(int group_size,int iterations, int time_limit);
     p::list benchmarkSingleGroupLNS(int group_size,int iterations, int time_limit);
@@ -160,7 +160,7 @@ private:
 
 	//stats about CBS
     std::clock_t start_time;
-    double runtime;
+    float runtime;
     vector<statistics> statistic_list;
     int strategies[4] = {0,1,3,5};
     int neighbours[4] = {0,2,3,4};

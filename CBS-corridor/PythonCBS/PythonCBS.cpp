@@ -86,15 +86,30 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, string algo, flo
 
 
 template <class Map>
-void PythonCBS<Map>::updateAgents(p::object railEnv1) {
+void PythonCBS<Map>::replan(p::object railEnv1, float time_limit) {
+    start_time = time(NULL);// time(NULL) return time in seconds
 	if (options1.debug)
 		cout << "update Agents" << endl;
 	al->updateAgents(railEnv.attr("agents"));
-	
-	//if (icbs != NULL)
-	//	delete icbs;
 	if (options1.debug)
 		cout << "update Agents done!" << endl;
+	if (al->new_malfunction_agents.empty())
+	    return; // we do not replan if there are no new mal agents
+
+	// TODO: use mcp to build new paths
+	// TODO: if the increased cost is smaller than the threshold, return
+
+    runtime = (float)(time(NULL) - start_time);
+	if (runtime >= time_limit)
+	    return;
+    LNS lns(*al, *ml, f_w, s, agent_priority_strategy, options1, corridor2, trainCorridor1, chasing,
+            neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
+	bool succ = lns.replan(runtime - time_limit);
+	if (succ)
+    {
+	    clearMCP();
+	    buildMCP();
+    }
 }
 
 template <class Map>
@@ -123,9 +138,9 @@ bool PythonCBS<Map>::search() {
     {
         LNS lns(*al, *ml, f_w, s, agent_priority_strategy, options1, corridor2, trainCorridor1, chasing,
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
-        runtime = (double)(time(NULL)- start_time) ;
+        runtime = (float)(time(NULL)- start_time) ;
         bool succ = lns.run(hard_time_limit - runtime, soft_time_limit - runtime);
-        runtime = (double)(time(NULL) - start_time);
+        runtime = (float)(time(NULL) - start_time);
         statistic_list[0].HL_num_expanded = lns.HL_num_expanded;
         statistic_list[0].HL_num_generated = lns.HL_num_generated;
         statistic_list[0].LL_num_expanded = lns.LL_num_expanded;
@@ -1261,7 +1276,7 @@ BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final
 		.def("hasConflicts", &PythonCBS<FlatlandLoader>::findConflicts)
 		.def("getResultDetail", &PythonCBS<FlatlandLoader>::getResultDetail)
 		.def("writeResultsToFile", &PythonCBS<FlatlandLoader>::writeResultsToFile)
-		.def("updateAgents",&PythonCBS<FlatlandLoader>::updateAgents)
+		.def("replan",&PythonCBS<FlatlandLoader>::replan)
 		.def("updateFw", &PythonCBS<FlatlandLoader>::updateFw)
         .def("buildMCP", &PythonCBS<FlatlandLoader>::buildMCP)
         .def("getNextLoc", &PythonCBS<FlatlandLoader>::getNextLoc)

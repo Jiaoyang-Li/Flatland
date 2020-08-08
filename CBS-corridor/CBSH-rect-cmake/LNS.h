@@ -44,7 +44,7 @@ public:
         max_timestep = al.constraintTable.length_max;
     }
     bool run(float hard_time_limit, float soft_time_limit);
-    bool replan(float time_limit, const list<int>& malfunction_agents);
+    bool replan(float time_limit);
 
 private:
     high_resolution_clock::time_point start_time;
