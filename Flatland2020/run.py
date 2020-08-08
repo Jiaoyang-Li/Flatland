@@ -429,6 +429,7 @@ while True:
         if done['__all__']:
             print("Reward : ", sum(list(all_rewards.values())))
             print("all arrived.")
+            CBS.clearMCP()
             #
             # When done['__all__'] == True, then the evaluation of this 
             # particular Env instantiation is complete, and we can break out 
