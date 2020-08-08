@@ -110,16 +110,14 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 
 	 // generate start and add it to the OPEN list
-	auto start = new LLNode(-1, 0, my_heuristic[start_location].get_hval(start_heading), nullptr, 0, 0, false); // TODO::Shouldn't the h value be divided by its speed?
+	auto start = new LLNode(-1, 0, my_heuristic[start_location].get_hval(start_heading)/al->agents[agent_id]->speed, nullptr, 0, 0, false); // TODO::Shouldn't the h value be divided by its speed?
 	start->heading = start_heading;
 	num_generated++;
 	start->open_handle = open_list.push(start);
 	start->focal_handle = focal_list.push(start);
 	start->in_openlist = true;
 	start->time_generated = 0;
-	OldConfList* conflicts = res_table->findConflict(agent_id, start->loc, start->loc, -1, kRobust);
-	start->conflist = conflicts;
-	start->num_internal_conf= conflicts->size();
+	start->num_internal_conf= 0;
 
     
 	start->position_fraction = al->agents[agent_id]->position_fraction;
@@ -137,10 +135,9 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 
 	int start_h_val = my_heuristic[start_location].get_hval(start_heading) / al->agents[agent_id]->speed;
 	if (start->exit_loc >= 0 && al->agents[agent_id]->speed < 1) {
-		int h1 = my_heuristic[start_location].get_hval(start_heading);
-		int h2 = my_heuristic[start->exit_loc].get_hval(start->exit_heading);
-		start_h_val = h1 / al->agents[agent_id]->speed
-			- (h2 - h1)*al->agents[agent_id]->position_fraction;
+		int h1 = start_h_val;
+		int h2 = my_heuristic[start->exit_loc].get_hval(start->exit_heading)/ al->agents[agent_id]->speed;
+		start_h_val = h1 + (h2 - h1)*al->agents[agent_id]->position_fraction;
 
 	}
 	start->h_val = start_h_val;
@@ -276,19 +273,17 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
                     next_show_time = curr->show_time;
 
                 if (next_id!=-1)
-                    next_h_val = my_heuristic[next_id].get_hval(next_heading);
+                    next_h_val = my_heuristic[next_id].get_hval(next_heading)/al->agents[agent_id]->speed;
                 else
                     next_h_val = curr->h_val;
 
 				if (next_id!=-1 && move.exit_loc >= 0 && al->agents[agent_id]->speed<1) {
-					int h1 = my_heuristic[next_id].get_hval(next_heading);
-					int h2 = my_heuristic[move.exit_loc].get_hval(move.exit_heading);
-					next_h_val = h1
-						+ (h2-h1)*(move.position_fraction/1);
-                    next_h_val = round( next_h_val * 10000.0 ) / 10000.0;
+					int h1 = next_h_val;
+					int h2 = my_heuristic[move.exit_loc].get_hval(move.exit_heading)/al->agents[agent_id]->speed;
+					next_h_val = h1 + (h2-h1)*(move.position_fraction);
 
 				}
-				if (next_g_val + next_h_val*al->agents[agent_id]->speed > constraint_table.length_max)
+				if (next_g_val + next_h_val > constraint_table.length_max)
 					continue;
 
 //                cout<<"Next: "<<next_h_val<<","<< next_id/num_col <<", "<<next_id%num_col<<", heading: "<<next_heading<< endl;
@@ -326,7 +321,6 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 					}
 
 					allNodes_table.insert(next);
-					next->conflist = conflicts; // TODO: Can I delete this line?
 				}
 				else
 				{  // update existing node's if needed (only in the open_list)
@@ -356,8 +350,6 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 							existing_next->h_val = next_h_val;
 							existing_next->parent = curr;
 							existing_next->num_internal_conf = next_internal_conflicts;
-							delete(existing_next->conflist);
-							existing_next->conflist = conflicts;
 							if (update_open) 
 								open_list.increase(existing_next->open_handle);  // increase because f-val improved
 							if (add_to_focal) 
@@ -378,8 +370,6 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 							existing_next->num_internal_conf = next_internal_conflicts;
 							existing_next->open_handle = open_list.push(existing_next);
 							existing_next->in_openlist = true;
-							delete(existing_next->conflist);
-							existing_next->conflist = conflicts;
 							if (existing_next->getFVal() <= focal_threshold)
                                 existing_next->focal_handle = focal_list.push(existing_next);
 						}

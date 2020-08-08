@@ -10,7 +10,6 @@
 #include "agents_loader.h"
 #include "LLNode.h"
 #include "flat_map_loader.h"
-#include "ReservationTable.h"
 #include "ConstraintTable.h"
 #include "compute_heuristic.h"
 #include <boost/heap/fibonacci_heap.hpp>
@@ -31,37 +30,30 @@ public:
 	heap_focal_t focal_list;
 	hashtable_t allNodes_table;
 
-	int agent_id;
+    Agent& agent;
 	int start_location;
 	int goal_location;
-	int start_heading;
-	int malfunction_left;
-	int status;
 
-    vector<PathEntry> paths;
+    vector<PathEntry> path;
 
-    AgentsLoader* al;
-	const FlatlandLoader* ml;
+    AgentsLoader& al;
+	const FlatlandLoader& ml;
 	int map_size;
 	int num_col;
 	const std::vector<hvals>& my_heuristic;  // this is the precomputed heuristic for this agent
     ConstraintTable& constraintTable;
 
     int screen;
-	int time_limit;
+    float time_limit;
 	float f_w;
 
-	uint64_t num_expanded;
-	uint64_t num_generated;
+	uint64_t LL_num_expanded;
+	uint64_t LL_num_generated;
 
 	double focal_threshold;  // FOCAL's lower bound ( = e_weight * min_f_val)
 	double min_f_val;  // min f-val seen so far
 	int num_of_conf; // number of conflicts between this agent to all the other agents
 
-
-	//returns the minimal plan length for the agent (that is, extract the latest timestep which
-	// has a constraint invloving this agent's goal location).
-	//int extractLastGoalTimestep(int goal_location, const std::vector< std::list<std::pair<int, int> > >* cons);
 
 	//Checks if a vaild path found (wrt my_map and constraints)
 	//Note -- constraint[timestep] is a list of pairs. Each pair is a disallowed <loc1,loc2> (loc2=-1 for vertex constraint).
@@ -84,29 +76,21 @@ public:
 	}
 
 	// Updates the path datamember
-	void updatePath(LLNode* goal, std::vector<PathEntry> &path,ReservationTable* res_table);
-
-	// Return the number of conflicts between the known_paths' (by looking at the reservation table) for the move [curr_id,next_id].
-	// Returns 0 if no conflict, 1 for vertex or edge conflict, 2 for both.
-	int numOfConflictsForStep(int curr_id, int next_id, int next_timestep, const bool* res_table, int max_plan_len);
+	void updatePath(LLNode* goal);
 
 	// find path by time-space A* search
 	// Returns true if a collision free path found  while
 	// minimizing the number of internal conflicts (that is conflicts with known_paths for other agents found so far).
 	// lowerbound is the lowerbound of the length of the path
 	// max_plan_len used to compute the size of res_table
-	bool findPath(std::vector<PathEntry> &path, double f_weight, int focal_makespan,
-                  ConstraintTable& constraints, ReservationTable* res_table,
-                  size_t max_plan_len, double lowerbound,
-                  Time::time_point start=Time::time_point::min(), int time_limit = 0);
-	bool validMove(int curr, int next) const; // whetehr curr->next is a valid move
+	bool search();
 
 	inline void releaseClosedListNodes(hashtable_t* allNodes_table);
 
-	int getHeuristicAtStart() const {return (int)(my_heuristic[start_location].get_hval(start_heading) / al->agents[agent_id]->speed); }
+	int getHeuristicAtStart() const {return (int)(my_heuristic[start_location].get_hval(agent.heading) / agent.speed); }
 
-    SinglePlanning(const FlatlandLoader* ml, AgentsLoader* al, double f_w, int time_limit, options option);
-	~SinglePlanning();
+    SinglePlanning(const FlatlandLoader& ml, AgentsLoader& al, double f_w, float time_limit, options option);
+
 
 };
 

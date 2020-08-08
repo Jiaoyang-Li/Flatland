@@ -53,6 +53,14 @@ struct PathEntry
 	OldConfList* conflist=nullptr;
 };
 
+struct options {
+    bool asymmetry_constraint=false;
+    int debug = 0;
+    bool ignore_t0=false;
+    bool shortBarrier=false;
+    bool flippedRec=false;
+};
+
 struct Transition {
 	int location = -1;
 	int heading = -2;

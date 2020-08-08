@@ -15,13 +15,7 @@ using namespace std::chrono;
 typedef std::chrono::high_resolution_clock Time;
 typedef std::chrono::duration<float> fsec;
 
-struct options {
-	bool asymmetry_constraint=false;
-	int debug = 0;
-	bool ignore_t0=false;
-	bool shortBarrier=false;
-	bool flippedRec=false;
-};
+
 
 
 

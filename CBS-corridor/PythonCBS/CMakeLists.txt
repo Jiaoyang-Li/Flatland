@@ -47,8 +47,8 @@ ADD_LIBRARY(PythonCBS SHARED
 		../CBSH-rect-cmake/LNS.cpp
 		../CBSH-rect-cmake/LLNode.h
 		../CBSH-rect-cmake/LLNode.cpp
-#		../CBSH-rect-cmake/SinglePlanning.cpp
-#		../CBSH-rect-cmake/SinglePlanning.h
+		../CBSH-rect-cmake/SinglePlanning.cpp
+		../CBSH-rect-cmake/SinglePlanning.h
 
 )
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY  "./bin")

@@ -20,7 +20,7 @@ bool ConstraintTable::is_constrained(int agent_id, int loc, int timestep) const
     if (loc < 0)
         return false;
     //if (CT[loc].count(timestep))
-    if (!CT[loc].empty() && CT[loc][timestep])
+    if (!CT.empty() && !CT[loc].empty() && CT[loc][timestep])
         return true;
 
     if (CT_paths[loc].empty())

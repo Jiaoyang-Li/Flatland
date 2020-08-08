@@ -58,9 +58,9 @@ AgentsLoader::AgentsLoader(p::object agents) {
 		//this->goal_locations_all[i] = goal;
 		//this->headings_all[i] = heading;
 
-		int malfunction = 0;
-		int next_malfunction = 0;
-		float malfunction_rate = 0;
+		int malfunction = p::extract<int>(agents[i].attr("malfunction_data")["malfunction"]);
+		int next_malfunction = p::extract<int>(p::long_(agents[i].attr("malfunction_data")["next_malfunction"]));
+		float malfunction_rate = p::extract<int>(p::long_(agents[i].attr("malfunction_data")["malfunction_rate"]));
 		
 		float speed = p::extract<float>(agents[i].attr("speed_data")["speed"]);
 		float position_fraction = p::extract<float>(agents[i].attr("speed_data")["position_fraction"]);
