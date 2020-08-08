@@ -888,8 +888,8 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads){
         if (i ==best_pp_al)
             continue;
         AgentsLoader *temp = this->al_pool[best_pp_al]->clone();
-        delete this->al_pool[best_pp_al];
-        this->al_pool[best_pp_al] = temp;
+        delete this->al_pool[i];
+        this->al_pool[i] = temp;
     }
 
     //run lns skip pp
