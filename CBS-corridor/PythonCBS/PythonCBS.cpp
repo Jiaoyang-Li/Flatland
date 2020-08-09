@@ -91,7 +91,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     int max_timestep = p::extract<int>(railEnv.attr("_max_episode_steps"));
     al->constraintTable.length_max = max_timestep - timestep; // update max timestep
 	al->updateAgents(railEnv.attr("agents"));
-    /*if (options1.debug)
+    if (options1.debug)
     {
         cout << "Timestep = " << timestep << ";\t";
         cout << "Agent location: ";
@@ -103,7 +103,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
                 cout << "-1\t";
         }
         cout << endl;
-    }*/
+    }
 	if (al->new_malfunction_agents.empty())
 	    return; // we do not replan if there are no new mal agents
 

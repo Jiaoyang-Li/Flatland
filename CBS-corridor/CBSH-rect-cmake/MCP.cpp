@@ -16,6 +16,13 @@ void MCP::simulate(vector<Path>& paths, int timestep) const
         paths.reserve(al->paths_all[i].size() * 2);
         if (copy_agent_time[i] > 0)
         {
+            assert(copy_agent_time[i] < (int)no_wait_time[i].size());
+            int curr = ml->linearize_coordinate(al->agents_all[i].position);
+            if (al->paths_all[i][no_wait_time[i][copy_agent_time[i] - 1]].location != curr)
+            {
+                cout << curr << "," << al->paths_all[i][no_wait_time[i][copy_agent_time[i] - 1]].location << endl;
+                cout << "BOOM" << endl;
+            }
             assert(al->paths_all[i][no_wait_time[i][copy_agent_time[i] - 1]].location ==
                 ml->linearize_coordinate(al->agents_all[i].position));
             paths[i].push_back(al->paths_all[i][no_wait_time[i][copy_agent_time[i] - 1]]);
@@ -33,11 +40,7 @@ void MCP::simulate(vector<Path>& paths, int timestep) const
             if (copy_agent_time[i] == (int) no_wait_time[i].size())  // the agent has reached its location
             {
                 int previous = al->paths_all[i][no_wait_time[i][copy_agent_time[i] - 1]].location;
-                if (get<0>(copy_mcp[previous].front()) != i)
-                {
-                    cout << get<0>(copy_mcp[previous].front()) << " should be " << i << endl;
-                    assert(false);
-                }
+                assert(get<0>(copy_mcp[previous].front()) == i);
                 copy_mcp[previous].pop_front();
                 p = unfinished_agents.erase(p);
                 continue;
@@ -130,6 +133,13 @@ void MCP::build(const AgentsLoader* _al, const FlatlandLoader* _ml, options _opt
         }
     }
 
+    for (int i = 0; i < al->getNumOfAllAgents(); i++)
+    {
+        assert(al->paths_all[i].empty() || !no_wait_time[i].empty());
+        if (!no_wait_time[i].empty() && no_wait_time[i][0] == 0)
+            agent_time[i] = 1;
+    }
+
     // Debug for no_wait_time
     // cout << endl;
     // al->printPaths();
@@ -145,9 +155,8 @@ void MCP::build(const AgentsLoader* _al, const FlatlandLoader* _ml, options _opt
     //     cout << " ]" << endl;
     // }
     // printAgentTime();
-
-    cout << "End building MCP ..." << endl;
-    return;
+    if (options1.debug)
+        cout << "End building MCP ..." << endl;
 }
 
 
@@ -155,6 +164,8 @@ void MCP::getNextLoc(p::list agent_location, int timestep)
 {
     for (int i = 0; i < al->getNumOfAllAgents(); i++)
     {
+        if (al->paths_all[i].empty() || al->agents_all[i].status >= 2)
+            to_go[i] = -1;
         if (!al->paths_all[i].empty() &&
             appear_time[i] <= timestep &&
             agent_time[i] < no_wait_time[i].size())
@@ -233,13 +244,17 @@ void MCP::getNextLoc(p::list agent_location, int timestep)
             }
         }
     }
-    /*if (options1.debug)
+    if (options1.debug)
     {
+        cout << "\t\t\t\tCurr locations: ";
+        for (int i = 0; i < al->getNumOfAllAgents(); i++)
+            cout << p::extract<int>(p::long_(agent_location[i])) << "\t";
+        cout << endl;
         cout << "\t\t\t\tNext locations: ";
         for (const auto& loc : to_go)
             cout << loc << "\t";
         cout << endl;
-    }*/
+    }
 }
 
 
@@ -250,11 +265,11 @@ void MCP::update(p::list agent_location, p::dict agent_action)
         if (al->paths_all[i].empty())
             continue;
         // Reach Goal
-        else if (agent_time[i] == no_wait_time[i].size() &&
-            !mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].empty() &&
-            get<0>(mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].front()) == i)
-        {
-            mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].pop_front();
+        //else if (agent_time[i] == no_wait_time[i].size() &&
+        //    !mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].empty() &&
+        //    get<0>(mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].front()) == i)
+        //{
+        //    mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].pop_front();
 
             // for (const auto& m: mcp)
             // {
@@ -267,7 +282,7 @@ void MCP::update(p::list agent_location, p::dict agent_action)
             //         }
             //     }
             // }
-        }
+        //}
 
         else if (agent_time[i] < no_wait_time[i].size() &&
                  agent_location[i] != -1 &&
@@ -291,9 +306,31 @@ void MCP::update(p::list agent_location, p::dict agent_action)
                 mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].pop_front();
             }
 
+            if (agent_time[i] == (int) no_wait_time[i].size() - 1) // the agent reaches the goal location
+            {
+                auto p = mcp[al->paths_all[i].back().location].begin();
+                while (get<0>(*p) != i)
+                {
+                    ++p;
+                    assert(p != mcp[al->paths_all[i].back().location].end());
+                }
+                mcp[al->paths_all[i].back().location].erase(p);
+            }
             agent_time[i] ++;
         }
+        else if (al->agents_all[i].status == 1 &&
+                al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location != agent_location[i])
+        {
+            cout << "Agent " << i << " at location " << p::extract<int>(p::long_(agent_location[i])) << " should be "
+                << al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location << endl;
+            cout << "BOOM" << endl;
+        }
+        else if (al->agents_all[i].status == 0)
+        {
+            assert(agent_time[i] == 0);
+        }
     }
+
 }
 
 
