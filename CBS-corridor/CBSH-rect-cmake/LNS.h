@@ -46,7 +46,7 @@ public:
     }
     bool run(float hard_time_limit, float soft_time_limit);
     bool replan(float time_limit);
-
+    bool getInitialSolution();
 private:
     high_resolution_clock::time_point start_time;
     float runtime = 0;
@@ -57,7 +57,6 @@ private:
     int agent_priority_strategy;
     options options1;
     int max_timestep;
-
     //data for neighbors
     vector<int> neighbors;
     list<Path> neighbor_paths;
@@ -87,7 +86,6 @@ private:
     double reaction_factor = 0.1;
     vector<double> destroy_heuristics;
 
-    bool getInitialSolution();
 
     void replanByPP();
     bool replanByCBS();

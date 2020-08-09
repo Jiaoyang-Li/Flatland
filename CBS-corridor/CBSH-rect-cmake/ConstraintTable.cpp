@@ -53,7 +53,7 @@ void ConstraintTable::get_agents(set<int>& conflicting_agents, int loc) const
 void ConstraintTable::get_agents(list< pair<int, int> >& agents, int excluded_agent, const pair<int,int>& loc_time_pair) const
 {
     int loc = loc_time_pair.first;
-    for (int t = loc_time_pair.second; t <= (int)CT_paths[loc].size(); t++)
+    for (int t = loc_time_pair.second; t < (int)CT_paths[loc].size(); t++)
     {
         int agent = CT_paths[loc][t];
         if (agent >= 0 && agent != excluded_agent && (agents.empty() || agents.back().first != agent))
@@ -141,11 +141,8 @@ void ConstraintTable::delete_path(int agent_id, const Path& path)
         int loc = path[timestep].location;
         if (loc == -1)
             continue;
-        for (int t = timestep; t <= timestep; t++)
-        {
-            assert(CT_paths[loc][t] == -1 || CT_paths[loc][t] == agent_id);
-            CT_paths[loc][t] = -1;
-        }
+        assert(CT_paths[loc][timestep] == agent_id);
+        CT_paths[loc][timestep] = -1;
     }
 }
 

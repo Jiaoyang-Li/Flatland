@@ -55,6 +55,7 @@ public:
     AgentsLoader();
     AgentsLoader(boost::python::object agents);
     void updateAgents(boost::python::object agents);
+    void updateConstraintTable();
     // void addAgent ( int start_row, int start_col, int goal_row, int goal_col );
     void printAllAgentsInitGoal () const;
     void printCurrentAgentsInitGoal () const;

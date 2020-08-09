@@ -5,7 +5,7 @@
 #include <pthread.h>
 #include "flat_map_loader.h"
 #include "LNS.h"
-
+#include "MCP.h"
 
 
 namespace p = boost::python;
@@ -70,19 +70,26 @@ public:
     int agent_priority_strategy;
 	bool search();
 	p::dict getResultDetail();
-	void replan(p::object railEnv1, float time_limit);
+	void replan(p::object railEnv1, int timestep, float time_limit);
 	void updateFw(float fw);
     p::list benchmarkSingleGroup(int group_size,int iterations, int time_limit);
     p::list benchmarkSingleGroupLNS(int group_size,int iterations, int time_limit);
     bool findConflicts() const;
-    p::list getNextLoc(p::list agent_location, int timestep);
-    void updateMCP(p::list agent_location, p::dict agent_action);
-    void buildMCP(void);
-    void clearMCP(void) { mcp.clear(); };
-    void printAllMCP(void);
-    void printMCP(int loc);
-    void printAgentTime(void);
-    void printAgentNoWaitTime(void);
+    p::list getNextLoc(p::list agent_location, int timestep)
+    {
+        mcp.getNextLoc(agent_location,timestep);
+        boost::python::list next_loc;
+        for (int i = 0; i < al->getNumOfAllAgents(); i++)
+            next_loc.append(mcp.to_go[i]);
+        return next_loc;
+    }
+    void updateMCP(p::list agent_location, p::dict agent_action) { mcp.update(agent_location, agent_action); }
+    void buildMCP(void) { mcp.build(al, ml, options1); }
+    void clearMCP(void) { mcp.clear(); }
+    void printAllMCP(void) { mcp.printAll(); }
+    void printMCP(int loc) { mcp.print(loc); }
+    void printAgentTime(void) { mcp.printAgentTime(); }
+    void printAgentNoWaitTime(void) { mcp.printAgentNoWaitTime(); }
 
     void writeResultsToFile(const string& fileName) const
     {
@@ -135,6 +142,7 @@ private:
 	p::object railEnv;
 	FlatlandLoader* ml;  // TODO:: Shouldn't it be Map* ml?
 	AgentsLoader* al;
+	MCP mcp;
 	vector<AgentsLoader*> al_pool;
 	vector<LNS*> lns_pool;
 	constraint_strategy s;
@@ -179,14 +187,6 @@ private:
 
     void generateNeighbor(int agent_id, const PathEntry& start, int start_time,
             set<int>& neighbor, int neighbor_size, int upperbound);
-
-    // MCP
-    typedef list<tuple<int, int>> Occupy;
-    vector<Occupy> mcp;
-    vector<int> agent_time;
-    vector<int> to_go;
-    vector<int> appear_time;
-    vector<vector<int>> no_wait_time;
 
     void updateCBSResults(const MultiMapICBSSearch<Map>& cbs, int thread_id = 0)
     {

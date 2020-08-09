@@ -14,6 +14,7 @@ public:
 		CT.resize(CT_paths.size());
 	}
 
+	void reset() {auto map_size = CT_paths.size(); CT_paths.clear(); CT_paths.resize(map_size); }
 	void insert(int loc, int t_min, int t_max); // insert a constraint
 	bool insert_path(int agent_id, const Path& path);
     void delete_path(int agent_id, const Path& path);

@@ -107,6 +107,9 @@ void AgentsLoader::updateAgents(p::object agents)
     new_malfunction_agents.clear();
     for (int i = 0; i < num_of_agents_all; i++)
     {
+        agents_all[i].status = p::extract<int>(agents[i].attr("status"));
+        if (agents_all[i].status >= 2)  // done (2) or done removed (3)
+            continue;
         int malfunction_left = p::extract<int>(p::long_(agents[i].attr("malfunction_data")["malfunction"]));
         if (agents_all[i].malfunction_left == 0 && malfunction_left > 0)
             new_malfunction_agents.push_back(i);
@@ -114,7 +117,7 @@ void AgentsLoader::updateAgents(p::object agents)
         agents_all[i].next_malfunction = p::extract<int>(p::long_(agents[i].attr("malfunction_data")["next_malfunction"]));
         agents_all[i].malfunction_rate = p::extract<float>(p::long_(agents[i].attr("malfunction_data")["malfunction_rate"]));
 
-        agents_all[i].status = p::extract<int>(agents[i].attr("status"));
+
         if (agents_all[i].status == 1) // active
         {
             p::tuple iniTuple(agents[i].attr("position"));
@@ -129,7 +132,7 @@ void AgentsLoader::updateAgents(p::object agents)
         }
 
         agents_all[i].position_fraction = p::extract<float>(agents[i].attr("speed_data")["position_fraction"]);
-        int exit_action = p::extract<int>(agents[i].attr("speed_data")["transition_action_on_cellexit"]);
+        int exit_action = int(p::extract<float>(agents[i].attr("speed_data")["transition_action_on_cellexit"]));
         if (exit_action == 1) {
             agents_all[i].exit_heading = agents_all[i].heading - 1;
             if (agents_all[i].exit_heading < 0)
@@ -484,6 +487,15 @@ void AgentsLoader::generateAgentOrder(int agent_priority_strategy)
     unplanned_agents = list<int>(agent_order.begin(), agent_order.end());
 }
 
+void AgentsLoader::updateConstraintTable()
+{
+    constraintTable.reset();
+    for (int i = 0; i < (int)paths_all.size(); i++)
+    {
+        bool succ = constraintTable.insert_path(i, paths_all[i]);
+        assert(succ);
+    }
+}
 
 void AgentsLoader::quickSort(vector<int>& agent_order, int low, int high, int agent_priority_strategy)
 {

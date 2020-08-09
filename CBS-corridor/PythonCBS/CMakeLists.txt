@@ -50,7 +50,7 @@ ADD_LIBRARY(PythonCBS SHARED
 		../CBSH-rect-cmake/SinglePlanning.cpp
 		../CBSH-rect-cmake/SinglePlanning.h
 
-)
+        ../CBSH-rect-cmake/MCP.cpp ../CBSH-rect-cmake/MCP.h)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY  "./bin")
 
 

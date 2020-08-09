@@ -44,7 +44,7 @@ bool SinglePlanning::search()
 	 // generate start and add it to the OPEN list
 	LLNode* start;
 	if (agent.status == 0)
-	    start = new LLNode(-1, 0, my_heuristic[start_location].get_hval(agent.heading)/agent.speed, nullptr, 0, 0, false); // TODO::Shouldn't the h value be divided by its speed? Yes it should
+	    start = new LLNode(-1, 0, 1 + my_heuristic[start_location].get_hval(agent.heading)/agent.speed, nullptr, 0, 0, false); // TODO::Shouldn't the h value be divided by its speed? Yes it should
     else
         start = new LLNode(start_location, 0, my_heuristic[start_location].get_hval(agent.heading)/agent.speed, nullptr, 0, 0, false);
 
@@ -101,6 +101,12 @@ bool SinglePlanning::search()
 			runtime = Time::now() - start_clock;
 			time_check_count = LL_num_generated / 10000;
 			if (runtime.count() > time_limit) {
+                releaseClosedListNodes(&allNodes_table);
+
+                open_list.clear();
+                focal_list.clear();
+
+                allNodes_table.clear();
 				return false;
 			}
 		}
