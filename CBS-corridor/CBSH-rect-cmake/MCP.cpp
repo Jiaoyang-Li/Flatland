@@ -282,7 +282,7 @@ void MCP::update(p::list agent_location, p::dict agent_action)
             }*/
 
             // Remove previous location from MCP after reach time no_wait_time[agent_time[i]]
-            if (no_wait_time[i][agent_time[i]] > 0 &&
+            if (no_wait_time[i][agent_time[i]] > 0 && agent_time[i] > 0 &&
                 al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location != -1 &&
                 !mcp[al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location].empty())
             {

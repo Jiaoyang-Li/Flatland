@@ -170,34 +170,33 @@ bool SinglePlanning::search()
 			transitions.push_back(move2);
             
         }
-		else if (curr->position_fraction +agent.speed >= 0.97) {
-			if (curr->position_fraction == 0)
-			    ml.get_transitions(transitions, curr->loc, curr->heading, false);
-			else {
-				Transition move;
-				move.location = curr->exit_loc;
-				move.heading = curr->exit_heading;
-				move.position_fraction = 0;
-				transitions.push_back(move);
-			}
-		}
-		else if (curr->position_fraction == 0) {
-		    ml.get_exits(transitions, curr->loc, curr->heading, agent.speed, false);
-
-		}
-		else { //<0.97 and po_frac not 0
-			
-
-			Transition move2;
-			move2.location = curr->loc;
-			move2.heading = curr->heading;
-			move2.position_fraction = curr->position_fraction + agent.speed;
-			move2.exit_loc = curr->exit_loc;
-			move2.exit_heading = curr->exit_heading;
-			transitions.push_back(move2);
-
-
-		}
+		else {
+            ml.get_transitions(transitions, curr->loc, curr->heading, false);
+        }
+//		else if (curr->position_fraction +agent.speed >= 0.97) {
+//			if (curr->position_fraction == 0)
+//			    ml.get_transitions(transitions, curr->loc, curr->heading, false);
+//			else {
+//				Transition move;
+//				move.location = curr->exit_loc;
+//				move.heading = curr->exit_heading;
+//				move.position_fraction = 0;
+//				transitions.push_back(move);
+//			}
+//		}
+//		else if (curr->position_fraction == 0) {
+//		    ml.get_exits(transitions, curr->loc, curr->heading, agent.speed, false);
+//
+//		}
+//		else { //<0.97 and po_frac not 0
+//			Transition move2;
+//			move2.location = curr->loc;
+//			move2.heading = curr->heading;
+//			move2.position_fraction = curr->position_fraction + agent.speed;
+//			move2.exit_loc = curr->exit_loc;
+//			move2.exit_heading = curr->exit_heading;
+//			transitions.push_back(move2);
+//		}
 
 
 		for (const auto& move : transitions)
