@@ -137,8 +137,11 @@ void MCP::build(const AgentsLoader* _al, const FlatlandLoader* _ml, options _opt
     {
         assert(al->paths_all[i].empty() || !no_wait_time[i].empty());
         if (!no_wait_time[i].empty() && no_wait_time[i][0] == 0)
+        {
             agent_time[i] = 1;
-    }
+            to_go[i] = al->paths_all[i][0].location;
+            }
+        }
 
     // Debug for no_wait_time
     // cout << endl;
@@ -196,7 +199,8 @@ void MCP::getNextLoc(p::list agent_location, int timestep)
             else if (first_agent < i && mcp[loc].size() > 1)
             {
                 if (get<0>(*std::next(mcp[loc].begin())) == i && // the second agent is i
-                    agent_location[first_agent] == loc)  // the fist agent is already at loc
+                    agent_location[first_agent] == loc && // the fist agent is already at loc
+                    to_go[first_agent] != loc)  // the first agent is going to leave
                     // agent_location[i] != al->paths_all[first_agent][agent_time[first_agent]].location) // not edge conflict
                 {
                     to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
