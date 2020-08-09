@@ -59,7 +59,7 @@ bool SinglePlanning::search()
     
 	start->position_fraction = agent.position_fraction;
 	start->exit_heading = agent.exit_heading;
-	if (start->exit_heading >= 0) {
+	if (start->exit_heading > 0) {
 	    //I forget why I have this here, it must have a reason.
 	    //Exit_loc and exit_heading only have influence on trains with speed!=1.
 		list<Transition> temp;
@@ -171,7 +171,24 @@ bool SinglePlanning::search()
             
         }
 		else {
-            ml.get_transitions(transitions, curr->loc, curr->heading, false);
+//		    cout<<curr->exit_heading<<endl;
+            if ( curr->position_fraction>0 && curr->exit_heading>0){
+                Transition move;
+                move.location = curr->exit_loc;
+                move.heading = curr->exit_heading;
+                move.position_fraction = 0;
+                transitions.push_back(move);
+
+                Transition move2;
+                move2.location = curr->loc;
+                move2.heading = curr->heading;
+                move2.position_fraction = curr->position_fraction;
+                move2.exit_loc = curr->exit_loc;
+                move2.exit_heading = curr->exit_heading;
+                transitions.push_back(move2);
+            }
+            else
+                ml.get_transitions(transitions, curr->loc, curr->heading, false);
         }
 //		else if (curr->position_fraction +agent.speed >= 0.97) {
 //			if (curr->position_fraction == 0)
