@@ -33,7 +33,7 @@ void MCP::simulate(vector<Path>& paths, int timestep) const
             if (copy_agent_time[i] == (int) no_wait_time[i].size())  // the agent has reached its location
             {
                 int previous = al->paths_all[i][no_wait_time[i][copy_agent_time[i] - 1]].location;
-                if (get<0>(copy_mcp[previous].front()) == i)
+                if (get<0>(copy_mcp[previous].front()) != i)
                 {
                     cout << get<0>(copy_mcp[previous].front()) << " should be " << i << endl;
                     assert(false);
