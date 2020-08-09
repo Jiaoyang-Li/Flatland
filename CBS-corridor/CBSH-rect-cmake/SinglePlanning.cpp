@@ -172,20 +172,24 @@ bool SinglePlanning::search()
         }
 		else {
 //		    cout<<curr->exit_heading<<endl;
-            if ( curr->position_fraction>0 && curr->exit_heading>0){
-                Transition move;
-                move.location = curr->exit_loc;
-                move.heading = curr->exit_heading;
-                move.position_fraction = 0;
-                transitions.push_back(move);
+            if ( curr->position_fraction>1 && curr->exit_heading>0){
 
-                Transition move2;
-                move2.location = curr->loc;
-                move2.heading = curr->heading;
-                move2.position_fraction = curr->position_fraction;
-                move2.exit_loc = curr->exit_loc;
-                move2.exit_heading = curr->exit_heading;
-                transitions.push_back(move2);
+                if (constraintTable.is_constrained(agent.agent_id, curr->exit_loc, curr->timestep+1)) {
+                    Transition move2;
+                    move2.location = curr->loc;
+                    move2.heading = curr->heading;
+                    move2.position_fraction = curr->position_fraction;
+                    move2.exit_loc = curr->exit_loc;
+                    move2.exit_heading = curr->exit_heading;
+                    transitions.push_back(move2);
+                }
+                else{
+                    Transition move;
+                    move.location = curr->exit_loc;
+                    move.heading = curr->exit_heading;
+                    move.position_fraction = 0;
+                    transitions.push_back(move);
+                }
             }
             else
                 ml.get_transitions(transitions, curr->loc, curr->heading, false);
