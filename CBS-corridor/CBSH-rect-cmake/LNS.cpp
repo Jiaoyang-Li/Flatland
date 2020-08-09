@@ -240,6 +240,12 @@ bool LNS::replan(float time_limit)
                     al.paths_all[i][t - 1].location == al.paths_all[mal_agent][intersection.second - 1].location))
                     continue;
                 auto copy = al.paths_all[i];
+                if (i == 48 && al.agents_all[i].malfunction_left == 3)
+                {
+                    for (const auto& entry : copy)
+                        cout << entry.location << "\t";
+                    cout << endl;
+                }
                 al.constraintTable.delete_path(i, al.paths_all[i]);
                 runtime = ((fsec) (Time::now() - start_time)).count();
                 al.agents[0] = &al.agents_all[i];

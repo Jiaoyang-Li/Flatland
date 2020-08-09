@@ -250,10 +250,6 @@ void MCP::getNextLoc(p::list agent_location, int timestep)
     }
     if (options1.debug)
     {
-        cout << "\t\t\t\tCurr locations: ";
-        for (int i = 0; i < al->getNumOfAllAgents(); i++)
-            cout << p::extract<int>(p::long_(agent_location[i])) << "\t";
-        cout << endl;
         cout << "\t\t\t\tNext locations: ";
         for (const auto& loc : to_go)
             cout << loc << "\t";

@@ -94,7 +94,13 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     if (options1.debug)
     {
         cout << "Timestep = " << timestep << ";\t";
-        cout << "Agent location: ";
+        cout << "Agent id\t\t: ";
+        for (const auto& agent : al->agents_all)
+        {
+                cout << agent.agent_id << "\t";
+        }
+        cout << endl;
+        cout << "\t\t\t\tCurr location: ";
         for (const auto& agent : al->agents_all)
         {
             if (agent.status == 1) // active
@@ -159,8 +165,8 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
         }*/
         cout << "Cost increase from " << old_cost << " to " << new_cost << endl;
     }
-	if (new_cost - old_cost < 0.01 * al->agents_all.size() * max_timestep)
-	    return; // cost increase is smaller than the threshold
+	//if (new_cost - old_cost < 0.01 * al->agents_all.size() * max_timestep)
+	//    return; // cost increase is smaller than the threshold
 
     runtime = (float)(time(NULL) - start_time);
 	if (runtime >= time_limit)
