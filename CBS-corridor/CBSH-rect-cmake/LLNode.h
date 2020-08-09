@@ -30,8 +30,6 @@ public:
 	int num_internal_conf = 0; 
 	bool in_openlist = false;
 	// bool in_focallist = false;
-	OldConfList* conflist=nullptr;
-
 	int next_malfunction = -1;
 	int malfunction_left = 0;
 
