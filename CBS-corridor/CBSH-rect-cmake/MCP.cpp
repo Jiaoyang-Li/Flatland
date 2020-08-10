@@ -169,7 +169,9 @@ void MCP::getNextLoc(p::list agent_location, int timestep)
     {
         if (al->paths_all[i].empty() || al->agents_all[i].status >= 2)
             to_go[i] = -1;
-        if (!al->paths_all[i].empty() &&
+        else if (al->agents_all[i].malfunction_left > 0)
+            to_go[i] = p::extract<int>(p::long_(agent_location[i]));
+        else if (!al->paths_all[i].empty() &&
             appear_time[i] <= timestep &&
             agent_time[i] < no_wait_time[i].size())
         {
@@ -200,7 +202,8 @@ void MCP::getNextLoc(p::list agent_location, int timestep)
             {
                 if (get<0>(*std::next(mcp[loc].begin())) == i && // the second agent is i
                     agent_location[first_agent] == loc && // the fist agent is already at loc
-                    to_go[first_agent] != loc)  // the first agent is going to leave
+                    to_go[first_agent] != loc &&
+                    al->agents_all[first_agent].malfunction_left == 0)  // the first agent is going to leave
                     // agent_location[i] != al->paths_all[first_agent][agent_time[first_agent]].location) // not edge conflict
                 {
                     to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
@@ -248,13 +251,13 @@ void MCP::getNextLoc(p::list agent_location, int timestep)
             }
         }
     }
-    if (options1.debug)
+    /*if (options1.debug)
     {
         cout << "\t\t\t\tNext locations: ";
         for (const auto& loc : to_go)
             cout << loc << "\t";
         cout << endl;
-    }
+    }*/
 }
 
 

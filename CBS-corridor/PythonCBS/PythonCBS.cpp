@@ -94,7 +94,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     if (options1.debug)
     {
         cout << "Timestep = " << timestep << ";\t";
-        cout << "Agent id\t\t: ";
+        /*cout << "Agent id\t\t: ";
         for (const auto& agent : al->agents_all)
         {
                 cout << agent.agent_id << "\t";
@@ -107,7 +107,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
                 cout << ml->linearize_coordinate(agent.position) << "\t";
             else
                 cout << "-1\t";
-        }
+        }*/
         cout << endl;
     }
 	if (al->new_malfunction_agents.empty())

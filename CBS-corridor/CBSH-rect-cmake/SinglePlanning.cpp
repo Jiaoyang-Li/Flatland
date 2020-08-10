@@ -59,7 +59,7 @@ bool SinglePlanning::search()
     
 	start->position_fraction = agent.position_fraction;
 	start->exit_heading = agent.exit_heading;
-	if (start->exit_heading > 0) {
+	if (start->exit_heading >= 0) {
 	    //I forget why I have this here, it must have a reason.
 	    //Exit_loc and exit_heading only have influence on trains with speed!=1.
 		list<Transition> temp;
@@ -172,7 +172,7 @@ bool SinglePlanning::search()
         }
 		else {
 //		    cout<<curr->exit_heading<<endl;
-            if ( curr->position_fraction>1 && curr->exit_heading>0){
+            if ( curr->position_fraction>=1 && curr->exit_heading>=0){
 
                 if (constraintTable.is_constrained(agent.agent_id, curr->exit_loc, curr->timestep+1)) {
                     Transition move2;

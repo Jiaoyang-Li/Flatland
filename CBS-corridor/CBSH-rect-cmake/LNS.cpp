@@ -208,25 +208,25 @@ bool LNS::replan(float time_limit)
                 future_intersections.emplace_back(loc, t);
             }
         }
-        if (options1.debug)
+        /*if (options1.debug)
         {
             for (const auto &intersection : future_intersections)
                 cout << intersection.first << "(t=" << intersection.second << ")\t";
             cout << endl;
-        }
+        }*/
         for (const auto &intersection : future_intersections)
         {
             // get agents that pass through the intersection after the mal agent
             list<pair<int, int>> agents; // <agent_id, timestep>
             al.constraintTable.get_agents(agents, mal_agent, intersection); // TODO: get this information from MCP instead of constraint table
 
-            if (options1.debug && !agents.empty())
+            /*if (options1.debug && !agents.empty())
             {
                 cout << "Intersection " << intersection.first << " has agents ";
                 for (const auto& agent : agents)
                     cout << agent.first << "\t";
                 cout << endl;
-            }
+            }*/
 
             for (const auto &agent : agents) // replan the agents one by one
             {
@@ -240,12 +240,6 @@ bool LNS::replan(float time_limit)
                     al.paths_all[i][t - 1].location == al.paths_all[mal_agent][intersection.second - 1].location))
                     continue;
                 auto copy = al.paths_all[i];
-                if (i == 48 && al.agents_all[i].malfunction_left == 3)
-                {
-                    for (const auto& entry : copy)
-                        cout << entry.location << "\t";
-                    cout << endl;
-                }
                 al.constraintTable.delete_path(i, al.paths_all[i]);
                 runtime = ((fsec) (Time::now() - start_time)).count();
                 al.agents[0] = &al.agents_all[i];
