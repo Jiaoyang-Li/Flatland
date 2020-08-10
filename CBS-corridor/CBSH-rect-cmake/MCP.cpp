@@ -251,13 +251,13 @@ void MCP::getNextLoc(p::list agent_location, int timestep)
             }
         }
     }
-    if (options1.debug)
+    /*if (options1.debug)
     {
         cout << "\t\t\t\tNext locations: ";
         for (const auto& loc : to_go)
             cout << loc << "\t";
         cout << endl;
-    }
+    }*/
 }
 
 
