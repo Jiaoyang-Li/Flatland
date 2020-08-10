@@ -1,6 +1,8 @@
 #include "MCP.h"
 
-
+// TODO: if the agent is already appeared on the map,
+//  but because of the delays, its replanned path deos not reach its goal location,
+//  so we cannot assume that the last location in an agent's path is its goal location
 void MCP::simulate(vector<Path>& paths, int timestep) const
 {
     auto copy_agent_time = agent_time;
@@ -83,11 +85,11 @@ void MCP::build(const AgentsLoader* _al, const FlatlandLoader* _ml, options _opt
     al = _al;
     ml = _ml;
     options1 = _options1;
-    if (options1.debug)
-        cout << "Start MCP ..." << endl;
+    //if (options1.debug)
+    //    cout << "Start MCP ..." << endl;
     size_t map_size = ml->cols * ml->rows;
-    if (options1.debug)
-        cout << "map_size: " << map_size << endl;
+    //if (options1.debug)
+    //    cout << "map_size: " << map_size << endl;
     mcp.resize(map_size);
     agent_time.resize(al->getNumOfAllAgents(), 0);
     to_go.resize(al->getNumOfAllAgents(), -1);
@@ -96,8 +98,8 @@ void MCP::build(const AgentsLoader* _al, const FlatlandLoader* _ml, options _opt
     for (int i = 0; i < al->getNumOfAllAgents(); i++)
         if (!al->paths_all[i].empty() && al->paths_all[i].size() > max_timestep)
             max_timestep = al->paths_all[i].size();
-    if (options1.debug)
-        cout << "max_timestep = " << max_timestep << endl;
+    //if (options1.debug)
+    //    cout << "max_timestep = " << max_timestep << endl;
 
     // Push nodes to MCP
     no_wait_time.resize(al->getNumOfAllAgents());
@@ -158,8 +160,8 @@ void MCP::build(const AgentsLoader* _al, const FlatlandLoader* _ml, options _opt
     //     cout << " ]" << endl;
     // }
     // printAgentTime();
-    if (options1.debug)
-        cout << "End building MCP ..." << endl;
+    //if (options1.debug)
+    //    cout << "End building MCP ..." << endl;
 }
 
 

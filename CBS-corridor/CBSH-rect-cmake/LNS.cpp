@@ -191,10 +191,10 @@ bool LNS::replan(float time_limit)
     al.agents.resize(1);
     for (const auto& mal_agent : al.new_malfunction_agents)
     {
-        if (options1.debug)
+        /*if (options1.debug)
         {
             cout << "Mal agent " << mal_agent << "'s intersections: ";
-        }
+        }*/
         // find the intersections in front of the mal_agent
         list<pair<int, int> > future_intersections; // <location, timestep>
         if (al.agents_all[mal_agent].status == 0) // the mal agent is still in the station

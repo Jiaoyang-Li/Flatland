@@ -163,7 +163,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
                 cout << entry.location << "\t";
             cout << endl;
         }*/
-        cout << "Cost increase from " << old_cost << " to " << new_cost << endl;
+        cout << "Cost increase from " << old_cost << " to " << new_cost << "\t";  //endl;
     }
 	//if (new_cost - old_cost < 0.01 * al->agents_all.size() * max_timestep)
 	//    return; // cost increase is smaller than the threshold
