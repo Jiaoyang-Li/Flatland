@@ -7,6 +7,10 @@
 #include "LNS.h"
 #include "MCP.h"
 
+using namespace std::chrono;
+typedef std::chrono::high_resolution_clock Time;
+typedef std::chrono::duration<float> fsec;
+
 
 namespace p = boost::python;
 
@@ -167,7 +171,7 @@ private:
     int replan_strategy;
 
 	//stats about CBS
-    std::clock_t start_time;
+    Time::time_point start_time;
     float runtime;
     vector<statistics> statistic_list;
     int strategies[4] = {0,1,3,5};

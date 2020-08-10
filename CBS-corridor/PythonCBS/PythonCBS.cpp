@@ -87,7 +87,7 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, string algo, flo
 
 template <class Map>
 void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) {
-    start_time = time(NULL);// time(NULL) return time in seconds
+    start_time = Time::now();// time(NULL) return time in seconds
     int max_timestep = p::extract<int>(railEnv.attr("_max_episode_steps"));
     al->constraintTable.length_max = max_timestep - timestep; // update max timestep
 	al->updateAgents(railEnv.attr("agents"));
@@ -168,7 +168,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
 	//if (new_cost - old_cost < 0.01 * al->agents_all.size() * max_timestep)
 	//    return; // cost increase is smaller than the threshold
 
-    runtime = (float)(time(NULL) - start_time);
+    runtime = ((fsec)(Time::now() - start_time)).count();
 	if (runtime >= time_limit)
 	    return;
 
@@ -178,7 +178,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
 
     LNS lns(*al, *ml, f_w, s, agent_priority_strategy, options1, corridor2, trainCorridor1, chasing,
             neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
-    runtime = (float)(time(NULL) - start_time);
+    runtime = ((fsec)(Time::now() - start_time)).count();
 	lns.replan(time_limit - runtime);
     if (options1.debug)
     {
@@ -206,7 +206,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     mcp.build(al, ml, options1);
     if (options1.debug)
     {
-        runtime = (float)(time(NULL) - start_time);
+        runtime = ((fsec)(Time::now() - start_time)).count();
         cout << "Runtime = " << runtime << "s." << endl;
     }
 }
@@ -225,7 +225,7 @@ p::list PythonCBS<Map>::getResult() {
 
 template <class Map>
 bool PythonCBS<Map>::search() {
-    start_time = time(NULL);// time(NULL) return time in seconds
+    start_time = Time::now();// time(NULL) return time in seconds
     if (options1.debug)
 		cout << "start initialize" << endl;
 	//initialize search engine
@@ -237,9 +237,9 @@ bool PythonCBS<Map>::search() {
     {
         LNS lns(*al, *ml, f_w, s, agent_priority_strategy, options1, corridor2, trainCorridor1, chasing,
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
-        runtime = (float)(time(NULL)- start_time) ;
+        runtime = ((fsec)(Time::now() - start_time)).count(); 
         bool succ = lns.run(hard_time_limit - runtime, soft_time_limit - runtime);
-        runtime = (float)(time(NULL) - start_time);
+        runtime = ((fsec)(Time::now() - start_time)).count();
         statistic_list[0].HL_num_expanded = lns.HL_num_expanded;
         statistic_list[0].HL_num_generated = lns.HL_num_generated;
         statistic_list[0].LL_num_expanded = lns.LL_num_expanded;
@@ -379,7 +379,7 @@ bool PythonCBS<Map>::PrioritizedPlaning(AgentsLoader* al, int thread_id, int pri
     al->generateAgentOrder(priority_strategy);
 
 
-    auto runtime = (double)(time(NULL) - start_time);
+    auto runtime = ((fsec)(Time::now() - start_time)).count();
     while (runtime < hard_time_limit) {
         cout << endl;
         al->updateToBePlannedAgents(1);
@@ -399,7 +399,7 @@ bool PythonCBS<Map>::PrioritizedPlaning(AgentsLoader* al, int thread_id, int pri
             hasConflicts(); // to print the conflict
             return false;
         }
-        runtime = (double)(time(NULL) - start_time);
+        runtime = ((fsec)(Time::now() - start_time)).count();;
         int old_runtime = 0;
         if (!iteration_stats[thread_id].empty())
             old_runtime = get<2>(iteration_stats[thread_id].back());
@@ -414,7 +414,7 @@ bool PythonCBS<Map>::PrioritizedPlaning(AgentsLoader* al, int thread_id, int pri
                                      icbs.LL_num_expanded);
     }
 
-    runtime = (double)(time(NULL) - start_time);
+    runtime = ((fsec)(Time::now() - start_time)).count();;
     if (options1.debug)
     cout << endl << endl << "Find a solution for " << al->getNumOfAllAgents() - al->getNumOfUnplannedAgents()
          << " agents (including " << al->getNumOfDeadAgents() << " dead agents) in " << runtime << " seconds!" << endl;
@@ -441,7 +441,7 @@ bool PythonCBS<Map>::GroupPrioritizedPlaning()
     al->generateAgentOrder(agent_priority_strategy);
 
     int groupSize = defaultGroupSize;
-    runtime = (double)(time(NULL) - start_time);
+    runtime = ((fsec)(Time::now() - start_time)).count();;
 
     while (runtime < hard_time_limit) {
         if (options1.debug)
@@ -449,7 +449,7 @@ bool PythonCBS<Map>::GroupPrioritizedPlaning()
         al->updateToBePlannedAgents(groupSize);
         if (al->num_of_agents == 0) // all agents have paths
             break;
-        runtime = (double)(time(NULL) - start_time);
+        runtime = ((fsec)(Time::now() - start_time)).count();;
         double time_limit = (hard_time_limit - runtime) * al->num_of_agents / al->getNumOfUnplannedAgents() / 2;
         if (options1.debug)
         cout << "Group size = " << al->num_of_agents <<
@@ -492,7 +492,7 @@ bool PythonCBS<Map>::GroupPrioritizedPlaning()
             hasConflicts(); // to print the conflict
             return false;
         }
-        runtime = (double)(time(NULL) - start_time);
+        runtime = ((fsec)(Time::now() - start_time)).count();;
         int old_runtime = 0;
         if (!iteration_stats[0].empty())
             old_runtime = get<2>(iteration_stats[0].back());
@@ -507,7 +507,7 @@ bool PythonCBS<Map>::GroupPrioritizedPlaning()
                                      icbs.LL_num_expanded);
     }
 
-    runtime = (double)(time(NULL) - start_time);
+    runtime = ((fsec)(Time::now() - start_time)).count();;
     if (options1.debug)
     cout << endl << endl << "Find a solution for " << al->getNumOfAllAgents() - al->getNumOfUnplannedAgents()
          << " agents (including " << al->getNumOfDeadAgents() << " dead agents) in " << runtime << " seconds!" << endl;
@@ -524,7 +524,7 @@ template <class Map>
 p::list PythonCBS<Map>::benchmarkSingleGroup(int group_size,int iterations, int time_limit) {
     p::list result;
 
-    start_time = time(NULL);
+    start_time = Time::now();
     if (options1.debug)
         cout << "start initialize" << endl;
     //initialize search engine
@@ -537,13 +537,13 @@ p::list PythonCBS<Map>::benchmarkSingleGroup(int group_size,int iterations, int 
     al->generateAgentOrder(agent_priority_strategy);
 
     int groupSize = group_size;
-    runtime = (double)(time(NULL) - start_time);
+    runtime = ((fsec)(Time::now() - start_time)).count();;
     int num_iterations = iterations;
     while (iterations > 0) {
         al->sampleAgents(groupSize,iterations,num_iterations);
         if (al->num_of_agents == 0) // all agents have paths
             break;
-        runtime = (double)(time(NULL) - start_time);
+        runtime = ((fsec)(Time::now() - start_time)).count();;
         cout << "Group size = " << al->num_of_agents <<
              ", time limit = " << time_limit << " seconds. " << endl;
         if (options1.debug)
@@ -605,7 +605,7 @@ p::list PythonCBS<Map>::benchmarkSingleGroup(int group_size,int iterations, int 
 template <class Map>
 p::list PythonCBS<Map>::benchmarkSingleGroupLNS(int group_size,int iterations, int time_limit) {
     p::list result;
-    start_time = time(NULL);
+    start_time = Time::now();
     if (options1.debug)
         cout << "start initialize" << endl;
     //initialize search engine
@@ -628,7 +628,7 @@ p::list PythonCBS<Map>::benchmarkSingleGroupLNS(int group_size,int iterations, i
         if (!path.empty())
             finished_agents++;
     }
-    runtime = (double)(time(NULL) - start_time);
+    runtime = ((fsec)(Time::now() - start_time)).count();;
     cout << "Solution cost = " << solution_cost << ", "
          << "makespan = " << makespan << ", "
          << "remaining time = " << hard_time_limit - runtime << endl;
@@ -875,7 +875,7 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
         this->al_pool[i] = temp;
         this->lns_pool[i] = new LNS(*al_pool[i], *ml, f_w, s, strategies[i], options1, corridor2, trainCorridor1, chasing,
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
-        runtime = (double)(time(NULL) - start_time);
+        runtime = ((fsec)(Time::now() - start_time)).count();;
         wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,*this->lns_pool[i]);
         pthread_create( &threads[i], NULL, call_func, w );
     }
@@ -928,7 +928,7 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
     this->al = this->al_pool[best_al];
     this->best_thread_id = best_al;
     this->best_initisl_priority_strategy = strategies[best_al];
-    runtime = (double)(time(NULL) - start_time);
+    runtime = ((fsec)(Time::now() - start_time)).count();;
     if (options1.debug) {
         cout << "Best PP strategy = " << strategies[best_al] << ", "
              << "Final Solution cost = " << best_cost << ", "
@@ -959,7 +959,7 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads){
         this->lns_pool[i] = new LNS(*al_pool[i], *ml, f_w, s, strategies[i], options1, corridor2, trainCorridor1, chasing,
                                     3, prirority_ordering_strategy, replan_strategy);
         this->lns_pool[i]->pp_only = true;
-        runtime = (double)(time(NULL) - start_time);
+        runtime = ((fsec)(Time::now() - start_time)).count();;
         wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,*this->lns_pool[i]);
         wrap_handle.push_back(w);
         pthread_create( &threads[i], NULL, call_func, w );
@@ -1012,7 +1012,7 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads){
         this->lns_pool[i] = new LNS(*al_pool[i], *ml, f_w, s, 0, options1, corridor2, trainCorridor1, chasing,
                                     neighbours[i], prirority_ordering_strategy, replan_strategy);
         this->lns_pool[i]->skip_pp = true;
-        runtime = (double)(time(NULL) - start_time);
+        runtime = ((fsec)(Time::now() - start_time)).count();;
         wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,*this->lns_pool[i]);
         wrap_handle.push_back(w);
         pthread_create( &threads[i], NULL, call_func, w );
@@ -1066,7 +1066,7 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads){
     this->al = this->al_pool[best_al];
     this->best_thread_id = best_al;
     this->best_neighbour_strategy = neighbours[best_al];
-    runtime = (double)(time(NULL) - start_time);
+    runtime = ((fsec)(Time::now() - start_time)).count();;
     if (options1.debug) {
         cout << "Best PP strategy = " << strategies[best_al] << ", "
              << "Final Solution cost = " << best_cost << ", "
