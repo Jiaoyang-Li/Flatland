@@ -45,13 +45,20 @@ struct PathEntry
 	int actionToHere = -1;
 	bool malfunction = false;
 	int malfunction_left = 0;
-	int next_malfunction = 0;
 	float position_fraction = 0.0;
 	int exit_heading = -1;
 	int exit_loc = -1;
 	//PathEntry(int loc = -1) { location = loc; single = false; }
 	//std::list<int> locations; // all possible locations at the same time step (i.e., mdd nodes at the same time step)
 	OldConfList* conflist=nullptr;
+};
+
+struct options {
+    bool asymmetry_constraint=false;
+    int debug = 0;
+    bool ignore_t0=false;
+    bool shortBarrier=false;
+    bool flippedRec=false;
 };
 
 struct Transition {

@@ -1,8 +1,6 @@
 #include "LNS.h"
 
 
-
-
 bool LNS::run(float _hard_time_limit, float _soft_time_limit)
 {
     start_time = Time::now();
@@ -183,6 +181,120 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
     return true;
 }
 
+
+bool LNS::replan(float time_limit)
+{
+    start_time = Time::now();
+    max_timestep = al.constraintTable.length_max;
+    set<int> tabu_list; // record the agents already been replanned
+    al.num_of_agents = 1;
+    al.agents.resize(1);
+    list<list<pair<int, int>>> agent_groups;
+    for (const auto& mal_agent : al.new_malfunction_agents)
+    {
+        /*if (options1.debug)
+        {
+            cout << "Mal agent " << mal_agent << "'s intersections: ";
+        }*/
+        // find the intersections in front of the mal_agent
+        list<pair<int, int> > future_intersections; // <location, timestep>
+        if (al.agents_all[mal_agent].status == 0) // the mal agent is still in the station
+            future_intersections.emplace_back(ml.linearize_coordinate(al.agents_all[mal_agent].initial_location), 0); // replan agents at the start location
+        for (int t = 0; t < (int) al.paths_all[mal_agent].size(); t++)
+        {
+            int loc = al.paths_all[mal_agent][t].location;
+            if (loc < 0)
+                continue;
+            if (ml.getDegree(loc) > 2 && (future_intersections.empty() || future_intersections.back().first != loc)) {
+                future_intersections.emplace_back(loc, t);
+            }
+        }
+        /*if (options1.debug)
+        {
+            for (const auto &intersection : future_intersections)
+                cout << intersection.first << "(t=" << intersection.second << ")\t";
+            cout << endl;
+        }*/
+        for (const auto &intersection : future_intersections)
+        {
+            // get agents that pass through the intersection after the mal agent
+            list<pair<int, int>> agents; // <agent_id, timestep>
+            al.constraintTable.get_agents(agents, mal_agent, intersection); // TODO: get this information from MCP instead of constraint table
+
+            /*if (options1.debug && !agents.empty())
+            {
+                cout << "Intersection " << intersection.first << " has agents ";
+                for (const auto& agent : agents)
+                    cout << agent.first << "\t";
+                cout << endl;
+            }*/
+
+            for (const auto &agent : agents) // replan the agents one by one
+            {
+                runtime = ((fsec) (Time::now() - start_time)).count();
+                if (runtime >= time_limit)
+                    return true;
+                int i = agent.first;
+                int t = agent.second;
+                if (tabu_list.count(i) > 0 || // the agent has already been replanned, or
+                    (intersection.second > 0 && // the agent is following the mal_agent. We do not replan them for now
+                    al.paths_all[i][t - 1].location == al.paths_all[mal_agent][intersection.second - 1].location))
+                    continue;
+                auto copy = al.paths_all[i];
+                al.constraintTable.delete_path(i, al.paths_all[i]);
+                runtime = ((fsec) (Time::now() - start_time)).count();
+                al.agents[0] = &al.agents_all[i];
+                SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
+                planner.search();
+                if (planner.path.empty())
+                {
+                    addAgentPath(i, copy);
+                }
+                else
+                {
+                    addAgentPath(i, planner.path);
+                    tabu_list.insert(i);
+                }
+            }
+
+            agent_groups.push_back(agents);
+        }
+    }
+
+    // replan the skipped agents
+    for (const auto &agents : agent_groups)
+    {
+        for (const auto &agent : agents) // replan the agents one by one
+        {
+            runtime = ((fsec) (Time::now() - start_time)).count();
+            if (runtime >= time_limit)
+                return true;
+            int i = agent.first;
+            int t = agent.second;
+            if (tabu_list.count(i) > 0)
+                continue;
+            auto copy = al.paths_all[i];
+            al.constraintTable.delete_path(i, al.paths_all[i]);
+            runtime = ((fsec) (Time::now() - start_time)).count();
+            al.agents[0] = &al.agents_all[i];
+            SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
+            planner.search();
+            if (planner.path.empty())
+            {
+                addAgentPath(i, copy);
+            }
+            else
+            {
+                addAgentPath(i, planner.path);
+                tabu_list.insert(i);
+            }
+        }
+    }
+
+    return true;
+}
+
+
 bool LNS::getInitialSolution()
 {
     if (options1.debug)
@@ -211,10 +323,12 @@ bool LNS::getInitialSolution()
             cout << "Remaining agents = " << remaining_agents <<
              ", remaining time = " << hard_time_limit - runtime << " seconds. " << endl
                     << "Agent " << al.agents[0]->agent_id << endl;
-        MultiMapICBSSearch<FlatlandLoader> icbs(&ml, &al, f_w, c, 0, options1.debug? 3 : 0, options1);
-        icbs.runICBSSearch();
-        updateCBSResults(icbs);
-        addAgentPath(agent, *icbs.paths[0]);
+//        MultiMapICBSSearch<FlatlandLoader> icbs(&ml, &al, f_w, c, 0, options1.debug? 3 : 0, options1);
+//        icbs.runICBSSearch();
+        SinglePlanning planner(ml,al,f_w,0,options1);
+        planner.search();
+        updateCBSResults(planner);
+        addAgentPath(agent, planner.path);
         remaining_agents--;
     }
 
@@ -390,23 +504,28 @@ void LNS::replanByPP()
             return;
         }
         al.agents[0] = &al.agents_all[agent];
-        MultiMapICBSSearch<FlatlandLoader> icbs(&ml, &al, f_w, c, 0, options1.debug? 3 : 0, options1);
-        icbs.runICBSSearch();
-        updateCBSResults(icbs);
-        assert(icbs.paths[0]->back().location == al.paths_all[agent].back().location);
-        addAgentPath(agent, *icbs.paths[0]);
-        if (icbs.paths[0]->empty())
+//        MultiMapICBSSearch<FlatlandLoader> icbs(&ml, &al, f_w, c, 0, options1.debug? 3 : 0, options1);
+//        icbs.runICBSSearch();
+//        updateCBSResults(icbs);
+//        addAgentPath(agent, *icbs.paths[0]);
+        SinglePlanning planner(ml,al,f_w,0,options1);
+        planner.search();
+        updateCBSResults(planner);
+        addAgentPath(agent, planner.path);
+        assert(planner.path.back().location == al.paths_all[agent].back().location);
+
+        if (planner.path.empty())
         {
             sum_of_costs += max_timestep;
             makespan = max_timestep;
         }
         else
         {
-            sum_of_costs += (int)icbs.paths[0]->size() - 1;
-            makespan = max(makespan, (int)icbs.paths[0]->size() - 1);
-            for (int t  = 0; t < (int)icbs.paths[0]->size(); t++)
+            sum_of_costs += (int)planner.path.size() - 1;
+            makespan = max(makespan, (int)planner.path.size() - 1);
+            for (int t  = 0; t < (int)planner.path.size(); t++)
             {
-                if (icbs.paths[0]->at(t).location >= 0)
+                if (planner.path.at(t).location >= 0)
                 {
                     sum_of_showup_time += t;
                     break;
