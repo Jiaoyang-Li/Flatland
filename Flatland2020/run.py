@@ -329,6 +329,8 @@ while True:
                 curr_locs.append(-1)
             else:
                 curr_locs.append(linearize_loc(local_env, a.position))
+
+        CBS.replan(local_env, steps, 3.0)
         next_locs = CBS.getNextLoc(curr_locs, steps + 1)
         action = my_controller.get_actions(prev_locs, next_locs, curr_locs)
 

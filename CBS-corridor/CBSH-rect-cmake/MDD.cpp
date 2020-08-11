@@ -186,7 +186,7 @@ bool MDD<Map>::buildMDD( ConstraintTable& constraints,
 	root->col = solver.start_location % solver.num_col;
 	root->position_fraction = solver.al->agents[solver.agent_id]->position_fraction;
 	root->malfunction_left = solver.al->agents[solver.agent_id]->malfunction_left;
-	root->next_malfunction = solver.al->agents[solver.agent_id]->next_malfuntion;
+	root->next_malfunction = solver.al->agents[solver.agent_id]->next_malfunction;
 	std::queue<MDDNode*> open;
 	std::list<MDDNode*> closed;
 	open.push(root);

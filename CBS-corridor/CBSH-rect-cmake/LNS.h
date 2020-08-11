@@ -1,5 +1,6 @@
 #pragma once
 #include "ICBSSearch.h"
+#include "SinglePlanning.h"
 #include <chrono>
 using namespace std::chrono;
 typedef std::chrono::high_resolution_clock Time;
@@ -44,7 +45,8 @@ public:
         max_timestep = al.constraintTable.length_max;
     }
     bool run(float hard_time_limit, float soft_time_limit);
-
+    bool replan(float time_limit);
+    bool getInitialSolution();
 private:
     high_resolution_clock::time_point start_time;
     float runtime = 0;
@@ -55,7 +57,6 @@ private:
     int agent_priority_strategy;
     options options1;
     int max_timestep;
-
     //data for neighbors
     vector<int> neighbors;
     list<Path> neighbor_paths;
@@ -85,7 +86,6 @@ private:
     double reaction_factor = 0.1;
     vector<double> destroy_heuristics;
 
-    bool getInitialSolution();
 
     void replanByPP();
     bool replanByCBS();
@@ -121,6 +121,13 @@ private:
         num_corridor += cbs.num_corridor;
         num_start+=cbs.num_start;
         num_chasing += cbs.num_chasing;
+    }
+
+    void updateCBSResults(const SinglePlanning& planner)
+    {
+        runtime = ((fsec)(Time::now() - start_time)).count();
+        LL_num_expanded += planner.LL_num_expanded;
+        LL_num_generated += planner.LL_num_generated;
     }
 
     // bool hasConflicts(const vector<Path>& paths) const;

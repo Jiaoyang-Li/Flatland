@@ -102,7 +102,6 @@ public:
 				s1->loc == s2->loc &&
 				s1->timestep == s2->timestep &&
 				s1->heading == s2->heading &&
-				s1->next_malfunction == s2->next_malfunction &&
 				s1->malfunction_left == s2->malfunction_left &&
 				round(s1->position_fraction*1000) == round(s2->position_fraction*1000) &&
                     s1->exit_loc == s2->exit_loc)
