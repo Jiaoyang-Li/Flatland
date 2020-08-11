@@ -76,6 +76,7 @@ public:
 	p::dict getResultDetail();
 	void replan(p::object railEnv1, int timestep, float time_limit);
 	void updateFw(float fw);
+	void updateAgents(p::object railEnv1);
     p::list benchmarkSingleGroup(int group_size,int iterations, int time_limit);
     p::list benchmarkSingleGroupLNS(int group_size,int iterations, int time_limit);
     bool findConflicts() const;
