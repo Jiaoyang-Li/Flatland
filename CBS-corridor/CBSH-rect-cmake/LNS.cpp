@@ -189,12 +189,13 @@ bool LNS::replan(float time_limit)
     set<int> tabu_list; // record the agents already been replanned
     al.num_of_agents = 1;
     al.agents.resize(1);
+    list<list<pair<int, int>>> agent_groups;
     for (const auto& mal_agent : al.new_malfunction_agents)
     {
-        if (options1.debug)
+        /*if (options1.debug)
         {
             cout << "Mal agent " << mal_agent << "'s intersections: ";
-        }
+        }*/
         // find the intersections in front of the mal_agent
         list<pair<int, int> > future_intersections; // <location, timestep>
         if (al.agents_all[mal_agent].status == 0) // the mal agent is still in the station
@@ -255,8 +256,41 @@ bool LNS::replan(float time_limit)
                     tabu_list.insert(i);
                 }
             }
+
+            agent_groups.push_back(agents);
         }
     }
+
+    // replan the skipped agents
+    for (const auto &agents : agent_groups)
+    {
+        for (const auto &agent : agents) // replan the agents one by one
+        {
+            runtime = ((fsec) (Time::now() - start_time)).count();
+            if (runtime >= time_limit)
+                return true;
+            int i = agent.first;
+            int t = agent.second;
+            if (tabu_list.count(i) > 0)
+                continue;
+            auto copy = al.paths_all[i];
+            al.constraintTable.delete_path(i, al.paths_all[i]);
+            runtime = ((fsec) (Time::now() - start_time)).count();
+            al.agents[0] = &al.agents_all[i];
+            SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
+            planner.search();
+            if (planner.path.empty())
+            {
+                addAgentPath(i, copy);
+            }
+            else
+            {
+                addAgentPath(i, planner.path);
+                tabu_list.insert(i);
+            }
+        }
+    }
+
     return true;
 }
 
