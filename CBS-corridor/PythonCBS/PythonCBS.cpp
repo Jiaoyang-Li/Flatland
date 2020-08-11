@@ -110,8 +110,8 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
         }*/
         cout << endl;
     }
-	if (al->new_malfunction_agents.empty())
-	    return; // we do not replan if there are no new mal agents
+	if (al->new_malfunction_agents.empty() && to_be_replanned.empty())
+	    return; // we do not replan if there are no new mal agents and no to-be-replanned agents
 
     if (options1.debug)
     {
@@ -179,7 +179,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     LNS lns(*al, *ml, f_w, s, agent_priority_strategy, options1, corridor2, trainCorridor1, chasing,
             neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
     runtime = ((fsec)(Time::now() - start_time)).count();
-	lns.replan(time_limit - runtime);
+	lns.replan(to_be_replanned, time_limit - runtime);
     if (options1.debug)
     {
         //cout << "Updated paths" << endl;

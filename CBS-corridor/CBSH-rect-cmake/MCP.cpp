@@ -142,8 +142,8 @@ void MCP::build(const AgentsLoader* _al, const FlatlandLoader* _ml, options _opt
         {
             agent_time[i] = 1;
             to_go[i] = al->paths_all[i][0].location;
-            }
         }
+    }
 
     // Debug for no_wait_time
     // cout << endl;
