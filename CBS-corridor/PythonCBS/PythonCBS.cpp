@@ -179,7 +179,8 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     LNS lns(*al, *ml, f_w, s, agent_priority_strategy, options1, corridor2, trainCorridor1, chasing,
             neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
     runtime = ((fsec)(Time::now() - start_time)).count();
-	lns.replan(to_be_replanned, time_limit - runtime);
+	lns.replan(time_limit - runtime);
+	// lns.replan(to_be_replanned, time_limit - runtime);
     if (options1.debug)
     {
         //cout << "Updated paths" << endl;
