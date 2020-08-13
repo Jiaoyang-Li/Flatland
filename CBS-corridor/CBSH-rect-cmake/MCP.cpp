@@ -15,7 +15,7 @@ void MCP::simulate(vector<Path>& paths, int timestep) const
             al->paths_all[i].empty()) // the agent did not have a path
             continue;
         unfinished_agents.push_back(i);
-        paths.reserve(al->paths_all[i].size() * 2);
+        paths[i].reserve(al->paths_all[i].size() * 2);
         if (copy_agent_time[i] > 0)
         {
             assert(copy_agent_time[i] < (int)no_wait_time[i].size());
