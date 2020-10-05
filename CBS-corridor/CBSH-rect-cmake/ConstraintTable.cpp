@@ -15,7 +15,7 @@ void ConstraintTable::insert(int loc, int t_min, int t_max)
 	}
 }
 
-bool ConstraintTable::is_constrained(int agent_id, int loc, int timestep) const
+bool ConstraintTable::is_constrained(int agent_id, int loc, int timestep, int pre_loc) const
 {
     if (loc < 0)
         return false;
@@ -25,16 +25,26 @@ bool ConstraintTable::is_constrained(int agent_id, int loc, int timestep) const
 
     if (CT_paths[loc].empty())
         return false;
+
+
     for (int t = timestep - kRobust; t <= timestep + kRobust; t++)
     {
         if (CT_paths[loc][t] >= 0)
         {
             assert(agent_id != CT_paths[loc][t]);
-            if ((agent_id > CT_paths[loc][t] && timestep <= t) || // This agent reaches loc earlier than the second agent with smaller id
-                (agent_id < CT_paths[loc][t] && timestep >= t))   // This agent reaches loc later than the second agent with larger id
-                return true;
+//            if ((agent_id > CT_paths[loc][t] && timestep <= t) || // This agent reaches loc earlier than the second agent with smaller id
+//                (agent_id < CT_paths[loc][t] && timestep >= t))   // This agent reaches loc later than the second agent with larger id
+            return true;
         }
+
+
     }
+
+    if(pre_loc >= 0 && !CT_paths[pre_loc].empty() && timestep - 1>=0 && CT_paths[loc][timestep-1]>=0 && CT_paths[loc][timestep-1] == CT_paths[pre_loc][timestep]){
+        return true; //edge conflict
+
+    }
+
 	return false;
 }
 

@@ -311,6 +311,11 @@ bool PythonCBS<Map>::hasConflicts() const
                 		cout<<"at t: "<<t<<" location:" << al->paths_all[j][t].location<<endl;
 					return true;
 				}
+                else if( t-1>=0 && constraintTable.is_constrained(al->agents_all[j].agent_id, al->paths_all[j][t].location, t, al->paths_all[j][t-1].location)){
+                    cout<<"Agent: "<<i <<","<<j <<" have edge conflict"<<endl;
+                    cout<<"at t: "<<t<<" location:" << al->paths_all[j][t].location<<endl;
+                    return true;
+                }
             }
         }
     }

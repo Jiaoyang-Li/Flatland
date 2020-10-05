@@ -174,7 +174,7 @@ bool SinglePlanning::search()
 //		    cout<<curr->exit_heading<<endl;
             if ( curr->position_fraction>=1 && curr->exit_heading>=0){
 
-                if (constraintTable.is_constrained(agent.agent_id, curr->exit_loc, curr->timestep+1)) {
+                if (constraintTable.is_constrained(agent.agent_id, curr->exit_loc, curr->timestep+1,curr->loc)) {
                     Transition move2;
                     move2.location = curr->loc;
                     move2.heading = curr->heading;
@@ -227,8 +227,7 @@ bool SinglePlanning::search()
 			int next_timestep = curr->timestep + 1;
 
 
-			if (!constraintTable.is_constrained(agent.agent_id, next_id, next_timestep)) //&&
-				//!constraintTable.is_constrained(curr->loc * map_size + next_id, next_timestep)) // TODO:: for k-robust cases, we do not need to check edge constraint?
+			if (!constraintTable.is_constrained(agent.agent_id, next_id, next_timestep,curr->loc)) //&&
 			{
 			    int next_malfunction_left;
 			    if (curr->malfunction_left>0)

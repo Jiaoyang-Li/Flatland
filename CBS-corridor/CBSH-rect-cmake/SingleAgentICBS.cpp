@@ -252,8 +252,8 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 			int next_timestep = curr->timestep + 1;
 
 
-			if (!constraint_table.is_constrained(al->agents[agent_id]->agent_id, next_id, next_timestep)) //&&
-				//!constraint_table.is_constrained(curr->loc * map_size + next_id, next_timestep)) // TODO:: for k-robust cases, we do not need to check edge constraint?
+			if (!constraint_table.is_constrained(al->agents[agent_id]->agent_id, next_id, next_timestep,curr->loc) &&
+				!constraint_table.is_constrained(al->agents[agent_id]->agent_id, curr->loc * map_size + next_id, next_timestep)) // edge constraint
 			{
 
 				int next_g_val = curr->g_val + 1;
@@ -292,7 +292,7 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
 //                cout <<endl;
 
 
-                int next_internal_conflicts = res_table->countConflict(agent_id, curr->loc, next_id, curr->timestep, kRobust);
+                int next_internal_conflicts = curr->num_internal_conf + res_table->countConflict(agent_id, curr->loc, next_id, curr->timestep, kRobust);
 
 
 

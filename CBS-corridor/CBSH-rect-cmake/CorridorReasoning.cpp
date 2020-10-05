@@ -247,8 +247,8 @@ int CorridorReasoning<Map>::getBypassLength(int agent_id, int start, int end, st
 			time_generated += 1;
 
 			int next_timestep = curr->timestep + 1;
-			if ( !constraint_table.is_constrained(agent_id, next_loc, next_timestep)) //&&
-				//!constraint_table.is_constrained(al->agents[agent_id].agent_id, curr->loc * map_size + next_loc, next_timestep))
+			if ( !constraint_table.is_constrained(agent_id, next_loc, next_timestep,curr->loc) &&
+				!constraint_table.is_constrained(agent_id, curr->loc * map_size + next_loc, next_timestep))
 			{  // if that grid is not blocked
 				if ((curr->loc == blocked.first && next_loc == blocked.second) ||
 					(curr->loc == blocked.second && next_loc == blocked.first)) // use the prohibited edge
@@ -405,8 +405,8 @@ int CorridorReasoning<Map>::getBypassLength(int agent_id, int start, int end,int
 
 			int next_timestep = curr->timestep + 1;
 
-			if (!constraint_table.is_constrained(agent_id, next_loc, next_timestep))  // &&
-				// !constraint_table.is_constrained(curr->loc * map_size + next_loc, next_timestep))
+			if (!constraint_table.is_constrained(agent_id, next_loc, next_timestep) &&
+				!constraint_table.is_constrained(agent_id, curr->loc * map_size + next_loc, next_timestep))
 			{  // if that grid is not blocked
 
                 if ((curr->loc == blocked.first && next_loc == blocked.second) ||
