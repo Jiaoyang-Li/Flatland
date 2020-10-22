@@ -185,10 +185,97 @@ else
 
 ## Framework 3: CPR
 
-The idea is from Complete Path Reservation (CPR) from one of the last year's [solution](https://eprints.hsr.ch/855/1/Masterarbeit_Waelter_Jonas.pdf)
+The idea is borrowed from Complete Path Reservation (CPR) from one of the last year's 
+[solution](https://eprints.hsr.ch/855/1/Masterarbeit_Waelter_Jonas.pdf).
+The idea is that we dynamically assign directions to the edges on the graph so that, 
+at any timestep, for every pair of neighboring locations v and u, we only allow agents to move in one direction, 
+i.e., either from v to u or from u to v.
+If we ask all agents to follow their shortest paths on this modified directed graph, it is guaranteed that 
+all agents that have paths to their goal locations on the directed graph 
+can reach their goal locations without deadlocks.
 
+We use a matrix ``highways'' of size (map-size * map-size) to represent the directions of the edges. 
+At any timestep, for any pair of locations u and v, highways[u][v] + highways[v][u] = 0.
+- highways[u][v] = k > 0 means that there are currently k agents that *want to* move from u to v. 
+  Future agents can also move from u to v.
+- highways[u][v] = -k < 0 means that there are currently k agents that *want to* move from v to u. 
+  So future agents cannot move from u to v.
+- highways[u][v] = 0 means that there are no agents that *want to* move from u to v or v to u. 
+  So the next agent can move either from u to v or v to u.
+  
+We update highways whenever we plan a path for an agent and whenever an agent moves.
+- If a new planned path traverses edge (u, v), then highways[u][v]++ and highways[v][u]--.
+- If an agent moves from u to v at the current timestep, then highways[u][v]-- and highways[v][u]++,
+  i.e., the agent has already used this edge, so it can release its reservation in highways.
+  
+When we plan path for an agent, we can only use edges (u, v) that satisfy highways[u][v] >= 0. 
 
+We show the pseudo-codes below.
 
+### Initial Planning
+```c++
+A = [a1, a2, ..., am];  // unplanned agents
+P = {};  // planned paths
+A = sort(A);  // sort the agents by some heuristics
+highways = a (map-size * map-size) zero matrix; // the directions of the edges
+for (a in A) {
+    path = A*(a, highways);  // find a shortest path by A* that only uses edges (u, v) that satisfy highway[u][v] >= 0
+    if(path is found) {
+        for ((u,v) in path) { // update highways
+            highways[u][v]++;
+            highways[v][u]--;
+        }
+        Add path to P;
+        Remove a from A;
+    }
+}
+```
+
+### Replanning at every timestep during execution
+agent_steps is intialized as a zero vector of length m (m is the number of agents) at timestep 0. 
+It represents the number of steps each agent has already taken along its path.
+
+```c++
+/* Update agent_steps and highways */
+currs = locations of all agents at the current timestep;
+prevs = locations of all agents at the previous timestep;
+replan = false;
+for (i = 1; i < m; i ++) {  // m is the number of agents
+    if (currs[i] != prevs[i]) {  // agent i moves from prevs[i] to currs[i]       
+        agent_steps[i]++;
+        highways[prevs[i]][currs[i]]--;
+        highways[currs[i]][prevs[i]]++;       
+        if (highways[prevs[i]][currs[i]] == 0) {
+            replan = true;
+        }
+    }
+}
+
+/* replan if necessary*/
+if (replan) {
+    for (a in A) {
+        path = A*(a, highways);  // find a shortest path by A* that only uses edges (u, v) that satisfy highway[u][v] >= 0
+        if(path is found) {
+            for ((u,v) in path) { // update highways
+                highways[u][v]++;
+                highways[v][u]--;
+            }
+            Add path to P;
+            Remove a from A;
+        }        
+    }
+}
+
+/* generate the next location that each agent needs to go */
+togo = vector(m, nullptr);
+for (i = 1; i < m; i ++) {
+    p = the path of agent ai in P;
+    if (p exists and agent ai has not reach its goal location) {
+        togo[i] = p[agent_steps[i] + 1];
+    }
+}
+return togo;
+```
 
 ## CBS
 For the CBS solver, we have the following major changes:
