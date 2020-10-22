@@ -6,6 +6,7 @@
 #include "flat_map_loader.h"
 #include "LNS.h"
 #include "MCP.h"
+#include "CPR.h"
 
 using namespace std::chrono;
 typedef std::chrono::high_resolution_clock Time;
@@ -64,7 +65,11 @@ public:
 	    }
 
         delete ml;
-
+        if (cpr != nullptr)
+        {
+            delete cpr;
+            cpr = nullptr;
+        }
     }
 
 	p::list getResult();
@@ -82,14 +87,40 @@ public:
     bool findConflicts() const;
     p::list getNextLoc(p::list agent_location, int timestep)
     {
-        mcp.getNextLoc(agent_location,timestep);
         boost::python::list next_loc;
-        for (int i = 0; i < al->getNumOfAllAgents(); i++)
-            next_loc.append(mcp.to_go[i]);
-        return next_loc;
+        if (framework == "CPR")
+        {
+            vector<int> to_go(al->getNumOfAllAgents(), -1);
+            cpr->getNextLoc(to_go);
+            for (int i = 0; i < al->getNumOfAllAgents(); i++)
+                next_loc.append(to_go[i]);
+            return next_loc;
+        }
+        else
+        {
+            mcp.getNextLoc(agent_location,timestep);
+            for (int i = 0; i < al->getNumOfAllAgents(); i++)
+                next_loc.append(mcp.to_go[i]);
+            return next_loc;
+        }
     }
-    void updateMCP(p::list agent_location, p::dict agent_action) { mcp.update(agent_location, agent_action); }
-    void buildMCP(void) { mcp.build(al, ml, options1); }
+    void updateMCP(p::list agent_location, p::dict agent_action)
+    {
+        if (framework == "CPR")
+        {
+            cpr->update(agent_location);
+        }
+        else
+        {
+            mcp.update(agent_location, agent_action);
+        }
+
+    }
+    void buildMCP(void)
+    {
+        if (framework != "CPR")
+            mcp.build(al, ml, options1);
+    }
     void clearMCP(void) { mcp.clear(); }
     void printAllMCP(void) { mcp.printAll(); }
     void printMCP(int loc) { mcp.print(loc); }
@@ -178,7 +209,8 @@ private:
     int strategies[4] = {0,1,3,5};
     int neighbours[4] = {0,2,3,4};
 
-
+    // CPR
+    CPR* cpr = nullptr;
 
     //stats about each iteration
     typedef tuple<int, double, double, double, int,

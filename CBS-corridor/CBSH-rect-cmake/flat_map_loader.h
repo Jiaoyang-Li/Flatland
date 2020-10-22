@@ -14,6 +14,7 @@ struct railCell {
 	int transitions;
 	bool isTurn;
 	bool isDeadEnd;
+	int highways[4] = {0, 0, 0, 0}; // the move on a given direction i is allowed only when highways[i] >= 0
 };
 
 class FlatlandLoader:public MapLoader {

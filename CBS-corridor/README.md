@@ -182,6 +182,14 @@ else
     add old_paths to P;
  ```
 
+
+## Framework 3: CPR
+
+The idea is from Complete Path Reservation (CPR) from one of the last year's [solution](https://eprints.hsr.ch/855/1/Masterarbeit_Waelter_Jonas.pdf)
+
+
+
+
 ## CBS
 For the CBS solver, we have the following major changes:
 * We use k-robust CBSH with k = 1.

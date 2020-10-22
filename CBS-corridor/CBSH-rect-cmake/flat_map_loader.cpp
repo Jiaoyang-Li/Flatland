@@ -78,7 +78,7 @@ void FlatlandLoader::get_transitions(list<Transition>& transitions, int location
 	int moves[4] = { (bits >> 3) & 1, (bits >> 2) & 1, (bits >> 1) & 1, (bits) & 1 };
 
 	for (int i = 0; i < 4; i++) {
-		if (moves[i] == 1) {
+		if (moves[i] == 1 && railMap[location].highways[i] >= 0) {
 			Transition move;
 
 			move.location = location + this->moves_offset[i];
@@ -102,7 +102,7 @@ void FlatlandLoader::get_exits(list<Transition>& transitions, int location, int 
 	int moves[4] = { (bits >> 3) & 1, (bits >> 2) & 1, (bits >> 1) & 1, (bits) & 1 };
 
 	for (int i = 0; i < 4; i++) {
-		if (moves[i] == 1) {
+		if (moves[i] == 1 && railMap[location].highways[i] >= 0) {
 			Transition move;
 
 			move.location = location;
