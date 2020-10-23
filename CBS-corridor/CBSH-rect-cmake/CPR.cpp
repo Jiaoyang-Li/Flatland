@@ -70,16 +70,20 @@ void CPR::update(p::list agent_location)
 
         if (agent_location[i] == al.paths_all[i][agent_steps[i]].exit_loc) // the agent has successfully moved to the next location
         {
-            // update highway's value in both directions
-            auto state = al.paths_all[i][agent_steps[i]];
-            ml.railMap[state.location].highways[state.exit_heading]--;
-            ml.railMap[state.exit_loc].highways[(state.exit_heading + 2) % 4]++;
+            if (al.paths_all[i][agent_steps[i]].location >= 0)
+            {
+                // update highway's value in both directions
+                auto state = al.paths_all[i][agent_steps[i]];
+                ml.railMap[state.location].highways[state.exit_heading]--;
+                ml.railMap[state.exit_loc].highways[(state.exit_heading + 2) % 4]++;
+                if (ml.railMap[state.location].highways[state.exit_heading] == 0 && !unplanned_agents.empty())
+                {
+                    replan = true; // a new edge is released. Let's try to replan the unplanned agents later
+                }
+            }
             // agent moves to the next state on its path
             agent_steps[i]++;
-            if (ml.railMap[state.location].highways[state.exit_heading] == 0 && !unplanned_agents.empty())
-            {
-                replan = true; // a new edge is released. Let's try to replan the unplanned agents later
-            }
+
         }
     }
 
