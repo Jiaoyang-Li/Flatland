@@ -87,15 +87,15 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, string algo, flo
 
 template <class Map>
 void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) {
+    int max_timestep = p::extract<int>(railEnv.attr("_max_episode_steps"));
+    al->constraintTable.length_max = max_timestep - timestep; // update max timestep
     if (framework == "CPR")
     {
         cpr->planPaths(time_limit);
         return;
     }
     start_time = Time::now();// time(NULL) return time in seconds
-    int max_timestep = p::extract<int>(railEnv.attr("_max_episode_steps"));
-    al->constraintTable.length_max = max_timestep - timestep; // update max timestep
-	al->updateAgents(railEnv.attr("agents"));
+    al->updateAgents(railEnv.attr("agents"));
     if (options1.debug)
     {
         cout << "Timestep = " << timestep << ";\t";
