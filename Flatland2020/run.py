@@ -73,28 +73,6 @@ def linearize_loc(in_env, loc):
     """
     return loc[0]*in_env.width + loc[1]
 
-def classify_test(x,y,no_agents):
-    test_dic = {
-        (25,25): {5:0},
-        (30,30):{10:1,20:2},
-        (20,35):{50:3},
-        (35,20):{80:4},
-        (35,35):{80:5},
-        (40,60):{80:6},
-        (60,40):{80:7},
-        (60,60):{80:8},
-        (80,120):{100:9},
-        (100,80):{100:10},
-        (100,100):{200:11},
-        (150,150):{200:12, 400:13},
-    }
-    if (x,y) not in test_dic:
-        return -1
-    if no_agents not in test_dic[(x,y)]:
-        return -1
-    return test_dic[(x,y)][no_agents]
-
-
 #####################################################################
 # Instantiate a Remote Client
 #####################################################################
@@ -110,7 +88,7 @@ my_observation_builder = GlobalObsForRailEnv()
 #####################################################################
 
 evaluation_number = 0  # evaluation counter
-num_of_evaluations = 400  # total number of evaluations
+# num_of_evaluations = 400  # total number of evaluations
 total_time_limit = 8 * 60 * 60
 global_time_start = time.time()
 
@@ -221,33 +199,24 @@ while True:
     if remote_client:
         env_width = local_env.width
         env_height = local_env.height
-        test_type = classify_test(env_width,env_height,number_of_agents)
 
-        predict_remaining_time = 0
-        for i in range(0,len(finished_test)):
-            remaing_amount = test_amount[i] - finished_test[i]
-            predict_remaining_time += (build_mcp_time + mean_execuation_time[i] + time_limit_setting[i]) * remaing_amount
-        
-        predict_time_limit = time_limit_setting[test_type]
-        finished_test[test_type]+=1
-    
-    framework = "Parallel-LNS"
+    framework = "CPR"
+    if evaluation_number <= 200:
+        framework = "Parallel-LNS"
+
     f_w = 1
     debug = False
-    remaining_time = total_time_limit - (time.time() - global_time_start)
+    # remaining_time = total_time_limit - (time.time() - global_time_start)
     if remote_client:
-        time_limit = (predict_time_limit/predict_remaining_time) * remaining_time
+        time_limit = 0 # (predict_time_limit/predict_remaining_time) * remaining_time
         if debug_print:
             print("time limit: ",time_limit)
             print("predict_time_limit: ",predict_time_limit)
             print("predict_remaining_time: ",predict_remaining_time)
             print("remaining_time: ",remaining_time)
             print("finished: ", finished_test)
-
-
-
     else:
-        time_limit = remaining_time / (num_of_evaluations - evaluation_number + 1)
+        time_limit = 0  # remaining_time / (num_of_evaluations - evaluation_number + 1)
     default_group_size = 16  # max number of agents in a group
     corridor_method = 1  # or "corridor2" or ""
     chasing = True
@@ -267,7 +236,7 @@ while True:
         time_temp = time.time()
     CBS.buildMCP()
     if debug_print:
-        print('TIme for building MCP: ', time.time() - time_temp)
+        print('Time for building MCP: ', time.time() - time_temp)
 
     if debug_print:
         # print paths
