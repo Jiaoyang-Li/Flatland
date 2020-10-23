@@ -50,11 +50,12 @@ void CPR::getNextLoc(vector<int>& to_go)
 {
     for (int i = 0; i < al.getNumOfAllAgents(); i++)
     {
-        if (al.paths_all[i].empty() || // the path has not been planned yet
-            al.agents_all[i].status >= 2) // the agent has already finished
+        if (al.paths_all[i].empty()) // the path has not been planned yet
             continue;
-        assert(agent_steps[i]+1 <= al.paths_all[i].size() );
-        to_go[i] = al.paths_all[i][agent_steps[i]].exit_loc;
+        if (agent_steps[i]+1 <= al.paths_all[i].size() )
+            to_go[i] = al.paths_all[i][agent_steps[i]].exit_loc;
+        else
+            to_go[i] = al.paths_all[i].back().location;
     }
 }
 
