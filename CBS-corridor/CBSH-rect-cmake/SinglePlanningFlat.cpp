@@ -51,7 +51,7 @@ bool SinglePlanningFlat::search()
 	 // generate start and add it to the OPEN list
 	LLNode* start;
 	if (agent.status == 0)
-	    start = new LLNode(-1, 0, 1 + my_heuristic[start_location].get_hval(agent.heading)/agent.speed, nullptr, 0, 0, false); 
+	    start = new LLNode(-1, 0, 1 + my_heuristic[start_location].get_hval(agent.heading)/agent.speed, nullptr, 0, 0, false);
     else
         start = new LLNode(start_location, 0, my_heuristic[start_location].get_hval(agent.heading)/agent.speed, nullptr, 0, 0, false);
 
@@ -330,8 +330,8 @@ bool SinglePlanningFlat::search()
 
 	}  // end while loop
 
-	assert(min_f_val >= constraintTable.length_max);
-	  // no path found
+//	assert(min_f_val >= constraintTable.length_max);
+//	  // no path found
 	releaseClosedListNodes(&allNodes_table);
 	open_list.clear();
 	focal_list.clear();

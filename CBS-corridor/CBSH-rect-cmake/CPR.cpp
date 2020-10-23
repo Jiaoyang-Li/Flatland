@@ -53,7 +53,7 @@ void CPR::getNextLoc(vector<int>& to_go)
         if (al.paths_all[i].empty() || // the path has not been planned yet
             al.agents_all[i].status >= 2) // the agent has already finished
             continue;
-        assert(agent_steps[i] < al.paths_all[i].size() - 1);
+        assert(agent_steps[i]+1 <= al.paths_all[i].size() );
         to_go[i] = al.paths_all[i][agent_steps[i]].exit_loc;
     }
 }
@@ -64,8 +64,9 @@ void CPR::update(p::list agent_location)
     replan = false;
     for (int i = 0; i < al.getNumOfAllAgents(); i++)
     {
-        if (agent_steps[i] >= al.paths_all[i].size() - 1) // the agent either has finished or the path has not been planned yet
+        if (agent_steps[i]+1 >= al.paths_all[i].size()) // the agent either has finished or the path has not been planned yet
             continue;
+
         if (agent_location[i] == al.paths_all[i][agent_steps[i]].exit_loc) // the agent has successfully moved to the next location
         {
             // update highway's value in both directions
@@ -93,6 +94,7 @@ void CPR::planPaths(float time_limit)
         runtime = ((fsec) (Time::now() - start_time)).count();
         if (runtime > time_limit)
             return;
+        al.agents.resize(1);
         al.agents[0] = agent;
         SinglePlanningFlat planner(ml, al, 1, time_limit - runtime, options1);
         planner.search();
