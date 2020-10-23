@@ -242,6 +242,7 @@ bool PythonCBS<Map>::search() {
     {
         runtime = ((fsec)(Time::now() - start_time)).count();
         cpr = new CPR(*al, *ml, options1, soft_time_limit - runtime);
+        return true;
     }
     else if (framework == "LNS")
     {

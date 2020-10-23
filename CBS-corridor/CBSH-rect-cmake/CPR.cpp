@@ -88,7 +88,7 @@ void CPR::update(p::list agent_location)
 void CPR::planPaths(float time_limit)
 {
     start_time = Time::now();
-    for (auto it = unplanned_agents.begin(); it != unplanned_agents.end(); ++it)
+    for (auto it = unplanned_agents.begin(); it != unplanned_agents.end();)
     {
         auto agent = *it;
         runtime = ((fsec) (Time::now() - start_time)).count();
@@ -110,7 +110,11 @@ void CPR::planPaths(float time_limit)
                     ml.railMap[state.exit_loc].highways[(state.exit_heading + 2) % 4]--;
                 }
             }
-            unplanned_agents.erase(it);
+            it = unplanned_agents.erase(it);
+        }
+        else
+        {
+            ++it;
         }
     }
 }
