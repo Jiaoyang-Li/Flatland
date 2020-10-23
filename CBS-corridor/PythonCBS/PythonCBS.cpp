@@ -243,7 +243,7 @@ bool PythonCBS<Map>::search() {
         runtime = ((fsec)(Time::now() - start_time)).count();
         cpr = new CPR(*al, *ml, options1, soft_time_limit - runtime);
     }
-    if (framework == "LNS")
+    else if (framework == "LNS")
     {
         LNS lns(*al, *ml, f_w, s, agent_priority_strategy, options1, corridor2, trainCorridor1, chasing,
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);

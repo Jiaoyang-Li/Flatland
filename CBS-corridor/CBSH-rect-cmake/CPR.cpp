@@ -94,7 +94,7 @@ void CPR::planPaths(float time_limit)
         if (runtime > time_limit)
             return;
         al.agents[0] = agent;
-        SinglePlanning planner(ml, al, 1, time_limit - runtime, options1); // TODO: this need to be changed to a non-wait-action planner
+        SinglePlanningFlat planner(ml, al, 1, time_limit - runtime, options1);
         planner.search();
         if (!planner.path.empty())
         {
