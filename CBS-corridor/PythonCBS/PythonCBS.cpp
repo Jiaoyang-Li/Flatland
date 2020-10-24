@@ -94,6 +94,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
         cpr->planPaths(time_limit);
         return;
     }
+    return;
     start_time = Time::now();// time(NULL) return time in seconds
     al->updateAgents(railEnv.attr("agents"));
     if (options1.debug)
