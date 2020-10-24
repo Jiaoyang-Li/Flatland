@@ -200,11 +200,11 @@ void MCP::getNextLoc(p::list agent_location, int timestep)
             if (get<0>(mcp[loc].front()) == i || agent_time[i] == no_wait_time[i].size() - 1)
                 to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
 
-            else if (first_agent < i && mcp[loc].size() > 1)
+            else if ( mcp[loc].size() > 1)
             {
                 if (get<0>(*std::next(mcp[loc].begin())) == i && // the second agent is i
                     agent_location[first_agent] == loc && // the fist agent is already at loc
-                    to_go[first_agent] != loc &&
+//                    to_go[first_agent] != loc &&
                     al->agents_all[first_agent].malfunction_left == 0)  // the first agent is going to leave
                     // agent_location[i] != al->paths_all[first_agent][agent_time[first_agent]].location) // not edge conflict
                 {

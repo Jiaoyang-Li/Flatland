@@ -96,7 +96,6 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     }
     return;
     start_time = Time::now();// time(NULL) return time in seconds
-    al->updateAgents(railEnv.attr("agents"));
     if (options1.debug)
     {
         cout << "Timestep = " << timestep << ";\t";
@@ -264,6 +263,10 @@ bool PythonCBS<Map>::search() {
         statistic_list[0].num_corridor2 = lns.num_corridor2;
         statistic_list[0].runtime_corridor = lns.runtime_corridor;
         iteration_stats[0] = lns.iteration_stats;
+        if (findConflicts()){
+            assert("Find conflict.");
+        }
+
         return succ;
     }
     else if(framework == "Parallel-LNS")
@@ -278,7 +281,6 @@ bool PythonCBS<Map>::search() {
 template <class Map>
 bool PythonCBS<Map>::findConflicts() const
 {
-    assert(kRobust > 0); // TODO: consider kDelay==0 in the future (in which case, we also need to consider edge conflicts)
     for (int i = 0; i < (int)al->agents_all.size() - 1; i++)
     {
         for (int j = i + 1; j < (int)al->agents_all.size(); j++)
@@ -288,11 +290,12 @@ bool PythonCBS<Map>::findConflicts() const
                 int loc = al->paths_all[i][t].location;
                 if (loc < 0)
                     continue;
-                for (int timestep = max(0, t - kRobust); timestep <= min(t + kRobust, (int)al->paths_all[j].size() - 1); timestep++)
-                {
-                    if (al->paths_all[j][timestep].location == loc)
-                        return true;
-                }
+                if (t < al->paths_all[j].size() && al->paths_all[j][t].location == loc)
+                    return true;
+                if (t < al->paths_all[j].size() && t>=1
+                && al->paths_all[j][t-1].location == loc &&  al->paths_all[j][t].location == al->paths_all[i][t-1].location)
+                    return true;
+
             }
         }
     }
