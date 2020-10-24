@@ -152,7 +152,7 @@ private:
 	vector<LNS*> lns_pool;
 	constraint_strategy s;
 	options options1;
-    float hard_time_limit = 270;
+    float hard_time_limit = 280;
     float soft_time_limit;
 	int kRobust;
 	int max_malfunction;
@@ -178,7 +178,8 @@ private:
     int strategies[4] = {0,1,3,5};
     int neighbours[4] = {0,2,3,4};
 
-
+    //replan
+    list<int> to_be_replanned;
 
     //stats about each iteration
     typedef tuple<int, double, double, double, int,
