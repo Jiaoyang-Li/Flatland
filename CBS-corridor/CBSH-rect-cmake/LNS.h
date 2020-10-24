@@ -46,6 +46,7 @@ public:
     }
     bool run(float hard_time_limit, float soft_time_limit);
     bool replan(float time_limit);
+    bool replan(list<int>& to_be_replanned, float time_limit);
     bool getInitialSolution();
 private:
     high_resolution_clock::time_point start_time;
