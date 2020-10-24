@@ -202,7 +202,7 @@ while True:
 
     framework = "CPR"
     if evaluation_number <= 200:
-        framework = "Parallel-LNS"
+        framework = "LNS"
 
     f_w = 1
     debug = False
