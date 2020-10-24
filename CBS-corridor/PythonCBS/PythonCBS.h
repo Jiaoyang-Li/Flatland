@@ -101,7 +101,6 @@ public:
             mcp.getNextLoc(agent_location,timestep);
             for (int i = 0; i < al->getNumOfAllAgents(); i++)
                 next_loc.append(mcp.to_go[i]);
-            al->updateAgents(railEnv.attr("agents"));
             return next_loc;
         }
     }

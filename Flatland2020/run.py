@@ -226,7 +226,6 @@ while True:
     prirority_ordering_strategy = 0
     replan_strategy = 1
 
-    time_limit += int(len(local_env.agents) / 100) * 20  # add additional 20 seconds for every 100 agents
 
     CBS = PythonCBS(local_env, framework, "CBSH", time_limit, default_group_size, debug, f_w,
                     corridor_method, chasing, accept_partial_solution, agent_priority_strategy,
