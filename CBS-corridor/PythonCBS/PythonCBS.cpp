@@ -94,127 +94,163 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
         cpr->planPaths(time_limit);
         return;
     }
-    al->updateAgents(railEnv.attr("agents"));
-    return;
-    start_time = Time::now();// time(NULL) return time in seconds
-    if (options1.debug)
+    else if (framework == "OnlinePP")
     {
-        cout << "Timestep = " << timestep << ";\t";
-        /*cout << "Agent id\t\t: ";
-        for (const auto& agent : al->agents_all)
+        start_time = Time::now();// time(NULL) return time in seconds
+        al->updateAgents(railEnv.attr("agents"));
+        for (int a : al->new_agents)
         {
-                cout << agent.agent_id << "\t";
+            int start = ml->linearize_coordinate(al->agents_all[a].initial_location);
+            opp->to_be_planned_group.push_back(start);
         }
-        cout << endl;
-        cout << "\t\t\t\tCurr location: ";
-        for (const auto& agent : al->agents_all)
-        {
-            if (agent.status == 1) // active
-                cout << ml->linearize_coordinate(agent.position) << "\t";
-            else
-                cout << "-1\t";
-        }*/
-        cout << endl;
-    }
-	if (al->new_malfunction_agents.empty() && to_be_replanned.empty())
-	    return; // we do not replan if there are no new mal agents and no to-be-replanned agents
+        opp->updateToBePlanedAgents(al->getNumOfAllAgents());
+        if (opp->to_be_planned_agents.empty())
+            return;
 
-    if (options1.debug)
-    {
-        cout << "New mal agent: ";
-        for (const auto& agent : al->new_malfunction_agents)
-        {
-            int loc = -1;
-            if (al->agents_all[agent].status == 1)
-                loc = ml->linearize_coordinate(al->agents_all[agent].position);
-            cout << agent << " at location " << loc
-                 << " (" << al->agents_all[agent].malfunction_left << " timesteps left), ";
-        }
+        // use mcp to build new paths
+        vector<Path> paths;
+        mcp.simulate(paths, timestep);
 
-        cout << endl;
-    }
-    int old_cost = mcp.getEstimatedCost(timestep);
-
-	// use mcp to build new paths
-    vector<Path> paths;
-    mcp.simulate(paths, timestep);// TODO: the current version does not handle speeds
-
-	int new_cost = 0;
-    for (int i = 0 ; i < (int)paths.size(); i++)
-    {
-        if (al->agents_all[i].status >= 2)  // done (2) or done removed (3)
-            continue;
-        else if (paths[i].empty())
-        {
-            new_cost += al->constraintTable.length_max;
-        }
-        else
-        {
-            new_cost += (int)paths[i].size() - 1;
-        }
-    }
-    if (options1.debug)
-    {
-        /*cout << "Old paths" << endl;
-        for (const auto& path : al->paths_all)
-        {
-            for (const auto& entry : path)
-                cout << entry.location << "\t";
-            cout << endl;
-        }
-        cout << "New paths" << endl;
-        for (const auto& path : paths)
-        {
-            for (const auto& entry : path)
-                cout << entry.location << "\t";
-            cout << endl;
-        }*/
-        cout << "Cost increase from " << old_cost << " to " << new_cost << "\t";  //endl;
-    }
-	//if (new_cost - old_cost < 0.01 * al->agents_all.size() * max_timestep)
-	//    return; // cost increase is smaller than the threshold
-
-    runtime = ((fsec)(Time::now() - start_time)).count();
-	if (runtime >= time_limit)
-	    return;
-
-	// update paths
-	al->paths_all = paths;
-    al->updateConstraintTable();
-
-    LNS lns(*al, *ml, f_w, s, agent_priority_strategy, options1, corridor2, trainCorridor1, chasing,
-            neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
-    runtime = ((fsec)(Time::now() - start_time)).count();
-	lns.replan(time_limit - runtime);
-	// lns.replan(to_be_replanned, time_limit - runtime);
-    if (options1.debug)
-    {
-        //cout << "Updated paths" << endl;
-        new_cost = 0;
-        for (int i = 0 ; i < (int)al->agents_all.size(); i++)
-        {
-            //for (const auto& entry : al->paths_all[i])
-            //    cout << entry.location << "\t";
-            //cout << endl;
-            if (al->agents_all[i].status >= 2) // the agent is done
-                continue;
-            if (al->paths_all[i].empty())
-            {
-                new_cost += al->constraintTable.length_max;
-            }
-            else
-            {
-                new_cost += (int)al->paths_all[i].size() - 1;
-            }
-        }
-        cout << "Updated cost = " << new_cost << endl;
-    }
-    mcp.clear();
-    mcp.build(al, ml, options1);
-    if (options1.debug)
-    {
         runtime = ((fsec)(Time::now() - start_time)).count();
-        cout << "Runtime = " << runtime << "s." << endl;
+        if (runtime >= time_limit)
+            return;
+
+        // update paths
+        al->paths_all = paths;
+        al->updateConstraintTable();
+
+        runtime = ((fsec)(Time::now() - start_time)).count();
+        opp->planPaths(time_limit - runtime);
+
+        mcp.clear();
+        mcp.build(al, ml, options1);
+        return;
+    }
+    else // LNS
+    {
+        start_time = Time::now();// time(NULL) return time in seconds
+        al->updateAgents(railEnv.attr("agents"));
+        if (options1.debug)
+        {
+            cout << "Timestep = " << timestep << ";\t";
+            /*cout << "Agent id\t\t: ";
+            for (const auto& agent : al->agents_all)
+            {
+                    cout << agent.agent_id << "\t";
+            }
+            cout << endl;
+            cout << "\t\t\t\tCurr location: ";
+            for (const auto& agent : al->agents_all)
+            {
+                if (agent.status == 1) // active
+                    cout << ml->linearize_coordinate(agent.position) << "\t";
+                else
+                    cout << "-1\t";
+            }*/
+            cout << endl;
+        }
+        if (timestep % 100 < 99 || al->new_malfunction_agents.empty())
+            return; // replan every 100 timesteps
+
+        if (options1.debug)
+        {
+            cout << "New mal agent: ";
+            for (const auto& agent : al->new_malfunction_agents)
+            {
+                int loc = -1;
+                if (al->agents_all[agent].status == 1)
+                    loc = ml->linearize_coordinate(al->agents_all[agent].position);
+                cout << agent << " at location " << loc
+                     << " (" << al->agents_all[agent].malfunction_left << " timesteps left), ";
+            }
+
+            cout << endl;
+        }
+
+        // use mcp to build new paths
+        vector<Path> paths;
+        mcp.simulate(paths, timestep);
+
+        if (options1.debug)
+        {
+            int old_cost = mcp.getEstimatedCost(timestep);
+            int new_cost = 0;
+            for (int i = 0 ; i < (int)paths.size(); i++)
+            {
+                if (al->agents_all[i].status >= 2)  // done (2) or done removed (3)
+                    continue;
+                else if (paths[i].empty())
+                {
+                    new_cost += al->constraintTable.length_max;
+                }
+                else
+                {
+                    new_cost += (int)paths[i].size() - 1;
+
+                }
+            }
+            /*cout << "Old paths" << endl;
+            for (const auto& path : al->paths_all)
+            {
+                for (const auto& entry : path)
+                    cout << entry.location << "\t";
+                cout << endl;
+            }
+            cout << "New paths" << endl;
+            for (const auto& path : paths)
+            {
+                for (const auto& entry : path)
+                    cout << entry.location << "\t";
+                cout << endl;
+            }*/
+            cout << "Cost increase from " << old_cost << " to " << new_cost << "\t";  //endl;
+        }
+        //if (new_cost - old_cost < 0.01 * al->agents_all.size() * max_timestep)
+        //    return; // cost increase is smaller than the threshold
+
+        runtime = ((fsec)(Time::now() - start_time)).count();
+        if (runtime >= time_limit)
+            return;
+
+        // update paths
+        al->paths_all = paths;
+        al->updateConstraintTable();
+
+        LNS lns(*al, *ml, f_w, s, agent_priority_strategy, options1, corridor2, trainCorridor1, chasing,
+                neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
+        runtime = ((fsec)(Time::now() - start_time)).count();
+        lns.replan(time_limit - runtime);
+        // lns.replan(to_be_replanned, time_limit - runtime);
+        if (options1.debug)
+        {
+            //cout << "Updated paths" << endl;
+            int new_cost = 0;
+            for (int i = 0 ; i < (int)al->agents_all.size(); i++)
+            {
+                //for (const auto& entry : al->paths_all[i])
+                //    cout << entry.location << "\t";
+                //cout << endl;
+                if (al->agents_all[i].status >= 2) // the agent is done
+                    continue;
+                if (al->paths_all[i].empty())
+                {
+                    new_cost += al->constraintTable.length_max;
+                }
+                else
+                {
+                    new_cost += (int)al->paths_all[i].size() - 1;
+                }
+            }
+            cout << "Updated cost = " << new_cost << endl;
+        }
+        mcp.clear();
+        mcp.build(al, ml, options1);
+        if (options1.debug)
+        {
+            runtime = ((fsec)(Time::now() - start_time)).count();
+            cout << "Runtime = " << runtime << "s." << endl;
+        }
+        al->new_malfunction_agents.clear();
     }
 }
 
@@ -240,10 +276,16 @@ bool PythonCBS<Map>::search() {
     al->computeHeuristics(ml); // TODO: this can be optimized; heuristics for agents with the same goal location only need to be computed once
     this->statistic_list.resize(1);
     this->iteration_stats.resize(1);
-    if (framework == "CPR")
+    if (framework == "OnlinePP")
     {
         runtime = ((fsec)(Time::now() - start_time)).count();
-        cpr = new CPR(*al, *ml, options1, soft_time_limit - runtime);
+        opp = new OnlinePP(*al, *ml, options1, soft_time_limit - runtime);
+        return true;
+    }
+    else if (framework == "CPR")
+    {
+        runtime = ((fsec)(Time::now() - start_time)).count();
+        cpr = new CPR(*al, *ml, options1, hard_time_limit - runtime);
         return true;
     }
     else if (framework == "LNS")

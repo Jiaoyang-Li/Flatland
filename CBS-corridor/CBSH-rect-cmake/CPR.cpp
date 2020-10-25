@@ -86,7 +86,6 @@ void CPR::update(p::list agent_location)
 
         }
     }
-
 }
 
 

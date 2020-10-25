@@ -7,6 +7,7 @@
 #include "LNS.h"
 #include "MCP.h"
 #include "CPR.h"
+#include "OnlinePP.h"
 
 using namespace std::chrono;
 typedef std::chrono::high_resolution_clock Time;
@@ -69,6 +70,11 @@ public:
         {
             delete cpr;
             cpr = nullptr;
+        }
+        if (opp != nullptr)
+        {
+            delete opp;
+            opp = nullptr;
         }
     }
 
@@ -214,6 +220,9 @@ private:
     list<int> to_be_replanned;
     // CPR
     CPR* cpr = nullptr;
+
+    // Online PP
+    OnlinePP* opp = nullptr;
 
     //stats about each iteration
     typedef tuple<int, double, double, double, int,

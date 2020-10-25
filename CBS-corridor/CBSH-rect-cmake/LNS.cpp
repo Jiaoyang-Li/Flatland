@@ -186,16 +186,67 @@ bool LNS::replan(float time_limit)
 {
     start_time = Time::now();
     max_timestep = al.constraintTable.length_max;
+    al.num_of_agents = 1;
+    al.agents.resize(1);
+
+    map<int, list<int>> agent_groups;  // key = path length, value = list of agents
+    int makespan = 0;
+    for (int i = 0; i < al.getNumOfAllAgents(); i++)
+    {
+        if (al.paths_all[i].empty())
+        {
+            makespan = max_timestep * 2;
+            agent_groups[max_timestep * 2].push_back(i);
+        }
+        else
+        {
+            makespan = max(makespan, (int) al.paths_all[i].size() - 1);
+            if (al.agents_all[i].status == 0)
+                agent_groups[al.paths_all[i].size() - 1].push_back(i);
+        }
+    }
+    bool empty_path = false;
+    for (auto it = agent_groups.rbegin(); it != agent_groups.rend() && !empty_path; ++it) // replan paths from the longest to the shortest
+    {
+        for (auto i : it->second)
+        {
+            runtime = ((fsec) (Time::now() - start_time)).count();
+            if (runtime >= time_limit)
+                return true;
+
+            auto copy = al.paths_all[i];
+            al.constraintTable.delete_path(i, al.paths_all[i]);
+            runtime = ((fsec) (Time::now() - start_time)).count();
+            al.agents[0] = &al.agents_all[i];
+            SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
+            planner.search();
+            if (planner.path.empty())
+            {
+                addAgentPath(i, copy);
+                empty_path = true;
+                if (it->first < max_timestep * 2)
+                    break;
+            }
+            else
+            {
+                addAgentPath(i, planner.path);
+            }
+        }
+    }
+    return true;
+}
+
+/*
+bool LNS::replan(float time_limit)
+{
+    start_time = Time::now();
+    max_timestep = al.constraintTable.length_max;
     set<int> tabu_list; // record the agents already been replanned
     al.num_of_agents = 1;
     al.agents.resize(1);
     list<list<pair<int, int>>> agent_groups;
     for (const auto& mal_agent : al.new_malfunction_agents)
     {
-        /*if (options1.debug)
-        {
-            cout << "Mal agent " << mal_agent << "'s intersections: ";
-        }*/
         // find the intersections in front of the mal_agent
         list<pair<int, int> > future_intersections; // <location, timestep>
         if (al.agents_all[mal_agent].status == 0) // the mal agent is still in the station
@@ -209,25 +260,11 @@ bool LNS::replan(float time_limit)
                 future_intersections.emplace_back(loc, t);
             }
         }
-        /*if (options1.debug)
-        {
-            for (const auto &intersection : future_intersections)
-                cout << intersection.first << "(t=" << intersection.second << ")\t";
-            cout << endl;
-        }*/
         for (const auto &intersection : future_intersections)
         {
             // get agents that pass through the intersection after the mal agent
             list<pair<int, int>> agents; // <agent_id, timestep>
             al.constraintTable.get_agents(agents, mal_agent, intersection); // TODO: get this information from MCP instead of constraint table
-
-            /*if (options1.debug && !agents.empty())
-            {
-                cout << "Intersection " << intersection.first << " has agents ";
-                for (const auto& agent : agents)
-                    cout << agent.first << "\t";
-                cout << endl;
-            }*/
 
             for (const auto &agent : agents) // replan the agents one by one
             {
@@ -293,7 +330,7 @@ bool LNS::replan(float time_limit)
 
     return true;
 }
-
+ */
 bool LNS::replan(list<int>& to_be_replanned, float time_limit)
 {
     start_time = Time::now();
@@ -302,10 +339,6 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
     list<int> new_to_be_replanned;
     for (const auto& mal_agent : al.new_malfunction_agents)
     {
-        /*if (options1.debug)
-        {
-            cout << "Mal agent " << mal_agent << "'s intersections: ";
-        }*/
         // find the intersections in front of the mal_agent
         list<pair<int, int> > future_intersections; // <location, timestep>
         if (al.agents_all[mal_agent].status == 0) // the mal agent is still in the station
@@ -319,12 +352,6 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
                 future_intersections.emplace_back(loc, t);
             }
         }
-        /*if (options1.debug)
-        {
-            for (const auto &intersection : future_intersections)
-                cout << intersection.first << "(t=" << intersection.second << ")\t";
-            cout << endl;
-        }*/
         for (const auto &intersection : future_intersections)
         {
             runtime = ((fsec) (Time::now() - start_time)).count();
@@ -336,14 +363,6 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
             // get agents that pass through the intersection after the mal agent
             list<pair<int, int>> agents; // <agent_id, timestep>
             al.constraintTable.get_agents(agents, mal_agent, intersection); // TODO: get this information from MCP instead of constraint table
-
-            /*if (options1.debug && !agents.empty())
-            {
-                cout << "Intersection " << intersection.first << " has agents ";
-                for (const auto& agent : agents)
-                    cout << agent.first << "\t";
-                cout << endl;
-            }*/
 
             for (const auto &agent : agents) // replan the agents one by one
             {

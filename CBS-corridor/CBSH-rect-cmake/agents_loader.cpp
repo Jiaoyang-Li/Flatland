@@ -104,13 +104,23 @@ AgentsLoader::AgentsLoader(p::object agents) {
 
 void AgentsLoader::updateAgents(p::object agents)
 {
-    new_malfunction_agents.clear();
+    // new_malfunction_agents.clear();
+    new_agents.clear();
+    num_active_agents = 0;
     for (int i = 0; i < num_of_agents_all; i++)
     {
-        agents_all[i].status = p::extract<int>(agents[i].attr("status"));
+        int new_status = p::extract<int>(agents[i].attr("status"));
+        int malfunction_left = p::extract<int>(p::long_(agents[i].attr("malfunction_data")["malfunction"]));
+        if (new_status == 1)
+            num_active_agents++;
+        if (agents_all[i].status == 0 && new_status == 1)
+            new_agents.push_back(i); // agent i just starts to move
+        else if (agents_all[i].status == 0 && agents_all[i].malfunction_left == 0 && malfunction_left > 0)
+            new_agents.push_back(i); // agent i is about to move, but trapped by malfunction
+
+        agents_all[i].status = new_status;
         if (agents_all[i].status >= 2)  // done (2) or done removed (3)
             continue;
-        int malfunction_left = p::extract<int>(p::long_(agents[i].attr("malfunction_data")["malfunction"]));
         if (agents_all[i].malfunction_left == 0 && malfunction_left > 0)
             new_malfunction_agents.push_back(i);
         agents_all[i].malfunction_left = malfunction_left;
