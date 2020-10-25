@@ -15,11 +15,13 @@
 #include "ConstraintTable.h"
 using namespace std;
 
+static vector<hvals> empty_h;
+
 struct Agent {
 	pair<int, int> initial_location;
 	pair<int, int> goal_location;
 	pair<int, int> position;
-    vector<hvals> heuristics;
+    vector<hvals>& heuristics = empty_h;
     int agent_id;
 	int status = 0;
 	int heading = -1;
@@ -31,6 +33,11 @@ struct Agent {
 	int exit_heading = -1;
 	int distance_to_goal = MAX_COST;
 	int priority = 0;
+
+    Agent& operator=(const Agent& other)
+    {
+        return *this;
+    }
 };
 
 class AgentsLoader {
@@ -176,6 +183,7 @@ private:
     int num_of_dead_agents = 0;
     list<int> unplanned_agents;
     int num_of_agents_all;
+    std::unordered_map<int,vector<hvals>> existing_heuristics; //goal heuristic
 
     void quickSort(vector<int>& agent_order, int low, int high, int agent_priority_strategy);
 };

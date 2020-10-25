@@ -45,10 +45,8 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 {
 	size_t root_location = goal_location;
 	res.resize(map_rows * map_cols);
-		
-	// generate a heap that can save nodes (and a open_handle)
-	boost::heap::fibonacci_heap< LLNode*, boost::heap::compare<LLNode::compare_node> > heap;
-	boost::heap::fibonacci_heap< LLNode*, boost::heap::compare<LLNode::compare_node> >::handle_type open_handle;
+
+	std::list<LLNode*> queue;
 	// generate hash_map (key is a node pointer, data is a node handler,
 	//                    NodeHasher is the hash function to be used,
 	//                    eqnode is used to break ties when hash values are equal)
@@ -59,21 +57,21 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 	if (start_heading == -1) {
 		LLNode* root = new LLNode(root_location, 0, 0, nullptr, 0);
 		root->heading = start_heading;
-		root->open_handle = heap.push(root);  // add root to heap
+		queue.push_front(root);  // add root to heap
 		nodes.insert(root);       // add root to hash_table (nodes)
 	}
 	else {
 		for (int heading = 0; heading < 4; heading++) {
 			LLNode* root = new LLNode(root_location, 0, 0, nullptr, 0);
 			root->heading = heading;
-			root->open_handle = heap.push(root);  // add root to heap
+			queue.push_front(root);  // add root to heap
 			nodes.insert(root);       // add root to hash_table (nodes)
 		}
 	}
 	
-	while (!heap.empty()) {
-		LLNode* curr = heap.top();
-		heap.pop();
+	while (!queue.empty()) {
+		LLNode* curr = queue.back();
+		queue.pop_back();
 
 		list<Transition> transitions;
 		ml->get_transitions(transitions, curr->loc,curr->heading,true);
@@ -101,18 +99,13 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 					delete(next);
 					continue;
 				}
-				next->open_handle = heap.push(next);
+				queue.push_front(next);
 				nodes.insert(next);
 			}
-			else {  // update existing node's g_val if needed (only in the heap)
-				delete(next);  // not needed anymore -- we already generated it before
-				LLNode* existing_next = (*it);
-				if (existing_next->g_val > next_g_val) 
-				{
-					existing_next->g_val = next_g_val;
-					heap.update(open_handle);
-				}
+			else{
+			    delete(next);
 			}
+
 		}
 	}
 	// iterate over all nodes and populate the distances
@@ -153,7 +146,7 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 		delete (s);
 	}
 	nodes.clear();
-	heap.clear();
+	queue.clear();
 
 }
 
