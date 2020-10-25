@@ -21,18 +21,23 @@ public:
     void print(int loc);
     void printAgentTime(void);
     void printAgentNoWaitTime(void);
-    void simulate(vector<Path>& paths, int timestep) const;
+    void simulate(vector<Path>& paths, int timestep);
     int getEstimatedCost(int timestep) const;
 private:
     const AgentsLoader* al = nullptr;
     const FlatlandLoader* ml = nullptr;
     options options1;
 
-    typedef list<tuple<int, int>> Occupy;
+    typedef list<int> Occupy;
     vector<Occupy> mcp;
     vector<int> agent_time;
-
     vector<int> appear_time;
     vector<vector<int>> no_wait_time;
+
+    vector<Occupy> copy_mcp;
+    vector<int> copy_agent_time;
+    list<int> unfinished_agents;
+
+    bool moveAgent(vector<Path>& paths, list<int>::iterator& p, int t, int timestep);
 };
 

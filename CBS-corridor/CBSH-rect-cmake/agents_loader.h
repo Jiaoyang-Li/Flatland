@@ -44,6 +44,8 @@ public:
     int makespan = 0; // the makepsan of the paths in paths_all
 
     list<int> new_malfunction_agents; // agents that have just got malfunction
+    list<int> new_agents; // agents that have just appear on the map
+    int num_active_agents = 0;
 
     //vector< pair<int, int> > initial_locations;
     //vector< pair<int, int> > goal_locations;
