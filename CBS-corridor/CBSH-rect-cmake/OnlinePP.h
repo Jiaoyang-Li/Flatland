@@ -13,7 +13,6 @@ public:
 
 private:
     bool replan = false;
-    high_resolution_clock::time_point start_time;
     float runtime = 0;
     AgentsLoader& al;
     FlatlandLoader& ml;

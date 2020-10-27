@@ -6,6 +6,7 @@ namespace p = boost::python;
 class MCP {
 public:
     vector<int> to_go;
+    list<int> active_agents;
 
     void getNextLoc(p::list agent_location, int timestep);
     void update(p::list agent_location, p::dict agent_action);
@@ -33,7 +34,6 @@ private:
     vector<int> agent_time;
     vector<int> appear_time;
     vector<vector<int>> no_wait_time;
-
     vector<Occupy> copy_mcp;
     vector<int> copy_agent_time;
     list<int> unfinished_agents;

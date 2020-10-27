@@ -208,10 +208,14 @@ void MCP::build(const AgentsLoader* _al, const FlatlandLoader* _ml, options _opt
     to_go.resize(al->getNumOfAllAgents(), -1);
     appear_time.resize(al->getNumOfAllAgents(), al->constraintTable.length_max + 1);
     size_t max_timestep = 0;
+    active_agents.clear();
     for (int i = 0; i < al->getNumOfAllAgents(); i++)
-        if (!al->paths_all[i].empty() &&
-            al->paths_all[i].size() > max_timestep)
-            max_timestep = al->paths_all[i].size();
+        if (!al->paths_all[i].empty())
+        {
+            active_agents.push_back(i);
+            if (al->paths_all[i].size() > max_timestep)
+                max_timestep = al->paths_all[i].size();
+        }
     //if (options1.debug)
     //    cout << "max_timestep = " << max_timestep << endl;
 
@@ -219,10 +223,9 @@ void MCP::build(const AgentsLoader* _al, const FlatlandLoader* _ml, options _opt
     no_wait_time.resize(al->getNumOfAllAgents());
     for (size_t t = 0; t < max_timestep; t++)
     {
-        for (int i = 0; i < al->getNumOfAllAgents(); i++)
+        for (int i : active_agents)
         {
-            if (!al->paths_all[i].empty() &&
-                t < al->paths_all[i].size() &&
+            if (t < al->paths_all[i].size() &&
                 al->paths_all[i][t].location != -1 &&
                 (t==0 || al->paths_all[i][t].location != al->paths_all[i][t-1].location))
             {
@@ -233,9 +236,9 @@ void MCP::build(const AgentsLoader* _al, const FlatlandLoader* _ml, options _opt
         }
     }
 
-    for (int i = 0; i < al->getNumOfAllAgents(); i++)
+    for (int i : active_agents)
     {
-        assert(al->paths_all[i].empty() || !no_wait_time[i].empty());
+        assert(!no_wait_time[i].empty());
         if (!no_wait_time[i].empty() && no_wait_time[i][0] == 0)
         {
             agent_time[i] = 1;
@@ -247,9 +250,9 @@ void MCP::build(const AgentsLoader* _al, const FlatlandLoader* _ml, options _opt
 
 void MCP::getNextLoc(p::list agent_location, int timestep)
 {
-    for (int i = 0; i < al->getNumOfAllAgents(); i++)
+    for (int i : active_agents)
     {
-        if (al->paths_all[i].empty() || al->agents_all[i].status >= 2)
+        if (al->agents_all[i].status >= 2)
             to_go[i] = -1;
         else if (al->agents_all[i].malfunction_left > 0)
             to_go[i] = p::extract<int>(p::long_(agent_location[i]));
@@ -283,11 +286,9 @@ void MCP::getNextLoc(p::list agent_location, int timestep)
 
 void MCP::update(p::list agent_location, p::dict agent_action)
 {
-    for (int i = 0; i < al->getNumOfAllAgents(); i++)
+    for (int i : active_agents)
     {
-        if (al->paths_all[i].empty())
-            continue;
-        else if (agent_time[i] < no_wait_time[i].size() &&
+        if (agent_time[i] < no_wait_time[i].size() &&
                  agent_location[i] != -1 &&
                  agent_location[i] == al->paths_all[i][no_wait_time[i][agent_time[i]]].location)
         {
