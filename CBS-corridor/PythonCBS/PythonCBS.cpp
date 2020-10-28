@@ -124,12 +124,16 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
 
         mcp.clear();
         mcp.build(al, ml, options1);
+        runtime = ((fsec)(Time::now() - start_time)).count();
+        cout << "Active agents = " << mcp.active_agents.size() << endl;
+        cout << "Runtime for replan  = " << runtime << endl;
         return;
     }
     else // LNS
     {
         start_time = Time::now();// time(NULL) return time in seconds
         al->updateAgents(railEnv.attr("agents"));
+        return;
         if (options1.debug)
         {
             cout << "Timestep = " << timestep << ";\t";

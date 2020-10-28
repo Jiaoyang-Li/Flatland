@@ -200,9 +200,9 @@ while True:
         env_width = local_env.width
         env_height = local_env.height
 
-    framework = "CPR"
-    if evaluation_number <= 200:
-        framework = "LNS"
+    # framework = "CPR"
+    # if evaluation_number <= 200:
+    framework = "LNS"
 
     f_w = 1
     debug = False

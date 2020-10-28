@@ -223,6 +223,7 @@ bool LNS::replan(float time_limit)
             al.agents[0] = &al.agents_all[i];
             SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
             planner.search();
+            assert(planner.path.size() <= copy.size());
             if (planner.path.empty())
             {
                 addAgentPath(i, copy);
@@ -233,6 +234,10 @@ bool LNS::replan(float time_limit)
             else
             {
                 addAgentPath(i, planner.path);
+                if (copy.size() == planner.path.size()) // fail to decrease the makespan
+                {
+                    return true;
+                }
             }
         }
     }
@@ -431,6 +436,8 @@ bool LNS::getInitialSolution()
         runtime = ((fsec)(Time::now() - start_time)).count();
         if (runtime >= hard_time_limit)
         {
+            cout << "Find a solution for " << al.getNumOfAllAgents() - remaining_agents << " agents" <<
+                    " with " << remaining_agents << " agents remain" << endl;
             return false;
         }
         al.agents[0] = &al.agents_all[agent];
@@ -440,17 +447,16 @@ bool LNS::getInitialSolution()
                     << "Agent " << al.agents[0]->agent_id << endl;
 //        MultiMapICBSSearch<FlatlandLoader> icbs(&ml, &al, f_w, c, 0, options1.debug? 3 : 0, options1);
 //        icbs.runICBSSearch();
-        SinglePlanning planner(ml,al,f_w,0,options1);
+        SinglePlanning planner(ml,al,f_w,hard_time_limit - runtime,options1);
         planner.search();
         updateCBSResults(planner);
         addAgentPath(agent, planner.path);
         remaining_agents--;
     }
 
-    runtime = ((fsec)(Time::now() - start_time)).count();
-    if (options1.debug)
-        cout << endl << endl << "Find a solution for " << al.getNumOfAllAgents() - al.getNumOfUnplannedAgents()
-         << " agents (including " << al.getNumOfDeadAgents() << " dead agents) in " << runtime << " seconds!" << endl;
+    cout << endl << endl << "Find a solution for " << al.getNumOfAllAgents() - al.getNumOfUnplannedAgents()
+         << " agents " << endl;
+
 
     return true;
 }
