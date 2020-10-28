@@ -426,7 +426,7 @@ inline void SingleAgentICBS<Map>::releaseClosedListNodes(hashtable_t* allNodes_t
 
 template<class Map>
 SingleAgentICBS<Map>::SingleAgentICBS(int start_location, int goal_location,  const Map* ml1, AgentsLoader* al,int agent_id, int start_heading, int kRobust):
-    ml(ml1), my_heuristic(al->agents[agent_id]->heuristics)
+    ml(ml1), my_heuristic(*al->agents[agent_id]->heuristics)
 {
 	this->al = al;
 	this->agent_id = agent_id;

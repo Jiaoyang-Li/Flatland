@@ -349,7 +349,7 @@ inline void SinglePlanningFlat::releaseClosedListNodes(hashtable_t* allNodes_tab
 
 
 SinglePlanningFlat::SinglePlanningFlat(const FlatlandLoader& ml, AgentsLoader& al, double f_w, float time_limit, options option):
-    ml(ml),al(al), my_heuristic(al.agents[0]->heuristics),constraintTable(al.constraintTable), agent(*al.agents[0])
+    ml(ml),al(al), my_heuristic(*al.agents[0]->heuristics),constraintTable(al.constraintTable), agent(*al.agents[0])
 {
     if(al.agents.size()!=1)
         cout<<"Single Planning can only have 1 agent in al->agents"<<endl;

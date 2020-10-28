@@ -15,13 +15,12 @@
 #include "ConstraintTable.h"
 using namespace std;
 
-static vector<hvals> empty_h;
 
 struct Agent {
 	pair<int, int> initial_location;
 	pair<int, int> goal_location;
 	pair<int, int> position;
-    vector<hvals>& heuristics = empty_h;
+    vector<hvals>* heuristics = NULL;
     int agent_id;
 	int status = 0;
 	int heading = -1;
@@ -34,10 +33,6 @@ struct Agent {
 	int distance_to_goal = MAX_COST;
 	int priority = 0;
 
-    Agent& operator=(const Agent& other)
-    {
-        return *this;
-    }
 };
 
 class AgentsLoader {

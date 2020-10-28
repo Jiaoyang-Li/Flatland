@@ -64,7 +64,7 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 		for (int heading = 0; heading < 4; heading++) {
 			LLNode* root = new LLNode(root_location, 0, 0, nullptr, 0);
 			root->heading = heading;
-			queue.push_front(root);  // add root to heap
+            queue.push_front(root);  // add root to heap
 			nodes.insert(root);       // add root to hash_table (nodes)
 		}
 	}
@@ -132,7 +132,7 @@ void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 					int heading = (next_heading + 2) % 4;
                     if (s->g_val < res[s->loc].heading[heading]) {
 						res[s->loc].heading[heading] = s->g_val;
-					}
+                    }
 
 				}
 			}

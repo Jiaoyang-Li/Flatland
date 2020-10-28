@@ -825,7 +825,7 @@ void PythonCBS<Map>::generateNeighbor(int agent_id, const PathEntry& start, int 
 {
     // a random walk with path that is shorter than upperbound and has conflicting with neighbor_size agents
     int speed = al->agents_all[agent_id].speed;
-    const auto& heuristics = al->agents_all[agent_id].heuristics;
+    const auto& heuristics = *al->agents_all[agent_id].heuristics;
     int loc = start.location;
     int heading = start.heading;
     auto position_fraction = start.position_fraction;

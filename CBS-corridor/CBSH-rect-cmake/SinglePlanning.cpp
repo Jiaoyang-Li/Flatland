@@ -5,10 +5,11 @@
 
 void SinglePlanning::updatePath(LLNode* goal)
 {
-	path.resize(goal->timestep + 1);
+	path.resize(goal->g_val + 1);
 	LLNode* curr = goal;
 	num_of_conf = goal->num_internal_conf;
-	for(int t = goal->timestep; t >= 0; t--)
+
+    for(int t = goal->g_val; t >= 0; t--)
 	{
 
 		path[t].location = curr->loc;
@@ -398,7 +399,7 @@ inline void SinglePlanning::releaseClosedListNodes(hashtable_t* allNodes_table)
 
 
 SinglePlanning::SinglePlanning(const FlatlandLoader& ml, AgentsLoader& al, double f_w, float time_limit, options option):
-    ml(ml),al(al), my_heuristic(al.agents[0]->heuristics),constraintTable(al.constraintTable), agent(*al.agents[0])
+    ml(ml),al(al), my_heuristic(*al.agents[0]->heuristics),constraintTable(al.constraintTable), agent(*al.agents[0])
 {
     if(al.agents.size()!=1)
         cout<<"Single Planning can only have 1 agent in al->agents"<<endl;

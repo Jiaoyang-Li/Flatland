@@ -614,16 +614,17 @@ void AgentsLoader::computeHeuristics(const FlatlandLoader* ml)
         int goal_loc = ml->linearize_coordinate(agent.goal_location.first, agent.goal_location.second);
 
         if (existing_heuristics.count(goal_loc)){
-            agent.heuristics = existing_heuristics[goal_loc];
+            agent.heuristics = &existing_heuristics[goal_loc];
+
         }
         else{
             existing_heuristics[goal_loc] = vector<hvals>();
             ComputeHeuristic<FlatlandLoader> ch(init_loc, goal_loc, ml, agent.heading);
             ch.getHVals(existing_heuristics[goal_loc]);
-            agent.heuristics = existing_heuristics[goal_loc];
+            agent.heuristics = &existing_heuristics[goal_loc];
         }
 
-        agent.distance_to_goal = agent.heuristics[init_loc].get_hval(agent.heading);
+        agent.distance_to_goal = (*agent.heuristics)[init_loc].get_hval(agent.heading);
     }
 }
 
