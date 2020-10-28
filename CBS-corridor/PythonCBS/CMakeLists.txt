@@ -55,8 +55,8 @@ ADD_LIBRARY(PythonCBS SHARED
 		../CBSH-rect-cmake/MCP.h
 		../CBSH-rect-cmake/CPR.cpp
         ../CBSH-rect-cmake/CPR.h
-		../CBSH-rect-cmake/onlinePP.cpp
-		../CBSH-rect-cmake/onlinePP.h)
+		../CBSH-rect-cmake/OnlinePP.cpp
+		../CBSH-rect-cmake/OnlinePP.h)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY  "./bin")
 
 
