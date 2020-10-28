@@ -193,6 +193,8 @@ bool LNS::replan(float time_limit)
     int makespan = 0;
     for (int i = 0; i < al.getNumOfAllAgents(); i++)
     {
+        if (al.agents_all[i].status >= 2)
+            continue;
         if (al.paths_all[i].empty())
         {
             makespan = max_timestep * 2;
@@ -208,6 +210,7 @@ bool LNS::replan(float time_limit)
     bool empty_path = false;
     for (auto it = agent_groups.rbegin(); it != agent_groups.rend() && !empty_path; ++it) // replan paths from the longest to the shortest
     {
+
         for (auto i : it->second)
         {
             runtime = ((fsec) (Time::now() - start_time)).count();
