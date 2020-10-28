@@ -446,7 +446,7 @@ bool LNS::getInitialSolution()
                     << "Agent " << al.agents[0]->agent_id << endl;
 //        MultiMapICBSSearch<FlatlandLoader> icbs(&ml, &al, f_w, c, 0, options1.debug? 3 : 0, options1);
 //        icbs.runICBSSearch();
-        SinglePlanning planner(ml,al,f_w,0,options1);
+        SinglePlanning planner(ml,al,f_w,hard_time_limit - runtime,options1);
         planner.search();
         updateCBSResults(planner);
         addAgentPath(agent, planner.path);
