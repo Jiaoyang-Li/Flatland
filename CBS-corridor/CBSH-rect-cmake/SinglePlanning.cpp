@@ -1,5 +1,5 @@
 #include "SinglePlanning.h"
-
+#include <stack>
 #include <iostream>
 
 
@@ -472,6 +472,46 @@ void SIPP::getSafeIntervals(int prev_loc, int prev_timestep,
 void SIPP::updatePath(SIPPNode* goal)
 {
     path.resize(goal->timestep + 1);
+    const auto* curr = goal;
+    int t_start = goal->timestep;
+    std::stack<const SIPPNode*> states;
+    while (curr->parent != nullptr) // non-root node
+    {
+        states.push(curr);
+        t_start = min(t_start - 1, curr->parent->interval.second - 1); // latest timestep to leave curr->parent->loc
+        curr = curr->parent;
+    }
+    const auto* prev = states.top(); states.pop();
+    curr = states.top(); states.pop();
+    for (int t = t_start + 1; t < goal->timestep; t++)
+    {
+        if (t > t_start + 1 && t >= curr->interval.first)
+        {
+            prev = curr;
+            curr = states.top(); states.pop();
+        }
+        path[t].location = prev->loc;
+        path[t].heading = prev->heading;
+        path[t].position_fraction = prev->position_fraction;
+        path[t].malfunction_left = prev->malfunction_left;
+        path[t].exit_heading = prev->exit_heading;
+        path[t].exit_loc = prev->exit_loc;
+        assert(!constraintTable.is_constrained(agent.agent_id, path[t].location, t, path[t - 1].location));
+    }
+    assert(states.empty());
+    assert(!constraintTable.is_constrained(agent.agent_id, path[goal->timestep].location,
+            goal->timestep, path[goal->timestep - 1].location));
+    path[goal->timestep].location = goal->loc;
+    path[goal->timestep].heading = goal->heading;
+    path[goal->timestep].position_fraction = goal->position_fraction;
+    path[goal->timestep].malfunction_left = goal->malfunction_left;
+    path[goal->timestep].exit_heading = goal->exit_heading;
+    path[goal->timestep].exit_loc = goal->exit_loc;
+}
+
+/*void SIPP::updatePath(SIPPNode* goal)
+{
+    path.resize(goal->timestep + 1);
     const LLNode* curr = goal;
     while (curr->parent != nullptr) // non-root node
     {
@@ -494,4 +534,4 @@ void SIPP::updatePath(SIPPNode* goal)
         path[curr->timestep].exit_loc = curr->exit_loc;
         curr = prev;
     }
-}
+}*/

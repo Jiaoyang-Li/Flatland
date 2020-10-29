@@ -448,10 +448,9 @@ bool LNS::getInitialSolution()
         }
     }
 
-    cout << endl << endl << "Find a solution for " << al.getNumOfAllAgents() - al.getNumOfUnplannedAgents()
-         << " agents " << endl;
-
-
+    cout << "Find a solution for " << al.getNumOfAllAgents() - remaining_agents - dead_agents << " agents" <<
+         " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" << endl;
+    cout << "Sum of costs = " << sum_of_costs <<  " and makespan = " << makespan << endl;
     return true;
 }
 
