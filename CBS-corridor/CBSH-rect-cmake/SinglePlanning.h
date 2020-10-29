@@ -22,12 +22,6 @@ typedef std::chrono::duration<float> fsec;
 class SinglePlanning
 {
 public:
-	// define typedefs and handles for heap and hash_map
-	typedef boost::heap::pairing_heap< LLNode*, boost::heap::compare<LLNode::compare_node> > heap_open_t;
-    typedef boost::unordered_set<LLNode*, LLNode::NodeHasher, LLNode::eqnode> hashtable_t;
-	heap_open_t open_list;
-	hashtable_t allNodes_table;
-
     Agent& agent;
 	int start_location;
 	int goal_location;
@@ -49,23 +43,54 @@ public:
 	uint64_t LL_num_generated;
 
 
-	// Updates the path datamember
-	void updatePath(LLNode* goal);
-
-	// find path by time-space A* search
-	// Returns true if a collision free path found  while
-	// minimizing the number of internal conflicts (that is conflicts with known_paths for other agents found so far).
-	// lowerbound is the lowerbound of the length of the path
-	// max_plan_len used to compute the size of res_table
 	bool search(bool flat = false);
-
-	inline void releaseClosedListNodes(hashtable_t* allNodes_table);
 
 	int getHeuristicAtStart() const {return (int)(my_heuristic[start_location].get_hval(agent.heading)); }
 
     SinglePlanning(const FlatlandLoader& ml, AgentsLoader& al, double f_w, float time_limit, options option);
 
-
+private:
+    // define typedefs and handles for heap and hash_map
+    typedef boost::heap::pairing_heap< LLNode*, boost::heap::compare<LLNode::compare_node> > heap_open_t;
+    typedef boost::unordered_set<LLNode*, LLNode::NodeHasher, LLNode::eqnode> hashtable_t;
+    heap_open_t open_list;
+    hashtable_t allNodes_table;
+    // Updates the path datamember
+    void updatePath(LLNode* goal);
+    inline void releaseClosedListNodes()
+    {
+        for (auto it = allNodes_table.begin(); it != allNodes_table.end(); ++it)
+            delete (*it);
+        open_list.clear();
+        allNodes_table.clear();
+    }
 };
 
+
+class SIPP: public SinglePlanning
+{
+public:
+    bool search();
+    SIPP(const FlatlandLoader& ml, AgentsLoader& al, double f_w, float time_limit, options option):
+            SinglePlanning(ml, al, f_w, time_limit, option) {}
+
+private:
+
+    void getSafeIntervals(int prev_loc, int prev_timestep,
+                          const Interval& prev_interval, int next_loc, int next_h, list<Interval>& intervals);
+    // define typedefs and handles for heap and hash_map
+    typedef boost::heap::pairing_heap< SIPPNode*, boost::heap::compare<SIPPNode::compare_node> > heap_open_t;
+    typedef boost::unordered_set<SIPPNode*, SIPPNode::NodeHasher, SIPPNode::eqnode> hashtable_t;
+    heap_open_t open_list;
+    hashtable_t allNodes_table;
+    // Updates the path datamember
+    void updatePath(SIPPNode* goal);
+    inline void releaseClosedListNodes()
+    {
+        for (auto it = allNodes_table.begin(); it != allNodes_table.end(); ++it)
+            delete (*it);
+        open_list.clear();
+        allNodes_table.clear();
+    }
+};
 

@@ -12,6 +12,11 @@ bool ConstraintTable::is_constrained(int agent_id, int loc, int timestep, int pr
             CT_paths[loc][timestep - 1] == CT_paths[pre_loc][timestep]); //edge conflict
 }
 
+bool ConstraintTable::blocked(int loc, int t) const
+{
+    return loc >=0 && !CT_paths[loc].empty() && CT_paths[loc][t] >= 0;
+}
+
 void ConstraintTable::get_agents(set<int>& conflicting_agents, int loc) const
 {
     if (loc < 0)

@@ -313,6 +313,10 @@ bool PythonCBS<Map>::search() {
             assert("Find conflict.");
         }
 
+        if (options1.debug)
+        {
+            al->printPaths();
+        }
         return succ;
     }
     else if(framework == "Parallel-LNS")

@@ -75,30 +75,7 @@ struct Transition {
         exit_loc(exit_loc), exit_heading(exit_heading) {}
 };
 
-/*struct MDDPath {
-	vector<std::unordered_set<int>> levels;
-	void print() {
-		for (int l = 0; l < levels.size(); l++) {
-			std::unordered_set<int>::iterator it;
-			std::cout << "level " << l << ": ";
-			for (it = levels[l].begin(); it != levels[l].end(); ++it) {
-				std::cout << *it << ",";
-			}
-			std::cout << std::endl;
-		}
-	}
-	void print(int col) {
-		for (int l = 0; l < levels.size(); l++) {
-			std::unordered_set<int>::iterator it;
-			std::cout << "level " << l << ": ";
-			for (it = levels[l].begin(); it != levels[l].end(); ++it) {
-				std::cout <<"("<< *it/col << "," << *it%col <<") ";
-			}
-			std::cout << std::endl;
-		}
-	}
-};*/
-
+typedef pair<int, int> Interval; // [t_min, t_max)
 
 
 typedef std::vector<PathEntry> Path;

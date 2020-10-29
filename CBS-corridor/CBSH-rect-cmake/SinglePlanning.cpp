@@ -39,9 +39,9 @@ bool SinglePlanning::search(bool flat)
 	 // generate start and add it to the OPEN list
 	LLNode* start;
 	if (agent.status == 0)
-	    start = new LLNode(-1, 0, (1 + my_heuristic[start_location].get_hval(agent.heading)), nullptr, 0, false);
+	    start = new LLNode(-1, 0, (1 + my_heuristic[start_location].get_hval(agent.heading)), nullptr, 0);
     else
-        start = new LLNode(start_location, 0, my_heuristic[start_location].get_hval(agent.heading), nullptr, 0,  false);
+        start = new LLNode(start_location, 0, my_heuristic[start_location].get_hval(agent.heading), nullptr, 0);
     int start_h_val = start->h_val;
     if (start->h_val < MAX_COST)
         start->h_val = start->h_val*f_w;
@@ -85,17 +85,12 @@ bool SinglePlanning::search(bool flat)
 			runtime = Time::now() - start_clock;
 			time_check_count = LL_num_generated / 10000;
 			if (runtime.count() > time_limit) {
-                releaseClosedListNodes(&allNodes_table);
-
-                open_list.clear();
-
-                allNodes_table.clear();
+                releaseClosedListNodes();
 				return false;
 			}
 		}
 
 		LLNode* curr = open_list.top(); open_list.pop();
-		curr->in_openlist = false;
 
 // 		assert(curr->h_val >=0);
 //        cout<<"Current: "<<curr->h_val<< ": "<<curr->loc/num_col <<", "<<curr->loc%num_col << ", heading: "<<curr->heading<< endl;
@@ -113,11 +108,7 @@ bool SinglePlanning::search(bool flat)
 		{
 			updatePath(curr);
 
-			releaseClosedListNodes(&allNodes_table);
-
-			open_list.clear();
-
-			allNodes_table.clear();
+			releaseClosedListNodes();
 			return true;
 			//}
 		}
@@ -220,7 +211,7 @@ bool SinglePlanning::search(bool flat)
 
 
                 // generate (maybe temporary) node
-				auto next = new LLNode(next_id, next_g_val, next_h_val,	curr, next_timestep, false);
+				auto next = new LLNode(next_id, next_g_val, next_h_val,	curr, next_timestep);
 				next->heading = next_heading;
 				next->time_generated = time_generated;
 				next->position_fraction = next_position_fraction;
@@ -237,8 +228,6 @@ bool SinglePlanning::search(bool flat)
 					next->open_handle = open_list.push(next);
 					next->in_openlist = true;
                     LL_num_generated++;
-
-
 					allNodes_table.insert(next);
 				}
 				else
@@ -277,42 +266,24 @@ bool SinglePlanning::search(bool flat)
 				}  // end update an existing node
 			}// end if case forthe move is legal
 		}  // end for loop that generates successors
-		//cout << "focal list size"<<focal_list.size() << endl;
-		// update FOCAL if min f-val increased
-		if (open_list.empty())  // in case OPEN is empty, no path found
-			break;
-
-
 	}  // end while loop
 
 	  // no path found
-	releaseClosedListNodes(&allNodes_table);
-	open_list.clear();
-	allNodes_table.clear();
+	releaseClosedListNodes();
 	return false;
 }
 
 
-inline void SinglePlanning::releaseClosedListNodes(hashtable_t* allNodes_table)
-{
-
-	hashtable_t::iterator it;
-	for (it = allNodes_table->begin(); it != allNodes_table->end(); ++it) {
-
-			delete (*it);
-	}
-}
 
 
 SinglePlanning::SinglePlanning(const FlatlandLoader& ml, AgentsLoader& al, double f_w, float time_limit, options option):
-    ml(ml),al(al), my_heuristic(*al.agents[0]->heuristics),constraintTable(al.constraintTable), agent(*al.agents[0])
+    ml(ml),al(al), f_w(f_w), time_limit(time_limit),
+    my_heuristic(*al.agents[0]->heuristics),constraintTable(al.constraintTable), agent(*al.agents[0])
 {
     if(al.agents.size()!=1)
         cout<<"Single Planning can only have 1 agent in al->agents"<<endl;
 
     this->screen = screen;
-    this->time_limit= time_limit;
-	this->f_w = f_w;
 	this->start_location = ml.linearize_coordinate(agent.position.first, agent.position.second);
 	this->goal_location = ml.linearize_coordinate(agent.goal_location.first, agent.goal_location.second);
 
@@ -323,4 +294,204 @@ SinglePlanning::SinglePlanning(const FlatlandLoader& ml, AgentsLoader& al, doubl
 
 	this->num_col = ml.cols;
 
+}
+
+
+// TODO: optimize showup time
+bool SIPP::search() // TODO: weighted SIPP
+{
+    assert(f_w < 1.001);
+    Time::time_point start_clock = Time::now();
+
+    LL_num_expanded = 0;
+    LL_num_generated = 0;
+
+    hashtable_t::iterator it;  // will be used for find()
+
+
+    // generate start and add it to the OPEN list
+    LL_num_generated++;
+    assert(agent.status == 0); // TODO: handle agents with status > 0
+    auto start = new SIPPNode(-1,
+            agent.malfunction_left, // malfunction_left is the earliest timestep when the agent can start to move
+            (1 + my_heuristic[start_location].get_hval(agent.heading)), nullptr,
+            agent.malfunction_left, // malfunction_left is the earliest timestep when the agent can start to move
+            make_pair(0, constraintTable.length_max + 1)); // initial timestep is from 0 to max timestep
+
+    start->heading = agent.heading;
+    start->time_generated = 0;
+    // start->malfunction_left = agent.malfunction_left;
+    start->position_fraction = agent.position_fraction;
+    start->exit_heading = agent.exit_heading;
+    start->open_handle = open_list.push(start);
+    start->in_openlist = true;
+    allNodes_table.insert(start);
+
+
+    int time_generated = 0;
+    int time_check_count = 0;
+    fsec runtime;
+
+    while (!open_list.empty())
+    {
+        if (LL_num_generated / 1000 > time_check_count && time_limit != 0) {
+            runtime = Time::now() - start_clock;
+            time_check_count = LL_num_generated / 1000;
+            if (runtime.count() > time_limit) {
+                releaseClosedListNodes();
+                return false;
+            }
+        }
+
+        auto curr = open_list.top(); open_list.pop();
+        curr->in_openlist = false;
+        LL_num_expanded++;
+
+        // check if the popped node is a goal
+        if (curr->loc == goal_location)
+        {
+            updatePath(curr);
+            releaseClosedListNodes();
+            return true;
+        }
+
+
+        list<Transition> transitions;
+        if(curr->loc == -1){
+            transitions.emplace_back(start_location, curr->heading,
+                                     curr->position_fraction, curr->exit_loc, curr->exit_heading);
+        }
+        else
+            ml.get_transitions(transitions, curr->loc, curr->heading, true);
+
+
+        for (const auto& move : transitions)
+        {
+            int next_id = move.location;
+            int next_heading = move.heading;
+            int next_h_val = my_heuristic[next_id].get_hval(next_heading);
+            list<Interval> intervals;
+            getSafeIntervals(curr->loc, curr->timestep, curr->interval, next_id, next_h_val, intervals);
+
+            for (auto& next_interval : intervals)
+            {
+                time_generated += 1;
+                int next_timestep = max(curr->timestep + 1, next_interval.first);
+
+                // generate (maybe temporary) node
+                auto next = new SIPPNode(next_id, next_timestep, next_h_val, curr, next_timestep, next_interval);
+                next->heading = next_heading;
+                next->time_generated = time_generated;
+                next->position_fraction = move.position_fraction;
+                next->exit_heading = move.exit_heading;
+                next->exit_loc = move.exit_loc;
+
+                // try to retrieve it from the hash table
+                it = allNodes_table.find(next);
+                if (it == allNodes_table.end())
+                {
+                    next->open_handle = open_list.push(next);
+                    next->in_openlist = true;
+                    LL_num_generated++;
+                    allNodes_table.insert(next);
+                }
+                else
+                {  // update existing node's if needed (only in the open_list)
+                    auto existing_next = (*it);
+                    if (existing_next->g_val > next->g_val)
+                    {// update existing node
+                        existing_next->g_val = next->g_val;
+                        existing_next->h_val = next->h_val;
+                        existing_next->timestep = next->timestep;
+                        existing_next->interval = next->interval;
+                        existing_next->parent = curr;
+                        if (existing_next->in_openlist)// if its in the open list
+                        {
+                            open_list.increase(existing_next->open_handle);  // increase because f-val improved
+                        }
+                        else // if its in the closed list (reopen)
+                        {
+                            existing_next->open_handle = open_list.push(existing_next);
+                            existing_next->in_openlist = true;
+                        }
+                    }
+                    delete(next);  // not needed anymore -- we already generated it before
+                }  // end update an existing node
+            }
+        }  // end for loop that generates successors
+    }  // end while loop
+
+    // no path found
+    releaseClosedListNodes();
+    return false;
+}
+
+
+void SIPP::getSafeIntervals(int prev_loc, int prev_timestep,
+        const Interval& prev_interval, int next_loc, int next_h, list<Interval>& intervals)
+{
+    int t_min = prev_timestep + 1;
+    int max_timestep = min(constraintTable.length_max - next_h + 1, prev_interval.second + 1);
+    while (t_min < max_timestep)
+    {
+        // find the earliest timestep when we can move to next loc
+        while(constraintTable.is_constrained(agent.agent_id, next_loc, t_min, prev_loc))
+            t_min++;
+        // find the latest timestep when we can move to next loc
+        int t_max = t_min;
+        while(t_max < max_timestep - 1 && !constraintTable.blocked(next_loc, t_max)) // no vertex conflict
+        {
+            t_max++;
+        }
+        if (t_max == max_timestep - 1 &&
+            !constraintTable.is_constrained(agent.agent_id, next_loc, t_max, prev_loc)) // no vertex or edge conflict
+        {
+            t_max++;
+        }
+        if (t_min < t_max)
+        {
+            intervals.emplace_back(t_min, t_max);
+            /*int t = prev_timestep + 1;
+            while (t < t_min - 1)
+            {
+                assert(!constraintTable.blocked(prev_loc, t));
+                t++;
+            }
+            assert(!constraintTable.is_constrained(agent.agent_id, next_loc, t_min, prev_loc));
+            while (t < t_max - 1)
+            {
+                assert(!constraintTable.blocked(prev_loc, t));
+                t++;
+            }
+            assert(!constraintTable.is_constrained(agent.agent_id, next_loc, t_max - 1, prev_loc));*/
+        }
+        t_min = t_max + 1;
+    }
+}
+
+void SIPP::updatePath(SIPPNode* goal)
+{
+    path.resize(goal->timestep + 1);
+    const LLNode* curr = goal;
+    while (curr->parent != nullptr) // non-root node
+    {
+        const auto* prev = curr->parent;
+
+        for (int t = prev->timestep + 1; t < curr->timestep; t++) // wait at prev location
+        {
+            path[t].location = prev->loc;
+            path[t].heading = prev->heading;
+            path[t].position_fraction = prev->position_fraction;
+            path[t].malfunction_left = prev->malfunction_left;
+            path[t].exit_heading = prev->exit_heading;
+            path[t].exit_loc = prev->exit_loc;
+        }
+        path[curr->timestep].location = curr->loc; // move to curr location
+        path[curr->timestep].heading = curr->heading;
+        path[curr->timestep].position_fraction = curr->position_fraction;
+        path[curr->timestep].malfunction_left = curr->malfunction_left;
+        path[curr->timestep].exit_heading = curr->exit_heading;
+        path[curr->timestep].exit_loc = curr->exit_loc;
+        curr = prev;
+    }
 }

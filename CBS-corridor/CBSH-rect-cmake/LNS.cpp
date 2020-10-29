@@ -412,13 +412,16 @@ bool LNS::getInitialSolution()
     al.num_of_agents = 1;
     al.agents.resize(1);
     int remaining_agents = (int)neighbors.size();
+    int dead_agents = 0;
+    int sum_of_costs = 0;
+    int makepsan = 0;
     for (auto agent : neighbors)
     {
         runtime = ((fsec)(Time::now() - start_time)).count();
         if (runtime >= hard_time_limit)
         {
-            cout << "Find a solution for " << al.getNumOfAllAgents() - remaining_agents << " agents" <<
-                    " with " << remaining_agents << " agents remain" << endl;
+            cout << "Find a solution for " << al.getNumOfAllAgents() - remaining_agents - dead_agents << " agents" <<
+                    " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" << endl;
             return false;
         }
         al.agents[0] = &al.agents_all[agent];
@@ -426,13 +429,22 @@ bool LNS::getInitialSolution()
             cout << "Remaining agents = " << remaining_agents <<
              ", remaining time = " << hard_time_limit - runtime << " seconds. " << endl
                     << "Agent " << al.agents[0]->agent_id << endl;
-//        MultiMapICBSSearch<FlatlandLoader> icbs(&ml, &al, f_w, c, 0, options1.debug? 3 : 0, options1);
-//        icbs.runICBSSearch();
-        SinglePlanning planner(ml,al,f_w,hard_time_limit - runtime,options1);
+        SIPP planner(ml,al,f_w,hard_time_limit - runtime,options1);
         planner.search();
         updateCBSResults(planner);
         addAgentPath(agent, planner.path);
         remaining_agents--;
+        if (planner.path.empty()) // TODO: can be deleted in the submission verison
+        {
+            dead_agents++;
+            sum_of_costs += al.constraintTable.length_max;
+            makepsan = al.constraintTable.length_max;
+        }
+        else
+        {
+            sum_of_costs += (int) planner.path.size() - 1;
+            makepsan = max((int) planner.path.size() - 1, makespan);
+        }
     }
 
     cout << endl << endl << "Find a solution for " << al.getNumOfAllAgents() - al.getNumOfUnplannedAgents()
