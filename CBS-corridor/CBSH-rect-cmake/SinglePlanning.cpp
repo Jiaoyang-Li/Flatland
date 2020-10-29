@@ -42,6 +42,7 @@ bool SinglePlanning::search(bool flat)
 	    start = new LLNode(-1, 0, (1 + my_heuristic[start_location].get_hval(agent.heading)), nullptr, 0, false);
     else
         start = new LLNode(start_location, 0, my_heuristic[start_location].get_hval(agent.heading), nullptr, 0,  false);
+    int start_h_val = start->h_val;
     if (start->h_val < MAX_COST)
         start->h_val = start->h_val*f_w;
     start->heading = agent.heading;
@@ -232,8 +233,11 @@ bool SinglePlanning::search(bool flat)
                         next_h_val = next_h_val*f_w;
                     }
                 }
-                else
+                else {
+                    if (next_g_val + start_h_val> constraintTable.length_max)
+                        continue;
                     next_h_val = curr->h_val;
+                }
                 assert(next_h_val >= 0 && next_h_val<=MAX_COST);
 
 
