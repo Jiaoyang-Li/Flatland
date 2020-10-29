@@ -385,7 +385,10 @@ bool SIPP::search() // TODO: weighted SIPP
                 next->position_fraction = move.position_fraction;
                 next->exit_heading = move.exit_heading;
                 next->exit_loc = move.exit_loc;
-
+                if (curr->loc == -1)
+                    next->show_time = next_timestep;
+                else
+                    next->show_time = curr->show_time;
                 // try to retrieve it from the hash table
                 it = allNodes_table.find(next);
                 if (it == allNodes_table.end())
