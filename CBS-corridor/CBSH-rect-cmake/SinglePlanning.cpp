@@ -3,10 +3,10 @@
 #include <iostream>
 
 
-void SinglePlanning::updatePath(SLLNode* goal)
+void SinglePlanning::updatePath(LLNode* goal)
 {
 	path.resize(goal->g_val + 1);
-	SLLNode* curr = goal;
+	LLNode* curr = goal;
 
     for(int t = goal->g_val; t >= 0; t--)
 	{
@@ -37,11 +37,11 @@ bool SinglePlanning::search(bool flat)
 
 
 	 // generate start and add it to the OPEN list
-	SLLNode* start;
+	LLNode* start;
 	if (agent.status == 0)
-	    start = new SLLNode(-1, 0, (1 + my_heuristic[start_location].get_hval(agent.heading)), nullptr, 0, false);
+	    start = new LLNode(-1, 0, (1 + my_heuristic[start_location].get_hval(agent.heading)), nullptr, 0, false);
     else
-        start = new SLLNode(start_location, 0, my_heuristic[start_location].get_hval(agent.heading), nullptr, 0,  false);
+        start = new LLNode(start_location, 0, my_heuristic[start_location].get_hval(agent.heading), nullptr, 0,  false);
     if (start->h_val < MAX_COST)
         start->h_val = start->h_val*f_w;
     start->heading = agent.heading;
@@ -93,7 +93,7 @@ bool SinglePlanning::search(bool flat)
 			}
 		}
 
-		SLLNode* curr = open_list.top(); open_list.pop();
+		LLNode* curr = open_list.top(); open_list.pop();
 		curr->in_openlist = false;
 
 // 		assert(curr->h_val >=0);
@@ -244,7 +244,7 @@ bool SinglePlanning::search(bool flat)
 
 
                 // generate (maybe temporary) node
-				auto next = new SLLNode(next_id, next_g_val, next_h_val,	curr, next_timestep, false);
+				auto next = new LLNode(next_id, next_g_val, next_h_val,	curr, next_timestep, false);
 				next->heading = next_heading;
 				next->time_generated = time_generated;
 				next->position_fraction = next_position_fraction;
@@ -269,7 +269,7 @@ bool SinglePlanning::search(bool flat)
 				else
 				{  // update existing node's if needed (only in the open_list)
 					delete(next);  // not needed anymore -- we already generated it before
-					SLLNode* existing_next = (*it);
+					LLNode* existing_next = (*it);
 
 					if (existing_next->in_openlist)
 					{  // if its in the open list

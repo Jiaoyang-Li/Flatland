@@ -8,7 +8,7 @@
 #include <ctime>
 #include "common.h"
 #include "agents_loader.h"
-#include "SLLNode.h"
+#include "LLNode.h"
 #include "flat_map_loader.h"
 #include "ConstraintTable.h"
 #include "compute_heuristic.h"
@@ -23,8 +23,8 @@ class SinglePlanning
 {
 public:
 	// define typedefs and handles for heap and hash_map
-	typedef boost::heap::pairing_heap< SLLNode*, boost::heap::compare<SLLNode::compare_node> > heap_open_t;
-    typedef boost::unordered_set<SLLNode*, SLLNode::NodeHasher, SLLNode::eqnode> hashtable_t;
+	typedef boost::heap::pairing_heap< LLNode*, boost::heap::compare<LLNode::compare_node> > heap_open_t;
+    typedef boost::unordered_set<LLNode*, LLNode::NodeHasher, LLNode::eqnode> hashtable_t;
 	heap_open_t open_list;
 	hashtable_t allNodes_table;
 
@@ -50,7 +50,7 @@ public:
 
 
 	// Updates the path datamember
-	void updatePath(SLLNode* goal);
+	void updatePath(LLNode* goal);
 
 	// find path by time-space A* search
 	// Returns true if a collision free path found  while
