@@ -407,6 +407,7 @@ bool SIPP::search() // TODO: weighted SIPP
                         existing_next->h_val = next->h_val;
                         existing_next->timestep = next->timestep;
                         existing_next->interval = next->interval;
+                        existing_next->show_time = next->show_time;
                         existing_next->parent = curr;
                         if (existing_next->in_openlist)// if its in the open list
                         {
