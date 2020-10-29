@@ -157,6 +157,8 @@ void ConstraintTable::delete_path(int agent_id, const Path& path)
 {
     for (int timestep = 0; timestep < (int)path.size(); timestep++)
     {
+        if (timestep >=length_max + kRobust + 1)
+            break;
         int loc = path[timestep].location;
         if (loc == -1)
             continue;
