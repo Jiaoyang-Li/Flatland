@@ -9,20 +9,6 @@ using std::cout;
 using std::endl;
 using boost::heap::fibonacci_heap;
 
-//FlatlandComputeHeuristic::FlatlandComputeHeuristic(int start_location, int goal_location, FlatlandLoader* fl0, int start_heading)  {
-//	fl = fl0;
-//	map_rows = fl->rows;
-//	map_cols = fl->cols;
-//	this->start_location = start_location;
-//	this->goal_location = goal_location;
-//	this->start_heading = start_heading;
-//
-//}
-//
-//vector<pair<int, int>> FlatlandComputeHeuristic::get_transitions(int loc, int heading, int noWait ) {
-//	vector<pair<int, int>> transitions = fl->get_transitions(loc, heading, noWait);
-//	return transitions;
-//}
 
 template<class Map>
 ComputeHeuristic<Map>::ComputeHeuristic() {}

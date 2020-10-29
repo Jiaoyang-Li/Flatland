@@ -1,51 +1,15 @@
 #include "ConstraintTable.h"
-void ConstraintTable::insert(int loc, int t_min, int t_max)
-{
-    assert(loc >= 0);
-    if (CT[loc].empty())
-        CT[loc].resize(length_max + 1, false);
-	if (t_max == 0) {
-        //CT[loc].emplace(t_min);
-        CT[loc][t_min] = true;
-	}
-	else {
-	    for (int t = t_min; t < t_max; t++)
-            //CT[loc].emplace(t);
-            CT[loc][t] = true;
-	}
-}
+
 
 bool ConstraintTable::is_constrained(int agent_id, int loc, int timestep, int pre_loc) const
 {
-    if (loc < 0)
-        return false;
-    //if (CT[loc].count(timestep))
-    if (!CT.empty() && !CT[loc].empty() && CT[loc][timestep])
-        return true;
-
-    if (CT_paths[loc].empty())
+    if (loc < 0 || CT_paths[loc].empty())
         return false;
 
-
-    for (int t = timestep - kRobust; t <= timestep + kRobust; t++)
-    {
-        if (CT_paths[loc][t] >= 0)
-        {
-            assert(agent_id != CT_paths[loc][t]);
-//            if ((agent_id > CT_paths[loc][t] && timestep <= t) || // This agent reaches loc earlier than the second agent with smaller id
-//                (agent_id < CT_paths[loc][t] && timestep >= t))   // This agent reaches loc later than the second agent with larger id
-            return true;
-        }
-
-
-    }
-
-    if(pre_loc >= 0 && !CT_paths[pre_loc].empty() && timestep - 1>=0 && CT_paths[loc][timestep-1]>=0 && CT_paths[loc][timestep-1] == CT_paths[pre_loc][timestep]){
-        return true; //edge conflict
-
-    }
-
-	return false;
+    assert(agent_id != CT_paths[loc][timestep]);
+    return CT_paths[loc][timestep] >= 0 || // vertex conflict
+           (pre_loc >= 0 && !CT_paths[pre_loc].empty() && timestep - 1 >= 0 && CT_paths[loc][timestep - 1] >= 0 &&
+            CT_paths[loc][timestep - 1] == CT_paths[pre_loc][timestep]); //edge conflict
 }
 
 void ConstraintTable::get_agents(set<int>& conflicting_agents, int loc) const
@@ -109,45 +73,43 @@ void ConstraintTable::get_conflicting_agents(int agent_id, set<int>& conflicting
     if (loc < 0 || CT_paths[loc].empty())
         return;
 
-    for (int t = timestep - kRobust; t <= timestep + kRobust; t++)
+    if (CT_paths[loc][timestep] >= 0)
     {
-        if (CT_paths[loc][t] >= 0)
-        {
-            if ((agent_id > CT_paths[loc][t] && timestep <= t) || // This agent reaches loc earlier than the second agent with smaller id
-                (agent_id < CT_paths[loc][t] && timestep >= t))   // This agent reaches loc later than the second agent with larger id
-                conflicting_agents.insert(CT_paths[loc][t]);
-        }
-
+        conflicting_agents.insert(CT_paths[loc][timestep]);
     }
 }
 
 bool ConstraintTable::insert_path(int agent_id, const Path& path)
 {
-    for (int timestep = 0; timestep < (int)path.size(); timestep++)
+    for (int timestep = (int)path.size() - 1; timestep >= 0; timestep--)
     {
-        if (timestep >=length_max + kRobust + 1)
+        if (timestep >=length_max + 1)
             break;
         int loc = path[timestep].location;
         if (loc == -1)
-            continue;
+            return true;
         if (CT_paths[loc].empty())
-            CT_paths[loc].resize(length_max + kRobust + 1, -1);
+            CT_paths[loc].resize(length_max + 1, -1);
 
-        if(CT_paths[loc][timestep] != -1 && CT_paths[loc][timestep] != agent_id) //TODO:: can be removed in the submission version
-        {
-            cout << "A conflict between " << agent_id << " and " << CT_paths[loc][timestep] <<
-                    " at location " << loc << " at timestep "<< timestep << endl;
-            assert(false && "Find conflict");
-            return false;
-        }
-        if(timestep>=1 && path[timestep-1].location!= -1 && !CT_paths[path[timestep-1].location].empty()
-            && CT_paths[path[timestep-1].location][timestep] == CT_paths[loc][timestep-1] && CT_paths[loc][timestep-1]!=-1) //TODO:: can be removed in the submission version
-        {
-            cout << "A edge conflict between " << agent_id << " and " << CT_paths[loc][timestep-1] <<
-                 " at location " << loc<<","<<path[timestep-1].location << " at timestep "<< timestep << endl;
-            assert(false &&"Find edge conflict");
-            return false;
-        }
+        assert(CT_paths[loc][timestep] == -1); // should not have vertex conflict
+        //if(CT_paths[loc][timestep] != -1 && CT_paths[loc][timestep] != agent_id) //TODO:: can be removed in the submission version
+        //{
+        //    cout << "A conflict between " << agent_id << " and " << CT_paths[loc][timestep] <<
+        //            " at location " << loc << " at timestep "<< timestep << endl;
+        //    assert(false && "Find conflict");
+        //    return false;
+        //}
+        assert(timestep == 0 || path[timestep-1].location == -1 || CT_paths[path[timestep-1].location].empty() ||
+            CT_paths[path[timestep-1].location][timestep] != CT_paths[loc][timestep-1] ||
+            CT_paths[loc][timestep-1] == -1);  // should not have edge conflict
+        //if(timestep>=1 && path[timestep-1].location!= -1 && !CT_paths[path[timestep-1].location].empty() &&
+        // CT_paths[path[timestep-1].location][timestep] == CT_paths[loc][timestep-1] && CT_paths[loc][timestep-1]!=-1) //TODO:: can be removed in the submission version
+        //{
+        //    cout << "A edge conflict between " << agent_id << " and " << CT_paths[loc][timestep-1] <<
+        //         " at location " << loc<<","<<path[timestep-1].location << " at timestep "<< timestep << endl;
+        //    assert(false &&"Find edge conflict");
+        //    return false;
+        //}
         CT_paths[loc][timestep] = agent_id;
     }
     return true;
@@ -155,69 +117,14 @@ bool ConstraintTable::insert_path(int agent_id, const Path& path)
 
 void ConstraintTable::delete_path(int agent_id, const Path& path)
 {
-    for (int timestep = 0; timestep < (int)path.size(); timestep++)
+    for (int timestep = (int)path.size() - 1; timestep >= 0; timestep--)
     {
-        if (timestep >=length_max + kRobust + 1)
+        if (timestep >=length_max + 1)
             break;
         int loc = path[timestep].location;
         if (loc == -1)
-            continue;
+            break;
         assert(CT_paths[loc][timestep] == agent_id);
         CT_paths[loc][timestep] = -1;
     }
 }
-
-/*bool ConstraintTable::is_good_malfunction_location(int loc, int t)
-{
-    if (loc <0)
-        return true;
-	//if (CT_Single.count(loc)) {
-		for (auto conT : CT_Single[loc]) {
-			if (conT >= t) {
-				return false;
-			}
-		}
-
-	//}
-	auto it = CT.find(loc);
-	if (it == CT.end())
-	{
-		return true;
-	}
-	for (auto constraint : it->second)
-	{
-		if (constraint.first >= t)
-			return false;
-	}
-	return true;
-}*/
-
-//void ConstraintTable::insert(int loc, int t_min, int t_max)
-//{
-//
-//	for (int t = t_min; t < t_max; t++) {
-//		CT[loc].insert(t);
-//	}
-//	if (loc == goal_location && t_max > length_min)
-//	{
-//		length_min = t_max;
-//	}
-//	if (t_max < INT_MAX && t_max > latest_timestep)
-//	{
-//		latest_timestep = t_max;
-//	}
-//}
-//
-//bool ConstraintTable::is_constrained(int loc, int t)
-//{
-//	auto it = CT.find(loc);
-//	if (it == CT.end())
-//	{
-//		return false;
-//	}
-//	
-//	if (CT[loc].count(t))
-//		return true;
-//	else
-//		return false;
-//}

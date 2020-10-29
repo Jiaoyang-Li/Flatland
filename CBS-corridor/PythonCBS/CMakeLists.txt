@@ -19,28 +19,14 @@ ADD_LIBRARY(PythonCBS SHARED
 		../CBSH-rect-cmake/flat_map_loader.cpp
 		../CBSH-rect-cmake/agents_loader.h
 		../CBSH-rect-cmake/compute_heuristic.h
-		../CBSH-rect-cmake/ICBSNode.h
-		../CBSH-rect-cmake/ICBSSearch.h
 		../CBSH-rect-cmake/LLNode.h
 		../CBSH-rect-cmake/map_loader.h
-		../CBSH-rect-cmake/MDD.h
-		../CBSH-rect-cmake/SingleAgentICBS.h
 		../CBSH-rect-cmake/agents_loader.cpp
 	   ../CBSH-rect-cmake/compute_heuristic.cpp
-		../CBSH-rect-cmake/ICBSNode.cpp
-		../CBSH-rect-cmake/ICBSSearch.cpp
 		../CBSH-rect-cmake/LLNode.cpp
 		../CBSH-rect-cmake/map_loader.cpp
-		../CBSH-rect-cmake/MDD.cpp
-		../CBSH-rect-cmake/SingleAgentICBS.cpp
-		../CBSH-rect-cmake/ReservationTable.h
-		../CBSH-rect-cmake/ReservationTable.cpp
-		../CBSH-rect-cmake/Conflict.h
-		../CBSH-rect-cmake/Conflict.cpp
-		../CBSH-rect-cmake/ConstraintTable.cpp
+        ../CBSH-rect-cmake/ConstraintTable.cpp
 		../CBSH-rect-cmake/ConstraintTable.h
-		../CBSH-rect-cmake/CorridorReasoning.cpp
-		../CBSH-rect-cmake/CorridorReasoning.h
 		../CBSH-rect-cmake/common.h
 		../CBSH-rect-cmake/common.cpp
 		../CBSH-rect-cmake/LNS.h

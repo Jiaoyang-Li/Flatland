@@ -116,39 +116,20 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
                 exit(0);
         }
 
-        switch(replan_strategy)
+        assert(replan_strategy == 1);
+        switch (prirority_ordering_strategy)  // generate priority ordering for prioritized planning
         {
-            case 0: // CBS
-                if (neighbors.size() > group_size) // resize the group
-                {
-                    sortNeighborsRandomly();
-                    neighbors.resize(group_size);
-                }
-                succ = replanByCBS();
-                if (succ)
-                    group_size++;
-                else if (group_size > 1)
-                    group_size--;
+            case 0:
+                sortNeighborsRandomly();
                 break;
-            case 1: // prioritized planning
-                switch (prirority_ordering_strategy)  // generate priority ordering for prioritized planning
-                {
-                    case 0:
-                        sortNeighborsRandomly();
-                        break;
-                    case 1:
-                        sortNeighborsByRegrets();
-                        break;
-                    default:
-                        cout << "Wrong prirority ordering strategy" << endl;
-                        exit(0);
-                }
-                replanByPP();
+            case 1:
+                sortNeighborsByRegrets();
                 break;
             default:
-                cout << "Wrong replanning strategy" << endl;
+                cout << "Wrong prirority ordering strategy" << endl;
                 exit(0);
         }
+        replanByPP();
 
         if (adaptive_destroy) // update destroy heuristics
         {
@@ -671,50 +652,6 @@ void LNS::replanByPP()
         }
         delta_costs = 0;
     }
-}
-
-bool LNS::replanByCBS()
-{
-    updateNeighborPathsCosts();
-    deleteNeighborPaths();
-    al.num_of_agents = (int)neighbors.size();
-    al.agents.clear();
-    for (auto i : neighbors)
-    {
-        al.agents.push_back(&al.agents_all[i]);
-    }
-    runtime = ((fsec)(Time::now() - start_time)).count();
-    double cbs_time_limit = min((double)soft_time_limit - runtime, 10.0);
-    MultiMapICBSSearch<FlatlandLoader> icbs(&ml, &al, f_w, c, cbs_time_limit, options1.debug? 3 : 0, options1);
-    icbs.trainCorridor1 = trainCorridor1;
-    icbs.corridor2 = corridor2;
-    icbs.chasing_reasoning = chasing;
-    if (options1.debug)
-        cout << "start search engine" << endl;
-    bool res = icbs.runICBSSearch();
-    updateCBSResults(icbs);
-    // assert(!res || icbs.solution_cost <= neighbor_sum_of_costs);
-    if (res && icbs.solution_cost <= neighbor_sum_of_costs)
-    {
-        int i = 0;
-        for (auto n : neighbors)
-        {
-            assert(icbs.paths[i]->back().location == al.paths_all[n].back().location);
-            addAgentPath(n, *icbs.paths[i]);
-            i++;
-        }
-        delta_costs = icbs.solution_cost - neighbor_sum_of_costs;
-    }
-    else
-    {
-        for (auto i : neighbors)
-        {
-            if(!al.constraintTable.insert_path(i, al.paths_all[i]))
-                exit(13);
-        }
-        delta_costs = 0;
-    }
-    return res;
 }
 
 

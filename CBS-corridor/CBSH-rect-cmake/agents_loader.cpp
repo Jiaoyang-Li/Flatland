@@ -581,7 +581,6 @@ void AgentsLoader::recoverAgents(int _num_of_agents, int iteration, int num_inst
 
 bool AgentsLoader::addPaths(const vector<Path*>& new_paths)
 {
-    constraintTable.clear();
     assert((int)new_paths.size() == num_of_agents);
     list<int> giveup_agents;
     for (int i = 0; i < num_of_agents; i++)

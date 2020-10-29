@@ -2,6 +2,7 @@
 
 #include <tuple>
 #include <boost/heap/fibonacci_heap.hpp>
+#include <set>
 #include <iostream>
 #include <unordered_map>
 #include <list>
@@ -27,6 +28,7 @@ using std::unordered_map;
 using std::list;
 using std::vector;
 using std::tuple;
+using std::set;
 
 namespace N
 {

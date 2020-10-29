@@ -14,43 +14,22 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF()
 
 
-include_directories(../mapVisualiser/)
-
 add_executable (CBS-K
 		driver.cpp
 		flat_map_loader.h
 		flat_map_loader.cpp
         agents_loader.h
         compute_heuristic.h
-		ICBSNode.h
-		ICBSSearch.h
 		LLNode.h
 		map_loader.h
-		MDD.h
-		RectangleReasoning.h
-		SingleAgentICBS.h
 		agents_loader.cpp
         compute_heuristic.cpp
-		ICBSNode.cpp
-		ICBSSearch.cpp
 		LLNode.cpp
 		map_loader.cpp
-		MDD.cpp
-		RectangleReasoning.cpp
-		SingleAgentICBS.cpp
-		ReservationTable.h
-		ReservationTable.cpp
-		Conflict.h
-		Conflict.cpp
 		ConstraintTable.cpp
 		ConstraintTable.h
-		CorridorReasoning.cpp
-		CorridorReasoning.h
-		egraph_reader.h
 		common.h
 		common.cpp
-		# ../mapVisualiser/Visualiser.h
-		# ../mapVisualiser/Visualiser.cpp
 		)
 
 
