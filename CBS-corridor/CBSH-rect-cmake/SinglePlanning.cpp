@@ -268,7 +268,6 @@ bool SinglePlanning::search(bool flat)
 					next->open_handle = open_list.push(next);
 					next->in_openlist = true;
                     LL_num_generated++;
-                    next->open_handle = open_list.push(next);
 
 
 					allNodes_table.insert(next);
