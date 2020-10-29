@@ -68,6 +68,11 @@ struct Transition {
 	float position_fraction=0.0;
 	int exit_loc=-1;
 	int exit_heading = -1;
+    Transition()=default;
+    Transition(int location, int heading): location(location), heading(heading) {}
+    Transition(int location, int heading, float position_fraction, int exit_loc, int exit_heading):
+        location(location), heading(heading), position_fraction(position_fraction),
+        exit_loc(exit_loc), exit_heading(exit_heading) {}
 };
 
 /*struct MDDPath {
