@@ -224,6 +224,10 @@ bool SinglePlanning::search(bool flat)
 
                 if (next_id!=-1) {
                     next_h_val = my_heuristic[next_id].get_hval(next_heading);
+
+                    if (next_g_val + next_h_val > constraintTable.length_max)
+                        continue;
+
                     if (next_h_val < MAX_COST){
                         next_h_val = next_h_val*f_w;
                     }
@@ -233,8 +237,7 @@ bool SinglePlanning::search(bool flat)
                 assert(next_h_val >= 0 && next_h_val<=MAX_COST);
 
 
-				if (next_h_val>= MAX_COST)
-					continue;
+
 
 //                cout<<"Next: "<<next_h_val<<","<< next_id/num_col <<", "<<next_id%num_col<<", heading: "<<next_heading<< endl;
 //                for (auto heading : my_heuristic[next_id].heading){

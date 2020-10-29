@@ -83,8 +83,6 @@ bool ConstraintTable::insert_path(int agent_id, const Path& path)
 {
     for (int timestep = (int)path.size() - 1; timestep >= 0; timestep--)
     {
-        if (timestep >=length_max + 1)
-            break;
         int loc = path[timestep].location;
         if (loc == -1)
             return true;
@@ -119,8 +117,6 @@ void ConstraintTable::delete_path(int agent_id, const Path& path)
 {
     for (int timestep = (int)path.size() - 1; timestep >= 0; timestep--)
     {
-        if (timestep >=length_max + 1)
-            break;
         int loc = path[timestep].location;
         if (loc == -1)
             break;
