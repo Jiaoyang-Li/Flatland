@@ -43,111 +43,43 @@ ComputeHeuristic<Map>::ComputeHeuristic(int start_location, int goal_location, c
 template<class Map>
 void ComputeHeuristic<Map>::getHVals(vector<hvals>& res,int limit)
 {
-	size_t root_location = goal_location;
 	res.resize(map_rows * map_cols);
-
+	vector<bool> visited(map_rows * map_cols * 4, false);
 	std::list<LLNode*> queue;
-	// generate hash_map (key is a node pointer, data is a node handler,
-	//                    NodeHasher is the hash function to be used,
-	//                    eqnode is used to break ties when hash values are equal)
-    typedef boost::unordered_set<LLNode*, LLNode::NodeHasher, LLNode::eqnode> hashtable_t;
-    hashtable_t nodes;
-    hashtable_t::iterator it; // will be used for find()
-
-	if (start_heading == -1) {
-		LLNode* root = new LLNode(root_location, 0, 0, nullptr, 0);
-		root->heading = start_heading;
-		queue.push_front(root);  // add root to heap
-		nodes.insert(root);       // add root to hash_table (nodes)
-	}
-	else {
-		for (int heading = 0; heading < 4; heading++) {
-			LLNode* root = new LLNode(root_location, 0, 0, nullptr, 0);
-			root->heading = heading;
-            queue.push_front(root);  // add root to heap
-			nodes.insert(root);       // add root to hash_table (nodes)
-		}
-	}
+    for (int heading = 0; heading < 4; heading++) {
+        auto root = new LLNode(goal_location, 0, 0, nullptr, 0);
+        root->heading = heading;
+        queue.push_front(root);
+        res[goal_location].heading[heading] = 0;
+        visited[goal_location * 4 + heading] = true;
+    }
 	
 	while (!queue.empty()) {
 		LLNode* curr = queue.back();
 		queue.pop_back();
-
 		list<Transition> transitions;
 		ml->get_transitions(transitions, curr->loc,curr->heading,true);
 		for (const auto& move:transitions)
 		{
+            assert(move.heading < 4); // no wait
 			int next_loc = move.location;
 			int next_g_val = curr->g_val + 1;
-			LLNode* next = new LLNode(next_loc, next_g_val, 0, nullptr, 0);
+            int rheading = (move.heading + 2) % 4; // reverse heading
 
-			if (curr->heading == -1) //heading == -1 means no heading info
-				next->heading = -1;
-			else
-				if (move.heading == 4) //move == 4 means wait
-					next->heading = curr->heading;
-				else
-					next->heading = move.heading;
-
-			curr->possible_next_heading.push_back(next->heading);
-
-
-			it = nodes.find(next);
-			if (it == nodes.end())
-			{  // add the newly generated node to heap and hash table
-				if (next_g_val > limit) {
-					delete(next);
-					continue;
-				}
-				queue.push_front(next);
-				nodes.insert(next);
-			}
-			else{
-			    delete(next);
-			}
-
+            if (res[curr->loc].heading[rheading] > curr->g_val)
+            {
+                res[curr->loc].heading[rheading] = curr->g_val;
+            }
+            if (!visited[next_loc * 4 + move.heading])
+            {
+                visited[next_loc * 4 + move.heading] = true;
+                auto next = new LLNode(next_loc, next_g_val, 0, nullptr, 0);
+                next->heading = move.heading;
+                queue.push_front(next);
+            }
 		}
+        delete curr;
 	}
-	// iterate over all nodes and populate the distances
-	for (it = nodes.begin(); it != nodes.end(); it++)
-	{
-		LLNode* s = (*it);
-		/*if (s->heading == -1) {
-
-			if (!res[s->loc].heading.count(-1)) {
-				res[s->loc].heading[-1] = s->g_val;
-
-			}
-			else if (s->g_val < res[s->loc].heading[-1]) {
-				res[s->loc].heading[-1] = s->g_val;
-
-
-			}
-
-		}
-		else {*/
-
-			if (s->possible_next_heading.size() > 0) {
-				for (int& next_heading : s->possible_next_heading) {
-					int heading = (next_heading + 2) % 4;
-                    if (s->g_val < res[s->loc].heading[heading]) {
-						res[s->loc].heading[heading] = s->g_val;
-                    }
-
-				}
-			}
-
-//			int heading = (s->heading + 2) % 4;
-//			if (s->g_val < res[s->loc].heading[heading]) {
-//				res[s->loc].heading[heading] = s->g_val;
-//			}
-		//}
-
-		delete (s);
-	}
-	nodes.clear();
-	queue.clear();
-
 }
 
 template<class Map>
