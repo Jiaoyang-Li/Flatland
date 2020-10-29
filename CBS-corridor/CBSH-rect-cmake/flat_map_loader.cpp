@@ -79,20 +79,13 @@ void FlatlandLoader::get_transitions(list<Transition>& transitions, int location
 
 	for (int i = 0; i < 4; i++) {
 		if (moves[i] == 1 && railMap[location].highways[i] >= 0) {
-			Transition move;
-
-			move.location = location + this->moves_offset[i];
-			move.heading = i;
-			transitions.push_back(move);
+			transitions.emplace_back(location + this->moves_offset[i], i); // location + heading
 		}
 	}
 
 	if (!noWait)
     {
-        Transition wait;
-        wait.location = location;
-        wait.heading = heading;
-        transitions.push_back(wait);
+        transitions.emplace_back(location, heading); // location + heading
     }
 }
 

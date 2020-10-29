@@ -126,62 +126,31 @@ bool SinglePlanning::search(bool flat)
 		list<Transition> transitions;
 		if(flat){
             if(curr->loc == -1){
-                Transition move2;
-                move2.location = start_location;
-                move2.heading = curr->heading;
-                move2.position_fraction = curr->position_fraction;
-                move2.exit_loc = curr->exit_loc;
-                move2.exit_heading = curr->exit_heading;
-                transitions.push_back(move2);
+                transitions.emplace_back(start_location, curr->heading,
+                        curr->position_fraction, curr->exit_loc, curr->exit_heading);
             }
             else
                 ml.get_transitions(transitions, curr->loc, curr->heading, true);
 		}
 		else if (curr->malfunction_left>0 ){
-            Transition move;
-            move.location = curr->loc;
-            move.heading = curr->heading;
-            move.position_fraction = curr->position_fraction;
-            move.exit_loc = curr->exit_loc;
-            move.exit_heading = curr->exit_heading;
-            transitions.push_back(move);
+            transitions.emplace_back(curr->loc, curr->heading, curr->position_fraction,
+                    curr->exit_loc, curr->exit_heading);
 		}
 		else if(curr->loc == -1){
-            Transition move;
-            move.location = -1;
-            move.heading = curr->heading;
-            move.position_fraction = curr->position_fraction;
-            move.exit_loc = curr->exit_loc;
-            move.exit_heading = curr->exit_heading;
-            transitions.push_back(move);
-
-            
-            Transition move2;
-			move2.location = start_location;
-			move2.heading = curr->heading;
-			move2.position_fraction = curr->position_fraction;
-			move2.exit_loc = curr->exit_loc;
-			move2.exit_heading = curr->exit_heading;
-			transitions.push_back(move2);
+            transitions.emplace_back(-1, curr->heading, curr->position_fraction, curr->exit_loc, curr->exit_heading);
+            transitions.emplace_back(start_location, curr->heading,
+                                     curr->position_fraction, curr->exit_loc, curr->exit_heading);
             
         }
 		else if ( curr->position_fraction>=1 && curr->exit_heading>=0 ){
 
                 if (constraintTable.is_constrained(agent.agent_id, curr->exit_loc, curr->timestep+1,curr->loc)) {
-                    Transition move2;
-                    move2.location = curr->loc;
-                    move2.heading = curr->heading;
-                    move2.position_fraction = curr->position_fraction;
-                    move2.exit_loc = curr->exit_loc;
-                    move2.exit_heading = curr->exit_heading;
-                    transitions.push_back(move2);
+                    transitions.emplace_back(curr->loc, curr->heading, curr->position_fraction,
+                                             curr->exit_loc, curr->exit_heading);
                 }
                 else{
-                    Transition move;
-                    move.location = curr->exit_loc;
-                    move.heading = curr->exit_heading;
-                    move.position_fraction = 0;
-                    transitions.push_back(move);
+                    transitions.emplace_back(curr->exit_loc, curr->exit_heading);
+                    transitions.back().position_fraction = 0;
                 }
             }
 		else
