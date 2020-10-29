@@ -1,5 +1,4 @@
 #pragma once
-#include "ICBSSearch.h"
 #include "SinglePlanning.h"
 #include <chrono>
 using namespace std::chrono;
@@ -89,7 +88,6 @@ private:
 
 
     void replanByPP();
-    bool replanByCBS();
 
     void generateNeighborByRandomWalk(boost::unordered_set<int>& tabu_list);
     bool generateNeighborByStart();
@@ -109,20 +107,6 @@ private:
     void randomWalk(int agent_id, const PathEntry& start, int start_timestep,
                     set<int>& neighbor, int neighbor_size, int upperbound);
 
-    void updateCBSResults(const MultiMapICBSSearch<FlatlandLoader>& cbs)
-    {
-        runtime = ((fsec)(Time::now() - start_time)).count();
-        runtime_corridor += cbs.runtime_corridor.count();
-        HL_num_expanded += cbs.HL_num_expanded;
-        HL_num_generated += cbs.HL_num_generated;
-        LL_num_expanded += cbs.LL_num_expanded;
-        LL_num_generated += cbs.LL_num_generated;
-        num_standard += cbs.num_standard;
-        num_corridor2 += cbs.num_corridor2;
-        num_corridor += cbs.num_corridor;
-        num_start+=cbs.num_start;
-        num_chasing += cbs.num_chasing;
-    }
 
     void updateCBSResults(const SinglePlanning& planner)
     {

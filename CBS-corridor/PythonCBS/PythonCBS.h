@@ -88,8 +88,6 @@ public:
 	void replan(p::object railEnv1, int timestep, float time_limit);
 	void updateFw(float fw);
 	void updateAgents(p::object railEnv1);
-    p::list benchmarkSingleGroup(int group_size,int iterations, int time_limit);
-    p::list benchmarkSingleGroupLNS(int group_size,int iterations, int time_limit);
     bool findConflicts() const;
     p::list getNextLoc(p::list agent_location, int timestep)
     {
@@ -229,29 +227,11 @@ private:
                     int, int, double, int, int, int> IterationStats;
     vector<list<IterationStats>> iteration_stats;
 
-    bool PrioritizedPlaning(AgentsLoader* al = NULL, int thread_id = 0, int priority_strategy = -1);
-    bool GroupPrioritizedPlaning();
     bool parallel_LNS(int no_threads = 4);
     bool parallel_neighbour_LNS(int no_threads = 4);
 
     void generateNeighbor(int agent_id, const PathEntry& start, int start_time,
             set<int>& neighbor, int neighbor_size, int upperbound);
-
-    void updateCBSResults(const MultiMapICBSSearch<Map>& cbs, int thread_id = 0)
-    {
-        statistic_list[thread_id].runtime_corridor += cbs.runtime_corridor.count();
-        statistic_list[thread_id].HL_num_expanded += cbs.HL_num_expanded;
-        statistic_list[thread_id].HL_num_generated += cbs.HL_num_generated;
-        statistic_list[thread_id].LL_num_expanded += cbs.LL_num_expanded;
-        statistic_list[thread_id].LL_num_generated += cbs.LL_num_generated;
-        statistic_list[thread_id].num_standard += cbs.num_standard;
-        statistic_list[thread_id].num_corridor2 += cbs.num_corridor2;
-        statistic_list[thread_id].num_corridor += cbs.num_corridor;
-        statistic_list[thread_id].num_start+=cbs.num_start;
-        statistic_list[thread_id].num_chasing += cbs.num_chasing;
-    }
-
-    bool hasConflicts() const;
 };
 
 

@@ -1,21 +1,13 @@
 #pragma once
-#include "Conflict.h"
 #include <climits>
-#include <unordered_set>
-#include <set>
+#include "common.h"
+
 class ConstraintTable
 {
 public:
 	int length_max = INT_MAX;
-    int kRobust = 0;
-	void clear()
-	{
-		CT.clear();
-		CT.resize(CT_paths.size());
-	}
 
 	void reset() {auto map_size = CT_paths.size(); CT_paths.clear(); CT_paths.resize(map_size); }
-	void insert(int loc, int t_min, int t_max); // insert a constraint
 	bool insert_path(int agent_id, const Path& path);
     void delete_path(int agent_id, const Path& path);
 	bool is_constrained(int agent_id, int loc, int t, int pre_loc = -2) const;
@@ -30,7 +22,6 @@ public:
         CT_paths.resize(map_size);
     }
 private:
-    vector< vector<bool> > CT; // this stores the constraints from CBS
     vector< vector<int> > CT_paths; // this stores the already planned paths, the value is the id of the agent
 };
 
