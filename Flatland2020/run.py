@@ -79,7 +79,6 @@ def linearize_loc(in_env, loc):
 if remote_test:
     remote_client = FlatlandRemoteClient()
 
-my_observation_builder = GlobalObsForRailEnv()
 
 #####################################################################
 # Main evaluation loop
@@ -109,7 +108,7 @@ while True:
     if remote_test:
         time_start = time.time()
         observation, info = remote_client.env_create(
-                        obs_builder_object=my_observation_builder
+                        obs_builder_object=DummyObservationBuilder()
                     )
         env_creation_time = time.time() - time_start
         if not observation:
@@ -151,7 +150,7 @@ while True:
                       schedule_generator=sparse_schedule_generator(speed_ration_map),
                       number_of_agents=given_num_agents,
                       malfunction_generator_and_process_data=malfunction_from_params(stochastic_data),
-                      obs_builder_object=GlobalObsForRailEnv(),
+                      obs_builder_object=DummyObservationBuilder(),
                       remove_agents_at_target=True,
                       record_steps=True
                       )
@@ -163,11 +162,11 @@ while True:
 
     max_time_steps = int(4 * 2 * (local_env.width + local_env.height + 20))
 
-    if debug_print:
-        print("number of agents: ", number_of_agents)
-        for i in range(0,number_of_agents):
-            print("Agent id: ", i, " agent start location: ", local_env.agents[i].initial_position,
-                  " goal_locaiton: ", local_env.agents[i].target)
+    # if debug_print:
+    #     print("number of agents: ", number_of_agents)
+    #     for i in range(0,number_of_agents):
+    #         print("Agent id: ", i, " agent start location: ", local_env.agents[i].initial_position,
+    #               " goal_locaiton: ", local_env.agents[i].target)
 
 
 
@@ -233,18 +232,18 @@ while True:
     success = CBS.search()
     paths = CBS.getResult()
 
-    if debug_print:
-        time_temp = time.time()
+    # if debug_print:
+    #     time_temp = time.time()
     CBS.buildMCP()
-    if debug_print:
-        print('Time for building MCP: ', time.time() - time_temp)
+    # if debug_print:
+    #     print('Time for building MCP: ', time.time() - time_temp)
 
-    if debug_print:
-        # print paths
-        for i,p in enumerate(paths):
-            print(i, ": " , p)
-        # print mcp
-        CBS.printAllMCP()
+    # if debug_print:
+    #     # print paths
+    #     for i,p in enumerate(paths):
+    #         print(i, ": " , p)
+    #     # print mcp
+    #     CBS.printAllMCP()
 
     #####################################################################
     # stn to action controller
@@ -261,10 +260,10 @@ while True:
     # Show the flatland visualization, for debugging
     #####################################################################
 
-    if env_renderer_enable:
-        env_renderer = RenderTool(local_env, screen_height=4000,
-                                  screen_width=4000)
-        env_renderer.render_env(show=True, show_observations=False, show_predictions=False)
+    # if env_renderer_enable:
+    #     env_renderer = RenderTool(local_env, screen_height=4000,
+    #                               screen_width=4000)
+    #     env_renderer.render_env(show=True, show_observations=False, show_predictions=False)
 
     #####################################################################
 
@@ -274,20 +273,20 @@ while True:
         #
         #####################################################################
 
-        if debug_print:
-            print("current step: ", steps)
+        # if debug_print:
+        #     print("current step: ", steps)
 
         time_start = time.time()
 
         #####################################################################
         # get curr, next locations from mcp
         #####################################################################
-        if debug_print:
-            CBS.printAgentTime()
+        # if debug_print:
+        #     CBS.printAgentTime()
         time_temp = time.time()
         
-        if debug_print:
-            print('TIme for get next location: ', time.time() - time_temp)
+        # if debug_print:
+        #     print('TIme for get next location: ', time.time() - time_temp)
 
         # get curr locations from the environment (observation)
         curr_locs = []
@@ -304,11 +303,11 @@ while True:
         next_locs = CBS.getNextLoc(curr_locs, steps + 1)
         action = my_controller.get_actions(prev_locs, next_locs, curr_locs)
 
-        if debug_print:
-            print("prev_locs", prev_locs)
-            print("curr_locs", curr_locs)
-            print("next_locs", next_locs)
-            print("actions: ", action)
+        # if debug_print:
+        #     print("prev_locs", prev_locs)
+        #     print("curr_locs", curr_locs)
+        #     print("next_locs", next_locs)
+        #     print("actions: ", action)
 
 
         time_taken = time.time() - time_start
@@ -322,35 +321,35 @@ while True:
         # are returned by the remote copy of the env
         time_start = time.time()
 
-        if debug_print:
-
-            print("before moving agent locations: ")
-
-            for i,a in enumerate(local_env.agents):
-                # print(a.status)
-                # print(a.malfunction_data)
-                if(a.position != None):
-                    print(i, a.position, linearize_loc(local_env,a.position))
-                else:
-                    print(i, a.position, a.status, "Agent hasn't entered the start locaiton/has reached goal location")
+        # if debug_print:
+        #
+        #     print("before moving agent locations: ")
+        #
+        #     for i,a in enumerate(local_env.agents):
+        #         # print(a.status)
+        #         # print(a.malfunction_data)
+        #         if(a.position != None):
+        #             print(i, a.position, linearize_loc(local_env,a.position))
+        #         else:
+        #             print(i, a.position, a.status, "Agent hasn't entered the start locaiton/has reached goal location")
 
         if remote_test:
             observation, all_rewards, done, info = remote_client.env_step(action)
         else:
             observation, all_rewards, done, info = local_env.step(action)
 
-        if env_renderer_enable:
-            env_renderer.render_env(show=True, show_observations=False, show_predictions=False)
+        # if env_renderer_enable:
+        #     env_renderer.render_env(show=True, show_observations=False, show_predictions=False)
 
-        if debug_print:
-            print("after moving agent locations: ")
-            for i,a in enumerate(local_env.agents):
-                # print(a.status)
-                # print(a.malfunction_data)
-                if (a.position != None):
-                    print(i, a.position, linearize_loc(local_env, a.position))
-                else:
-                    print(i, a.position, a.status, "Agent hasn't entered the start locaiton/has reached goal location")
+        # if debug_print:
+        #     print("after moving agent locations: ")
+        #     for i,a in enumerate(local_env.agents):
+        #         # print(a.status)
+        #         # print(a.malfunction_data)
+        #         if (a.position != None):
+        #             print(i, a.position, linearize_loc(local_env, a.position))
+        #         else:
+        #             print(i, a.position, a.status, "Agent hasn't entered the start locaiton/has reached goal location")
 
         new_curr_locs = []
         for i,a in enumerate(local_env.agents):
@@ -362,16 +361,16 @@ while True:
             else:
                 new_curr_locs.append(linearize_loc(local_env, a.position))
 
-        if debug_print:
-            print("new curr locations to MCP: ", new_curr_locs)
-
-        if debug_print:
-            time_temp = time.time()
+        # if debug_print:
+        #     print("new curr locations to MCP: ", new_curr_locs)
+        #
+        # if debug_print:
+        #     time_temp = time.time()
 
         CBS.updateMCP(new_curr_locs, action)
 
-        if debug_print:
-            print('Time for update MCP: ', time.time() - time_temp)
+        # if debug_print:
+        #     print('Time for update MCP: ', time.time() - time_temp)
 
         # display the updated mcp
         # if debug_print:
@@ -386,8 +385,8 @@ while True:
 
         # hit enter to go next step
         # print("hit enter to execute the next step")
-        if input_pause_renderer:
-            input()
+        # if input_pause_renderer:
+        #     input()
 
         # or wait for a period of time
 
