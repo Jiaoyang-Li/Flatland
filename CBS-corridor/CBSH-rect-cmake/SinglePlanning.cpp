@@ -401,7 +401,8 @@ bool SIPP::search() // TODO: weighted SIPP
                 else
                 {  // update existing node's if needed (only in the open_list)
                     auto existing_next = (*it);
-                    if (existing_next->g_val > next->g_val)
+                    if (existing_next->g_val > next->g_val ||
+                        (existing_next->g_val == next->g_val && existing_next->show_time < next->show_time))
                     {// update existing node
                         existing_next->g_val = next->g_val;
                         existing_next->h_val = next->h_val;
