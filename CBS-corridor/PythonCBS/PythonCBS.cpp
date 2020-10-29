@@ -277,7 +277,7 @@ bool PythonCBS<Map>::search() {
 		cout << "start initialize" << endl;
 	//initialize search engine
 	al->constraintTable.init(ml->map_size());
-    al->computeHeuristics(ml); // TODO: this can be optimized; heuristics for agents with the same goal location only need to be computed once
+    al->computeHeuristics(ml);
     this->statistic_list.resize(1);
     this->iteration_stats.resize(1);
     if (framework == "OnlinePP")
