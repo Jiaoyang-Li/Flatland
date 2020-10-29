@@ -21,23 +21,18 @@ public:
 	int g_val;
 	float h_val = 0;
 	int heading;
-	int actionToHere = 4;
-	std::vector<int> possible_next_heading;
+	std::vector<int> possible_next_heading;// for heuristic computation (reversing of direction)
 	LLNode* parent=nullptr;
 	int timestep = 0;
 	int time_generated=0;
 	int show_time = 0;
 	int num_internal_conf = 0; 
 	bool in_openlist = false;
-	// bool in_focallist = false;
-	int next_malfunction = -1;
 	int malfunction_left = 0;
 
-	float speed = 1.0;
 	float position_fraction = 0.0;
 	int exit_loc=-1;
 	int exit_heading=-1;
-    bool active = 0;
 
 
 	// the following is used to comapre nodes in the OPEN list
@@ -46,11 +41,12 @@ public:
 		// returns true if n1 > n2 (note -- this gives us *min*-heap).
 		bool operator()(const LLNode* n1, const LLNode* n2) const 
 		{
-			if (n1->g_val + n1->h_val == n2->g_val + n2->h_val)
+			if (n1->getFVal() == n2->getFVal())
 				return n1->g_val <= n2->g_val;  // break ties towards larger g_vals
-			return n1->g_val + n1->h_val >= n2->g_val + n2->h_val;
+			return n1->getFVal() >= n2->getFVal();
 		}
 	};  // used by OPEN (heap) to compare nodes (top of the heap has min f-val, and then highest g-val)
+
 
 	// the following is used to comapre nodes in the FOCAL list
 	struct secondary_compare_node

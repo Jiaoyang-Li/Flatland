@@ -13,7 +13,6 @@ void SingleAgentICBS<Map>::updatePath(LLNode* goal, std::vector<PathEntry> &path
 	{
 
 		path[t].location = curr->loc;
-		path[t].actionToHere = curr->actionToHere;
 		path[t].heading = curr->heading;
 		path[t].position_fraction = curr->position_fraction;
 		path[t].malfunction_left = curr->malfunction_left;
@@ -299,7 +298,6 @@ bool SingleAgentICBS<Map>::findPath(std::vector<PathEntry> &path, double f_weigh
                 // generate (maybe temporary) node
 				auto next = new LLNode(next_id, next_g_val, next_h_val,	curr, next_timestep, next_internal_conflicts, false);
 				next->heading = next_heading;
-				next->actionToHere = move.heading;
 				next->time_generated = time_generated;
 				next->position_fraction = next_position_fraction;
 				next->exit_heading = move.exit_heading;

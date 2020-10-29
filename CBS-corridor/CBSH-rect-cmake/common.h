@@ -42,7 +42,6 @@ struct PathEntry
 	int location = -1;
 	int heading = -1;
 	bool single = false;
-	int actionToHere = -1;
 	bool malfunction = false;
 	int malfunction_left = 0;
 	float position_fraction = 0.0;

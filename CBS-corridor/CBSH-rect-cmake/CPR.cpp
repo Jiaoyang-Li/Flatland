@@ -100,8 +100,8 @@ void CPR::planPaths(float time_limit)
             return;
         al.agents.resize(1);
         al.agents[0] = agent;
-        SinglePlanningFlat planner(ml, al, 1, time_limit - runtime, options1);
-        planner.search();
+        SinglePlanning planner(ml, al, 1, time_limit - runtime, options1);
+        planner.search(true);
         if (!planner.path.empty())
         {
             al.paths_all[agent->agent_id] = planner.path;

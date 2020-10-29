@@ -179,7 +179,6 @@ int CorridorReasoning<Map>::getBypassLength(int start, int end, std::pair<int, i
 			LLNode* next = new LLNode(next_loc, next_g_val, getMahattanDistance(next_loc, end, num_col), nullptr, 0);
 			int next_heading = move.heading;
 			next->heading = next_heading;
-			next->actionToHere = move.heading;
 			next->time_generated = time_generated;
 
 			it = nodes.find(next);
@@ -264,7 +263,6 @@ int CorridorReasoning<Map>::getBypassLength(int agent_id, int start, int end, st
 				LLNode* next = new LLNode(next_loc, next_g_val, next_h_val, nullptr, next_timestep);
 
 				next->heading = next_heading;
-				next->actionToHere = move.heading;
 				next->time_generated = time_generated;
 
 				it = nodes.find(next);
@@ -437,7 +435,6 @@ int CorridorReasoning<Map>::getBypassLength(int agent_id, int start, int end,int
                 LLNode* next = new LLNode(next_loc, next_g_val, next_h_val, nullptr, next_timestep);
 
 				next->heading = next_heading;
-				next->actionToHere = move.heading;
 				next->time_generated = time_generated;
 				next->position_fraction = next_position_fraction;
 				next->exit_heading = move.exit_heading;

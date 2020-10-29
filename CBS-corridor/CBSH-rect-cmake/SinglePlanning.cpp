@@ -3,27 +3,21 @@
 #include <iostream>
 
 
-void SinglePlanning::updatePath(LLNode* goal)
+void SinglePlanning::updatePath(SLLNode* goal)
 {
 	path.resize(goal->g_val + 1);
-	LLNode* curr = goal;
-	num_of_conf = goal->num_internal_conf;
+	SLLNode* curr = goal;
 
     for(int t = goal->g_val; t >= 0; t--)
 	{
 
 		path[t].location = curr->loc;
-		path[t].actionToHere = curr->heading;
 		path[t].heading = curr->heading;
 		path[t].position_fraction = curr->position_fraction;
 		path[t].malfunction_left = curr->malfunction_left;
 		path[t].exit_heading = curr->exit_heading;
 		path[t].exit_loc = curr->exit_loc;
 
-		path[t].conflist = nullptr;
-        if (t == goal->timestep && curr->loc != goal_location) {
-			path[t].malfunction = true;
-		}
 
 		curr = curr->parent;
 	}
@@ -32,7 +26,7 @@ void SinglePlanning::updatePath(LLNode* goal)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // return true if a path found (and updates vector<int> path) or false if no path exists
 
-bool SinglePlanning::search()
+bool SinglePlanning::search(bool flat)
 {
     Time::time_point start_clock = Time::now();
 
@@ -43,16 +37,16 @@ bool SinglePlanning::search()
 
 
 	 // generate start and add it to the OPEN list
-	LLNode* start;
+	SLLNode* start;
 	if (agent.status == 0)
-	    start = new LLNode(-1, 0, 1 + my_heuristic[start_location].get_hval(agent.heading)/agent.speed, nullptr, 0, 0, false); // TODO::Shouldn't the h value be divided by its speed? Yes it should
+	    start = new SLLNode(-1, 0, (1 + my_heuristic[start_location].get_hval(agent.heading)), nullptr, 0, false);
     else
-        start = new LLNode(start_location, 0, my_heuristic[start_location].get_hval(agent.heading)/agent.speed, nullptr, 0, 0, false);
-
+        start = new SLLNode(start_location, 0, my_heuristic[start_location].get_hval(agent.heading), nullptr, 0,  false);
+    if (start->h_val < MAX_COST)
+        start->h_val = start->h_val*f_w;
     start->heading = agent.heading;
     LL_num_generated++;
 	start->open_handle = open_list.push(start);
-	start->focal_handle = focal_list.push(start);
 	start->in_openlist = true;
 	start->time_generated = 0;
 	start->malfunction_left = agent.malfunction_left;
@@ -61,8 +55,6 @@ bool SinglePlanning::search()
 	start->position_fraction = agent.position_fraction;
 	start->exit_heading = agent.exit_heading;
 	if (start->exit_heading >= 0) {
-	    //I forget why I have this here, it must have a reason.
-	    //Exit_loc and exit_heading only have influence on trains with speed!=1.
 		list<Transition> temp;
 		ml.get_transitions(temp, start_location, start->heading, true);
 		if (temp.size() == 1) {
@@ -73,20 +65,10 @@ bool SinglePlanning::search()
 			start->exit_loc = start_location + ml.moves_offset[start->exit_heading];
 	}
 
-	int start_h_val = my_heuristic[start_location].get_hval(agent.heading) / agent.speed;
-	if (start->exit_loc >= 0 && agent.speed < 1) {
-		int h1 = my_heuristic[start_location].get_hval(agent.heading)/ agent.speed;
-		int h2 = my_heuristic[start->exit_loc].get_hval(start->exit_heading)/ agent.speed;
-		start_h_val = h1 + (h2 - h1)*agent.position_fraction;
-
-	}
-	start->h_val = start_h_val;
 
 
 	allNodes_table.insert(start);
-	min_f_val = start->getFVal();
 
-    focal_threshold = f_w * min_f_val;
 
 	int time_generated = 0;
 	int time_check_count = 0;
@@ -96,7 +78,7 @@ bool SinglePlanning::search()
 			std::cout << "(" << h << ": heading:"<<-1 <<": "<< my_heuristic[h].heading[-1] << ")";
 	}*/
 
-	while (!focal_list.empty()) 
+	while (!open_list.empty())
 	{
 		if (LL_num_generated / 10000 > time_check_count && time_limit != 0) {
 			runtime = Time::now() - start_clock;
@@ -105,15 +87,14 @@ bool SinglePlanning::search()
                 releaseClosedListNodes(&allNodes_table);
 
                 open_list.clear();
-                focal_list.clear();
 
                 allNodes_table.clear();
 				return false;
 			}
 		}
 
-		LLNode* curr = focal_list.top(); focal_list.pop();
-		open_list.erase(curr->open_handle);
+		SLLNode* curr = open_list.top(); open_list.pop();
+		curr->in_openlist = false;
 
 // 		assert(curr->h_val >=0);
 //        cout<<"Current: "<<curr->h_val<< ": "<<curr->loc/num_col <<", "<<curr->loc%num_col << ", heading: "<<curr->heading<< endl;
@@ -129,13 +110,11 @@ bool SinglePlanning::search()
 		// check if the popped node is a goal
 		if ((curr->loc == goal_location ) /*|| (curr->parent!= nullptr && curr->next_malfunction==0 && curr->parent->next_malfunction ==1)*/)
 		{
-
 			updatePath(curr);
 
 			releaseClosedListNodes(&allNodes_table);
 
 			open_list.clear();
-			focal_list.clear();
 
 			allNodes_table.clear();
 			return true;
@@ -144,7 +123,20 @@ bool SinglePlanning::search()
 		
 
 		list<Transition> transitions;
-		if (curr->malfunction_left>0){
+		if(flat){
+            if(curr->loc == -1){
+                Transition move2;
+                move2.location = start_location;
+                move2.heading = curr->heading;
+                move2.position_fraction = curr->position_fraction;
+                move2.exit_loc = curr->exit_loc;
+                move2.exit_heading = curr->exit_heading;
+                transitions.push_back(move2);
+            }
+            else
+                ml.get_transitions(transitions, curr->loc, curr->heading, true);
+		}
+		else if (curr->malfunction_left>0 ){
             Transition move;
             move.location = curr->loc;
             move.heading = curr->heading;
@@ -155,12 +147,13 @@ bool SinglePlanning::search()
 		}
 		else if(curr->loc == -1){
             Transition move;
-			move.location = -1;
-			move.heading = curr->heading;
-			move.position_fraction = curr->position_fraction;
-			move.exit_loc = curr->exit_loc;
-			move.exit_heading = curr->exit_heading;
-			transitions.push_back(move);
+            move.location = -1;
+            move.heading = curr->heading;
+            move.position_fraction = curr->position_fraction;
+            move.exit_loc = curr->exit_loc;
+            move.exit_heading = curr->exit_heading;
+            transitions.push_back(move);
+
             
             Transition move2;
 			move2.location = start_location;
@@ -171,9 +164,7 @@ bool SinglePlanning::search()
 			transitions.push_back(move2);
             
         }
-		else {
-//		    cout<<curr->exit_heading<<endl;
-            if ( curr->position_fraction>=1 && curr->exit_heading>=0){
+		else if ( curr->position_fraction>=1 && curr->exit_heading>=0 ){
 
                 if (constraintTable.is_constrained(agent.agent_id, curr->exit_loc, curr->timestep+1,curr->loc)) {
                     Transition move2;
@@ -192,43 +183,23 @@ bool SinglePlanning::search()
                     transitions.push_back(move);
                 }
             }
-            else
+		else
                 ml.get_transitions(transitions, curr->loc, curr->heading, false);
-        }
-//		else if (curr->position_fraction +agent.speed >= 0.97) {
-//			if (curr->position_fraction == 0)
-//			    ml.get_transitions(transitions, curr->loc, curr->heading, false);
-//			else {
-//				Transition move;
-//				move.location = curr->exit_loc;
-//				move.heading = curr->exit_heading;
-//				move.position_fraction = 0;
-//				transitions.push_back(move);
-//			}
-//		}
-//		else if (curr->position_fraction == 0) {
-//		    ml.get_exits(transitions, curr->loc, curr->heading, agent.speed, false);
-//
-//		}
-//		else { //<0.97 and po_frac not 0
-//			Transition move2;
-//			move2.location = curr->loc;
-//			move2.heading = curr->heading;
-//			move2.position_fraction = curr->position_fraction + agent.speed;
-//			move2.exit_loc = curr->exit_loc;
-//			move2.exit_heading = curr->exit_heading;
-//			transitions.push_back(move2);
-//		}
+
 
 
 		for (const auto& move : transitions)
 		{
 			int next_id = move.location;
 			time_generated += 1;
-			int next_timestep = curr->timestep + 1;
+			int next_timestep;
+			if(flat)
+                next_timestep = curr->timestep;
+			else
+			    next_timestep = curr->timestep + 1;
 
 
-			if (!constraintTable.is_constrained(agent.agent_id, next_id, next_timestep,curr->loc)) //&&
+			if (flat || !constraintTable.is_constrained(agent.agent_id, next_id, next_timestep,curr->loc)) //&&
 			{
 			    int next_malfunction_left;
 			    if (curr->malfunction_left>0)
@@ -251,18 +222,18 @@ bool SinglePlanning::search()
                 else
                     next_show_time = curr->show_time;
 
-                if (next_id!=-1)
-                    next_h_val = my_heuristic[next_id].get_hval(next_heading)/agent.speed;
+                if (next_id!=-1) {
+                    next_h_val = my_heuristic[next_id].get_hval(next_heading);
+                    if (next_h_val < MAX_COST){
+                        next_h_val = next_h_val*f_w;
+                    }
+                }
                 else
                     next_h_val = curr->h_val;
+                assert(next_h_val >= 0 && next_h_val<=MAX_COST);
 
-				if (next_id!=-1 && move.exit_loc >= 0 && agent.speed<1) {
-					int h1 = my_heuristic[next_id].get_hval(next_heading)/agent.speed;
-					int h2 = my_heuristic[move.exit_loc].get_hval(move.exit_heading)/agent.speed;
-					next_h_val = h1 + (h2-h1)*(move.position_fraction);
 
-				}
-				if (next_g_val + next_h_val> constraintTable.length_max)
+				if (next_h_val>= MAX_COST)
 					continue;
 
 //                cout<<"Next: "<<next_h_val<<","<< next_id/num_col <<", "<<next_id%num_col<<", heading: "<<next_heading<< endl;
@@ -273,9 +244,8 @@ bool SinglePlanning::search()
 
 
                 // generate (maybe temporary) node
-				auto next = new LLNode(next_id, next_g_val, next_h_val,	curr, next_timestep, 0, false);
+				auto next = new SLLNode(next_id, next_g_val, next_h_val,	curr, next_timestep, false);
 				next->heading = next_heading;
-				next->actionToHere = move.heading;
 				next->time_generated = time_generated;
 				next->position_fraction = next_position_fraction;
 				next->exit_heading = move.exit_heading;
@@ -291,59 +261,42 @@ bool SinglePlanning::search()
 					next->open_handle = open_list.push(next);
 					next->in_openlist = true;
                     LL_num_generated++;
-					if (next->getFVal() <= focal_threshold)
-					{
-						next->focal_handle = focal_list.push(next);
-					}
+                    next->open_handle = open_list.push(next);
+
 
 					allNodes_table.insert(next);
 				}
 				else
 				{  // update existing node's if needed (only in the open_list)
 					delete(next);  // not needed anymore -- we already generated it before
-					LLNode* existing_next = (*it);
+					SLLNode* existing_next = (*it);
 
 					if (existing_next->in_openlist)
 					{  // if its in the open list
-						if (existing_next->getFVal() > next_g_val + next_h_val)
+						if (existing_next->g_val > next_g_val)
 						{
-							// if f-val decreased through this new path (or it remains the same and there's less internal conflicts)
-							bool add_to_focal = false;  // check if it was above the focal bound before and now below (thus need to be inserted)
-							bool update_in_focal = false;  // check if it was inside the focal and needs to be updated (because f-val changed)
-							bool update_open = false;
-							if ((next_g_val + next_h_val) <= focal_threshold)
-							{  // if the new f-val qualify to be in FOCAL
-								if (existing_next->getFVal() > focal_threshold)
-									add_to_focal = true;  // and the previous f-val did not qualify to be in FOCAL then add
-								else
-									update_in_focal = true;  // and the previous f-val did qualify to be in FOCAL then update
-							}
-							if (existing_next->getFVal() > next_g_val + next_h_val)
-								update_open = true;
+
 							// update existing node
 							existing_next->g_val = next_g_val;
 							existing_next->h_val = next_h_val;
+                            existing_next->timestep = next_timestep;
 							existing_next->parent = curr;
-							if (update_open) 
-								open_list.increase(existing_next->open_handle);  // increase because f-val improved
-							if (add_to_focal) 
-								existing_next->focal_handle = focal_list.push(existing_next);
-							if (update_in_focal) 
-								focal_list.update(existing_next->focal_handle);  // should we do update? yes, because number of conflicts may go up or down
-						}				
+							open_list.increase(existing_next->open_handle);  // increase because f-val improved
+						}
 					}
 					else 
 					{  // if its in the closed list (reopen)
-						if (existing_next->getFVal() > next_g_val + next_h_val )
+						if (existing_next->g_val > next_g_val )
 						{
 							// if f-val decreased through this new path (or it remains the same and there's less internal conflicts)
 							existing_next->g_val = next_g_val;
 							existing_next->h_val = next_h_val;
-							existing_next->parent = curr;
+                            existing_next->timestep = next_timestep;
+
+                            existing_next->parent = curr;
 							existing_next->open_handle = open_list.push(existing_next);
 							existing_next->in_openlist = true;
-							if (existing_next->getFVal() <= focal_threshold)
-                                existing_next->focal_handle = focal_list.push(existing_next);
+
 						}
 					}  // end update a node in closed list
 				}  // end update an existing node
@@ -353,35 +306,13 @@ bool SinglePlanning::search()
 		// update FOCAL if min f-val increased
 		if (open_list.empty())  // in case OPEN is empty, no path found
 			break;
-		LLNode* open_head = open_list.top();
-
-        //assert(open_head->getFVal() >= min_f_val);
-		if (open_head->getFVal() > min_f_val) 
-		{
-			min_f_val = open_head->getFVal();
-			double new_focal_threshold = std::max(f_w * min_f_val, min_f_val);
-            if (new_focal_threshold > focal_threshold)
-            {
-                for (LLNode* n : open_list)
-                {
-
-                    if (n->getFVal() > focal_threshold && n->getFVal() <= new_focal_threshold)
-                    {
-                        n->focal_handle = focal_list.push(n);
-                    }
-                }
-                focal_threshold = new_focal_threshold;
-            }
-		}
 
 
 	}  // end while loop
 
-	assert(min_f_val >= constraintTable.length_max);
 	  // no path found
 	releaseClosedListNodes(&allNodes_table);
 	open_list.clear();
-	focal_list.clear();
 	allNodes_table.clear();
 	return false;
 }
@@ -414,9 +345,6 @@ SinglePlanning::SinglePlanning(const FlatlandLoader& ml, AgentsLoader& al, doubl
 
 	this->LL_num_expanded = 0;
 	this->LL_num_generated = 0;
-
-	this->focal_threshold = 0;
-	this->min_f_val = 0;
 
 	this->num_col = ml.cols;
 

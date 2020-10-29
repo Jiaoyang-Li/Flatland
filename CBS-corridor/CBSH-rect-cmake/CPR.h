@@ -1,5 +1,5 @@
 #pragma once
-#include "SinglePlanningFlat.h"
+#include "SinglePlanning.h"
 #include <boost/python.hpp>
 namespace p = boost::python;
 

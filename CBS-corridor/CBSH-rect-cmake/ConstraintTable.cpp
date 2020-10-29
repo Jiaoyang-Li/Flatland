@@ -125,6 +125,8 @@ bool ConstraintTable::insert_path(int agent_id, const Path& path)
 {
     for (int timestep = 0; timestep < (int)path.size(); timestep++)
     {
+        if (timestep >=length_max + kRobust + 1)
+            break;
         int loc = path[timestep].location;
         if (loc == -1)
             continue;
@@ -138,7 +140,8 @@ bool ConstraintTable::insert_path(int agent_id, const Path& path)
             assert(false && "Find conflict");
             return false;
         }
-        if(timestep>=1 && path[timestep-1].location!= -1 && !CT_paths[path[timestep-1].location].empty() && CT_paths[path[timestep-1].location][timestep] == CT_paths[loc][timestep-1] && CT_paths[loc][timestep-1]!=-1) //TODO:: can be removed in the submission version
+        if(timestep>=1 && path[timestep-1].location!= -1 && !CT_paths[path[timestep-1].location].empty()
+            && CT_paths[path[timestep-1].location][timestep] == CT_paths[loc][timestep-1] && CT_paths[loc][timestep-1]!=-1) //TODO:: can be removed in the submission version
         {
             cout << "A edge conflict between " << agent_id << " and " << CT_paths[loc][timestep-1] <<
                  " at location " << loc<<","<<path[timestep-1].location << " at timestep "<< timestep << endl;
