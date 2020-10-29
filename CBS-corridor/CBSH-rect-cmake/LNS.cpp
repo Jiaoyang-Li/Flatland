@@ -414,7 +414,7 @@ bool LNS::getInitialSolution()
     int remaining_agents = (int)neighbors.size();
     int dead_agents = 0;
     int sum_of_costs = 0;
-    int makepsan = 0;
+    int makespan = 0;
     for (auto agent : neighbors)
     {
         runtime = ((fsec)(Time::now() - start_time)).count();
@@ -422,6 +422,7 @@ bool LNS::getInitialSolution()
         {
             cout << "Find a solution for " << al.getNumOfAllAgents() - remaining_agents - dead_agents << " agents" <<
                     " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" << endl;
+            cout << "Sum of costs = " << sum_of_costs <<  " and makespan = " << makespan << endl;
             return false;
         }
         al.agents[0] = &al.agents_all[agent];
@@ -438,12 +439,12 @@ bool LNS::getInitialSolution()
         {
             dead_agents++;
             sum_of_costs += al.constraintTable.length_max;
-            makepsan = al.constraintTable.length_max;
+            makespan = al.constraintTable.length_max;
         }
         else
         {
             sum_of_costs += (int) planner.path.size() - 1;
-            makepsan = max((int) planner.path.size() - 1, makespan);
+            makespan = max((int) planner.path.size() - 1, makespan);
         }
     }
 
