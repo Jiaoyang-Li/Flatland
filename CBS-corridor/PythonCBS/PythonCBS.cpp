@@ -744,6 +744,7 @@ BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final
 		.def("updateAgents", &PythonCBS<FlatlandLoader>::updateAgents)
 		.def("updateFw", &PythonCBS<FlatlandLoader>::updateFw)
 		.def("buildMCP", &PythonCBS<FlatlandLoader>::buildMCP)
+        .def("getActions",&PythonCBS<FlatlandLoader>::getActions)
         .def("getNextLoc", &PythonCBS<FlatlandLoader>::getNextLoc)
         .def("updateMCP", &PythonCBS<FlatlandLoader>::updateMCP)
         .def("clearMCP", &PythonCBS<FlatlandLoader>::clearMCP)

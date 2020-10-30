@@ -8,6 +8,7 @@
 #include "MCP.h"
 #include "CPR.h"
 #include "OnlinePP.h"
+#include "action_converter.h"
 
 using namespace std::chrono;
 typedef std::chrono::high_resolution_clock Time;
@@ -121,6 +122,7 @@ public:
         }
 
     }
+
     void buildMCP(void)
     {
         if (framework != "CPR")
@@ -131,7 +133,6 @@ public:
     void printMCP(int loc) { mcp.print(loc); }
     void printAgentTime(void) { mcp.printAgentTime(); }
     void printAgentNoWaitTime(void) { mcp.printAgentNoWaitTime(); }
-
     void writeResultsToFile(const string& fileName) const
     {
         std::ofstream output;
@@ -176,7 +177,17 @@ public:
         }
         output.close();
     }
+    p::list getActions(p::list prev_locs, p::list next_locs, p::list curr_locs){
+        action_converter.num_agent = al->getNumOfAllAgents();
+        action_converter.env_width = ml->cols;
 
+        boost::python::list actions;
+        for(int i =0; i<al->getNumOfAllAgents(); i++){
+            actions.append(action_converter.pos2action(i, curr_locs, prev_locs, next_locs ));
+        }
+
+        return actions;
+    }
 private:
 	std::string algo;
 	string framework;
@@ -184,6 +195,7 @@ private:
 	FlatlandLoader* ml;  // TODO:: Shouldn't it be Map* ml?
 	AgentsLoader* al;
 	MCP mcp;
+    ActionConverter action_converter;
 	vector<AgentsLoader*> al_pool;
 	vector<LNS*> lns_pool;
 	constraint_strategy s;
