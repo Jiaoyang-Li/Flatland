@@ -9,20 +9,16 @@ typedef std::chrono::duration<float> fsec;
 class LNS
 {
 public:
-    //stats about CBS
-    double runtime_corridor = 0;
-    int HL_num_expanded = 0;
-    int HL_num_generated = 0;
-    int LL_num_expanded = 0;
-    int LL_num_generated = 0;
-    int num_standard = 0;
-    int num_corridor2 = 0;
-    int num_corridor = 0;
-    int num_start = 0;
-    int num_chasing = 0;
     bool pp_only = false;
     bool skip_pp = false;
-    
+
+    float runtime = 0;
+    float initial_runtime = 0;
+    int sum_of_costs = 0;
+    int initial_sum_of_costs = 0;
+    int makespan = 0;
+    int initial_makespan = 0;
+    int iterations = 0;
 
     //stats about each iteration
     typedef tuple<int, double, double, double, int,
@@ -43,13 +39,12 @@ public:
             replan_strategy(replan_strategy) {
         max_timestep = al.constraintTable.length_max;
     }
-    bool run(float hard_time_limit, float soft_time_limit);
+    bool run(float hard_time_limit, float soft_time_limit, float success_rate = 1.1);
     bool replan(float time_limit);
     bool replan(list<int>& to_be_replanned, float time_limit);
-    bool getInitialSolution();
+    bool getInitialSolution(float success_rate = 1.1);
 private:
     high_resolution_clock::time_point start_time;
-    float runtime = 0;
     AgentsLoader& al;
     FlatlandLoader& ml;
     double f_w;
@@ -111,8 +106,6 @@ private:
     void updateCBSResults(const SinglePlanning& planner)
     {
         runtime = ((fsec)(Time::now() - start_time)).count();
-        LL_num_expanded += planner.LL_num_expanded;
-        LL_num_generated += planner.LL_num_generated;
     }
 
     // bool hasConflicts(const vector<Path>& paths) const;

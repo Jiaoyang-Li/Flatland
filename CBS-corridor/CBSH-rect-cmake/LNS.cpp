@@ -1,37 +1,46 @@
 #include "LNS.h"
 
 
-bool LNS::run(float _hard_time_limit, float _soft_time_limit)
+bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate)
 {
     start_time = Time::now();
     hard_time_limit = _hard_time_limit;
     soft_time_limit = min(_soft_time_limit, hard_time_limit);
     if(! skip_pp) {
-        if (!getInitialSolution()) // get initial solution
+        if (!getInitialSolution(success_rate)) // get initial solution
             return false;
     }
 
-    size_t solution_cost = 0;
+    int solution_cost = 0;
     int sum_of_showup_time = 0;
-    size_t makespan = 0;
     for (const auto& path : al.paths_all)
     {
-        solution_cost += path.size() - 1;
-        makespan = max(path.size() - 1, makespan);
-        for (int t  = 0; t < (int)path.size(); t++)
+        if (path.empty())
         {
-            if (path[t].location >= 0)
+            solution_cost += al.constraintTable.length_max;
+            initial_makespan = al.constraintTable.length_max;
+        }
+        else
+        {
+            solution_cost += (int)path.size() - 1;
+            initial_makespan = max((int)path.size() - 1, initial_makespan);
+            for (int t  = 0; t < (int)path.size(); t++)
             {
-                sum_of_showup_time += t;
-                break;
+                if (path[t].location >= 0)
+                {
+                    sum_of_showup_time += t;
+                    break;
+                }
             }
         }
     }
     runtime = ((fsec)(Time::now() - start_time)).count();
+    initial_runtime = runtime;
+    initial_sum_of_costs = solution_cost;
     if (options1.debug)
         cout << "Initial solution cost = " << solution_cost << ", "
          << "travel time = " << solution_cost - sum_of_showup_time << ", "
-         << "makespan = " << makespan << ", "
+         << "makespan = " << initial_makespan << ", "
          << "runtime = " << runtime << endl;
     iteration_stats.emplace_back(al.agents_all.size(), 0,
                                  runtime, runtime,
@@ -42,7 +51,7 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
                                  0,
                                  0,
                                  0);
-    if(pp_only)
+    if(pp_only || al.getNumOfAllAgents() == 1)
         return true;
     if (destroy_strategy == 3)
     {
@@ -64,71 +73,83 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
     boost::unordered_set<int> tabu_list;
     bool succ;
     auto old_runtime = runtime;
-    while (runtime < soft_time_limit && iteration_stats.size() < 10000)
+    while (runtime < soft_time_limit && iteration_stats.size() < 5000)
     {
         runtime =((fsec)(Time::now() - start_time)).count();
-        if (adaptive_destroy)
+        if (al.getNumOfAllAgents() < 2 * group_size)
         {
-            double sum = 0;
-            for (const auto& h : destroy_heuristics)
-                sum += h;
-            if (options1.debug)
+            neighbors.resize(al.getNumOfAllAgents());
+            for (int i = 0; i < al.getNumOfAllAgents(); i++)
+                neighbors[i] = i;
+            sortNeighborsRandomly();
+            neighbors.resize(min(group_size, al.getNumOfAllAgents()));
+        }
+        else
+        {
+            if (adaptive_destroy)
             {
-                cout << "destroy heuristics = ";
+                double sum = 0;
                 for (const auto& h : destroy_heuristics)
-                    cout << h / sum << ",";
+                    sum += h;
+                if (options1.debug)
+                {
+                    cout << "destroy heuristics = ";
+                    for (const auto& h : destroy_heuristics)
+                        cout << h / sum << ",";
+                }
+                double r = (double) rand() / RAND_MAX;
+                if (r * sum < destroy_heuristics[0])
+                    destroy_strategy = 0;
+                else if (r * sum < destroy_heuristics[0] + destroy_heuristics[1])
+                    destroy_strategy = 1;
+                else
+                    destroy_strategy = 2;
+                if (options1.debug)
+                    cout << "Choose destroy strategy " << destroy_strategy << endl;
             }
-            double r = (double) rand() / RAND_MAX;
-            if (r * sum < destroy_heuristics[0])
-                destroy_strategy = 0;
-            else if (r * sum < destroy_heuristics[0] + destroy_heuristics[1])
-                destroy_strategy = 1;
-            else
-                destroy_strategy = 2;
-            if (options1.debug)
-                cout << "Choose destroy strategy " << destroy_strategy << endl;
-        }
-        else if (iterative_destroy)
-        {
-            destroy_strategy = (destroy_strategy + 1) % 3;
+            else if (iterative_destroy)
+            {
+                destroy_strategy = (destroy_strategy + 1) % 3;
+            }
+
+            switch (destroy_strategy)
+            {
+                case 0:
+                    generateNeighborByRandomWalk(tabu_list);
+                    break;
+                case 1:
+                    succ = generateNeighborByStart();
+                    if(!succ) // no two agents have the same start locations
+                        return true;
+                    break;
+                case 2:
+                    //if (rand() % 2)
+                    succ = generateNeighborByIntersection();
+                    //else
+                    // succ = generateNeighborByTemporalIntersection();
+                    if(!succ) // the selected intersection has fewer than 2 agents
+                        continue;
+                    break;
+                default:
+                    cout << "Wrong neighbor generation strategy" << endl;
+                    exit(0);
+            }
+
+            assert(replan_strategy == 1);
+            switch (prirority_ordering_strategy)  // generate priority ordering for prioritized planning
+            {
+                case 0:
+                    sortNeighborsRandomly();
+                    break;
+                case 1:
+                    sortNeighborsByRegrets();
+                    break;
+                default:
+                    cout << "Wrong prirority ordering strategy" << endl;
+                    exit(0);
+            }
         }
 
-        switch (destroy_strategy)
-        {
-            case 0:
-                generateNeighborByRandomWalk(tabu_list);
-                break;
-            case 1:
-                succ = generateNeighborByStart();
-                if(!succ) // no two agents have the same start locations
-                    return true;
-                break;
-            case 2:
-                //if (rand() % 2)
-                succ = generateNeighborByIntersection();
-                //else
-                // succ = generateNeighborByTemporalIntersection();
-                if(!succ) // the selected intersection has fewer than 2 agents
-                    continue;
-                break;
-            default:
-                cout << "Wrong neighbor generation strategy" << endl;
-                exit(0);
-        }
-
-        assert(replan_strategy == 1);
-        switch (prirority_ordering_strategy)  // generate priority ordering for prioritized planning
-        {
-            case 0:
-                sortNeighborsRandomly();
-                break;
-            case 1:
-                sortNeighborsByRegrets();
-                break;
-            default:
-                cout << "Wrong prirority ordering strategy" << endl;
-                exit(0);
-        }
         replanByPP();
 
         if (adaptive_destroy) // update destroy heuristics
@@ -159,6 +180,21 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
         if (replan_strategy == 0 && group_size > al.agents_all.size())
             return true; // CBS has replanned paths for all agents. No need for further iterations
     }
+    iterations = (int)iteration_stats.size();
+    for (const auto& path : al.paths_all)
+    {
+        if (path.empty())
+        {
+            sum_of_costs += al.constraintTable.length_max;
+            makespan = al.constraintTable.length_max;
+        }
+        else
+        {
+            sum_of_costs += (int)path.size() - 1;
+            makespan = max(makespan, (int)path.size() - 1);
+        }
+    }
+    cout << "LNS improves the solution to: Sum of costs = " << sum_of_costs << " and makespan = " << makespan << endl;
     return true;
 }
 
@@ -396,7 +432,7 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
 }
 
 
-bool LNS::getInitialSolution()
+bool LNS::getInitialSolution(float success_rate)
 {
     if (options1.debug)
         cout << "Prioritized planning" << endl;
@@ -418,7 +454,8 @@ bool LNS::getInitialSolution()
     for (auto agent : neighbors)
     {
         runtime = ((fsec)(Time::now() - start_time)).count();
-        if (runtime >= hard_time_limit)
+        if (runtime >= hard_time_limit ||
+            al.getNumOfAllAgents() - remaining_agents >= success_rate * al.getNumOfAllAgents())
         {
             cout << "Find a solution for " << al.getNumOfAllAgents() - remaining_agents - dead_agents << " agents" <<
                     " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" << endl;
