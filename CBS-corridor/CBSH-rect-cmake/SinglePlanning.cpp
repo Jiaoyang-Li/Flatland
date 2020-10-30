@@ -239,11 +239,11 @@ bool SinglePlanning::search(bool flat)
 					{  // if its in the open list
 						if (existing_next->g_val > next_g_val)
 						{
-
 							// update existing node
 							existing_next->g_val = next_g_val;
 							existing_next->h_val = next_h_val;
                             existing_next->timestep = next_timestep;
+                            existing_next->show_time = next_show_time;
 							existing_next->parent = curr;
 							open_list.increase(existing_next->open_handle);  // increase because f-val improved
 						}
@@ -256,7 +256,7 @@ bool SinglePlanning::search(bool flat)
 							existing_next->g_val = next_g_val;
 							existing_next->h_val = next_h_val;
                             existing_next->timestep = next_timestep;
-
+                            existing_next->show_time = next_show_time;
                             existing_next->parent = curr;
 							existing_next->open_handle = open_list.push(existing_next);
 							existing_next->in_openlist = true;
@@ -297,7 +297,6 @@ SinglePlanning::SinglePlanning(const FlatlandLoader& ml, AgentsLoader& al, doubl
 }
 
 
-// TODO: optimize showup time
 bool SIPP::search() // TODO: weighted SIPP
 {
     assert(f_w < 1.001);
@@ -312,9 +311,10 @@ bool SIPP::search() // TODO: weighted SIPP
     // generate start and add it to the OPEN list
     LL_num_generated++;
     assert(agent.status == 0); // TODO: handle agents with status > 0
+    int h = 1 + my_heuristic[start_location].get_hval(agent.heading);
     auto start = new SIPPNode(-1,
             agent.malfunction_left, // malfunction_left is the earliest timestep when the agent can start to move
-            (1 + my_heuristic[start_location].get_hval(agent.heading)), nullptr,
+            h, nullptr,
             agent.malfunction_left, // malfunction_left is the earliest timestep when the agent can start to move
             make_pair(0, constraintTable.length_max + 1)); // initial timestep is from 0 to max timestep
 
@@ -405,7 +405,6 @@ bool SIPP::search() // TODO: weighted SIPP
                         (existing_next->g_val == next->g_val && existing_next->show_time < next->show_time))
                     {// update existing node
                         existing_next->g_val = next->g_val;
-                        existing_next->h_val = next->h_val;
                         existing_next->timestep = next->timestep;
                         existing_next->interval = next->interval;
                         existing_next->show_time = next->show_time;
@@ -436,23 +435,29 @@ void SIPP::getSafeIntervals(int prev_loc, int prev_timestep,
         const Interval& prev_interval, int next_loc, int next_h, list<Interval>& intervals)
 {
     int t_min = prev_timestep + 1;
-    int max_timestep = min(constraintTable.length_max - next_h + 1, prev_interval.second + 1);
-    while (t_min < max_timestep)
+    while (t_min <= prev_interval.second)
     {
         // find the earliest timestep when we can move to next loc
         while(constraintTable.is_constrained(agent.agent_id, next_loc, t_min, prev_loc))
+        {
+            if (t_min == prev_interval.second)
+            {
+                return;
+            }
             t_min++;
+        }
+        if (constraintTable.get_latest_constrained_timestep(next_loc) <= t_min) // no constraints after this timestep
+        {
+            if (t_min < constraintTable.length_max + 1)
+            {
+                intervals.emplace_back(t_min, constraintTable.length_max + 1);
+            }
+            return;
+        }
         // find the latest timestep when we can move to next loc
         int t_max = t_min;
-        while(t_max < max_timestep - 1 && !constraintTable.blocked(next_loc, t_max)) // no vertex conflict
-        {
+        while(!constraintTable.blocked(next_loc, t_max)) // no vertex conflict
             t_max++;
-        }
-        if (t_max == max_timestep - 1 &&
-            !constraintTable.is_constrained(agent.agent_id, next_loc, t_max, prev_loc)) // no vertex or edge conflict
-        {
-            t_max++;
-        }
         if (t_min < t_max)
         {
             intervals.emplace_back(t_min, t_max);
@@ -495,6 +500,7 @@ void SIPP::updatePath(SIPPNode* goal)
             prev = curr;
             curr = states.top(); states.pop();
         }
+        assert(prev->interval.first <= t && t < prev->interval.second);
         path[t].location = prev->loc;
         path[t].heading = prev->heading;
         path[t].position_fraction = prev->position_fraction;
@@ -513,30 +519,3 @@ void SIPP::updatePath(SIPPNode* goal)
     path[goal->timestep].exit_heading = goal->exit_heading;
     path[goal->timestep].exit_loc = goal->exit_loc;
 }
-
-/*void SIPP::updatePath(SIPPNode* goal)
-{
-    path.resize(goal->timestep + 1);
-    const LLNode* curr = goal;
-    while (curr->parent != nullptr) // non-root node
-    {
-        const auto* prev = curr->parent;
-
-        for (int t = prev->timestep + 1; t < curr->timestep; t++) // wait at prev location
-        {
-            path[t].location = prev->loc;
-            path[t].heading = prev->heading;
-            path[t].position_fraction = prev->position_fraction;
-            path[t].malfunction_left = prev->malfunction_left;
-            path[t].exit_heading = prev->exit_heading;
-            path[t].exit_loc = prev->exit_loc;
-        }
-        path[curr->timestep].location = curr->loc; // move to curr location
-        path[curr->timestep].heading = curr->heading;
-        path[curr->timestep].position_fraction = curr->position_fraction;
-        path[curr->timestep].malfunction_left = curr->malfunction_left;
-        path[curr->timestep].exit_heading = curr->exit_heading;
-        path[curr->timestep].exit_loc = curr->exit_loc;
-        curr = prev;
-    }
-}*/

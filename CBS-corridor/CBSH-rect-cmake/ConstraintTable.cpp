@@ -114,6 +114,7 @@ bool ConstraintTable::insert_path(int agent_id, const Path& path)
         //    return false;
         //}
         CT_paths[loc][timestep] = agent_id;
+        latest_conatraints[loc] = std::max(latest_conatraints[loc], timestep);
     }
     return true;
 }
@@ -127,5 +128,12 @@ void ConstraintTable::delete_path(int agent_id, const Path& path)
             break;
         assert(CT_paths[loc][timestep] == agent_id);
         CT_paths[loc][timestep] = -1;
+        if (latest_conatraints[loc] == timestep)
+        {
+            int t = timestep - 1;
+            while(t >= 0 && CT_paths[loc][t] < 0)
+                t--;
+            latest_conatraints[loc] = t;
+        }
     }
 }
