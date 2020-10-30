@@ -1,5 +1,3 @@
-from Controllers import MCP_Controller
-
 from flatland.evaluators.client import FlatlandRemoteClient
 from flatland.core.env_observation_builder import DummyObservationBuilder
 from my_observation_builder import CustomObservationBuilder
@@ -251,7 +249,6 @@ while True:
     # may need correction/improvement
     #####################################################################
 
-    my_controller = MCP_Controller(local_env)
 
     # init prev locations to be -1 for each agent. (None of them has left the station yet)
     prev_locs = [-1 for i in range(0,len(local_env.agents))]
@@ -301,7 +298,17 @@ while True:
 
         CBS.replan(local_env, steps, 3.0)
         next_locs = CBS.getNextLoc(curr_locs, steps + 1)
-        action = my_controller.get_actions(prev_locs, next_locs, curr_locs)
+
+        action = {}
+        # action = my_controller.get_actions(prev_locs, next_locs, curr_locs)
+        action_list = CBS.getActions(prev_locs, next_locs, curr_locs)
+        # print(action_list)
+        for i in range(0, len(action_list)):
+            # print(action_list[i])
+            action[i] = action_list[i]
+
+
+        # action = my_controller.get_actions(prev_locs, next_locs, curr_locs)
 
         # if debug_print:
         #     print("prev_locs", prev_locs)
@@ -334,9 +341,9 @@ while True:
         #             print(i, a.position, a.status, "Agent hasn't entered the start locaiton/has reached goal location")
 
         if remote_test:
-            observation, all_rewards, done, info = remote_client.env_step(action)
+            _, all_rewards, done, info = remote_client.env_step(action)
         else:
-            observation, all_rewards, done, info = local_env.step(action)
+            _, all_rewards, done, info = local_env.step(action)
 
         # if env_renderer_enable:
         #     env_renderer.render_env(show=True, show_observations=False, show_predictions=False)
