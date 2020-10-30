@@ -227,7 +227,7 @@ while True:
     CBS = PythonCBS(local_env, framework, "CBSH", time_limit, default_group_size, debug, f_w,
                     corridor_method, chasing, accept_partial_solution, agent_priority_strategy,
                     neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
-    success = CBS.search()
+    success = CBS.search(1.1)
     paths = CBS.getResult()
 
     # if debug_print:
