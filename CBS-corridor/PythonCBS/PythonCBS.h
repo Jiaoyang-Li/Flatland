@@ -52,8 +52,8 @@ extern "C" void* call_func( void *f )
 template <class Map>
 class PythonCBS {
 public:
-	PythonCBS(p::object railEnv1, string framework, std::string algo, float soft_time_limit,
-              int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
+	PythonCBS(p::object railEnv1, string framework, float soft_time_limit,
+              int default_group_size, int debug, float f_w,bool replan,
               int agent_priority_strategy, int neighbor_generation_strategy,
               int prirority_ordering_strategy, int replan_strategy);
 	~PythonCBS(){
@@ -218,6 +218,7 @@ private:
     int neighbor_generation_strategy;
     int prirority_ordering_strategy;
     int replan_strategy;
+    bool replan_on = false;
 
 	//stats about CBS
     Time::time_point start_time;

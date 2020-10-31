@@ -311,18 +311,41 @@ bool SIPP::search() // TODO: weighted SIPP
 
     // generate start and add it to the OPEN list
     LL_num_generated++;
-    assert(agent.status == 0); // TODO: handle agents with status > 0
-    auto start = new SIPPNode(-1,
-            agent.malfunction_left, // malfunction_left is the earliest timestep when the agent can start to move
-            (1 + my_heuristic[start_location].get_hval(agent.heading)), nullptr,
-            agent.malfunction_left, // malfunction_left is the earliest timestep when the agent can start to move
-            make_pair(0, constraintTable.length_max + 1)); // initial timestep is from 0 to max timestep
+    SIPPNode* start;
+    if (agent.status == 0)
+        start = new SIPPNode(-1,
+                             agent.malfunction_left, // malfunction_left is the earliest timestep when the agent can start to move
+                             (1 + my_heuristic[start_location].get_hval(agent.heading)), nullptr,
+                             agent.malfunction_left, // malfunction_left is the earliest timestep when the agent can start to move
+                             make_pair(0, constraintTable.length_max + 1)); // initial timestep is from 0 to max timestep
+    else {
+        int t_max = 0;
+        while(!constraintTable.is_constrained(agent.agent_id, start_location, t_max, -1) && t_max<=constraintTable.length_max)
+            t_max++;
+        start = new SIPPNode(start_location,
+                             agent.malfunction_left, // malfunction_left is the earliest timestep when the agent can start to move
+                             my_heuristic[start_location].get_hval(agent.heading), nullptr,
+                             agent.malfunction_left, // malfunction_left is the earliest timestep when the agent can start to move
+                             make_pair(0,t_max)); // initial timestep is from 0 to
+    }
+
 
     start->heading = agent.heading;
     start->time_generated = 0;
-    // start->malfunction_left = agent.malfunction_left;
+    start->malfunction_left = agent.malfunction_left;
     start->position_fraction = agent.position_fraction;
     start->exit_heading = agent.exit_heading;
+    if (start->exit_heading >= 0) {
+        start->interval = make_pair(0,1);
+        list<Transition> temp;
+        ml.get_transitions(temp, start_location, start->heading, true);
+        if (temp.size() == 1) { //if not on a cross, exit_heading is not accurate as flatland env only provide an move forwad action.
+            start->exit_loc = temp.front().location;
+            start->exit_heading = temp.front().heading;
+        }
+        else //if on a cross, exit_heading is always accurate, as move forwad must be along agent's current heading.
+            start->exit_loc = start_location + ml.moves_offset[start->exit_heading];
+    }
     start->open_handle = open_list.push(start);
     start->in_openlist = true;
     allNodes_table.insert(start);
@@ -360,6 +383,11 @@ bool SIPP::search() // TODO: weighted SIPP
         if(curr->loc == -1){
             transitions.emplace_back(start_location, curr->heading,
                                      curr->position_fraction, curr->exit_loc, curr->exit_heading);
+        }
+        else if ( curr->position_fraction>=1 && curr->exit_heading>=0 ){
+
+            transitions.emplace_back(curr->exit_loc, curr->exit_heading,0,-1,-1);
+
         }
         else
             ml.get_transitions(transitions, curr->loc, curr->heading, true);
@@ -502,6 +530,16 @@ void SIPP::updatePath(SIPPNode* goal)
         path[t].exit_heading = prev->exit_heading;
         path[t].exit_loc = prev->exit_loc;
         assert(!constraintTable.is_constrained(agent.agent_id, path[t].location, t, path[t - 1].location));
+    }
+    if (agent.status > 0) {
+        for (int t = 0; t < t_start + 1; t++) {
+            path[t].location = start_location;
+            path[t].heading = agent.heading;
+            path[t].position_fraction = 0;
+            path[t].malfunction_left = 0;
+            path[t].exit_heading = agent.heading;
+            path[t].exit_loc = start_location;
+        }
     }
     assert(states.empty());
     assert(!constraintTable.is_constrained(agent.agent_id, path[goal->timestep].location,

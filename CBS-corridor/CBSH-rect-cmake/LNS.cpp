@@ -163,69 +163,69 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
 }
 
 
-bool LNS::replan(float time_limit)
-{
-    start_time = Time::now();
-    max_timestep = al.constraintTable.length_max;
-    al.num_of_agents = 1;
-    al.agents.resize(1);
+//bool LNS::replan(float time_limit)
+//{
+//    start_time = Time::now();
+//    max_timestep = al.constraintTable.length_max;
+//    al.num_of_agents = 1;
+//    al.agents.resize(1);
+//
+//    map<int, list<int>> agent_groups;  // key = path length, value = list of agents
+//    int makespan = 0;
+//    for (int i = 0; i < al.getNumOfAllAgents(); i++)
+//    {
+//        if (al.agents_all[i].status >= 2)
+//            continue;
+//        if (al.paths_all[i].empty())
+//        {
+//            makespan = max_timestep * 2;
+//            agent_groups[max_timestep * 2].push_back(i);
+//        }
+//        else
+//        {
+//            makespan = max(makespan, (int) al.paths_all[i].size() - 1);
+//            if (al.agents_all[i].status == 0)
+//                agent_groups[al.paths_all[i].size() - 1].push_back(i);
+//        }
+//    }
+//    bool empty_path = false;
+//    for (auto it = agent_groups.rbegin(); it != agent_groups.rend() && !empty_path; ++it) // replan paths from the longest to the shortest
+//    {
+//
+//        for (auto i : it->second)
+//        {
+//            runtime = ((fsec) (Time::now() - start_time)).count();
+//            if (runtime >= time_limit)
+//                return true;
+//
+//            auto copy = al.paths_all[i];
+//            al.constraintTable.delete_path(i, al.paths_all[i]);
+//            runtime = ((fsec) (Time::now() - start_time)).count();
+//            al.agents[0] = &al.agents_all[i];
+//            SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
+//            planner.search();
+//            assert(planner.path.size() <= copy.size());
+//            if (planner.path.empty())
+//            {
+//                addAgentPath(i, copy);
+//                empty_path = true;
+//                if (it->first < max_timestep * 2)
+//                    break;
+//            }
+//            else
+//            {
+//                addAgentPath(i, planner.path);
+//                if (copy.size() == planner.path.size()) // fail to decrease the makespan
+//                {
+//                    return true;
+//                }
+//            }
+//        }
+//    }
+//    return true;
+//}
 
-    map<int, list<int>> agent_groups;  // key = path length, value = list of agents
-    int makespan = 0;
-    for (int i = 0; i < al.getNumOfAllAgents(); i++)
-    {
-        if (al.agents_all[i].status >= 2)
-            continue;
-        if (al.paths_all[i].empty())
-        {
-            makespan = max_timestep * 2;
-            agent_groups[max_timestep * 2].push_back(i);
-        }
-        else
-        {
-            makespan = max(makespan, (int) al.paths_all[i].size() - 1);
-            if (al.agents_all[i].status == 0)
-                agent_groups[al.paths_all[i].size() - 1].push_back(i);
-        }
-    }
-    bool empty_path = false;
-    for (auto it = agent_groups.rbegin(); it != agent_groups.rend() && !empty_path; ++it) // replan paths from the longest to the shortest
-    {
 
-        for (auto i : it->second)
-        {
-            runtime = ((fsec) (Time::now() - start_time)).count();
-            if (runtime >= time_limit)
-                return true;
-
-            auto copy = al.paths_all[i];
-            al.constraintTable.delete_path(i, al.paths_all[i]);
-            runtime = ((fsec) (Time::now() - start_time)).count();
-            al.agents[0] = &al.agents_all[i];
-            SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
-            planner.search();
-            assert(planner.path.size() <= copy.size());
-            if (planner.path.empty())
-            {
-                addAgentPath(i, copy);
-                empty_path = true;
-                if (it->first < max_timestep * 2)
-                    break;
-            }
-            else
-            {
-                addAgentPath(i, planner.path);
-                if (copy.size() == planner.path.size()) // fail to decrease the makespan
-                {
-                    return true;
-                }
-            }
-        }
-    }
-    return true;
-}
-
-/*
 bool LNS::replan(float time_limit)
 {
     start_time = Time::now();
@@ -270,7 +270,7 @@ bool LNS::replan(float time_limit)
                 al.constraintTable.delete_path(i, al.paths_all[i]);
                 runtime = ((fsec) (Time::now() - start_time)).count();
                 al.agents[0] = &al.agents_all[i];
-                SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
+                SIPP planner(ml,al,f_w,time_limit - runtime,options1);
                 planner.search();
                 if (planner.path.empty())
                 {
@@ -303,7 +303,7 @@ bool LNS::replan(float time_limit)
             al.constraintTable.delete_path(i, al.paths_all[i]);
             runtime = ((fsec) (Time::now() - start_time)).count();
             al.agents[0] = &al.agents_all[i];
-            SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
+            SIPP planner(ml,al,f_w,time_limit - runtime,options1);
             planner.search();
             if (planner.path.empty())
             {
@@ -319,7 +319,7 @@ bool LNS::replan(float time_limit)
 
     return true;
 }
- */
+
 bool LNS::replan(list<int>& to_be_replanned, float time_limit)
 {
     start_time = Time::now();
@@ -379,8 +379,9 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
         al.constraintTable.delete_path(i, al.paths_all[i]);
         runtime = ((fsec) (Time::now() - start_time)).count();
         al.agents[0] = &al.agents_all[i];
-        SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
+        SIPP planner(ml,al,f_w,time_limit - runtime,options1);
         planner.search();
+
         if (planner.path.empty())
         {
             addAgentPath(i, copy);
@@ -391,6 +392,7 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
             tabu_list.insert(i);
         }
     }
+
 
     return true;
 }

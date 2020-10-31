@@ -118,6 +118,51 @@ bool ConstraintTable::insert_path(int agent_id, const Path& path)
     return true;
 }
 
+bool ConstraintTable::insert_path_list(int agent_id, const Path& path)
+{
+    for (int timestep = (int)path.size() - 1; timestep >= 0; timestep--)
+    {
+        int loc = path[timestep].location;
+        int to;
+        if (timestep <(int)path.size() - 2)
+            to = path[timestep+1].location;
+        else
+            to = -1;
+        if (loc == -1)
+            return true;
+        if (CT_paths[loc].empty())
+            CT_paths_list[loc].emplace_back(timestep,agent_id,to);
+        else if(timestep < CT_paths_list[loc].front().timestep){
+            CT_paths_list[loc].emplace_front(timestep,agent_id,to);
+        }
+        else if(timestep > CT_paths_list[loc].back().timestep){
+            CT_paths_list[loc].emplace_back(timestep,agent_id,to);
+        }
+        else if(CT_paths[loc].size() == 1 && timestep == CT_paths_list[loc].front().timestep){
+            assert(false && "Vertex conflict");
+        }
+        else{
+            auto it = CT_paths_list[loc].begin();
+            auto pre = it;
+            it++;
+            while (it!=CT_paths_list[loc].end()){
+                assert(it->timestep!=timestep && "Vertex conflict");
+                if (it->timestep!=timestep)
+                    break;
+
+                if (timestep > pre->timestep && timestep < it->timestep) {
+                    CT_paths_list[loc].insert(pre, CT_entry(timestep, agent_id,to));
+                    break;
+                }
+                pre = it;
+                it++;
+            }
+
+        }
+    }
+    return true;
+}
+
 void ConstraintTable::delete_path(int agent_id, const Path& path)
 {
     for (int timestep = (int)path.size() - 1; timestep >= 0; timestep--)
@@ -128,4 +173,64 @@ void ConstraintTable::delete_path(int agent_id, const Path& path)
         assert(CT_paths[loc][timestep] == agent_id);
         CT_paths[loc][timestep] = -1;
     }
+}
+
+void ConstraintTable::delete_path_list(int agent_id, const Path& path)
+{
+    for (int timestep = (int)path.size() - 1; timestep >= 0; timestep--)
+    {
+        int loc = path[timestep].location;
+        if (loc == -1)
+            break;
+        assert(!CT_paths_list[loc].empty());
+
+        if(timestep == CT_paths_list[loc].front().timestep){
+            assert(CT_paths_list[loc].front().agent_id == agent_id);
+            CT_paths_list[loc].pop_front();
+        }
+        else if(timestep == CT_paths_list[loc].back().timestep){
+            assert(CT_paths_list[loc].back().agent_id == agent_id);
+            CT_paths_list[loc].pop_back();        }
+        else{
+            auto it = CT_paths_list[loc].begin();
+            while (it!=CT_paths_list[loc].end()){
+                assert(it->timestep!=timestep && "Vertex conflict");
+                if (it->timestep!=timestep) {
+                    CT_paths_list[loc].erase(it);
+                    break;
+                }
+                else
+                    ++it;
+            }
+
+        }
+
+    }
+}
+
+bool ConstraintTable::is_constrained_list(int agent_id, int loc, int timestep, int pre_loc) const
+{
+    if (loc < 0 || CT_paths_list[loc].empty())
+        return false;
+
+    if (timestep <= CT_paths_list[loc].front().timestep){
+        return timestep == CT_paths_list[loc].front().timestep;
+    }
+    else if (timestep >= CT_paths_list[loc].back().timestep){
+        return timestep == CT_paths_list[loc].back().timestep;
+    }
+    else{
+
+        auto it = CT_paths_list[loc].begin();
+        while (it!=CT_paths_list[loc].end()){
+            if (it->timestep > timestep)
+                break;
+
+            if (timestep == it->timestep || (it->to!= -1 && timestep - it->timestep == 1 && pre_loc == it->to ))
+                return true;
+
+
+        };
+    }
+
 }

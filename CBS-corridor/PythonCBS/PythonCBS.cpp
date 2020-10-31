@@ -11,15 +11,14 @@ namespace p = boost::python;
 
 
 template <class Map>
-PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, string algo, float soft_time_limit,
-                          int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
+PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, float soft_time_limit,
+                          int default_group_size, int debug, float f_w,bool replan,
                           int agent_priority_strategy, int neighbor_generation_strategy,
                           int prirority_ordering_strategy, int replan_strategy) :
-                          railEnv(railEnv1), framework(framework), algo(algo),
+                          railEnv(railEnv1), framework(framework),
                           soft_time_limit(soft_time_limit),
                           f_w(f_w), defaultGroupSize(default_group_size),
-                          chasing(chasing),
-                          accept_partial_solution(accept_partial_solution),
+                          replan_on(replan),
                           agent_priority_strategy(agent_priority_strategy),
                           neighbor_generation_strategy(neighbor_generation_strategy),
                           prirority_ordering_strategy(prirority_ordering_strategy),
@@ -30,35 +29,6 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, string algo, flo
 	options1.debug = debug;
     srand(0);
 	this->kRobust = 1;
-	this->corridor_option = corridor;
-    if(corridor == 0){
-        this->trainCorridor1 = false;
-        this->corridor2 = false;
-    }
-	else if(corridor == 1){
-	    this->trainCorridor1 = true;
-	}
-	else if(corridor == 2){
-	    this->corridor2 = true;
-	}
-    else if(corridor == 3){
-        this->trainCorridor1 = true;
-        this->corridor2 = true;
-    }
-    if (options1.debug)
-        cout<<"Corridor option: "<< corridor<< " Chasing option: " << chasing << endl;
-
-	if (algo == "ICBS")
-		s = constraint_strategy::ICBS;
-	else if (algo == "CBS")
-		s = constraint_strategy::CBS;
-	else if (algo == "CBSH")
-		s = constraint_strategy::CBSH;
-	else
-	{
-		std::cout << "WRONG SOLVER NAME! Use CBSH as default" << std::endl;
-		s = constraint_strategy::CBSH;
-	}
 
     if (options1.debug)
 	std::cout << "get width height " << std::endl;
@@ -132,7 +102,8 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     {
         start_time = Time::now();// time(NULL) return time in seconds
         al->updateAgents(railEnv.attr("agents"));
-        return;
+        if (!replan_on)
+            return;
         if (options1.debug)
         {
             cout << "Timestep = " << timestep << ";\t";
@@ -152,8 +123,8 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
             }*/
             cout << endl;
         }
-        if (timestep % 100 < 99 || al->new_malfunction_agents.empty())
-            return; // replan every 100 timesteps
+//        if (timestep % 100 < 99 || al->new_malfunction_agents.empty())
+//            return; // replan every 100 timesteps
 
         if (options1.debug)
         {
@@ -169,6 +140,8 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
 
             cout << endl;
         }
+        if (al->new_malfunction_agents.empty() && to_be_replanned.empty())
+            return; // we do not replan if there are no new mal agents and no to-be-replanned agents
 
         // use mcp to build new paths
         vector<Path> paths;
@@ -223,7 +196,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
         runtime = ((fsec)(Time::now() - start_time)).count();
         lns.replan(time_limit - runtime);
-        // lns.replan(to_be_replanned, time_limit - runtime);
+//         lns.replan(to_be_replanned, time_limit - runtime);
         if (options1.debug)
         {
             //cout << "Updated paths" << endl;
@@ -733,8 +706,8 @@ template class PythonCBS<FlatlandLoader>;
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
 {
 	using namespace boost::python;
-	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, string, float,
-	        int, int,float,int,bool,bool,int,int,int,int>())
+	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, float,
+	        int, int,float,bool,int,int,int,int>())
 		.def("getResult", &PythonCBS<FlatlandLoader>::getResult)
 		.def("search", &PythonCBS<FlatlandLoader>::search)
 		.def("hasConflicts", &PythonCBS<FlatlandLoader>::findConflicts)

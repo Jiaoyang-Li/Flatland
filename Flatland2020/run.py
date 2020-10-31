@@ -215,17 +215,15 @@ while True:
     else:
         time_limit = 0  # remaining_time / (num_of_evaluations - evaluation_number + 1)
     default_group_size = 16  # max number of agents in a group
-    corridor_method = 1  # or "corridor2" or ""
-    chasing = True
-    accept_partial_solution = True
+    replan = False
     agent_priority_strategy = 3
     neighbor_generation_strategy = 3
     prirority_ordering_strategy = 0
     replan_strategy = 1
 
 
-    CBS = PythonCBS(local_env, framework, "CBSH", time_limit, default_group_size, debug, f_w,
-                    corridor_method, chasing, accept_partial_solution, agent_priority_strategy,
+    CBS = PythonCBS(local_env, framework, time_limit, default_group_size, debug, f_w,
+                     replan, agent_priority_strategy,
                     neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
     success = CBS.search()
     paths = CBS.getResult()
