@@ -94,6 +94,7 @@ agent_percentages[344] = 0.95
 agent_percentages[283] = 0.95
 agent_percentages[295] = 0.95
 agent_percentages[282] = 0.95
+agent_percentages[354] = 0.85
 
 
 # temp solution: C++ solver path file
