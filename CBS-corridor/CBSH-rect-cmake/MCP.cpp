@@ -277,8 +277,17 @@ void MCP::getNextLoc(p::list agent_location, int timestep)
                     // agent_location[i] != al->paths_all[first_agent][agent_time[first_agent]].location) // not edge conflict
                 {
                     to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
+
                 }
+                else if(al->agents_all[i].status==0){
+                    to_go[i] = -1;
+                }
+
+
+
+
             }
+
         }
     }
 }
@@ -286,6 +295,7 @@ void MCP::getNextLoc(p::list agent_location, int timestep)
 
 void MCP::update(p::list agent_location, p::dict agent_action)
 {
+
     for (int i : active_agents)
     {
         if (agent_time[i] < no_wait_time[i].size() &&
