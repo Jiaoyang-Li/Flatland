@@ -19,16 +19,17 @@ namespace p = boost::python;
 
 struct statistics {
     double runtime;
-    double runtime_corridor=0;
+    int iterations;
+    int sum_of_costs;
+    int makespan;
+    double initial_runtime;
+    int initial_sum_of_costs;
+    int initial_makespan;
+
     int HL_num_expanded = 0;
     int HL_num_generated = 0;
     int LL_num_expanded = 0;
     int LL_num_generated = 0;
-    int num_standard = 0;
-    int num_corridor2 = 0;
-    int num_corridor = 0;
-    int num_start = 0;
-    int num_chasing = 0;
 };
 
 // for p thread call non-static function in class
@@ -84,7 +85,7 @@ public:
 	int defaultGroupSize; // max number of agents in a group
     bool accept_partial_solution;
     int agent_priority_strategy;
-	bool search();
+	bool search(float success_rate = 1.1);
 	p::dict getResultDetail();
 	void replan(p::object railEnv1, int timestep, float time_limit);
 	void updateFw(float fw);
@@ -148,16 +149,10 @@ public:
                "normalized cost," <<
                "dead agents," <<
                "HL nodes," <<
-               "LL nodes,";
-        if (framework == "Parallel-LNS")
-            output << "Initial agent priority" << endl;
-        else if(framework == "Parallel-Neighbour-LNS")
-            output <<"Neighbour strategy"<< endl;
-        else
-            output<<endl;
+               "LL nodes," << endl;
 
-        for (int i = 0 ; i<iteration_stats.size(); i++) {
-            for (const auto &data : iteration_stats[i]) {
+        for (const auto & iteration_stat : iteration_stats) {
+            for (const auto &data : iteration_stat) {
                 output << get<0>(data) << "," <<
                        get<1>(data) << "," <<
                        get<2>(data) << "," <<
@@ -168,11 +163,7 @@ public:
                        get<7>(data) << "," <<
                        get<8>(data) << "," <<
                        get<9>(data) << "," <<
-                       get<10>(data) <<"," ;
-                if (framework == "Parallel-LNS")
-                    output << strategies[i] << ","<< endl;
-                else if(framework == "Parallel-Neighbour-LNS")
-                    output << neighbours[i] <<","<<endl;
+                       get<10>(data) <<"," << endl;
             }
         }
         output.close();

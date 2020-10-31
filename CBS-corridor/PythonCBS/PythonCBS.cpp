@@ -243,7 +243,7 @@ p::list PythonCBS<Map>::getResult() {
 }
 
 template <class Map>
-bool PythonCBS<Map>::search() {
+bool PythonCBS<Map>::search(float success_rate) {
     start_time = Time::now();// time(NULL) return time in seconds
     if (options1.debug)
 		cout << "start initialize" << endl;
@@ -269,20 +269,17 @@ bool PythonCBS<Map>::search() {
         LNS lns(*al, *ml, f_w, s, agent_priority_strategy, options1, corridor2, trainCorridor1, chasing,
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
         runtime = ((fsec)(Time::now() - start_time)).count(); 
-        bool succ = lns.run(hard_time_limit - runtime, soft_time_limit - runtime);
+        bool succ = lns.run(hard_time_limit - runtime, soft_time_limit - runtime, success_rate);
         runtime = ((fsec)(Time::now() - start_time)).count();
-        statistic_list[0].HL_num_expanded = lns.HL_num_expanded;
-        statistic_list[0].HL_num_generated = lns.HL_num_generated;
-        statistic_list[0].LL_num_expanded = lns.LL_num_expanded;
-        statistic_list[0].LL_num_generated = lns.LL_num_generated;
-        statistic_list[0].num_standard = lns.num_standard;
-        statistic_list[0].num_chasing = lns.num_chasing;
-        statistic_list[0].num_start = lns.num_start;
-        statistic_list[0].num_corridor = lns.num_corridor;
-        statistic_list[0].num_corridor2 = lns.num_corridor2;
-        statistic_list[0].runtime_corridor = lns.runtime_corridor;
+        statistic_list[0].runtime = runtime;
+        statistic_list[0].initial_runtime = lns.initial_runtime;
+        statistic_list[0].sum_of_costs = lns.sum_of_costs;
+        statistic_list[0].initial_sum_of_costs = lns.initial_sum_of_costs;
+        statistic_list[0].makespan = lns.makespan;
+        statistic_list[0].initial_makespan = lns.initial_makespan;
+        statistic_list[0].iterations = lns.iterations;
         iteration_stats[0] = lns.iteration_stats;
-        if (findConflicts()){
+        if (options1.debug && findConflicts()){
             assert("Find conflict.");
         }
 
@@ -331,31 +328,33 @@ p::dict PythonCBS<Map>::getResultDetail() {
 	p::dict result;
 	int thread_id = this->best_thread_id;
 
-	result["runtime"] = runtime;
-	result["HL_expanded"] = statistic_list[thread_id].HL_num_expanded;
-	result["HL_generated"] = statistic_list[thread_id].HL_num_generated;
-	result["LL_expanded"] = statistic_list[thread_id].LL_num_expanded;
-	result["LL_generated"] = statistic_list[thread_id].LL_num_generated;
-    std::stringstream stream;
-    stream << std::fixed << std::setprecision(1) << f_w;
-    std::string s = stream.str();
-	result["algorithm"] = framework +
-            to_string(neighbor_generation_strategy) + to_string(prirority_ordering_strategy) + to_string(replan_strategy) +
-            "_" + algo + "(" + s + ")_groupsize=" + to_string(defaultGroupSize) +
-	        "_priority=" + to_string(agent_priority_strategy);
-    result["num_standard"] = statistic_list[thread_id].num_standard;
-    result["num_chasing"] = statistic_list[thread_id].num_chasing;
-    result["num_start"] = statistic_list[thread_id].num_start;
-    result["num_corridor"] = statistic_list[thread_id].num_corridor;
-    result["num_corridor2"] = statistic_list[thread_id].num_corridor2;
-    result["runtime_corridor"] = statistic_list[thread_id].runtime_corridor;
+	result["initial_runtime"] = statistic_list[thread_id].initial_runtime;
+	result["final_runtime"] = statistic_list[thread_id].runtime;
+	result["initial_sum_of_costs"] = statistic_list[thread_id].initial_sum_of_costs;
+	result["final_sum_of_costs"] = statistic_list[thread_id].sum_of_costs;
+	result["initial_makespan"] = statistic_list[thread_id].initial_makespan;
+    result["final_makespan"] = statistic_list[thread_id].makespan;
+    result["initial_reward"] = statistic_list[thread_id].initial_sum_of_costs * 1.0 /
+            (al->constraintTable.length_max * al->getNumOfAllAgents());
+    result["final_reward"] = statistic_list[thread_id].sum_of_costs * 1.0 /
+            (al->constraintTable.length_max * al->getNumOfAllAgents());
+    result["iterations"] = statistic_list[thread_id].iterations;
+    result["max_timestep"] = al->constraintTable.length_max;
+    result["num_of_agents"] = al->getNumOfAllAgents();
+    //std::stringstream stream;
+    //stream << std::fixed << std::setprecision(1) << f_w;
+    //std::string s = stream.str();
+	//result["algorithm"] = framework +
+    //        to_string(neighbor_generation_strategy) + to_string(prirority_ordering_strategy) + to_string(replan_strategy) +
+    //        "_" + algo + "(" + s + ")_groupsize=" + to_string(defaultGroupSize) +
+	//        "_priority=" + to_string(agent_priority_strategy);
 
-    result["best_initial_priority_strategy"] = this->best_initisl_priority_strategy;
-    result["best_neighboour_strategy"] = this->best_neighbour_strategy;
+    //result["best_initial_priority_strategy"] = this->best_initisl_priority_strategy;
+    //result["best_neighboour_strategy"] = this->best_neighbour_strategy;
 
 
 
-    int solution_cost = 0;
+    /*int solution_cost = 0;
     int finished_agents = 0;
     int makespan = 0;
     for (const auto& path : al->paths_all)
@@ -367,7 +366,7 @@ p::dict PythonCBS<Map>::getResultDetail() {
     }
     result["solution_cost"] = solution_cost;
     result["finished_agents"] = finished_agents;
-    result["makespan"] = makespan;
+    result["makespan"] = makespan;*/
 	return result;
 }
 
@@ -508,16 +507,6 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
     int best_makespan = -1;
     int best_finished_agents = -1;
     for (int i=0; i<no_threads; i++){
-        statistic_list[i].HL_num_expanded = lns_pool[i]->HL_num_expanded;
-        statistic_list[i].HL_num_generated = lns_pool[i]->HL_num_generated;
-        statistic_list[i].LL_num_expanded = lns_pool[i]->LL_num_expanded;
-        statistic_list[i].LL_num_generated = lns_pool[i]->LL_num_generated;
-        statistic_list[i].num_standard = lns_pool[i]->num_standard;
-        statistic_list[i].num_chasing = lns_pool[i]->num_chasing;
-        statistic_list[i].num_start = lns_pool[i]->num_start;
-        statistic_list[i].num_corridor = lns_pool[i]->num_corridor;
-        statistic_list[i].num_corridor2 = lns_pool[i]->num_corridor2;
-        statistic_list[i].runtime_corridor = lns_pool[i]->runtime_corridor;
         iteration_stats[i] = lns_pool[i]->iteration_stats;
 
         size_t solution_cost = 0;
@@ -646,16 +635,6 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads){
     int best_makespan = -1;
     int best_finished_agents = -1;
     for (int i=0; i<no_threads; i++){
-        statistic_list[i].HL_num_expanded = lns_pool[i]->HL_num_expanded;
-        statistic_list[i].HL_num_generated = lns_pool[i]->HL_num_generated;
-        statistic_list[i].LL_num_expanded = lns_pool[i]->LL_num_expanded;
-        statistic_list[i].LL_num_generated = lns_pool[i]->LL_num_generated;
-        statistic_list[i].num_standard = lns_pool[i]->num_standard;
-        statistic_list[i].num_chasing = lns_pool[i]->num_chasing;
-        statistic_list[i].num_start = lns_pool[i]->num_start;
-        statistic_list[i].num_corridor = lns_pool[i]->num_corridor;
-        statistic_list[i].num_corridor2 = lns_pool[i]->num_corridor2;
-        statistic_list[i].runtime_corridor = lns_pool[i]->runtime_corridor;
         iteration_stats[i] = lns_pool[i]->iteration_stats;
 
         size_t solution_cost = 0;

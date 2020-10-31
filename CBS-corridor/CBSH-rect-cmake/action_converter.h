@@ -2,6 +2,7 @@
 #include <numeric>
 #include <cmath>
 #include <vector>
+#include <iostream>
 using namespace std;
 
 namespace p = boost::python;
@@ -15,15 +16,19 @@ public:
     ActionConverter(int num_agent, int env_width){num_agent = num_agent; env_width = env_width;}
 
     int pos2action(int i, p::list curr_locs, p::list prev_locs, p::list next_locs){
-        if (next_locs[i] == curr_locs[i]){
+
+
+        if (p::extract<int>(p::long_(next_locs[i])) == p::extract<int>(p::long_(curr_locs[i]))){
             return 4;
         }
-        if(curr_locs[i] == -1 && next_locs[i] != -1){
+        if(p::extract<int>(p::long_(curr_locs[i])) == -1 && p::extract<int>(p::long_(next_locs[i])) != -1){
             return 2;
         }
 
         int prev_pos0 = loc0(p::extract<int>(p::long_(prev_locs[i])));
         int prev_pos1 = loc1(p::extract<int>(p::long_(prev_locs[i])));
+
+//        cout << p::extract<int>(p::long_(prev_locs[i])) << endl;
 
         int curr_pos0 = loc0(p::extract<int>(p::long_(curr_locs[i])));
         int curr_pos1 = loc1(p::extract<int>(p::long_(curr_locs[i])));
@@ -31,8 +36,12 @@ public:
         int next_pos0 = loc0(p::extract<int>(p::long_(next_locs[i])));
         int next_pos1 = loc1(p::extract<int>(p::long_(next_locs[i])));
 
+//        cout << i << endl;
+//        cout << prev_pos0 << " " << prev_pos1 << ", " << curr_pos0 << " " << curr_pos1 << ", " << next_pos0 << " " << next_pos1 << endl;
+
         int agent_dir0 = curr_pos0 - prev_pos0;
         int agent_dir1 = curr_pos1 - prev_pos1;
+
 
         complex<int> agent_dir_v (agent_dir0, agent_dir1);
 
@@ -44,6 +53,10 @@ public:
         float norm1 = get_norm(agent_dir_v);
         float norm2 = get_norm(move_dir_v);
 
+//        cout << agent_dir0 <<" " << agent_dir1 << ", " << move_dir0 << " " << move_dir1 << ", " << endl;
+//
+//        cout << norm1 <<", " << norm2 << endl;
+
         if(norm1>0){
             agent_dir0 = floor(agent_dir0 / norm1);
             agent_dir1 = floor(agent_dir1 / norm1);
@@ -54,11 +67,21 @@ public:
 
         }
 
+        // need to recalculate norm; this part can be further optmized.
+
+        complex<int> agent_dir_v2 (agent_dir0, agent_dir1);
+        complex<int> move_dir_v2 (move_dir0, move_dir1);
+
+        float norm3 = get_norm(agent_dir_v2);
+        float norm4 = get_norm(move_dir_v2);
+
+//        cout << norm3 <<", " << norm4 << endl;
+
         int a_m_sum0 = agent_dir0 + move_dir0;
         int a_m_sum1 = agent_dir1 + move_dir1;
 
         // assume it's all 0 and 1.
-        if(!(a_m_sum0 | a_m_sum1) && norm1>0 && norm2>0){
+        if(!(a_m_sum0 | a_m_sum1) && norm3>0 && norm4>0){
             return 2;
         }
         else{
@@ -89,8 +112,8 @@ private:
         return loc0 * env_width + loc1;
     }
 
-    inline int loc0(int id) const { return id / env_width; }
-    inline int loc1(int id) const { return id % env_width; }
+    inline int loc0(int id) const { return floor(id / (float)env_width); }
+    inline int loc1(int id) const { return ((id % env_width) + env_width) % env_width; }
 
 
     inline float get_norm(complex<int> n) const {return sqrt(norm(n));}

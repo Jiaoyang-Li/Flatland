@@ -20,7 +20,11 @@ public:
 	int length_max = INT_MAX;
 	bool use_list = false;
 
-	void reset() {auto map_size = CT_paths.size(); CT_paths.clear(); CT_paths.resize(map_size); }
+	void reset()
+	{
+	    auto map_size = CT_paths.size(); CT_paths.clear(); CT_paths.resize(map_size);
+        latest_conatraints.resize(map_size, 0);
+    }
 	bool insert_path(int agent_id, const Path& path);
     void delete_path(int agent_id, const Path& path);
     bool insert_path_list(int agent_id, const Path& path);
@@ -33,15 +37,17 @@ public:
     void get_agents(list< pair<int, int> >& agents, int excluded_agent, const pair<int,int>& loc_time_pair) const;
     void get_agents(set<int>& conflicting_agents, int groupsize, int loc) const;
 	void get_conflicting_agents(int agent_id, set<int>& conflicting_agents, int loc, int t) const;
-
+    int get_latest_constrained_timestep(int loc) const { return latest_conatraints[loc]; }
     void init(size_t map_size)
     {
+        latest_conatraints.resize(map_size, 0);
         if (use_list)
             CT_paths_list.resize(map_size);
         else
             CT_paths.resize(map_size);
     }
 private:
+    vector<int> latest_conatraints; // latest constraint at each location
     vector< vector<int> > CT_paths; // this stores the already planned paths, the value is the id of the agent
     vector< list<CT_entry> > CT_paths_list; // this stores the already planned paths, the value is the id of the agent
 

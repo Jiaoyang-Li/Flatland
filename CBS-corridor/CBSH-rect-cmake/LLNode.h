@@ -131,7 +131,7 @@ public:
             return (n1 == n2) ||
                    (n1 && n2 && n1->loc == n2->loc &&
                     n1->heading == n2->heading &&
-                    n1->interval.second == n2->interval.second);
+                    n1->interval == n2->interval);
         }
     };
 };

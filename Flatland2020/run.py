@@ -100,9 +100,6 @@ test_amount = [50,50,50,40,30,30,30,30,20,20,20,10,10,10]
 
 while True:
 
-    evaluation_number += 1
-
-
     if remote_test:
         time_start = time.time()
         observation, info = remote_client.env_create(
@@ -225,8 +222,14 @@ while True:
     CBS = PythonCBS(local_env, framework, time_limit, default_group_size, debug, f_w,
                      replan, agent_priority_strategy,
                     neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
-    success = CBS.search()
-    paths = CBS.getResult()
+
+    if evaluation_number > 260 and  evaluation_number % 10 == 1:
+        success = CBS.search(0.9)
+    else:
+        success = CBS.search(1.1)
+    evaluation_number += 1
+
+    # paths = CBS.getResult()
 
     # if debug_print:
     #     time_temp = time.time()

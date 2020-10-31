@@ -59,8 +59,8 @@ private:
     void updatePath(LLNode* goal);
     inline void releaseClosedListNodes()
     {
-        for (auto it = allNodes_table.begin(); it != allNodes_table.end(); ++it)
-            delete (*it);
+        for (auto it : allNodes_table)
+            delete it;
         open_list.clear();
         allNodes_table.clear();
     }
@@ -79,7 +79,7 @@ private:
     void getSafeIntervals(int prev_loc, int prev_timestep,
                           const Interval& prev_interval, int next_loc, int next_h, list<Interval>& intervals);
     // define typedefs and handles for heap and hash_map
-    typedef boost::heap::pairing_heap< SIPPNode*, boost::heap::compare<SIPPNode::compare_node> > heap_open_t;
+    typedef boost::heap::pairing_heap< SIPPNode*, boost::heap::compare<LLNode::compare_node> > heap_open_t;
     typedef boost::unordered_set<SIPPNode*, SIPPNode::NodeHasher, SIPPNode::eqnode> hashtable_t;
     heap_open_t open_list;
     hashtable_t allNodes_table;
@@ -87,8 +87,8 @@ private:
     void updatePath(SIPPNode* goal);
     inline void releaseClosedListNodes()
     {
-        for (auto it = allNodes_table.begin(); it != allNodes_table.end(); ++it)
-            delete (*it);
+        for (auto it : allNodes_table)
+            delete it;
         open_list.clear();
         allNodes_table.clear();
     }
