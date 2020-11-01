@@ -302,7 +302,12 @@ void MCP::getNextLocForAgent(int i, vector<bool>& updated, int timestep)
             getNextLocForAgent(first_agent, updated, timestep); // update the first agent
         }
         if (to_go[first_agent] == loc) // the first agent does not move
-            to_go[i] = al->agents_all[i].position; // this agent cannot move either
+        { // this agent cannot move either
+            if (al->agents_all[i].status == 0)
+                to_go[i] = -1; // do noting
+            else
+                to_go[i] = al->agents_all[i].position; // stand still
+        }
         else
             to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location; // this agent can move
     }
