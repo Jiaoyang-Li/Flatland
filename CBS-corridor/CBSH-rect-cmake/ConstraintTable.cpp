@@ -5,7 +5,8 @@ bool ConstraintTable::is_constrained(int agent_id, int loc, int timestep, int pr
 {
     if (loc < 0 || CT_paths[loc].empty())
         return false;
-
+    if (timestep > length_max)
+        return true;
     assert(agent_id != CT_paths[loc][timestep]);
     return CT_paths[loc][timestep] >= 0 || // vertex conflict
            (pre_loc >= 0 && !CT_paths[pre_loc].empty() && timestep - 1 >= 0 && CT_paths[loc][timestep - 1] >= 0 &&
@@ -14,7 +15,7 @@ bool ConstraintTable::is_constrained(int agent_id, int loc, int timestep, int pr
 
 bool ConstraintTable::blocked(int loc, int t) const
 {
-    return loc >=0 && !CT_paths[loc].empty() && CT_paths[loc][t] >= 0;
+    return t > length_max || (loc >=0 && !CT_paths[loc].empty() && CT_paths[loc][t] >= 0);
 }
 
 void ConstraintTable::get_agents(set<int>& conflicting_agents, int loc) const

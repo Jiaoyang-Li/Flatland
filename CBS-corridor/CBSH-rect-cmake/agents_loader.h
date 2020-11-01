@@ -17,8 +17,8 @@ using namespace std;
 
 
 struct Agent {
-	pair<int, int> initial_location;
-	pair<int, int> goal_location;
+	int initial_location;
+	int goal_location;
 	int position;
     vector<hvals>* heuristics = NULL;
     int agent_id;
@@ -49,13 +49,7 @@ public:
     list<int> new_agents; // agents that have just appear on the map
     int num_active_agents = 0;
 
-    //vector< pair<int, int> > initial_locations;
-    //vector< pair<int, int> > goal_locations;
-    //vector<int> headings;
-    // vector<double> max_v;  // entry [i] is the max translational velocity for agent i
-    // vector<double> max_w;  // entry [i] is the max rotational velocity for agent i
-    // vector<double> max_a;  // entry [i] is the max accelration for agent i
-    AgentsLoader(const std::string& fname, const MapLoader &ml, int agentsNum);
+
     AgentsLoader();
     AgentsLoader(const FlatlandLoader &ml, boost::python::object agents);
     void updateAgents(const FlatlandLoader &ml, boost::python::object agents);
@@ -63,7 +57,6 @@ public:
     // void addAgent ( int start_row, int start_col, int goal_row, int goal_col );
     void printAllAgentsInitGoal () const;
     void printCurrentAgentsInitGoal () const;
-    void saveToFile(const std::string& fname);
     // pair<int, int> agentStartOrGoalAt(int row, int col);
     // void clearLocationFromAgents(int row, int col);
     ~AgentsLoader();

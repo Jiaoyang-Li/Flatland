@@ -275,7 +275,7 @@ bool LNS::replan(float time_limit)
         // find the intersections in front of the mal_agent
         list<pair<int, int> > future_intersections; // <location, timestep>
         if (al.agents_all[mal_agent].status == 0) // the mal agent is still in the station
-            future_intersections.emplace_back(ml.linearize_coordinate(al.agents_all[mal_agent].initial_location), 0); // replan agents at the start location
+            future_intersections.emplace_back(al.agents_all[mal_agent].initial_location, 0); // replan agents at the start location
         for (int t = 0; t < (int) al.paths_all[mal_agent].size(); t++)
         {
             int loc = al.paths_all[mal_agent][t].location;
@@ -367,7 +367,7 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
         // find the intersections in front of the mal_agent
         list<pair<int, int> > future_intersections; // <location, timestep>
         if (al.agents_all[mal_agent].status == 0) // the mal agent is still in the station
-            future_intersections.emplace_back(ml.linearize_coordinate(al.agents_all[mal_agent].initial_location), 0); // replan agents at the start location
+            future_intersections.emplace_back(al.agents_all[mal_agent].initial_location, 0); // replan agents at the start location
         for (int t = 0; t < (int) al.paths_all[mal_agent].size(); t++)
         {
             int loc = al.paths_all[mal_agent][t].location;
@@ -502,7 +502,7 @@ bool LNS::generateNeighborByStart()
     {
         for (int i = 0; i < (int)al.agents_all.size(); i++)
         {
-            auto start = ml.linearize_coordinate(al.agents_all[i].initial_location);
+            auto start = al.agents_all[i].initial_location;
             start_locations[start].push_back(i);
         }
         auto it = start_locations.begin();
@@ -811,7 +811,7 @@ void LNS::sortNeighborsByStrategy()
         // decide the agent priority for agents at the same start location
         start_locations.clear(); // map the agents to their start locations
         for (auto i : neighbors)
-            start_locations[ml.linearize_coordinate(al.agents_all[i].initial_location)].push_back(i);
+            start_locations[al.agents_all[i].initial_location].push_back(i);
         for (auto& agents : start_locations)
         {
             vector<int> agents_vec(agents.second.begin(), agents.second.end());
@@ -865,7 +865,7 @@ void LNS::randomWalk(int agent_id, const PathEntry& start, int start_timestep,
     int h_val;
     if (loc < 0)
     {
-        int initial_location = ml.linearize_coordinate(al.agents_all[agent_id].initial_location);
+        int initial_location = al.agents_all[agent_id].initial_location;
         h_val = heuristics[initial_location].get_hval(heading) / speed + 1;
     }
     else
@@ -893,7 +893,7 @@ void LNS::randomWalk(int agent_id, const PathEntry& start, int start_timestep,
             transitions.push_back(move);
 
             Transition move2;
-            move2.location = ml.linearize_coordinate(al.agents_all[agent_id].initial_location);
+            move2.location = al.agents_all[agent_id].initial_location;
             move2.heading = heading;
             move2.position_fraction = position_fraction;
             move2.exit_loc = exit_loc;

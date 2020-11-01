@@ -284,8 +284,11 @@ SinglePlanning::SinglePlanning(const FlatlandLoader& ml, AgentsLoader& al, doubl
         cout<<"Single Planning can only have 1 agent in al->agents"<<endl;
 
     this->screen = screen;
-	this->start_location = agent.position;
-	this->goal_location = ml.linearize_coordinate(agent.goal_location.first, agent.goal_location.second);
+    if (agent.position < 0)
+	    this->start_location = agent.initial_location;
+	else
+        this->start_location = agent.position;
+	this->goal_location = agent.goal_location;
 
 	this->map_size = ml.cols*ml.rows;
 
@@ -491,7 +494,7 @@ void SIPP::getSafeIntervals(int prev_loc, int prev_timestep,
         }
         // find the latest timestep when we can move to next loc
         int t_max = t_min;
-        while(!constraintTable.blocked(next_loc, t_max) && t_max<=constraintTable.length_max) // no vertex conflict
+        while(!constraintTable.blocked(next_loc, t_max)) // no vertex conflict
             t_max++;
         if (t_min < t_max)
         {

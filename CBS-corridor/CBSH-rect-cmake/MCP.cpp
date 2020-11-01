@@ -16,12 +16,11 @@ void MCP::simulate(vector<Path>& paths, int timestep)
         paths[i].reserve(al->paths_all[i].size() * 2);
         if (copy_agent_time[i] > 0)
         {
-            assert(copy_agent_time[i] < (int)no_wait_time[i].size());
             assert(al->paths_all[i][no_wait_time[i][copy_agent_time[i] - 1]].location ==
                 al->agents_all[i].position);
             paths[i].push_back(al->paths_all[i][no_wait_time[i][copy_agent_time[i] - 1]]);
         }
-        else
+        else // the agent has not started to move yet
         {
             assert(al->agents_all[i].status == 0);
             paths[i].push_back(al->paths_all[i].front());
@@ -83,11 +82,13 @@ void MCP::simulate(vector<Path>& paths, int timestep)
             assert(move);
         }
     }
-    for (int i : unfinished_agents)
-    {
-        if (!paths[i].empty() && paths[i].back().location != ml->linearize_coordinate(al->agents_all[i].goal_location))
-            paths[i].clear();
-    }
+    //for (int i : unfinished_agents)
+    //{
+    //    if (al->agents_all[i].status == 0 && // the agent has not started yet
+    //        !paths[i].empty() &&
+    //        paths[i].back().location != ml->linearize_coordinate(al->agents_all[i].goal_location)) // it cannot reach its goal location
+    //        paths[i].clear();
+    //}
 }
 
 bool MCP::moveAgent(vector<Path>& paths, list<int>::iterator& p, int t, int timestep)
@@ -101,13 +102,21 @@ bool MCP::moveAgent(vector<Path>& paths, list<int>::iterator& p, int t, int time
     assert(paths[i].size() == t + 1);
     assert(paths[i][t].location < 0 || copy_mcp[paths[i][t].location].front() == i);
     assert(copy_agent_time[i] <= (int) no_wait_time[i].size());
-    if (copy_agent_time[i] == (int) no_wait_time[i].size())  // the agent has reached its location
+    if (copy_agent_time[i] == (int) no_wait_time[i].size()) // the agent has reached the last location on its path
     {
-        int previous = al->paths_all[i][no_wait_time[i][copy_agent_time[i] - 1]].location;
-        assert(copy_mcp[previous].front() == i);
-        copy_mcp[previous].pop_front();
-        p = unfinished_agents.erase(p);
-        return true;
+        int loc = al->agents_all[i].goal_location;
+        if (paths[i][t].location == loc)// the agent has reached its goal location
+        {
+            assert(copy_mcp[loc].front() == i);
+            copy_mcp[loc].pop_front();
+            p = unfinished_agents.erase(p);
+            return true;
+        }
+        else // the path is finished, but the agent still has to wait here
+        {
+            paths[i].push_back(paths[i].back()); // stay still
+            return false;
+        }
     }
     if (appear_time[i] > t + 1 + timestep) // the agent should not appear before the appear time
     {
@@ -275,16 +284,21 @@ void MCP::getNextLocForAgent(int i, vector<bool>& updated, int timestep)
             to_go[i] = al->agents_all[i].position; // stand still
         return;
     }
-    assert(agent_time[i] < no_wait_time[i].size()); // the agent hasn't reach the goal location yet
-    assert(!mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].empty());
+    if (agent_time[i] == no_wait_time[i].size()) // the agent has reached the last location on its path, which is not its goal location
+    {
+        assert(al->agents_all[i].position > 0 && al->agents_all[i].position != al->agents_all[i].goal_location);
+        to_go[i] = al->agents_all[i].position; // stand still
+        return;
+    }
 
+    assert(!mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].empty());
     int loc = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
     int first_agent = mcp[loc].front();
 
     if (mcp[loc].front() == i || // the agent is the first in the mcp
-        agent_time[i] == no_wait_time[i].size() - 1) // the agent is going to reach its goal location
+        loc == al->agents_all[i].goal_location) // the agent is going to reach its goal location
     {
-        to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
+        to_go[i] = loc;
         return;
     }
 
@@ -296,7 +310,7 @@ void MCP::getNextLocForAgent(int i, vector<bool>& updated, int timestep)
     {
         if (!updated[first_agent])
         {
-            to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location; // pretend that this agent can move
+            to_go[i] = loc; // pretend that this agent can move
             getNextLocForAgent(first_agent, updated, timestep); // update the first agent
         }
         if (to_go[first_agent] == loc) // the first agent does not move
@@ -307,7 +321,7 @@ void MCP::getNextLocForAgent(int i, vector<bool>& updated, int timestep)
                 to_go[i] = al->agents_all[i].position; // stand still
         }
         else
-            to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location; // this agent can move
+            to_go[i] = loc; // this agent can move
     }
     else if (al->agents_all[i].status == 0)
         to_go[i] = -1; // do noting

@@ -69,7 +69,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
         al->updateAgents(*ml, railEnv.attr("agents"));
         for (int a : al->new_agents)
         {
-            int start = ml->linearize_coordinate(al->agents_all[a].initial_location);
+            int start = al->agents_all[a].initial_location;
             opp->to_be_planned_group.push_back(start);
         }
         opp->updateToBePlanedAgents(al->getNumOfAllAgents());
