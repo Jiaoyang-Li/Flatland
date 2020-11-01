@@ -322,14 +322,15 @@ bool SIPP::search() // TODO: weighted SIPP
     if (agent.status != 0) {
         start->loc = start_location;
         start->h_val--;
-        start->g_val = agent.malfunction_left;
-        start->timestep = agent.malfunction_left;
 
-        int t_max = agent.malfunction_left;
-        while(!constraintTable.is_constrained(agent.agent_id, start_location, t_max, -1) && t_max<=constraintTable.length_max)
-            t_max++;
-
-        start->interval = make_pair(0,t_max);
+        if (constraintTable.get_latest_constrained_timestep(start_location) > 0)
+        {
+            int t_max = agent.malfunction_left;
+            while(!constraintTable.is_constrained(agent.agent_id, start_location, t_max, -1) &&
+                t_max <= constraintTable.length_max)
+                t_max++;
+            start->interval = make_pair(0, t_max);
+        }
     }
 
 
@@ -341,18 +342,16 @@ bool SIPP::search() // TODO: weighted SIPP
     if (start->position_fraction>=1) {
         list<Transition> temp;
         ml.get_transitions(temp, start_location, start->heading, true);
-        if (temp.size() == 1) { //if not on a cross, exit_heading is not accurate as flatland env only provide an move forwad action.
+        if (temp.size() == 1) { //if not on a cross, exit_heading is not accurate as flatland env only provide an move forward action.
             start->exit_loc = temp.front().location;
             start->exit_heading = temp.front().heading;
         }
         else //if on a cross, exit_heading is always accurate, as move forwad must be along agent's current heading.
             start->exit_loc = start_location + ml.moves_offset[start->exit_heading];
-        start->timestep=agent.malfunction_left;
-        start->g_val=agent.malfunction_left;
         int t_max = agent.malfunction_left;
-        while(constraintTable.is_constrained(agent.agent_id, start->exit_loc, t_max, start_location) && t_max<=constraintTable.length_max)
+        while(constraintTable.is_constrained(agent.agent_id, start->exit_loc, t_max, start_location) && t_max <= constraintTable.length_max)
             t_max++;
-        start->interval = make_pair(0,t_max+1);
+        start->interval = make_pair(0,t_max);
     }
     start->open_handle = open_list.push(start);
     start->in_openlist = true;
