@@ -293,7 +293,7 @@ void MCP::getNextLocForAgent(int i, vector<bool>& updated, int timestep)
     assert(mcp[loc].size() > 1); // the agent is not the first in the mcp, so mcp should have at least two agents
 
     if (*std::next(mcp[loc].begin()) == i && // the second agent is i
-        al->agents_all[first_agent].position == loc && // the fist agent is already at loc
+        al->agents_all[first_agent].position == loc && al->agents_all[first_agent].status >= 1 && // the fist agent is already at loc
         al->agents_all[first_agent].malfunction_left == 0)  // the first agent does not malfuntion
     {
         if (!updated[first_agent])
