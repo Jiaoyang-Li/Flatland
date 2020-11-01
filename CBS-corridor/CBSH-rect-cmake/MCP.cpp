@@ -264,14 +264,17 @@ void MCP::getNextLocForAgent(int i, vector<bool>& updated, int timestep)
     updated[i] = true;
     if (al->agents_all[i].status >= 2 || // the agent is done
         al->paths_all[i].empty() ||  // the agent does not have paths
-        appear_time[i] > timestep)  // the agent cannot showup now
+        appear_time[i] > timestep)  // the agent cannot show up now
     {
         to_go[i] = -1; // do noting
         return;
     }
     if (al->agents_all[i].malfunction_left > 0) // the agent is malfunctioning
     {
-        to_go[i] = al->agents_all[i].position; // stand still
+        if (al->agents_all[i].status == 0)
+            to_go[i] = -1; // do noting
+        else
+            to_go[i] = al->agents_all[i].position; // stand still
         return;
     }
     assert(agent_time[i] < no_wait_time[i].size()); // the agent hasn't reach the goal location yet
@@ -303,9 +306,10 @@ void MCP::getNextLocForAgent(int i, vector<bool>& updated, int timestep)
         else
             to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location; // this agent can move
     }
-    else {
+    else if (al->agents_all[i].status == 0)
+        to_go[i] = -1; // do noting
+    else
         to_go[i] = al->agents_all[i].position; // stand still
-    }
 }
 
 void MCP::update(p::list agent_location, p::dict agent_action)

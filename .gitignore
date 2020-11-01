@@ -15,6 +15,5 @@ Flatland2020/cmake_install.cmake
 Flatland2020/CMakeCache.txt
 Flatland2020/Makefile
 Flatland2020/CMakeFiles
-test-round2
-
+test*
 ./CBS-corridor/build
