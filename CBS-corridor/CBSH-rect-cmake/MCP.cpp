@@ -1,8 +1,6 @@
 #include "MCP.h"
 
-// TODO: if the agent is already appeared on the map,
-//  but because of the delays, its replanned path does not reach its goal location,
-//  so we cannot assume that the last location in an agent's path is its goal location
+
 void MCP::simulate(vector<Path>& paths, int timestep)
 {
     copy_agent_time = agent_time;
@@ -88,7 +86,7 @@ void MCP::simulate(vector<Path>& paths, int timestep)
     for (int i : unfinished_agents)
     {
         if (!paths[i].empty() && paths[i].back().location != ml->linearize_coordinate(al->agents_all[i].goal_location))
-            paths[i].empty();
+            paths[i].clear();
     }
 }
 

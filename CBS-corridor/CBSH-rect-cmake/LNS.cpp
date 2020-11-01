@@ -418,9 +418,12 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
         SIPP planner(ml,al,f_w,time_limit - runtime,options1);
         planner.search();
 
-        if (planner.path.empty())
+        if (planner.path.empty()) // the agent cannot reach its goal before max timestep
         {
-            addAgentPath(i, copy);
+            if (al.agents_all[i].status > 0) // the agent has already started to move
+                addAgentPath(i, copy); // so it has to follow it original path, so that it does not block other agents
+            else
+                al.paths_all[i].clear();// otherwise, it has an empty path, which means that it will never show up.
         }
         else
         {
