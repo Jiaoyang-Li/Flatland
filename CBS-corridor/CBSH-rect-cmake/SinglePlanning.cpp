@@ -328,8 +328,7 @@ bool SIPP::search() // TODO: weighted SIPP
         int t_max = agent.malfunction_left;
         while(!constraintTable.is_constrained(agent.agent_id, start_location, t_max, -1) && t_max<=constraintTable.length_max)
             t_max++;
-        if (t_max == constraintTable.length_max)
-            t_max++;
+
         start->interval = make_pair(0,t_max);
     }
 
@@ -350,7 +349,10 @@ bool SIPP::search() // TODO: weighted SIPP
             start->exit_loc = start_location + ml.moves_offset[start->exit_heading];
         start->timestep=agent.malfunction_left;
         start->g_val=agent.malfunction_left;
-        start->interval = make_pair(0,agent.malfunction_left+1);
+        int t_max = agent.malfunction_left;
+        while(constraintTable.is_constrained(agent.agent_id, start->exit_loc, t_max, start_location) && t_max<=constraintTable.length_max)
+            t_max++;
+        start->interval = make_pair(0,t_max+1);
     }
     start->open_handle = open_list.push(start);
     start->in_openlist = true;

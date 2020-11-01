@@ -279,15 +279,22 @@ void MCP::getNextLoc(p::list agent_location, int timestep)
                     to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
 
                 }
-                else if(al->agents_all[i].status==0){
+                else if( al->agents_all[i].status==0){
                     to_go[i] = -1;
                 }
-
-
+                else {
+                    to_go[i] =p::extract<int>(p::long_(agent_location[i]));
+                }
 
 
             }
 
+        }
+        else if(al->agents_all[i].status==0){
+            to_go[i] = -1;
+        }
+        else {
+            to_go[i] =p::extract<int>(p::long_(agent_location[i]));
         }
     }
 }
