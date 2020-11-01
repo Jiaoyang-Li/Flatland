@@ -20,7 +20,7 @@ void MCP::simulate(vector<Path>& paths, int timestep)
         {
             assert(copy_agent_time[i] < (int)no_wait_time[i].size());
             assert(al->paths_all[i][no_wait_time[i][copy_agent_time[i] - 1]].location ==
-                ml->linearize_coordinate(al->agents_all[i].position));
+                al->agents_all[i].position);
             paths[i].push_back(al->paths_all[i][no_wait_time[i][copy_agent_time[i] - 1]]);
         }
         else
@@ -248,57 +248,65 @@ void MCP::build(const AgentsLoader* _al, const FlatlandLoader* _ml, options _opt
 }
 
 
-void MCP::getNextLoc(p::list agent_location, int timestep)
+void MCP::getNextLoc(int timestep)
 {
+    vector<bool> updated(al->getNumOfAllAgents(), false);
     for (int i : active_agents)
     {
-        if (al->agents_all[i].status >= 2)
-            to_go[i] = -1;
-        else if (al->agents_all[i].malfunction_left > 0)
-            to_go[i] = p::extract<int>(p::long_(agent_location[i]));
-        else if (!al->paths_all[i].empty() &&
-            appear_time[i] <= timestep &&
-            agent_time[i] < no_wait_time[i].size())
-        {
-            assert(!mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].empty());
-
-            int loc = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
-            int first_agent = mcp[loc].front();
-
-            if (mcp[loc].front() == i || agent_time[i] == no_wait_time[i].size() - 1)
-                to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
-
-            else if ( mcp[loc].size() > 1)
-            {
-                if (*std::next(mcp[loc].begin()) == i && // the second agent is i
-                    agent_location[first_agent] == loc && // the fist agent is already at loc
-//                    to_go[first_agent] != loc &&
-                    al->agents_all[first_agent].malfunction_left == 0)  // the first agent is going to leave
-                    // agent_location[i] != al->paths_all[first_agent][agent_time[first_agent]].location) // not edge conflict
-                {
-                    to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
-
-                }
-                else if( al->agents_all[i].status==0){
-                    to_go[i] = -1;
-                }
-                else {
-                    to_go[i] =p::extract<int>(p::long_(agent_location[i]));
-                }
-
-
-            }
-
-        }
-        else if(al->agents_all[i].status==0){
-            to_go[i] = -1;
-        }
-        else {
-            to_go[i] =p::extract<int>(p::long_(agent_location[i]));
-        }
+        getNextLocForAgent(i, updated, timestep);
     }
 }
 
+void MCP::getNextLocForAgent(int i, vector<bool>& updated, int timestep)
+{
+    if (updated[i])
+        return;
+    updated[i] = true;
+    if (al->agents_all[i].status >= 2 || // the agent is done
+        al->paths_all[i].empty() ||  // the agent does not have paths
+        appear_time[i] > timestep)  // the agent cannot showup now
+    {
+        to_go[i] = -1; // do noting
+        return;
+    }
+    if (al->agents_all[i].malfunction_left > 0) // the agent is malfunctioning
+    {
+        to_go[i] = al->agents_all[i].position; // stand still
+        return;
+    }
+    assert(agent_time[i] < no_wait_time[i].size()); // the agent hasn't reach the goal location yet
+    assert(!mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].empty());
+
+    int loc = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
+    int first_agent = mcp[loc].front();
+
+    if (mcp[loc].front() == i || // the agent is the first in the mcp
+        agent_time[i] == no_wait_time[i].size() - 1) // the agent is going to reach its goal location
+    {
+        to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
+        return;
+    }
+
+    assert(mcp[loc].size() > 1); // the agent is not the first in the mcp, so mcp should have at least two agents
+
+    if (*std::next(mcp[loc].begin()) == i && // the second agent is i
+        al->agents_all[first_agent].position == loc && // the fist agent is already at loc
+        al->agents_all[first_agent].malfunction_left == 0)  // the first agent does not malfuntion
+    {
+        if (!updated[first_agent])
+        {
+            to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location; // pretend that this agent can move
+            getNextLocForAgent(first_agent, updated, timestep); // update the first agent
+        }
+        if (to_go[first_agent] == loc) // the first agent does not move
+            to_go[i] = al->agents_all[i].position; // this agent cannot move either
+        else
+            to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location; // this agent can move
+    }
+    else {
+        to_go[i] = al->agents_all[i].position; // stand still
+    }
+}
 
 void MCP::update(p::list agent_location, p::dict agent_action)
 {

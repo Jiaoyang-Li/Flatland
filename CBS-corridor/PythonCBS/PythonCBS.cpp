@@ -41,7 +41,7 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, float soft_time_
     if (options1.debug)
     std::cout << "load agents " << std::endl;
 
-	al =  new AgentsLoader(railEnv.attr("agents"));
+	al =  new AgentsLoader(*ml, railEnv.attr("agents"));
     if (options1.debug)
 	std::cout << "load done " << std::endl;
 	if (debug) {
@@ -66,7 +66,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     else if (framework == "OnlinePP")
     {
         start_time = Time::now();// time(NULL) return time in seconds
-        al->updateAgents(railEnv.attr("agents"));
+        al->updateAgents(*ml, railEnv.attr("agents"));
         for (int a : al->new_agents)
         {
             int start = ml->linearize_coordinate(al->agents_all[a].initial_location);
@@ -101,7 +101,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     else // LNS
     {
         start_time = Time::now();// time(NULL) return time in seconds
-        al->updateAgents(railEnv.attr("agents"));
+        al->updateAgents(*ml, railEnv.attr("agents"));
         if (!replan_on)
             return;
         if (options1.debug)
@@ -133,7 +133,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
             {
                 int loc = -1;
                 if (al->agents_all[agent].status == 1)
-                    loc = ml->linearize_coordinate(al->agents_all[agent].position);
+                    loc = al->agents_all[agent].position;
                 cout << agent << " at location " << loc
                      << " (" << al->agents_all[agent].malfunction_left << " timesteps left), ";
             }
@@ -402,7 +402,7 @@ void PythonCBS<Map>::generateNeighbor(int agent_id, const PathEntry& start, int 
             transitions.push_back(move);
 
             Transition move2;
-            move2.location = ml->linearize_coordinate(al->agents_all[agent_id].position.first, al->agents_all[agent_id].position.second);
+            move2.location = al->agents_all[agent_id].position;
             move2.heading = heading;
             move2.position_fraction = position_fraction;
             move2.exit_loc = exit_loc;
@@ -677,7 +677,7 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads){
 
 template <class Map>
 void PythonCBS<Map>::updateAgents(p::object railEnv1){
-    al->updateAgents(railEnv.attr("agents"));
+    al->updateAgents(*ml, railEnv.attr("agents"));
 }
 
 template class PythonCBS<FlatlandLoader>;

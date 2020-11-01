@@ -104,7 +104,7 @@ public:
         }
         else
         {
-            mcp.getNextLoc(agent_location,timestep);
+            mcp.getNextLoc(timestep);
             for (int i = 0; i < al->getNumOfAllAgents(); i++)
                 next_loc.append(mcp.to_go[i]);
             return next_loc;

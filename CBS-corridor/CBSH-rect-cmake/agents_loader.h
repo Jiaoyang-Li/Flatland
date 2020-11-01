@@ -19,7 +19,7 @@ using namespace std;
 struct Agent {
 	pair<int, int> initial_location;
 	pair<int, int> goal_location;
-	pair<int, int> position;
+	int position;
     vector<hvals>* heuristics = NULL;
     int agent_id;
 	int status = 0;
@@ -57,8 +57,8 @@ public:
     // vector<double> max_a;  // entry [i] is the max accelration for agent i
     AgentsLoader(const std::string& fname, const MapLoader &ml, int agentsNum);
     AgentsLoader();
-    AgentsLoader(boost::python::object agents);
-    void updateAgents(boost::python::object agents);
+    AgentsLoader(const FlatlandLoader &ml, boost::python::object agents);
+    void updateAgents(const FlatlandLoader &ml, boost::python::object agents);
     void updateConstraintTable();
     // void addAgent ( int start_row, int start_col, int goal_row, int goal_col );
     void printAllAgentsInitGoal () const;

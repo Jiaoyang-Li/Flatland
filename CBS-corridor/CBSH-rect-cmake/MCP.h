@@ -8,7 +8,7 @@ public:
     vector<int> to_go;
     list<int> active_agents;
 
-    void getNextLoc(p::list agent_location, int timestep);
+    void getNextLoc(int timestep);
     void update(p::list agent_location, p::dict agent_action);
     void build(const AgentsLoader* al, const FlatlandLoader* ml, options options1, int timestep = 0);
     void clear(void)
@@ -39,5 +39,6 @@ private:
     list<int> unfinished_agents;
 
     bool moveAgent(vector<Path>& paths, list<int>::iterator& p, int t, int timestep);
+    void getNextLocForAgent(int i, vector<bool>& updated, int timestep);
 };
 

@@ -284,7 +284,7 @@ SinglePlanning::SinglePlanning(const FlatlandLoader& ml, AgentsLoader& al, doubl
         cout<<"Single Planning can only have 1 agent in al->agents"<<endl;
 
     this->screen = screen;
-	this->start_location = ml.linearize_coordinate(agent.position.first, agent.position.second);
+	this->start_location = agent.position;
 	this->goal_location = ml.linearize_coordinate(agent.goal_location.first, agent.goal_location.second);
 
 	this->map_size = ml.cols*ml.rows;

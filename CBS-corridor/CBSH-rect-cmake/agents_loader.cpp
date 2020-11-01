@@ -32,7 +32,7 @@ std::ostream& operator<<(std::ostream& os, const Agent& agent) {
     return os;
 }
 
-AgentsLoader::AgentsLoader(p::object agents) {
+AgentsLoader::AgentsLoader(const FlatlandLoader &ml, p::object agents) {
 	int agentsNum = p::len(agents);
 	this->num_of_agents_all = agentsNum;
 	///this->heuristics.resize(num_of_agents_all);
@@ -87,7 +87,7 @@ AgentsLoader::AgentsLoader(p::object agents) {
         this->agents_all[i].agent_id = i;
         this->agents_all[i].initial_location = initial;
         this->agents_all[i].goal_location = goal;
-        this->agents_all[i].position = initial;
+        this->agents_all[i].position = ml.linearize_coordinate(initial);
         this->agents_all[i].heading = heading;
         this->agents_all[i].status = status;
         this->agents_all[i].malfunction_left = malfunction;
@@ -102,7 +102,7 @@ AgentsLoader::AgentsLoader(p::object agents) {
 
 }
 
-void AgentsLoader::updateAgents(p::object agents)
+void AgentsLoader::updateAgents(const FlatlandLoader &ml, p::object agents)
 {
     // new_malfunction_agents.clear();
     new_agents.clear();
@@ -131,13 +131,13 @@ void AgentsLoader::updateAgents(p::object agents)
         if (agents_all[i].status == 1) // active
         {
             p::tuple iniTuple(agents[i].attr("position"));
-            agents_all[i].position.first = p::extract<int>(p::long_(iniTuple[0]));
-            agents_all[i].position.second = p::extract<int>(p::long_(iniTuple[1]));
+            agents_all[i].position = ml.linearize_coordinate(p::extract<int>(p::long_(iniTuple[0])),
+                    p::extract<int>(p::long_(iniTuple[1])));
             agents_all[i].heading = p::extract<int>(p::long_(agents[i].attr("direction")));
         }
         else // ready to depart (0) or done (2) or done removed (3)
         {
-            agents_all[i].position = agents_all[i].initial_location;
+            agents_all[i].position = ml.linearize_coordinate(agents_all[i].initial_location);
             agents_all[i].heading = p::extract<int>(p::long_(agents[i].attr("initial_direction")));
         }
 
@@ -475,7 +475,7 @@ void AgentsLoader::generateAgentOrder(int agent_priority_strategy)
     if (agent_priority_strategy == 5)
     {
         // decide the agent priority for agents at the same start location
-        boost::unordered_map<pair<int, int>, vector<int>, hash_pair> start_locations; // map the agents to their start locations
+        boost::unordered_map<int, vector<int>> start_locations; // map the agents to their start locations
         for (int i = 0; i < num_of_agents_all; i++)
             start_locations[agents_all[i].position].push_back(i);
         for (auto& agents : start_locations)
@@ -609,7 +609,7 @@ bool AgentsLoader::addPaths(const vector<Path*>& new_paths)
 void AgentsLoader::computeHeuristics(const FlatlandLoader* ml)
 {
     for (auto& agent : agents_all) {
-        int init_loc = ml->linearize_coordinate(agent.position.first, agent.position.second);
+        int init_loc = agent.position;
         int goal_loc = ml->linearize_coordinate(agent.goal_location.first, agent.goal_location.second);
 
         if (existing_heuristics.count(goal_loc)){
