@@ -57,6 +57,46 @@ malfunction_rate = 0.4          # fraction number, probability of having a stop.
 min_duration = 3
 max_duration = 20
 
+
+# agent percentages
+agent_percentages = [1.1 for _ in range(500)]
+agent_percentages[351] = 0.70
+agent_percentages[350] = 0.75
+agent_percentages[346] = 0.75
+agent_percentages[301] = 0.75
+agent_percentages[291] = 0.80
+agent_percentages[322] = 0.80
+agent_percentages[271] = 0.80
+agent_percentages[321] = 0.80
+agent_percentages[320] = 0.80
+agent_percentages[252] = 0.80
+agent_percentages[261] = 0.80
+agent_percentages[311] = 0.80
+agent_percentages[241] = 0.85
+agent_percentages[331] = 0.85
+agent_percentages[340] = 0.85
+agent_percentages[341] = 0.85
+agent_percentages[349] = 0.90
+agent_percentages[262] = 0.90
+agent_percentages[309] = 0.90
+# agent_percentages[231] = 0.90
+agent_percentages[281] = 0.95
+agent_percentages[333] = 0.95
+# agent_percentages[233] = 0.95
+agent_percentages[254] = 0.95
+agent_percentages[304] = 0.95
+agent_percentages[251] = 0.95
+agent_percentages[279] = 0.95
+agent_percentages[353] = 0.95
+agent_percentages[342] = 0.95
+agent_percentages[352] = 0.95
+agent_percentages[344] = 0.95
+agent_percentages[283] = 0.95
+agent_percentages[295] = 0.95
+agent_percentages[282] = 0.95
+agent_percentages[354] = 0.85
+
+
 # temp solution: C++ solver path file
 # path_file ="./config/paths.txt"
 # def parse_line_path(l):
@@ -213,6 +253,8 @@ while True:
         time_limit = 0  # remaining_time / (num_of_evaluations - evaluation_number + 1)
     default_group_size = 16  # max number of agents in a group
     replan = False
+    if evaluation_number < 240:
+        replan = True
     agent_priority_strategy = 3
     neighbor_generation_strategy = 3
     prirority_ordering_strategy = 0
@@ -223,10 +265,7 @@ while True:
                      replan, agent_priority_strategy,
                     neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
 
-    if evaluation_number > 260 and  evaluation_number % 10 == 1:
-        success = CBS.search(0.9)
-    else:
-        success = CBS.search(1.1)
+    success = CBS.search(agent_percentages[evaluation_number])
     evaluation_number += 1
 
     # paths = CBS.getResult()

@@ -362,7 +362,6 @@ p::dict PythonCBS<Map>::getResultDetail() {
     result["final_reward"] = statistic_list[thread_id].sum_of_costs * 1.0 /
             (al->constraintTable.length_max * al->getNumOfAllAgents());
     result["iterations"] = statistic_list[thread_id].iterations;
-    result["max_timestep"] = al->constraintTable.length_max;
     result["num_of_agents"] = al->getNumOfAllAgents();
     result["replan_times"] = replan_times;
     //std::stringstream stream;

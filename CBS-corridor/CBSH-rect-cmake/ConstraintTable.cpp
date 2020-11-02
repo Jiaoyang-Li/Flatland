@@ -105,8 +105,11 @@ bool ConstraintTable::insert_path(int agent_id, const Path& path)
         CT_paths[loc][timestep] = agent_id;
         latest_conatraints[loc] = std::max(latest_conatraints[loc], timestep);
         if (path[timestep].position_fraction > 1 && path[timestep].malfunction_left > 0 &&
-            CT_paths[path[timestep].exit_loc][timestep] < 0) // to avoid the situation when an agent cut inl
+            (CT_paths[path[timestep].exit_loc].empty() || CT_paths[path[timestep].exit_loc][timestep] < 0))
+            // to avoid the situation when an agent cut in line
         {
+            if (CT_paths[path[timestep].exit_loc].empty())
+                CT_paths[path[timestep].exit_loc].resize(length_max + 1, -1);
             CT_paths[path[timestep].exit_loc][timestep] = agent_id;
             latest_conatraints[path[timestep].exit_loc] = std::max(latest_conatraints[path[timestep].exit_loc], timestep);
         }
