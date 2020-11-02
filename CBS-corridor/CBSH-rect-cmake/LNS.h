@@ -19,7 +19,7 @@ public:
     int makespan = 0;
     int initial_makespan = 0;
     int iterations = 0;
-
+    int replan_times = 0;
     //stats about each iteration
     typedef tuple<int, double, double, double, int,
             int, int, double, int, int, int> IterationStats;
@@ -41,7 +41,7 @@ public:
     }
     bool run(float hard_time_limit, float soft_time_limit, float success_rate = 1.1);
     bool replan(float time_limit);
-    bool replan(list<int>& to_be_replanned, float time_limit);
+    //bool replan(list<int>& to_be_replanned, float time_limit);
     bool getInitialSolution(float success_rate = 1.1);
 private:
     high_resolution_clock::time_point start_time;

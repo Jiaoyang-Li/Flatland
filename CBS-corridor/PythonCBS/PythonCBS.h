@@ -123,7 +123,6 @@ public:
         }
 
     }
-
     void buildMCP(void)
     {
         if (framework != "CPR")
@@ -210,6 +209,7 @@ private:
     int prirority_ordering_strategy;
     int replan_strategy;
     bool replan_on = false;
+    int replan_times = 0;
 
 	//stats about CBS
     Time::time_point start_time;

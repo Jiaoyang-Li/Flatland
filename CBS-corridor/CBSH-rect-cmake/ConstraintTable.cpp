@@ -30,10 +30,12 @@ void ConstraintTable::get_agents(set<int>& conflicting_agents, int loc) const
     }
 }
 
-void ConstraintTable::get_agents(list< pair<int, int> >& agents, int excluded_agent, const pair<int,int>& loc_time_pair) const
+void ConstraintTable::get_agents(list< pair<int, int> >& agents, int excluded_agent,
+        const tuple<int, int, int>& loc_timeinterval_pair) const
 {
-    int loc = loc_time_pair.first;
-    for (int t = loc_time_pair.second; t < (int)CT_paths[loc].size(); t++)
+    int loc = std::get<0>(loc_timeinterval_pair);
+    int t_max = std::min(std::get<2>(loc_timeinterval_pair), (int)CT_paths[loc].size());
+    for (int t = std::get<1>(loc_timeinterval_pair); t < t_max; t++)
     {
         int agent = CT_paths[loc][t];
         if (agent >= 0 && agent != excluded_agent && (agents.empty() || agents.back().first != agent))

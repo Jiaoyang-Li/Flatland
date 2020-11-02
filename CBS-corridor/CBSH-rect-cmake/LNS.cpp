@@ -273,16 +273,28 @@ bool LNS::replan(float time_limit)
     for (const auto& mal_agent : al.new_malfunction_agents)
     {
         // find the intersections in front of the mal_agent
-        list<pair<int, int> > future_intersections; // <location, timestep>
+        list<tuple<int, int, int> > future_intersections; // <location, timestep>
+        int t = 0;
         if (al.agents_all[mal_agent].status == 0) // the mal agent is still in the station
-            future_intersections.emplace_back(al.agents_all[mal_agent].initial_location, 0); // replan agents at the start location
-        for (int t = 0; t < (int) al.paths_all[mal_agent].size(); t++)
+        {
+            for (;t < (int) al.paths_all[mal_agent].size(); t++)
+            {
+                if (al.paths_all[mal_agent][t].location > 0)
+                {
+                    future_intersections.emplace_back(al.agents_all[mal_agent].initial_location,
+                            t + 1, al.agents_all[mal_agent].malfunction_left + 1); // replan agents at the start location
+                    break;
+                }
+            }
+
+        }
+        for (;t < (int) al.paths_all[mal_agent].size(); t++)
         {
             int loc = al.paths_all[mal_agent][t].location;
             if (loc < 0)
                 continue;
-            if (ml.getDegree(loc) > 2 && (future_intersections.empty() || future_intersections.back().first != loc)) {
-                future_intersections.emplace_back(loc, t);
+            if (ml.getDegree(loc) > 2 && (future_intersections.empty() || get<0>(future_intersections.back()) != loc)) {
+                future_intersections.emplace_back(loc, t + 1, t + al.agents_all[mal_agent].malfunction_left + 1);
             }
         }
         for (const auto &intersection : future_intersections)
@@ -299,8 +311,10 @@ bool LNS::replan(float time_limit)
                 int i = agent.first;
                 int t = agent.second;
                 if (tabu_list.count(i) > 0 || // the agent has already been replanned, or
-                    (intersection.second > 0 && // the agent is following the mal_agent. We do not replan them for now
-                    al.paths_all[i][t - 1].location == al.paths_all[mal_agent][intersection.second - 1].location))
+                    (get<1>(intersection) - 1 > 0 && // the agent is following the mal_agent. We do not replan them
+                    al.paths_all[i][t - 1].location >= 0 &&
+                    al.paths_all[i][t - 1].location == al.paths_all[mal_agent][get<1>(intersection) - 2].location)
+                    )
                     continue;
                 auto copy = al.paths_all[i];
                 al.constraintTable.delete_path(i, al.paths_all[i]);
@@ -308,6 +322,7 @@ bool LNS::replan(float time_limit)
                 al.agents[0] = &al.agents_all[i];
                 SIPP planner(ml,al,f_w,time_limit - runtime,options1);
                 planner.search();
+                replan_times++;
                 if (planner.path.empty())
                 {
                     addAgentPath(i, copy);
@@ -324,7 +339,7 @@ bool LNS::replan(float time_limit)
     }
 
     // replan the skipped agents
-    for (const auto &agents : agent_groups)
+    /*for (const auto &agents : agent_groups)
     {
         for (const auto &agent : agents) // replan the agents one by one
         {
@@ -341,6 +356,7 @@ bool LNS::replan(float time_limit)
             al.agents[0] = &al.agents_all[i];
             SIPP planner(ml,al,f_w,time_limit - runtime,options1);
             planner.search();
+            replan_times++;
             if (planner.path.empty())
             {
                 addAgentPath(i, copy);
@@ -351,12 +367,12 @@ bool LNS::replan(float time_limit)
                 tabu_list.insert(i);
             }
         }
-    }
+    }*/
 
     return true;
 }
 
-bool LNS::replan(list<int>& to_be_replanned, float time_limit)
+/*bool LNS::replan(list<int>& to_be_replanned, float time_limit)
 {
     start_time = Time::now();
     max_timestep = al.constraintTable.length_max;
@@ -365,7 +381,7 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
     for (const auto& mal_agent : al.new_malfunction_agents)
     {
         // find the intersections in front of the mal_agent
-        list<pair<int, int> > future_intersections; // <location, timestep>
+        list<tuple<int, int, int> > future_intersections; // <location, timestep>
         if (al.agents_all[mal_agent].status == 0) // the mal agent is still in the station
             future_intersections.emplace_back(al.agents_all[mal_agent].initial_location, 0); // replan agents at the start location
         for (int t = 0; t < (int) al.paths_all[mal_agent].size(); t++)
@@ -434,7 +450,7 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
 
 
     return true;
-}
+}*/
 
 
 bool LNS::getInitialSolution(float success_rate)

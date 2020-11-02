@@ -44,9 +44,6 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, float soft_time_
 	al =  new AgentsLoader(*ml, railEnv.attr("agents"));
     if (options1.debug)
 	std::cout << "load done " << std::endl;
-	if (debug) {
-		al->printAllAgentsInitGoal();
-	}
     al->constraintTable.length_max = p::extract<int>(railEnv.attr("_max_episode_steps"));
     std::cout << "Max timestep = " << al->constraintTable.length_max << endl; // the deadline is stored in the constraint table in al, which will be used for all path finding.
 	this->max_malfunction = max_malfunction;
@@ -104,6 +101,9 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
         al->updateAgents(*ml, railEnv.attr("agents"));
         if (!replan_on)
             return;
+        if (al->new_malfunction_agents.empty() && to_be_replanned.empty())
+            return; // we do not replan if there are no new mal agents and no to-be-replanned agents
+
         if (options1.debug)
         {
             cout << "Timestep = " << timestep << ";\t";
@@ -140,9 +140,6 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
 
             cout << endl;
         }
-        if (al->new_malfunction_agents.empty() && to_be_replanned.empty())
-            return; // we do not replan if there are no new mal agents and no to-be-replanned agents
-
         // use mcp to build new paths
         vector<Path> paths;
         mcp.simulate(paths, timestep);
@@ -196,6 +193,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
         runtime = ((fsec)(Time::now() - start_time)).count();
         lns.replan(time_limit - runtime);
+        replan_times += lns.replan_times;
 //         lns.replan(to_be_replanned, time_limit - runtime);
         if (options1.debug)
         {
@@ -250,6 +248,9 @@ bool PythonCBS<Map>::search(float success_rate) {
 	//initialize search engine
 	al->constraintTable.init(ml->map_size());
     al->computeHeuristics(ml);
+    if (options1.debug) {
+        al->printAllAgentsInitGoal();
+    }
     this->statistic_list.resize(1);
     this->iteration_stats.resize(1);
     if (framework == "OnlinePP")
@@ -283,10 +284,10 @@ bool PythonCBS<Map>::search(float success_rate) {
             assert("Find conflict.");
         }
 
-        if (options1.debug)
-        {
-            al->printPaths();
-        }
+        //if (options1.debug)
+        //{
+        //    al->printPaths();
+        //}
         return succ;
     }
     else if(framework == "Parallel-LNS")
@@ -341,6 +342,7 @@ p::dict PythonCBS<Map>::getResultDetail() {
     result["iterations"] = statistic_list[thread_id].iterations;
     result["max_timestep"] = al->constraintTable.length_max;
     result["num_of_agents"] = al->getNumOfAllAgents();
+    result["replan_times"] = replan_times;
     //std::stringstream stream;
     //stream << std::fixed << std::setprecision(1) << f_w;
     //std::string s = stream.str();

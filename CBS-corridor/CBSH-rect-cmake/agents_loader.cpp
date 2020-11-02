@@ -235,8 +235,9 @@ void AgentsLoader::printAllAgentsInitGoal () const {
     cout<<"number of agents: "<<num_of_agents_all<<endl;
   for (int i=0; i<num_of_agents_all; i++) {
     cout << "Agent" << i << " : " ;
-      cout << "Initial: " << agents_all[i].initial_location << ","
-           << "Goal_location: " << agents_all[i].goal_location << ","
+      cout << "Initial: " << agents_all[i].initial_location << ", "
+           << "Goal_location: " << agents_all[i].goal_location << ", "
+           << "Distance: " << agents_all[i].distance_to_goal << ", "
            << "Status: " << agents_all[i].status << ", Heading: " << agents_all[i].heading
 		<< ", malfunction_left: " << agents_all[i].malfunction_left
 		<< ", next_malfuntion: " << agents_all[i].next_malfunction
@@ -456,7 +457,7 @@ bool AgentsLoader::addPaths(const vector<Path*>& new_paths)
 void AgentsLoader::computeHeuristics(const FlatlandLoader* ml)
 {
     for (auto& agent : agents_all) {
-        int init_loc = agent.position;
+        int init_loc = agent.initial_location;
         int goal_loc = agent.goal_location;
 
         if (existing_heuristics.count(goal_loc)){
