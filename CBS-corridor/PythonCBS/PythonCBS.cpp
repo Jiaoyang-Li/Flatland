@@ -101,15 +101,15 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     {
         start_time = Time::now();// time(NULL) return time in seconds
 
-        vector<int> positions(al->getNumOfAllAgents());
+        /*vector<int> positions(al->getNumOfAllAgents());
         for (int i = 0; i < al->getNumOfAllAgents(); i++)
         {
             positions[i] = al->agents_all[i].position;
-        }
+        }*/
 
         al->updateAgents(*ml, railEnv.attr("agents"));
 
-        for (int i = 0; i < al->getNumOfAllAgents(); i++)
+        /*for (int i = 0; i < al->getNumOfAllAgents(); i++)
         {
             if (al->agents_all[i].position == mcp.to_go[i])
                 continue;
@@ -118,7 +118,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
             cout << "At timestep " << timestep << ", Agent " << i << " should move from " << positions[i] << " to " << mcp.to_go[i]
                 << " but it moves to " << al->agents_all[i].position << endl;
             assert(false);
-        }
+        }*/
 
         mcp.update();
         if (!replan_on)
