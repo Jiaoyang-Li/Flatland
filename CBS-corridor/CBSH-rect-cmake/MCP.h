@@ -7,6 +7,7 @@ class MCP {
 public:
     vector<int> to_go;
     list<int> active_agents;
+    vector<int> appear_time;
 
     void getNextLoc(int timestep);
     void update();
@@ -32,7 +33,6 @@ private:
     typedef list<int> Occupy;
     vector<Occupy> mcp;
     vector<int> agent_time;
-    vector<int> appear_time;
     vector<vector<int>> no_wait_time;
     vector<Occupy> copy_mcp;
     vector<int> copy_agent_time;
