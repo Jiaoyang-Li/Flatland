@@ -9,7 +9,7 @@ public:
     list<int> active_agents;
 
     void getNextLoc(int timestep);
-    void update(p::list agent_location, p::dict agent_action);
+    void update();
     void build(const AgentsLoader* al, const FlatlandLoader* ml, options options1, int timestep = 0);
     void clear(void)
     {

@@ -119,45 +119,44 @@ void AgentsLoader::updateAgents(const FlatlandLoader &ml, p::object agents)
             new_agents.push_back(i); // agent i is about to move, but trapped by malfunction
 
         agents_all[i].status = new_status;
-        if (agents_all[i].status >= 2)  // done (2) or done removed (3)
-            continue;
-        if (agents_all[i].malfunction_left == 0 && malfunction_left > 0)
-            new_malfunction_agents.push_back(i);
-        agents_all[i].malfunction_left = malfunction_left;
-        agents_all[i].next_malfunction = p::extract<int>(p::long_(agents[i].attr("malfunction_data")["next_malfunction"]));
-        agents_all[i].malfunction_rate = p::extract<float>(p::long_(agents[i].attr("malfunction_data")["malfunction_rate"]));
+        if (agents_all[i].status <= 1)  // ready to depart (0) or active (1)
+        { // update malfunction information
+            if (agents_all[i].malfunction_left == 0 && malfunction_left > 0)
+                new_malfunction_agents.push_back(i);
+            agents_all[i].malfunction_left = malfunction_left;
+            agents_all[i].next_malfunction = p::extract<int>(p::long_(agents[i].attr("malfunction_data")["next_malfunction"]));
+            agents_all[i].malfunction_rate = p::extract<float>(p::long_(agents[i].attr("malfunction_data")["malfunction_rate"]));
+        }
 
-
+        // update position information
         if (agents_all[i].status == 1) // active
         {
             p::tuple iniTuple(agents[i].attr("position"));
             agents_all[i].position = ml.linearize_coordinate(p::extract<int>(p::long_(iniTuple[0])),
                     p::extract<int>(p::long_(iniTuple[1])));
             agents_all[i].heading = p::extract<int>(p::long_(agents[i].attr("direction")));
+            agents_all[i].position_fraction = p::extract<float>(agents[i].attr("speed_data")["position_fraction"]);
+            int exit_action = int(p::extract<float>(agents[i].attr("speed_data")["transition_action_on_cellexit"]));
+            if (exit_action == 1) {
+                agents_all[i].exit_heading = agents_all[i].heading - 1;
+                if (agents_all[i].exit_heading < 0)
+                    agents_all[i].exit_heading = 3;
+            }
+            else if (exit_action == 3) {
+                agents_all[i].exit_heading = agents_all[i].heading + 1;
+                if (agents_all[i].exit_heading > 3)
+                    agents_all[i].exit_heading = 0;
+            }
+            else if (exit_action == 2) {
+                agents_all[i].exit_heading = agents_all[i].heading;
+            }
+            else {
+                agents_all[i].exit_heading = -1;
+            }
         }
-        else // ready to depart (0) or done (2) or done removed (3)
+        else if (agents_all[i].status >= 2) // done (2) or done removed (3)
         {
-            agents_all[i].position = -1;
-            agents_all[i].heading = p::extract<int>(p::long_(agents[i].attr("initial_direction")));
-        }
-
-        agents_all[i].position_fraction = p::extract<float>(agents[i].attr("speed_data")["position_fraction"]);
-        int exit_action = int(p::extract<float>(agents[i].attr("speed_data")["transition_action_on_cellexit"]));
-        if (exit_action == 1) {
-            agents_all[i].exit_heading = agents_all[i].heading - 1;
-            if (agents_all[i].exit_heading < 0)
-                agents_all[i].exit_heading = 3;
-        }
-        else if (exit_action == 3) {
-            agents_all[i].exit_heading = agents_all[i].heading + 1;
-            if (agents_all[i].exit_heading > 3)
-                agents_all[i].exit_heading = 0;
-        }
-        else if (exit_action == 2) {
-            agents_all[i].exit_heading = agents_all[i].heading;
-        }
-        else {
-            agents_all[i].exit_heading = -1;
+            agents_all[i].position = agents_all[i].goal_location;
         }
     }
 }

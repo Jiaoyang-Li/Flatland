@@ -97,27 +97,19 @@ bool ConstraintTable::insert_path(int agent_id, const Path& path)
         if (CT_paths[loc].empty())
             CT_paths[loc].resize(length_max + 1, -1);
 
-        assert(CT_paths[loc][timestep] == -1); // should not have vertex conflict
-        //if(CT_paths[loc][timestep] != -1 && CT_paths[loc][timestep] != agent_id) //TODO:: can be removed in the submission version
-        //{
-        //    cout << "A conflict between " << agent_id << " and " << CT_paths[loc][timestep] <<
-        //            " at location " << loc << " at timestep "<< timestep << endl;
-        //    assert(false && "Find conflict");
-        //    return false;
-        //}
-        assert(timestep == 0 || path[timestep-1].location == -1 || CT_paths[path[timestep-1].location].empty() ||
-            CT_paths[path[timestep-1].location][timestep] != CT_paths[loc][timestep-1] ||
-            CT_paths[loc][timestep-1] == -1);  // should not have edge conflict
-        //if(timestep>=1 && path[timestep-1].location!= -1 && !CT_paths[path[timestep-1].location].empty() &&
-        // CT_paths[path[timestep-1].location][timestep] == CT_paths[loc][timestep-1] && CT_paths[loc][timestep-1]!=-1) //TODO:: can be removed in the submission version
-        //{
-        //    cout << "A edge conflict between " << agent_id << " and " << CT_paths[loc][timestep-1] <<
-        //         " at location " << loc<<","<<path[timestep-1].location << " at timestep "<< timestep << endl;
-        //    assert(false &&"Find edge conflict");
-        //    return false;
-        //}
+        //assert(CT_paths[loc][timestep] == -1); // should not have vertex conflict
+        //assert(timestep == 0 || path[timestep-1].location == -1 || CT_paths[path[timestep-1].location].empty() ||
+        //    CT_paths[path[timestep-1].location][timestep] != CT_paths[loc][timestep-1] ||
+        //    CT_paths[loc][timestep-1] == -1);  // should not have edge conflict
+
         CT_paths[loc][timestep] = agent_id;
         latest_conatraints[loc] = std::max(latest_conatraints[loc], timestep);
+        if (path[timestep].position_fraction > 1 && path[timestep].malfunction_left > 0 &&
+            CT_paths[path[timestep].exit_loc][timestep] < 0) // to avoid the situation when an agent cut inl
+        {
+            CT_paths[path[timestep].exit_loc][timestep] = agent_id;
+            latest_conatraints[path[timestep].exit_loc] = std::max(latest_conatraints[path[timestep].exit_loc], timestep);
+        }
     }
     return true;
 }
@@ -182,6 +174,18 @@ void ConstraintTable::delete_path(int agent_id, const Path& path)
             while(t >= 0 && CT_paths[loc][t] < 0)
                 t--;
             latest_conatraints[loc] = t;
+        }
+        if (path[timestep].position_fraction > 1 && path[timestep].malfunction_left > 0 &&
+            CT_paths[path[timestep].exit_loc][timestep] == agent_id)
+        {
+            CT_paths[path[timestep].exit_loc][timestep] = -1;
+            if (latest_conatraints[path[timestep].exit_loc] == timestep)
+            {
+                int t = timestep - 1;
+                while(t >= 0 && CT_paths[path[timestep].exit_loc][t] < 0)
+                    t--;
+                latest_conatraints[path[timestep].exit_loc] = t;
+            }
         }
     }
 }

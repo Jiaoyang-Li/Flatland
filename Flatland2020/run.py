@@ -375,7 +375,7 @@ while True:
         # if debug_print:
         #     time_temp = time.time()
 
-        CBS.updateMCP(new_curr_locs, action)
+        # CBS.updateMCP(new_curr_locs, action)
 
         # if debug_print:
         #     print('Time for update MCP: ', time.time() - time_temp)

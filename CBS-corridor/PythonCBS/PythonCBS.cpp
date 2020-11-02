@@ -57,13 +57,15 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     al->constraintTable.length_max = max_timestep - timestep; // update max timestep
     if (framework == "CPR")
     {
-        cpr->planPaths(time_limit);
+        //cpr->update(railEnv.attr("agents"));
+        //cpr->planPaths(time_limit);
         return;
     }
     else if (framework == "OnlinePP")
     {
         start_time = Time::now();// time(NULL) return time in seconds
         al->updateAgents(*ml, railEnv.attr("agents"));
+        mcp.update();
         for (int a : al->new_agents)
         {
             int start = al->agents_all[a].initial_location;
@@ -99,6 +101,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     {
         start_time = Time::now();// time(NULL) return time in seconds
         al->updateAgents(*ml, railEnv.attr("agents"));
+        mcp.update();
         if (!replan_on)
             return;
         if (al->new_malfunction_agents.empty() && to_be_replanned.empty())
@@ -700,7 +703,6 @@ BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final
 		.def("buildMCP", &PythonCBS<FlatlandLoader>::buildMCP)
         .def("getActions",&PythonCBS<FlatlandLoader>::getActions)
         .def("getNextLoc", &PythonCBS<FlatlandLoader>::getNextLoc)
-        .def("updateMCP", &PythonCBS<FlatlandLoader>::updateMCP)
         .def("clearMCP", &PythonCBS<FlatlandLoader>::clearMCP)
         .def("printAllMCP", &PythonCBS<FlatlandLoader>::printAllMCP)
         .def("printMCP", &PythonCBS<FlatlandLoader>::printMCP)

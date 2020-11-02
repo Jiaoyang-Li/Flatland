@@ -110,19 +110,6 @@ public:
             return next_loc;
         }
     }
-    void updateMCP(p::list agent_location, p::dict agent_action)
-    {
-        if (framework == "CPR")
-        {
-            cpr->update(agent_location);
-        }
-        else
-        {
-
-            mcp.update(agent_location, agent_action);
-        }
-
-    }
     void buildMCP(void)
     {
         if (framework != "CPR")

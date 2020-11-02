@@ -519,8 +519,6 @@ void SIPP::getSafeIntervals(int prev_loc, int prev_timestep,
 
 void SIPP::updatePath(SIPPNode* goal)
 {
-
-
     path.resize(goal->timestep + 1);
     const auto* curr = goal;
 
@@ -536,7 +534,6 @@ void SIPP::updatePath(SIPPNode* goal)
             path[t].location = curr->loc;
             path[t].heading = curr->heading;
             path[t].position_fraction = curr->position_fraction;
-            path[t].malfunction_left = curr->malfunction_left;
             path[t].exit_heading = curr->exit_heading;
             path[t].exit_loc = curr->exit_loc;
 
@@ -565,7 +562,6 @@ void SIPP::updatePath(SIPPNode* goal)
             path[t].location = prev->loc;
             path[t].heading = prev->heading;
             path[t].position_fraction = prev->position_fraction;
-            path[t].malfunction_left = prev->malfunction_left;
             path[t].exit_heading = prev->exit_heading;
             path[t].exit_loc = prev->exit_loc;
             assert(!constraintTable.is_constrained(agent.agent_id, path[t].location, t, path[t - 1].location));
@@ -577,10 +573,13 @@ void SIPP::updatePath(SIPPNode* goal)
         path[goal->timestep].location = goal->loc;
         path[goal->timestep].heading = goal->heading;
         path[goal->timestep].position_fraction = goal->position_fraction;
-        path[goal->timestep].malfunction_left = goal->malfunction_left;
         path[goal->timestep].exit_heading = goal->exit_heading;
         path[goal->timestep].exit_loc = goal->exit_loc;
     }
-
+    if (agent.malfunction_left > 0)
+    {
+        for (int t = 0; t < min(agent.malfunction_left, (int)path.size()); t++)
+            path[t].malfunction_left = agent.malfunction_left - t;
+    }
 
 }
