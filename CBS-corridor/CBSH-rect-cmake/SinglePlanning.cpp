@@ -356,8 +356,8 @@ bool SIPP::search() // TODO: weighted SIPP
             t_max++;
         start->interval = make_pair(0, t_max);
     }
-    start->open_handle = open_list.push(start);
-    start->in_openlist = true;
+    //start->open_handle = open_list.push(start);
+    //start->in_openlist = true;
     allNodes_table.insert(start);
 
 
@@ -365,7 +365,10 @@ bool SIPP::search() // TODO: weighted SIPP
     int time_check_count = 0;
     fsec runtime;
 
-    while (!open_list.empty())
+    SIPPNode* curr = start;
+    LLNode::compare_node compareNode;
+    bool direct_expansion = true; // directly expand the child without pushing it into the open list
+    while (!open_list.empty() || direct_expansion)
     {
         if (LL_num_generated / 1000 > time_check_count && time_limit != 0) {
             runtime = Time::now() - start_clock;
@@ -376,12 +379,17 @@ bool SIPP::search() // TODO: weighted SIPP
             }
         }
 
-        auto curr = open_list.top(); open_list.pop();
+        if (!direct_expansion)
+        {
+            curr = open_list.top(); open_list.pop();
+        }
         curr->in_openlist = false;
         LL_num_expanded++;
+        direct_expansion = false;
 
         // check if the popped node is a goal
-        if (curr->loc == goal_location)
+        if (curr->loc == goal_location &&
+            (open_list.empty() || compareNode(open_list.top(), curr)))
         {
             updatePath(curr);
             releaseClosedListNodes();
@@ -431,10 +439,18 @@ bool SIPP::search() // TODO: weighted SIPP
                 it = allNodes_table.find(next);
                 if (it == allNodes_table.end())
                 {
-                    next->open_handle = open_list.push(next);
-                    next->in_openlist = true;
                     LL_num_generated++;
                     allNodes_table.insert(next);
+                    if (transitions.size() == 1 && intervals.size() == 1)
+                    {
+                        direct_expansion = true;
+                        curr = next;
+                    }
+                    else
+                    {
+                        next->open_handle = open_list.push(next);
+                        next->in_openlist = true;
+                    }
                 }
                 else
                 {  // update existing node's if needed (only in the open_list)
@@ -453,8 +469,16 @@ bool SIPP::search() // TODO: weighted SIPP
                         }
                         else // if its in the closed list (reopen)
                         {
-                            existing_next->open_handle = open_list.push(existing_next);
-                            existing_next->in_openlist = true;
+                            if (transitions.size() == 1 && intervals.size() == 1)
+                            {
+                                direct_expansion = true;
+                                curr = existing_next;
+                            }
+                            else
+                            {
+                                existing_next->open_handle = open_list.push(existing_next);
+                                existing_next->in_openlist = true;
+                            }
                         }
                     }
                     delete(next);  // not needed anymore -- we already generated it before
