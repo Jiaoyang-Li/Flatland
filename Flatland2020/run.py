@@ -70,14 +70,14 @@ agent_percentages[271] = 0.80
 agent_percentages[321] = 0.80
 agent_percentages[320] = 0.80
 # agent_percentages[252] = 0.80
-agent_percentages[261] = 0.80
+#agent_percentages[261] = 0.80
 agent_percentages[311] = 0.80
 #agent_percentages[241] = 0.85
 agent_percentages[331] = 0.85
 agent_percentages[340] = 0.85
 agent_percentages[341] = 0.85
 agent_percentages[349] = 0.90
-agent_percentages[262] = 0.90
+#agent_percentages[262] = 0.90
 agent_percentages[309] = 0.90
 # agent_percentages[231] = 0.90
 agent_percentages[281] = 0.95
@@ -253,7 +253,7 @@ while True:
         time_limit = 0  # remaining_time / (num_of_evaluations - evaluation_number + 1)
     default_group_size = 16  # max number of agents in a group
     replan = False
-    if evaluation_number < 260:
+    if evaluation_number < 270:
         replan = True
     agent_priority_strategy = 3
     neighbor_generation_strategy = 3
