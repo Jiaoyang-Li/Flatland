@@ -352,8 +352,8 @@ bool SIPP::search() // TODO: weighted SIPP
         else //if on a cross, exit_heading is always accurate, as move forwad must be along agent's current heading.
             start->exit_loc = start_location + ml.moves_offset[start->exit_heading];
         int t_max = agent.malfunction_left+1;
-//        while(constraintTable.is_constrained(agent.agent_id, start->exit_loc, t_max, start_location) && t_max <= constraintTable.length_max)
-//            t_max++;
+        while(constraintTable.is_constrained(agent.agent_id, start->exit_loc, t_max, start_location) && t_max <= constraintTable.length_max)
+            t_max++;
         start->interval = make_pair(0,t_max);
     }
     start->open_handle = open_list.push(start);
