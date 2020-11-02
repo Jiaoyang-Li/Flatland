@@ -30,7 +30,10 @@ void MCP::simulate(vector<Path>& paths, int timestep)
         paths[i].back().exit_heading = al->agents_all[i].exit_heading;
         if (al->agents_all[i].position_fraction >= 1)
         {
-            paths[i].back().exit_loc = al->paths_all[i][no_wait_time[i][copy_agent_time[i]]].location;
+            if (copy_agent_time[i] < (int) no_wait_time[i].size())
+                paths[i].back().exit_loc = al->paths_all[i][no_wait_time[i][copy_agent_time[i]]].location;
+            else
+                paths[i].back().exit_loc = paths[i].back().location;
         }
     }
     for (int t = 0; t < al->constraintTable.length_max && !unfinished_agents.empty(); t++) {
