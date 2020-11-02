@@ -284,8 +284,11 @@ SinglePlanning::SinglePlanning(const FlatlandLoader& ml, AgentsLoader& al, doubl
         cout<<"Single Planning can only have 1 agent in al->agents"<<endl;
 
     this->screen = screen;
-	this->start_location = ml.linearize_coordinate(agent.position.first, agent.position.second);
-	this->goal_location = ml.linearize_coordinate(agent.goal_location.first, agent.goal_location.second);
+    if (agent.position < 0)
+	    this->start_location = agent.initial_location;
+	else
+        this->start_location = agent.position;
+	this->goal_location = agent.goal_location;
 
 	this->map_size = ml.cols*ml.rows;
 
@@ -299,6 +302,7 @@ SinglePlanning::SinglePlanning(const FlatlandLoader& ml, AgentsLoader& al, doubl
 
 bool SIPP::search() // TODO: weighted SIPP
 {
+
     assert(f_w < 1.001);
     Time::time_point start_clock = Time::now();
 
@@ -310,19 +314,48 @@ bool SIPP::search() // TODO: weighted SIPP
 
     // generate start and add it to the OPEN list
     LL_num_generated++;
-    assert(agent.status == 0); // TODO: handle agents with status > 0
     int h = 1 + my_heuristic[start_location].get_hval(agent.heading);
-    auto start = new SIPPNode(-1,
+    SIPPNode*  start = new SIPPNode(-1,
             agent.malfunction_left, // malfunction_left is the earliest timestep when the agent can start to move
             h, nullptr,
             agent.malfunction_left, // malfunction_left is the earliest timestep when the agent can start to move
-            make_pair(0, constraintTable.length_max + 1)); // initial timestep is from 0 to max timestep
+            make_pair(0,constraintTable.length_max + 1));
+
+
+    if (agent.status != 0) {
+        start->loc = start_location;
+        start->h_val--;
+
+        if (constraintTable.get_latest_constrained_timestep(start_location) > 0)
+        {
+            int t_max = agent.malfunction_left;
+            while(!constraintTable.is_constrained(agent.agent_id, start_location, t_max, -1) &&
+                t_max <= constraintTable.length_max)
+                t_max++;
+            start->interval = make_pair(0, t_max);
+        }
+    }
+
 
     start->heading = agent.heading;
     start->time_generated = 0;
-    // start->malfunction_left = agent.malfunction_left;
+    start->malfunction_left = agent.malfunction_left;
     start->position_fraction = agent.position_fraction;
     start->exit_heading = agent.exit_heading;
+    if (start->position_fraction>=1) {
+        list<Transition> temp;
+        ml.get_transitions(temp, start_location, start->heading, true);
+        if (temp.size() == 1) { //if not on a cross, exit_heading is not accurate as flatland env only provide an move forward action.
+            start->exit_loc = temp.front().location;
+            start->exit_heading = temp.front().heading;
+        }
+        else //if on a cross, exit_heading is always accurate, as move forwad must be along agent's current heading.
+            start->exit_loc = start_location + ml.moves_offset[start->exit_heading];
+        int t_max = agent.malfunction_left;
+        while(constraintTable.is_constrained(agent.agent_id, start->exit_loc, t_max, start_location) && t_max <= constraintTable.length_max)
+            t_max++;
+        start->interval = make_pair(0,t_max);
+    }
     start->open_handle = open_list.push(start);
     start->in_openlist = true;
     allNodes_table.insert(start);
@@ -360,6 +393,11 @@ bool SIPP::search() // TODO: weighted SIPP
         if(curr->loc == -1){
             transitions.emplace_back(start_location, curr->heading,
                                      curr->position_fraction, curr->exit_loc, curr->exit_heading);
+        }
+        else if ( curr->position_fraction>=1){
+
+            transitions.emplace_back(curr->exit_loc, curr->exit_heading);
+
         }
         else
             ml.get_transitions(transitions, curr->loc, curr->heading, true);
@@ -483,39 +521,65 @@ void SIPP::updatePath(SIPPNode* goal)
 {
     path.resize(goal->timestep + 1);
     const auto* curr = goal;
-    int t_start = goal->timestep;
-    std::stack<const SIPPNode*> states;
-    while (curr->parent != nullptr) // non-root node
-    {
-        states.push(curr);
-        t_start = min(t_start - 1, curr->parent->interval.second - 1); // latest timestep to leave curr->parent->loc
-        curr = curr->parent;
-    }
-    const auto* prev = states.top(); states.pop();
-    curr = states.top(); states.pop();
-    for (int t = t_start + 1; t < goal->timestep; t++)
-    {
-        if (t > t_start + 1 && t >= curr->interval.first)
+
+    if (agent.status > 0) {//go as early as possible
+        for (int t = goal->timestep; t >=0; t--)
         {
-            prev = curr;
-            curr = states.top(); states.pop();
+            if (t < curr->interval.first && curr->parent!= nullptr)
+            {
+                curr = curr->parent;
+            }
+            assert((curr->parent== nullptr || t>curr->parent->timestep) && t>=curr->interval.first && t<=curr->interval.second);
+
+            path[t].location = curr->loc;
+            path[t].heading = curr->heading;
+            path[t].position_fraction = curr->position_fraction;
+            path[t].exit_heading = curr->exit_heading;
+            path[t].exit_loc = curr->exit_loc;
+
         }
-        assert(prev->interval.first <= t && t < prev->interval.second);
-        path[t].location = prev->loc;
-        path[t].heading = prev->heading;
-        path[t].position_fraction = prev->position_fraction;
-        path[t].malfunction_left = prev->malfunction_left;
-        path[t].exit_heading = prev->exit_heading;
-        path[t].exit_loc = prev->exit_loc;
-        assert(!constraintTable.is_constrained(agent.agent_id, path[t].location, t, path[t - 1].location));
+
     }
-    assert(states.empty());
-    assert(!constraintTable.is_constrained(agent.agent_id, path[goal->timestep].location,
-            goal->timestep, path[goal->timestep - 1].location));
-    path[goal->timestep].location = goal->loc;
-    path[goal->timestep].heading = goal->heading;
-    path[goal->timestep].position_fraction = goal->position_fraction;
-    path[goal->timestep].malfunction_left = goal->malfunction_left;
-    path[goal->timestep].exit_heading = goal->exit_heading;
-    path[goal->timestep].exit_loc = goal->exit_loc;
+    else{//go as late as possible
+        int t_start = goal->timestep;
+        std::stack<const SIPPNode*> states;
+        while (curr->parent != nullptr) // non-root node
+        {
+            states.push(curr);
+            t_start = min(t_start - 1, curr->parent->interval.second - 1); // latest timestep to leave curr->parent->loc
+            curr = curr->parent;
+        }
+        const auto* prev = states.top(); states.pop();
+        curr = states.top(); states.pop();
+        for (int t = t_start + 1; t < goal->timestep; t++)
+        {
+            if (t > t_start + 1 && t >= curr->interval.first)
+            {
+                prev = curr;
+                curr = states.top(); states.pop();
+            }
+            assert(prev->interval.first <= t && t < prev->interval.second);
+            path[t].location = prev->loc;
+            path[t].heading = prev->heading;
+            path[t].position_fraction = prev->position_fraction;
+            path[t].exit_heading = prev->exit_heading;
+            path[t].exit_loc = prev->exit_loc;
+            assert(!constraintTable.is_constrained(agent.agent_id, path[t].location, t, path[t - 1].location));
+        }
+
+        assert(states.empty());
+        assert(!constraintTable.is_constrained(agent.agent_id, path[goal->timestep].location,
+                                               goal->timestep, path[goal->timestep - 1].location));
+        path[goal->timestep].location = goal->loc;
+        path[goal->timestep].heading = goal->heading;
+        path[goal->timestep].position_fraction = goal->position_fraction;
+        path[goal->timestep].exit_heading = goal->exit_heading;
+        path[goal->timestep].exit_loc = goal->exit_loc;
+    }
+    if (agent.malfunction_left > 0)
+    {
+        for (int t = 0; t < min(agent.malfunction_left, (int)path.size()); t++)
+            path[t].malfunction_left = agent.malfunction_left - t;
+    }
+
 }

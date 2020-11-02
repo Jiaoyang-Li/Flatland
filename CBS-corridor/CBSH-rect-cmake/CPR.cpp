@@ -10,7 +10,7 @@ CPR::CPR(AgentsLoader& al, FlatlandLoader& ml, const options& options1, float ti
     unordered_map< int, list<Agent*> > agent_groups;
     for (auto it = al.agents_all.begin(); it != al.agents_all.end(); ++it)
     {
-        auto key = ml.map_size() * it->heading + ml.linearize_coordinate(it->initial_location);
+        auto key = ml.map_size() * it->heading + it->initial_location;
         agent_groups[key].push_back(&(*it));
     }
 

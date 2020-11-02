@@ -53,8 +53,8 @@ extern "C" void* call_func( void *f )
 template <class Map>
 class PythonCBS {
 public:
-	PythonCBS(p::object railEnv1, string framework, std::string algo, float soft_time_limit,
-              int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
+	PythonCBS(p::object railEnv1, string framework, float soft_time_limit,
+              int default_group_size, int debug, float f_w,bool replan,
               int agent_priority_strategy, int neighbor_generation_strategy,
               int prirority_ordering_strategy, int replan_strategy);
 	~PythonCBS(){
@@ -104,26 +104,12 @@ public:
         }
         else
         {
-            mcp.getNextLoc(agent_location,timestep);
+            mcp.getNextLoc(timestep);
             for (int i = 0; i < al->getNumOfAllAgents(); i++)
                 next_loc.append(mcp.to_go[i]);
             return next_loc;
         }
     }
-    void updateMCP(p::list agent_location, p::dict agent_action)
-    {
-        if (framework == "CPR")
-        {
-            cpr->update(agent_location);
-        }
-        else
-        {
-
-            mcp.update(agent_location, agent_action);
-        }
-
-    }
-
     void buildMCP(void)
     {
         if (framework != "CPR")
@@ -209,6 +195,8 @@ private:
     int neighbor_generation_strategy;
     int prirority_ordering_strategy;
     int replan_strategy;
+    bool replan_on = false;
+    int replan_times = 0;
 
 	//stats about CBS
     Time::time_point start_time;

@@ -10,7 +10,7 @@ OnlinePP::OnlinePP(AgentsLoader& al, FlatlandLoader& ml, const options& options1
     unplanned_agents.resize(ml.map_size());
     for (Agent& agent : al.agents_all)
     {
-        int start_location = ml.linearize_coordinate(agent.initial_location);
+        int start_location = agent.initial_location;
         auto it = unplanned_agents[start_location].begin();
         for (; it != unplanned_agents[start_location].end(); ++it)
         {

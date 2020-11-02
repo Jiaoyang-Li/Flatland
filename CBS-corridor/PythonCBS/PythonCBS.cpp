@@ -11,15 +11,14 @@ namespace p = boost::python;
 
 
 template <class Map>
-PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, string algo, float soft_time_limit,
-                          int default_group_size, int debug, float f_w, int corridor,bool chasing, bool accept_partial_solution,
+PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, float soft_time_limit,
+                          int default_group_size, int debug, float f_w,bool replan,
                           int agent_priority_strategy, int neighbor_generation_strategy,
                           int prirority_ordering_strategy, int replan_strategy) :
-                          railEnv(railEnv1), framework(framework), algo(algo),
+                          railEnv(railEnv1), framework(framework),
                           soft_time_limit(soft_time_limit),
                           f_w(f_w), defaultGroupSize(default_group_size),
-                          chasing(chasing),
-                          accept_partial_solution(accept_partial_solution),
+                          replan_on(replan),
                           agent_priority_strategy(agent_priority_strategy),
                           neighbor_generation_strategy(neighbor_generation_strategy),
                           prirority_ordering_strategy(prirority_ordering_strategy),
@@ -30,35 +29,6 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, string algo, flo
 	options1.debug = debug;
     srand(0);
 	this->kRobust = 1;
-	this->corridor_option = corridor;
-    if(corridor == 0){
-        this->trainCorridor1 = false;
-        this->corridor2 = false;
-    }
-	else if(corridor == 1){
-	    this->trainCorridor1 = true;
-	}
-	else if(corridor == 2){
-	    this->corridor2 = true;
-	}
-    else if(corridor == 3){
-        this->trainCorridor1 = true;
-        this->corridor2 = true;
-    }
-    if (options1.debug)
-        cout<<"Corridor option: "<< corridor<< " Chasing option: " << chasing << endl;
-
-	if (algo == "ICBS")
-		s = constraint_strategy::ICBS;
-	else if (algo == "CBS")
-		s = constraint_strategy::CBS;
-	else if (algo == "CBSH")
-		s = constraint_strategy::CBSH;
-	else
-	{
-		std::cout << "WRONG SOLVER NAME! Use CBSH as default" << std::endl;
-		s = constraint_strategy::CBSH;
-	}
 
     if (options1.debug)
 	std::cout << "get width height " << std::endl;
@@ -71,12 +41,9 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, string algo, flo
     if (options1.debug)
     std::cout << "load agents " << std::endl;
 
-	al =  new AgentsLoader(railEnv.attr("agents"));
+	al =  new AgentsLoader(*ml, railEnv.attr("agents"));
     if (options1.debug)
 	std::cout << "load done " << std::endl;
-	if (debug) {
-		al->printAllAgentsInitGoal();
-	}
     al->constraintTable.length_max = p::extract<int>(railEnv.attr("_max_episode_steps"));
     std::cout << "Max timestep = " << al->constraintTable.length_max << endl; // the deadline is stored in the constraint table in al, which will be used for all path finding.
 	this->max_malfunction = max_malfunction;
@@ -90,16 +57,18 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     al->constraintTable.length_max = max_timestep - timestep; // update max timestep
     if (framework == "CPR")
     {
-        cpr->planPaths(time_limit);
+        //cpr->update(railEnv.attr("agents"));
+        //cpr->planPaths(time_limit);
         return;
     }
     else if (framework == "OnlinePP")
     {
         start_time = Time::now();// time(NULL) return time in seconds
-        al->updateAgents(railEnv.attr("agents"));
+        al->updateAgents(*ml, railEnv.attr("agents"));
+        mcp.update();
         for (int a : al->new_agents)
         {
-            int start = ml->linearize_coordinate(al->agents_all[a].initial_location);
+            int start = al->agents_all[a].initial_location;
             opp->to_be_planned_group.push_back(start);
         }
         opp->updateToBePlanedAgents(al->getNumOfAllAgents());
@@ -131,8 +100,13 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     else // LNS
     {
         start_time = Time::now();// time(NULL) return time in seconds
-        al->updateAgents(railEnv.attr("agents"));
-        return;
+        al->updateAgents(*ml, railEnv.attr("agents"));
+        mcp.update();
+        if (!replan_on)
+            return;
+        if (al->new_malfunction_agents.empty() && to_be_replanned.empty())
+            return; // we do not replan if there are no new mal agents and no to-be-replanned agents
+
         if (options1.debug)
         {
             cout << "Timestep = " << timestep << ";\t";
@@ -152,8 +126,8 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
             }*/
             cout << endl;
         }
-        if (timestep % 100 < 99 || al->new_malfunction_agents.empty())
-            return; // replan every 100 timesteps
+//        if (timestep % 100 < 99 || al->new_malfunction_agents.empty())
+//            return; // replan every 100 timesteps
 
         if (options1.debug)
         {
@@ -162,14 +136,13 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
             {
                 int loc = -1;
                 if (al->agents_all[agent].status == 1)
-                    loc = ml->linearize_coordinate(al->agents_all[agent].position);
+                    loc = al->agents_all[agent].position;
                 cout << agent << " at location " << loc
                      << " (" << al->agents_all[agent].malfunction_left << " timesteps left), ";
             }
 
             cout << endl;
         }
-
         // use mcp to build new paths
         vector<Path> paths;
         mcp.simulate(paths, timestep);
@@ -223,7 +196,8 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
         runtime = ((fsec)(Time::now() - start_time)).count();
         lns.replan(time_limit - runtime);
-        // lns.replan(to_be_replanned, time_limit - runtime);
+        replan_times += lns.replan_times;
+//         lns.replan(to_be_replanned, time_limit - runtime);
         if (options1.debug)
         {
             //cout << "Updated paths" << endl;
@@ -277,6 +251,9 @@ bool PythonCBS<Map>::search(float success_rate) {
 	//initialize search engine
 	al->constraintTable.init(ml->map_size());
     al->computeHeuristics(ml);
+    if (options1.debug) {
+        al->printAllAgentsInitGoal();
+    }
     this->statistic_list.resize(1);
     this->iteration_stats.resize(1);
     if (framework == "OnlinePP")
@@ -310,10 +287,10 @@ bool PythonCBS<Map>::search(float success_rate) {
             assert("Find conflict.");
         }
 
-        if (options1.debug)
-        {
-            al->printPaths();
-        }
+        //if (options1.debug)
+        //{
+        //    al->printPaths();
+        //}
         return succ;
     }
     else if(framework == "Parallel-LNS")
@@ -368,6 +345,7 @@ p::dict PythonCBS<Map>::getResultDetail() {
     result["iterations"] = statistic_list[thread_id].iterations;
     result["max_timestep"] = al->constraintTable.length_max;
     result["num_of_agents"] = al->getNumOfAllAgents();
+    result["replan_times"] = replan_times;
     //std::stringstream stream;
     //stream << std::fixed << std::setprecision(1) << f_w;
     //std::string s = stream.str();
@@ -429,7 +407,7 @@ void PythonCBS<Map>::generateNeighbor(int agent_id, const PathEntry& start, int 
             transitions.push_back(move);
 
             Transition move2;
-            move2.location = ml->linearize_coordinate(al->agents_all[agent_id].position.first, al->agents_all[agent_id].position.second);
+            move2.location = al->agents_all[agent_id].position;
             move2.heading = heading;
             move2.position_fraction = position_fraction;
             move2.exit_loc = exit_loc;
@@ -704,7 +682,7 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads){
 
 template <class Map>
 void PythonCBS<Map>::updateAgents(p::object railEnv1){
-    al->updateAgents(railEnv.attr("agents"));
+    al->updateAgents(*ml, railEnv.attr("agents"));
 }
 
 template class PythonCBS<FlatlandLoader>;
@@ -712,8 +690,8 @@ template class PythonCBS<FlatlandLoader>;
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
 {
 	using namespace boost::python;
-	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, string, float,
-	        int, int,float,int,bool,bool,int,int,int,int>())
+	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, float,
+	        int, int,float,bool,int,int,int,int>())
 		.def("getResult", &PythonCBS<FlatlandLoader>::getResult)
 		.def("search", &PythonCBS<FlatlandLoader>::search)
 		.def("hasConflicts", &PythonCBS<FlatlandLoader>::findConflicts)
@@ -725,7 +703,6 @@ BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final
 		.def("buildMCP", &PythonCBS<FlatlandLoader>::buildMCP)
         .def("getActions",&PythonCBS<FlatlandLoader>::getActions)
         .def("getNextLoc", &PythonCBS<FlatlandLoader>::getNextLoc)
-        .def("updateMCP", &PythonCBS<FlatlandLoader>::updateMCP)
         .def("clearMCP", &PythonCBS<FlatlandLoader>::clearMCP)
         .def("printAllMCP", &PythonCBS<FlatlandLoader>::printAllMCP)
         .def("printMCP", &PythonCBS<FlatlandLoader>::printMCP)

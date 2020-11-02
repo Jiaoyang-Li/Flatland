@@ -21,8 +21,8 @@ namespace p = boost::python;
 int RANDOM_WALK_STEPS = 100000;
 
 std::ostream& operator<<(std::ostream& os, const Agent& agent) {
-	os << "Initial: (" << agent.initial_location.first << "," << agent.initial_location.second << "),"
-       << "Goal_location: (" << agent.goal_location.first << "," << agent.goal_location.second << "),"
+	os << "Initial: " << agent.initial_location << ","
+       << "Goal_location: " << agent.goal_location << ","
        << "Status: " << agent.status << ", Heading: " << agent.heading
 		<< ", malfunction_left: " << agent.malfunction_left
 		<< ", next_malfuntion: " << agent.next_malfunction
@@ -32,7 +32,7 @@ std::ostream& operator<<(std::ostream& os, const Agent& agent) {
     return os;
 }
 
-AgentsLoader::AgentsLoader(p::object agents) {
+AgentsLoader::AgentsLoader(const FlatlandLoader &ml, p::object agents) {
 	int agentsNum = p::len(agents);
 	this->num_of_agents_all = agentsNum;
 	///this->heuristics.resize(num_of_agents_all);
@@ -85,9 +85,9 @@ AgentsLoader::AgentsLoader(p::object agents) {
 		}
 
         this->agents_all[i].agent_id = i;
-        this->agents_all[i].initial_location = initial;
-        this->agents_all[i].goal_location = goal;
-        this->agents_all[i].position = initial;
+        this->agents_all[i].initial_location = ml.linearize_coordinate(initial);
+        this->agents_all[i].goal_location = ml.linearize_coordinate(goal);
+        this->agents_all[i].position = -1;
         this->agents_all[i].heading = heading;
         this->agents_all[i].status = status;
         this->agents_all[i].malfunction_left = malfunction;
@@ -102,7 +102,7 @@ AgentsLoader::AgentsLoader(p::object agents) {
 
 }
 
-void AgentsLoader::updateAgents(p::object agents)
+void AgentsLoader::updateAgents(const FlatlandLoader &ml, p::object agents)
 {
     // new_malfunction_agents.clear();
     new_agents.clear();
@@ -119,45 +119,44 @@ void AgentsLoader::updateAgents(p::object agents)
             new_agents.push_back(i); // agent i is about to move, but trapped by malfunction
 
         agents_all[i].status = new_status;
-        if (agents_all[i].status >= 2)  // done (2) or done removed (3)
-            continue;
-        if (agents_all[i].malfunction_left == 0 && malfunction_left > 0)
-            new_malfunction_agents.push_back(i);
-        agents_all[i].malfunction_left = malfunction_left;
-        agents_all[i].next_malfunction = p::extract<int>(p::long_(agents[i].attr("malfunction_data")["next_malfunction"]));
-        agents_all[i].malfunction_rate = p::extract<float>(p::long_(agents[i].attr("malfunction_data")["malfunction_rate"]));
+        if (agents_all[i].status <= 1)  // ready to depart (0) or active (1)
+        { // update malfunction information
+            if (agents_all[i].malfunction_left == 0 && malfunction_left > 0)
+                new_malfunction_agents.push_back(i);
+            agents_all[i].malfunction_left = malfunction_left;
+            agents_all[i].next_malfunction = p::extract<int>(p::long_(agents[i].attr("malfunction_data")["next_malfunction"]));
+            agents_all[i].malfunction_rate = p::extract<float>(p::long_(agents[i].attr("malfunction_data")["malfunction_rate"]));
+        }
 
-
+        // update position information
         if (agents_all[i].status == 1) // active
         {
             p::tuple iniTuple(agents[i].attr("position"));
-            agents_all[i].position.first = p::extract<int>(p::long_(iniTuple[0]));
-            agents_all[i].position.second = p::extract<int>(p::long_(iniTuple[1]));
+            agents_all[i].position = ml.linearize_coordinate(p::extract<int>(p::long_(iniTuple[0])),
+                    p::extract<int>(p::long_(iniTuple[1])));
             agents_all[i].heading = p::extract<int>(p::long_(agents[i].attr("direction")));
+            agents_all[i].position_fraction = p::extract<float>(agents[i].attr("speed_data")["position_fraction"]);
+            int exit_action = int(p::extract<float>(agents[i].attr("speed_data")["transition_action_on_cellexit"]));
+            if (exit_action == 1) {
+                agents_all[i].exit_heading = agents_all[i].heading - 1;
+                if (agents_all[i].exit_heading < 0)
+                    agents_all[i].exit_heading = 3;
+            }
+            else if (exit_action == 3) {
+                agents_all[i].exit_heading = agents_all[i].heading + 1;
+                if (agents_all[i].exit_heading > 3)
+                    agents_all[i].exit_heading = 0;
+            }
+            else if (exit_action == 2) {
+                agents_all[i].exit_heading = agents_all[i].heading;
+            }
+            else {
+                agents_all[i].exit_heading = -1;
+            }
         }
-        else // ready to depart (0) or done (2) or done removed (3)
+        else if (agents_all[i].status >= 2) // done (2) or done removed (3)
         {
-            agents_all[i].position = agents_all[i].initial_location;
-            agents_all[i].heading = p::extract<int>(p::long_(agents[i].attr("initial_direction")));
-        }
-
-        agents_all[i].position_fraction = p::extract<float>(agents[i].attr("speed_data")["position_fraction"]);
-        int exit_action = int(p::extract<float>(agents[i].attr("speed_data")["transition_action_on_cellexit"]));
-        if (exit_action == 1) {
-            agents_all[i].exit_heading = agents_all[i].heading - 1;
-            if (agents_all[i].exit_heading < 0)
-                agents_all[i].exit_heading = 3;
-        }
-        else if (exit_action == 3) {
-            agents_all[i].exit_heading = agents_all[i].heading + 1;
-            if (agents_all[i].exit_heading > 3)
-                agents_all[i].exit_heading = 0;
-        }
-        else if (exit_action == 2) {
-            agents_all[i].exit_heading = agents_all[i].heading;
-        }
-        else {
-            agents_all[i].exit_heading = -1;
+            agents_all[i].position = agents_all[i].goal_location;
         }
     }
 }
@@ -229,156 +228,15 @@ void AgentsLoader::updateAgents(p::object agents)
 
 }*/
 
-AgentsLoader::AgentsLoader(const string& fname, const MapLoader &ml, int agentsNum = 0){
-  string line;
-
-  ifstream myfile (fname.c_str());
-
-  if (myfile.is_open()) {
-    getline (myfile,line);
-    char_separator<char> sep(",");
-    tokenizer< char_separator<char> > tok(line, sep);
-    tokenizer< char_separator<char> >::iterator beg=tok.begin();
-    this->num_of_agents_all = atoi ( (*beg).c_str() );
-    //this->heuristics.resize(num_of_agents_all);
-      this->agents_all.resize(num_of_agents_all);
-      this->paths_all.resize(num_of_agents_all);
-      //this->initial_locations_all.resize(num_of_agents_all);
-      //this->goal_locations_all.resize(num_of_agents_all);
-      //this->headings_all.resize(num_of_agents_all);
-    //    cout << "#AG=" << num_of_agents_all << endl;
-    for (int i=0; i<num_of_agents_all; i++) {
-      getline (myfile, line);
-      tokenizer< char_separator<char> > col_tok(line, sep);
-      tokenizer< char_separator<char> >::iterator c_beg=col_tok.begin();
-      pair<int,int> curr_pair;
-      // read start [row,col] for agent i
-      curr_pair.first = atoi ( (*c_beg).c_str() );
-      c_beg++;
-      curr_pair.second = atoi ( (*c_beg).c_str() );
-      //      cout << "AGENT" << i << ":   START[" << curr_pair.first << "," << curr_pair.second << "] ; ";
-      this->agents_all[i].initial_location = curr_pair;
-      // read goal [row,col] for agent i
-      c_beg++;
-      curr_pair.first = atoi ( (*c_beg).c_str() );
-      c_beg++;
-      curr_pair.second = atoi ( (*c_beg).c_str() );
-      //      cout << "GOAL[" << curr_pair.first << "," << curr_pair.second << "]" << endl;
-      this->agents_all[i].goal_location = curr_pair;
-	  this->agents_all[i].heading = -1;
-
-      // read max velocity and accelration for agent i
-     /* c_beg++;
-      this->max_v.push_back(atof((*c_beg).c_str()));
-      c_beg++;
-      this->max_w.push_back(atof((*c_beg).c_str()));
-      c_beg++;
-      this->max_a.push_back(atof((*c_beg).c_str()));*/
-    }
-    myfile.close();
-  } 
-  else if(agentsNum > 0)//Generate agents randomly
-  {
-	  this->num_of_agents_all = agentsNum;
-	  //this->heuristics.resize(num_of_agents_all);
-      this->agents_all.resize(num_of_agents_all);
-      this->paths_all.resize(num_of_agents_all);
-      //this->initial_locations_all.resize(num_of_agents_all);
-      //this->goal_locations_all.resize(num_of_agents_all);
-      //this->headings_all.resize(num_of_agents_all);
-	  vector<bool> starts(ml.rows * ml.cols, false);
-	  vector<bool> goals(ml.rows * ml.cols, false);
-	  // Choose random start locations
-	  for (int k = 0; k < agentsNum; k++)
-	  {
-		  int x = rand() % ml.rows, y = rand() % ml.cols;
-		  int start = x * ml.cols +y;
-		  if (!ml.my_map[start] && !starts[start])
-		  {
-				// update start
-				this->agents_all[k].initial_location = make_pair(x,y);
-				starts[start] = true;
-
-				// random walk
-				int loc = start;
-				bool* temp_map = new bool[ml.rows * ml.cols];
-				for (int walk = 0; walk < RANDOM_WALK_STEPS; walk++)
-				{
-					int directions[] = {0, 1, 2, 3, 4};
-					random_shuffle(directions, directions + 5);
-					int i = 0;
-					for(; i< 5; i++)
-					{
-						int next_loc = loc + ml.moves_offset[directions[i]];
-						if (0 <= next_loc && next_loc < ml.rows * ml.cols &&! ml.my_map[next_loc])
-						{
-							loc = next_loc;
-							break;
-						}
-					}
-					if (i == 5)
-					{
-						cout << "--------------ERROR!-----------------" << endl;
-						// system("pause");
-					}
-				}
-				// find goal
-				bool flag = false;
-				int goal = loc;
-				while (!flag)
-				{
-					int directions[] = { 0, 1, 2, 3, 4 };
-					random_shuffle(directions, directions + 5);
-					int i = 0;
-					for (; i< 5; i++)
-					{
-						int next_loc = goal + ml.moves_offset[directions[i]];
-						if (0 <= next_loc && next_loc < ml.rows * ml.cols && !ml.my_map[next_loc])
-						{
-							goal = next_loc;
-							break;
-						}
-					}
-					if (i == 5)
-					{
-						cout << "--------------ERROR!-----------------" << endl;
-						// system("pause");
-					}
-					flag = true;
-					if (goals[goal])
-						flag = false;
-				}
-				//update goal
-				this->agents_all[k].goal_location = make_pair(goal / ml.cols, goal % ml.cols);
-				goals[goal] = true;
-				this->agents_all[k].heading = -1;
-
-				// update others
-				/*this->max_v.push_back(1);
-				this->max_w.push_back(1);
-				this->max_a.push_back(1);*/
-		  }
-		  else
-		  {
-			  k--;
-		  }
-	  }
-	  saveToFile(fname);
-  }
-  else
-  {
-	  cerr << "Agent file " << fname << " not found." << std::endl;
-	  exit(10);
-  }
-}
 
 void AgentsLoader::printAllAgentsInitGoal () const {
   cout << "AGENTS:" << endl;
     cout<<"number of agents: "<<num_of_agents_all<<endl;
   for (int i=0; i<num_of_agents_all; i++) {
     cout << "Agent" << i << " : " ;
-      cout << "Initial: (" << agents_all[i].initial_location.first << "," << agents_all[i].initial_location.second << "),"
-           << "Goal_location: (" << agents_all[i].goal_location.first << "," << agents_all[i].goal_location.second << "),"
+      cout << "Initial: " << agents_all[i].initial_location << ", "
+           << "Goal_location: " << agents_all[i].goal_location << ", "
+           << "Distance: " << agents_all[i].distance_to_goal << ", "
            << "Status: " << agents_all[i].status << ", Heading: " << agents_all[i].heading
 		<< ", malfunction_left: " << agents_all[i].malfunction_left
 		<< ", next_malfuntion: " << agents_all[i].next_malfunction
@@ -393,8 +251,8 @@ void AgentsLoader::printCurrentAgentsInitGoal () const {
     cout<<"number of agents: "<<num_of_agents<<endl;
     for (int i=0; i<num_of_agents; i++) {
         cout << "Agent" << i << " : " ;
-        cout << "Initial: (" << agents[i]->initial_location.first << "," << agents[i]->initial_location.second << "),"
-             << "Goal_location: (" << agents[i]->goal_location.first << "," << agents[i]->goal_location.second << "),"
+        cout << "Initial: " << agents[i]->initial_location << ","
+             << "Goal_location: " << agents[i]->goal_location << ","
              << "Status: " << agents[i]->status << ", Heading: " << agents[i]->heading
              << ", malfunction_left: " << agents[i]->malfunction_left
              << ", next_malfuntion: " << agents[i]->next_malfunction
@@ -450,18 +308,7 @@ void AgentsLoader::addAgent(int start_row, int start_col, int goal_row, int goal
   num_of_agents++;
 }*/
 
-void AgentsLoader::saveToFile(const std::string& fname) {
-  ofstream myfile;
-  myfile.open(fname);
-  myfile << num_of_agents_all << endl;
-  for (int i = 0; i < num_of_agents_all; i++)
-    myfile << agents_all[i].initial_location.first << ","
-            << agents_all[i].initial_location.second << ","
-           << agents_all[i].goal_location.first << ","
-           << agents_all[i].goal_location.second << ","
-		   /*<< max_v[i] << "," << max_a[i] << "," << max_w[i] << ","*/  << endl;
-  myfile.close();
-}
+
 
 // agent_priority_strategy:
 // 0: keep the original ordering
@@ -475,7 +322,7 @@ void AgentsLoader::generateAgentOrder(int agent_priority_strategy)
     if (agent_priority_strategy == 5)
     {
         // decide the agent priority for agents at the same start location
-        boost::unordered_map<pair<int, int>, vector<int>, hash_pair> start_locations; // map the agents to their start locations
+        boost::unordered_map<int, vector<int>> start_locations; // map the agents to their start locations
         for (int i = 0; i < num_of_agents_all; i++)
             start_locations[agents_all[i].position].push_back(i);
         for (auto& agents : start_locations)
@@ -609,8 +456,8 @@ bool AgentsLoader::addPaths(const vector<Path*>& new_paths)
 void AgentsLoader::computeHeuristics(const FlatlandLoader* ml)
 {
     for (auto& agent : agents_all) {
-        int init_loc = ml->linearize_coordinate(agent.position.first, agent.position.second);
-        int goal_loc = ml->linearize_coordinate(agent.goal_location.first, agent.goal_location.second);
+        int init_loc = agent.initial_location;
+        int goal_loc = agent.goal_location;
 
         if (existing_heuristics.count(goal_loc)){
             agent.heuristics = &existing_heuristics[goal_loc];

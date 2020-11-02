@@ -199,69 +199,69 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
 }
 
 
-bool LNS::replan(float time_limit)
-{
-    start_time = Time::now();
-    max_timestep = al.constraintTable.length_max;
-    al.num_of_agents = 1;
-    al.agents.resize(1);
+//bool LNS::replan(float time_limit)
+//{
+//    start_time = Time::now();
+//    max_timestep = al.constraintTable.length_max;
+//    al.num_of_agents = 1;
+//    al.agents.resize(1);
+//
+//    map<int, list<int>> agent_groups;  // key = path length, value = list of agents
+//    int makespan = 0;
+//    for (int i = 0; i < al.getNumOfAllAgents(); i++)
+//    {
+//        if (al.agents_all[i].status >= 2)
+//            continue;
+//        if (al.paths_all[i].empty())
+//        {
+//            makespan = max_timestep * 2;
+//            agent_groups[max_timestep * 2].push_back(i);
+//        }
+//        else
+//        {
+//            makespan = max(makespan, (int) al.paths_all[i].size() - 1);
+//            if (al.agents_all[i].status == 0)
+//                agent_groups[al.paths_all[i].size() - 1].push_back(i);
+//        }
+//    }
+//    bool empty_path = false;
+//    for (auto it = agent_groups.rbegin(); it != agent_groups.rend() && !empty_path; ++it) // replan paths from the longest to the shortest
+//    {
+//
+//        for (auto i : it->second)
+//        {
+//            runtime = ((fsec) (Time::now() - start_time)).count();
+//            if (runtime >= time_limit)
+//                return true;
+//
+//            auto copy = al.paths_all[i];
+//            al.constraintTable.delete_path(i, al.paths_all[i]);
+//            runtime = ((fsec) (Time::now() - start_time)).count();
+//            al.agents[0] = &al.agents_all[i];
+//            SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
+//            planner.search();
+//            assert(planner.path.size() <= copy.size());
+//            if (planner.path.empty())
+//            {
+//                addAgentPath(i, copy);
+//                empty_path = true;
+//                if (it->first < max_timestep * 2)
+//                    break;
+//            }
+//            else
+//            {
+//                addAgentPath(i, planner.path);
+//                if (copy.size() == planner.path.size()) // fail to decrease the makespan
+//                {
+//                    return true;
+//                }
+//            }
+//        }
+//    }
+//    return true;
+//}
 
-    map<int, list<int>> agent_groups;  // key = path length, value = list of agents
-    int makespan = 0;
-    for (int i = 0; i < al.getNumOfAllAgents(); i++)
-    {
-        if (al.agents_all[i].status >= 2)
-            continue;
-        if (al.paths_all[i].empty())
-        {
-            makespan = max_timestep * 2;
-            agent_groups[max_timestep * 2].push_back(i);
-        }
-        else
-        {
-            makespan = max(makespan, (int) al.paths_all[i].size() - 1);
-            if (al.agents_all[i].status == 0)
-                agent_groups[al.paths_all[i].size() - 1].push_back(i);
-        }
-    }
-    bool empty_path = false;
-    for (auto it = agent_groups.rbegin(); it != agent_groups.rend() && !empty_path; ++it) // replan paths from the longest to the shortest
-    {
 
-        for (auto i : it->second)
-        {
-            runtime = ((fsec) (Time::now() - start_time)).count();
-            if (runtime >= time_limit)
-                return true;
-
-            auto copy = al.paths_all[i];
-            al.constraintTable.delete_path(i, al.paths_all[i]);
-            runtime = ((fsec) (Time::now() - start_time)).count();
-            al.agents[0] = &al.agents_all[i];
-            SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
-            planner.search();
-            assert(planner.path.size() <= copy.size());
-            if (planner.path.empty())
-            {
-                addAgentPath(i, copy);
-                empty_path = true;
-                if (it->first < max_timestep * 2)
-                    break;
-            }
-            else
-            {
-                addAgentPath(i, planner.path);
-                if (copy.size() == planner.path.size()) // fail to decrease the makespan
-                {
-                    return true;
-                }
-            }
-        }
-    }
-    return true;
-}
-
-/*
 bool LNS::replan(float time_limit)
 {
     start_time = Time::now();
@@ -273,16 +273,28 @@ bool LNS::replan(float time_limit)
     for (const auto& mal_agent : al.new_malfunction_agents)
     {
         // find the intersections in front of the mal_agent
-        list<pair<int, int> > future_intersections; // <location, timestep>
+        list<tuple<int, int, int> > future_intersections; // <location, timestep>
+        int t = 0;
         if (al.agents_all[mal_agent].status == 0) // the mal agent is still in the station
-            future_intersections.emplace_back(ml.linearize_coordinate(al.agents_all[mal_agent].initial_location), 0); // replan agents at the start location
-        for (int t = 0; t < (int) al.paths_all[mal_agent].size(); t++)
+        {
+            for (;t < (int) al.paths_all[mal_agent].size(); t++)
+            {
+                if (al.paths_all[mal_agent][t].location > 0)
+                {
+                    future_intersections.emplace_back(al.agents_all[mal_agent].initial_location,
+                            t + 1, al.agents_all[mal_agent].malfunction_left + 1); // replan agents at the start location
+                    break;
+                }
+            }
+
+        }
+        for (;t < (int) al.paths_all[mal_agent].size(); t++)
         {
             int loc = al.paths_all[mal_agent][t].location;
             if (loc < 0)
                 continue;
-            if (ml.getDegree(loc) > 2 && (future_intersections.empty() || future_intersections.back().first != loc)) {
-                future_intersections.emplace_back(loc, t);
+            if (ml.getDegree(loc) > 2 && (future_intersections.empty() || get<0>(future_intersections.back()) != loc)) {
+                future_intersections.emplace_back(loc, t + 1, t + al.agents_all[mal_agent].malfunction_left + 1);
             }
         }
         for (const auto &intersection : future_intersections)
@@ -299,15 +311,18 @@ bool LNS::replan(float time_limit)
                 int i = agent.first;
                 int t = agent.second;
                 if (tabu_list.count(i) > 0 || // the agent has already been replanned, or
-                    (intersection.second > 0 && // the agent is following the mal_agent. We do not replan them for now
-                    al.paths_all[i][t - 1].location == al.paths_all[mal_agent][intersection.second - 1].location))
+                    (get<1>(intersection) - 1 > 0 && // the agent is following the mal_agent. We do not replan them
+                    al.paths_all[i][t - 1].location >= 0 &&
+                    al.paths_all[i][t - 1].location == al.paths_all[mal_agent][get<1>(intersection) - 2].location)
+                    )
                     continue;
                 auto copy = al.paths_all[i];
                 al.constraintTable.delete_path(i, al.paths_all[i]);
                 runtime = ((fsec) (Time::now() - start_time)).count();
                 al.agents[0] = &al.agents_all[i];
-                SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
+                SIPP planner(ml,al,f_w,time_limit - runtime,options1);
                 planner.search();
+                replan_times++;
                 if (planner.path.empty())
                 {
                     addAgentPath(i, copy);
@@ -324,7 +339,7 @@ bool LNS::replan(float time_limit)
     }
 
     // replan the skipped agents
-    for (const auto &agents : agent_groups)
+    /*for (const auto &agents : agent_groups)
     {
         for (const auto &agent : agents) // replan the agents one by one
         {
@@ -339,8 +354,9 @@ bool LNS::replan(float time_limit)
             al.constraintTable.delete_path(i, al.paths_all[i]);
             runtime = ((fsec) (Time::now() - start_time)).count();
             al.agents[0] = &al.agents_all[i];
-            SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
+            SIPP planner(ml,al,f_w,time_limit - runtime,options1);
             planner.search();
+            replan_times++;
             if (planner.path.empty())
             {
                 addAgentPath(i, copy);
@@ -351,12 +367,12 @@ bool LNS::replan(float time_limit)
                 tabu_list.insert(i);
             }
         }
-    }
+    }*/
 
     return true;
 }
- */
-bool LNS::replan(list<int>& to_be_replanned, float time_limit)
+
+/*bool LNS::replan(list<int>& to_be_replanned, float time_limit)
 {
     start_time = Time::now();
     max_timestep = al.constraintTable.length_max;
@@ -365,9 +381,9 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
     for (const auto& mal_agent : al.new_malfunction_agents)
     {
         // find the intersections in front of the mal_agent
-        list<pair<int, int> > future_intersections; // <location, timestep>
+        list<tuple<int, int, int> > future_intersections; // <location, timestep>
         if (al.agents_all[mal_agent].status == 0) // the mal agent is still in the station
-            future_intersections.emplace_back(ml.linearize_coordinate(al.agents_all[mal_agent].initial_location), 0); // replan agents at the start location
+            future_intersections.emplace_back(al.agents_all[mal_agent].initial_location, 0); // replan agents at the start location
         for (int t = 0; t < (int) al.paths_all[mal_agent].size(); t++)
         {
             int loc = al.paths_all[mal_agent][t].location;
@@ -415,11 +431,15 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
         al.constraintTable.delete_path(i, al.paths_all[i]);
         runtime = ((fsec) (Time::now() - start_time)).count();
         al.agents[0] = &al.agents_all[i];
-        SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
+        SIPP planner(ml,al,f_w,time_limit - runtime,options1);
         planner.search();
-        if (planner.path.empty())
+
+        if (planner.path.empty()) // the agent cannot reach its goal before max timestep
         {
-            addAgentPath(i, copy);
+            if (al.agents_all[i].status > 0) // the agent has already started to move
+                addAgentPath(i, copy); // so it has to follow it original path, so that it does not block other agents
+            else
+                al.paths_all[i].clear();// otherwise, it has an empty path, which means that it will never show up.
         }
         else
         {
@@ -428,8 +448,9 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
         }
     }
 
+
     return true;
-}
+}*/
 
 
 bool LNS::getInitialSolution(float success_rate)
@@ -497,7 +518,7 @@ bool LNS::generateNeighborByStart()
     {
         for (int i = 0; i < (int)al.agents_all.size(); i++)
         {
-            auto start = ml.linearize_coordinate(al.agents_all[i].initial_location);
+            auto start = al.agents_all[i].initial_location;
             start_locations[start].push_back(i);
         }
         auto it = start_locations.begin();
@@ -806,7 +827,7 @@ void LNS::sortNeighborsByStrategy()
         // decide the agent priority for agents at the same start location
         start_locations.clear(); // map the agents to their start locations
         for (auto i : neighbors)
-            start_locations[ml.linearize_coordinate(al.agents_all[i].initial_location)].push_back(i);
+            start_locations[al.agents_all[i].initial_location].push_back(i);
         for (auto& agents : start_locations)
         {
             vector<int> agents_vec(agents.second.begin(), agents.second.end());
@@ -860,7 +881,7 @@ void LNS::randomWalk(int agent_id, const PathEntry& start, int start_timestep,
     int h_val;
     if (loc < 0)
     {
-        int initial_location = ml.linearize_coordinate(al.agents_all[agent_id].initial_location);
+        int initial_location = al.agents_all[agent_id].initial_location;
         h_val = heuristics[initial_location].get_hval(heading) / speed + 1;
     }
     else
@@ -888,7 +909,7 @@ void LNS::randomWalk(int agent_id, const PathEntry& start, int start_timestep,
             transitions.push_back(move);
 
             Transition move2;
-            move2.location = ml.linearize_coordinate(al.agents_all[agent_id].initial_location);
+            move2.location = al.agents_all[agent_id].initial_location;
             move2.heading = heading;
             move2.position_fraction = position_fraction;
             move2.exit_loc = exit_loc;
