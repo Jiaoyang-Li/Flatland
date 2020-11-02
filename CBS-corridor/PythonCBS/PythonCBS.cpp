@@ -115,7 +115,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
                 continue;
             if (positions[i] != mcp.to_go[i] && al->agents_all[i].position == positions[i])
                 continue;
-            cout << "Agent " << i << " should move from " << positions[i] << " to " << mcp.to_go[i]
+            cout << "At timestep " << timestep << ", Agent " << i << " should move from " << positions[i] << " to " << mcp.to_go[i]
                 << " but it moves to " << al->agents_all[i].position << endl;
             assert(false);
         }
@@ -123,6 +123,15 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
         mcp.update();
         if (!replan_on)
             return;
+
+        for (auto p = al->new_malfunction_agents.begin(); p != al->new_malfunction_agents.end();)
+        {
+            // if the agent always wait during the malfunction duration, then we do not need to replan
+            if (al->agents_all[*p].status == 0 && al->agents_all[*p].malfunction_left + timestep <= mcp.appear_time[*p])
+                p = al->new_malfunction_agents.erase(p);
+            else
+                ++p;
+        }
         if (al->new_malfunction_agents.empty() && to_be_replanned.empty())
             return; // we do not replan if there are no new mal agents and no to-be-replanned agents
 
