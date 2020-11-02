@@ -286,85 +286,10 @@ while True:
         #
         #####################################################################
 
-        # if debug_print:
-        #     print("current step: ", steps)
-
-        # time_start = time.time()
-
-
         action = CBS.getActions(local_env, steps, 3.0)
-
-        # time_taken = time.time() - time_start
-
-        # time_taken_by_controller.append(time_taken)
-
-        # Perform the chosen action on the environment.
-        # The action gets applied to both the local and the remote copy 
-        # of the environment instance, and the observation is what is 
-        # returned by the local copy of the env, and the rewards, and done and info
-        # are returned by the remote copy of the env
-        # time_start = time.time()
-
-        # if debug_print:
-        #
-        #     print("before moving agent locations: ")
-        #
-        #     for i,a in enumerate(local_env.agents):
-        #         # print(a.status)
-        #         # print(a.malfunction_data)
-        #         if(a.position != None):
-        #             print(i, a.position, linearize_loc(local_env,a.position))
-        #         else:
-        #             print(i, a.position, a.status, "Agent hasn't entered the start locaiton/has reached goal location")
-
-        if remote_test:
-            _, all_rewards, done, info = remote_client.env_step(action)
-        else:
-            _, all_rewards, done, info = local_env.step(action)
-
-        # if env_renderer_enable:
-        #     env_renderer.render_env(show=True, show_observations=False, show_predictions=False)
-
-        # if debug_print:
-        #     print("after moving agent locations: ")
-        #     for i,a in enumerate(local_env.agents):
-        #         # print(a.status)
-        #         # print(a.malfunction_data)
-        #         if (a.position != None):
-        #             print(i, a.position, linearize_loc(local_env, a.position))
-        #         else:
-        #             print(i, a.position, a.status, "Agent hasn't entered the start locaiton/has reached goal location")
-
-
-        # if debug_print:
-        #     print("new curr locations to MCP: ", new_curr_locs)
-        #
-        # if debug_print:
-        #     time_temp = time.time()
-
-        # CBS.updateMCP(new_curr_locs, action)
-
-        # if debug_print:
-        #     print('Time for update MCP: ', time.time() - time_temp)
-
-        # display the updated mcp
-        # if debug_print:
-        #     CBS.printAllMCP()
-
-
-        # hit enter to go next step
-        # print("hit enter to execute the next step")
-        # if input_pause_renderer:
-        #     input()
-
-        # or wait for a period of time
-
-        # time.sleep(0.5)
-
-
+        _, all_rewards, done, info = remote_client.env_step(action)
+       
         steps += 1
-        # time_taken = time.time() - time_start
-        # time_taken_per_step.append(time_taken)
 
         if done['__all__']:
             print("Reward : ", sum(list(all_rewards.values())))
