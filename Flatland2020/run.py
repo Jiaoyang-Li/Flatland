@@ -267,31 +267,7 @@ while True:
 
     success = CBS.search(agent_percentages[evaluation_number])
     evaluation_number += 1
-
-    # paths = CBS.getResult()
-
-    # if debug_print:
-    #     time_temp = time.time()
     CBS.buildMCP()
-    # if debug_print:
-    #     print('Time for building MCP: ', time.time() - time_temp)
-
-    # if debug_print:
-    #     # print paths
-    #     for i,p in enumerate(paths):
-    #         print(i, ": " , p)
-    #     # print mcp
-    #     CBS.printAllMCP()
-
-    #####################################################################
-    # stn to action controller
-    # this is an old stn to action controller for 2019 challenge
-    # may need correction/improvement
-    #####################################################################
-
-
-    # init prev locations to be -1 for each agent. (None of them has left the station yet)
-    prev_locs = [-1 for i in range(0,len(local_env.agents))]
 
     #####################################################################
     # Show the flatland visualization, for debugging
@@ -313,60 +289,21 @@ while True:
         # if debug_print:
         #     print("current step: ", steps)
 
-        time_start = time.time()
-
-        #####################################################################
-        # get curr, next locations from mcp
-        #####################################################################
-        # if debug_print:
-        #     CBS.printAgentTime()
-        time_temp = time.time()
-        
-        # if debug_print:
-        #     print('TIme for get next location: ', time.time() - time_temp)
-
-        # get curr locations from the environment (observation)
-        curr_locs = []
-        for i,a in enumerate(local_env.agents):
-            if(a.status == RailAgentStatus.DONE_REMOVED):
-                # print("---- agent " , i, "done! -----")
-                curr_locs.append(linearize_loc(local_env, a.target))
-            elif(a.status == RailAgentStatus.READY_TO_DEPART):
-                curr_locs.append(-1)
-            else:
-                curr_locs.append(linearize_loc(local_env, a.position))
-
-        CBS.replan(local_env, steps, 3.0)
-        next_locs = CBS.getNextLoc(curr_locs, steps + 1)
-
-        action = {}
-        # action = my_controller.get_actions(prev_locs, next_locs, curr_locs)
-        action_list = CBS.getActions(prev_locs, next_locs, curr_locs)
-        # print(action_list)
-        for i in range(0, len(action_list)):
-            # print(action_list[i])
-            action[i] = action_list[i]
+        # time_start = time.time()
 
 
-        # action = my_controller.get_actions(prev_locs, next_locs, curr_locs)
+        action = CBS.getActions(local_env, steps, 3.0)
 
-        # if debug_print:
-        #     print("prev_locs", prev_locs)
-        #     print("curr_locs", curr_locs)
-        #     print("next_locs", next_locs)
-        #     print("actions: ", action)
+        # time_taken = time.time() - time_start
 
-
-        time_taken = time.time() - time_start
-
-        time_taken_by_controller.append(time_taken)
+        # time_taken_by_controller.append(time_taken)
 
         # Perform the chosen action on the environment.
         # The action gets applied to both the local and the remote copy 
         # of the environment instance, and the observation is what is 
         # returned by the local copy of the env, and the rewards, and done and info
         # are returned by the remote copy of the env
-        time_start = time.time()
+        # time_start = time.time()
 
         # if debug_print:
         #
@@ -398,15 +335,6 @@ while True:
         #         else:
         #             print(i, a.position, a.status, "Agent hasn't entered the start locaiton/has reached goal location")
 
-        new_curr_locs = []
-        for i,a in enumerate(local_env.agents):
-            if(a.status == RailAgentStatus.DONE_REMOVED):
-                # print("---- agent " , i, "done! -----")
-                new_curr_locs.append(linearize_loc(local_env, a.target))
-            elif(a.status == RailAgentStatus.READY_TO_DEPART):
-                new_curr_locs.append(-1)
-            else:
-                new_curr_locs.append(linearize_loc(local_env, a.position))
 
         # if debug_print:
         #     print("new curr locations to MCP: ", new_curr_locs)
@@ -423,12 +351,6 @@ while True:
         # if debug_print:
         #     CBS.printAllMCP()
 
-        # update prev_locs
-        for i, a in enumerate(local_env.agents):
-            if curr_locs[i] == new_curr_locs[i]:
-                continue
-            else:
-                prev_locs[i] = curr_locs[i]
 
         # hit enter to go next step
         # print("hit enter to execute the next step")
@@ -441,8 +363,8 @@ while True:
 
 
         steps += 1
-        time_taken = time.time() - time_start
-        time_taken_per_step.append(time_taken)
+        # time_taken = time.time() - time_start
+        # time_taken_per_step.append(time_taken)
 
         if done['__all__']:
             print("Reward : ", sum(list(all_rewards.values())))

@@ -87,29 +87,9 @@ public:
     int agent_priority_strategy;
 	bool search(float success_rate = 1.1);
 	p::dict getResultDetail();
-	void replan(p::object railEnv1, int timestep, float time_limit);
 	void updateFw(float fw);
 	void updateAgents(p::object railEnv1);
     bool findConflicts() const;
-    p::list getNextLoc(p::list agent_location, int timestep)
-    {
-        boost::python::list next_loc;
-        if (framework == "CPR")
-        {
-            vector<int> to_go(al->getNumOfAllAgents(), -1);
-            cpr->getNextLoc(to_go);
-            for (int i = 0; i < al->getNumOfAllAgents(); i++)
-                next_loc.append(to_go[i]);
-            return next_loc;
-        }
-        else
-        {
-            mcp.getNextLoc(timestep);
-            for (int i = 0; i < al->getNumOfAllAgents(); i++)
-                next_loc.append(mcp.to_go[i]);
-            return next_loc;
-        }
-    }
     void buildMCP(void)
     {
         if (framework != "CPR")
@@ -154,17 +134,7 @@ public:
         }
         output.close();
     }
-    p::list getActions(p::list prev_locs, p::list next_locs, p::list curr_locs){
-        action_converter.num_agent = al->getNumOfAllAgents();
-        action_converter.env_width = ml->cols;
-
-        boost::python::list actions;
-        for(int i =0; i<al->getNumOfAllAgents(); i++){
-            actions.append(action_converter.pos2action(i, curr_locs, prev_locs, next_locs ));
-        }
-
-        return actions;
-    }
+    p::dict getActions(p::object railEnv1, int timestep, float time_limit);
 private:
 	std::string algo;
 	string framework;
@@ -198,6 +168,9 @@ private:
     bool replan_on = false;
     int replan_times = 0;
 
+    vector<int> curr_locations;
+    vector<int> prev_locations;
+
 	//stats about CBS
     Time::time_point start_time;
     float runtime;
@@ -223,6 +196,8 @@ private:
 
     void generateNeighbor(int agent_id, const PathEntry& start, int start_time,
             set<int>& neighbor, int neighbor_size, int upperbound);
+
+    void replan(p::object railEnv1, int timestep, float time_limit);
 };
 
 

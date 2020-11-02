@@ -48,8 +48,36 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, float soft_time_
     std::cout << "Max timestep = " << al->constraintTable.length_max << endl; // the deadline is stored in the constraint table in al, which will be used for all path finding.
 	this->max_malfunction = max_malfunction;
 
+    curr_locations.resize(ml->map_size(), -1);
+    prev_locations.resize(ml->map_size(), -1);
+    action_converter.num_agent = al->getNumOfAllAgents();
+    action_converter.env_width = ml->cols;
 }
 
+template <class Map>
+p::dict PythonCBS<Map>::getActions(p::object railEnv1, int timestep, float time_limit)
+{
+
+    replan(railEnv1, timestep, time_limit);// replan
+
+    // update curr and prev locations
+    for (int i = 0; i < al->getNumOfAllAgents(); i++)
+    {
+        if (curr_locations[i] != al->agents_all[i].position)
+            prev_locations[i] = curr_locations[i];
+        curr_locations[i] = al->agents_all[i].position;
+    }
+
+
+    mcp.getNextLoc(timestep +  1); // get next location
+
+    // convert next location to actions of boost dict structure
+    boost::python::dict actions;
+    for(int i =0; i<al->getNumOfAllAgents(); i++){
+        actions[i] = action_converter.pos2action(i, curr_locations, prev_locations, mcp.to_go);
+    }
+    return actions;
+}
 
 template <class Map>
 void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) {
@@ -724,12 +752,10 @@ BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final
 		.def("hasConflicts", &PythonCBS<FlatlandLoader>::findConflicts)
 		.def("getResultDetail", &PythonCBS<FlatlandLoader>::getResultDetail)
 		.def("writeResultsToFile", &PythonCBS<FlatlandLoader>::writeResultsToFile)
-		.def("replan",&PythonCBS<FlatlandLoader>::replan)
 		.def("updateAgents", &PythonCBS<FlatlandLoader>::updateAgents)
 		.def("updateFw", &PythonCBS<FlatlandLoader>::updateFw)
 		.def("buildMCP", &PythonCBS<FlatlandLoader>::buildMCP)
         .def("getActions",&PythonCBS<FlatlandLoader>::getActions)
-        .def("getNextLoc", &PythonCBS<FlatlandLoader>::getNextLoc)
         .def("clearMCP", &PythonCBS<FlatlandLoader>::clearMCP)
         .def("printAllMCP", &PythonCBS<FlatlandLoader>::printAllMCP)
         .def("printMCP", &PythonCBS<FlatlandLoader>::printMCP)
