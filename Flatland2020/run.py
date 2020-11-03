@@ -58,19 +58,17 @@ min_duration = 3
 max_duration = 20
 
 
-# agent percentages
-agent_percentages = [1.1 for _ in range(500)]
+agent_percentages = [1.1 for _ in range(400)]  # agent percentages
+replan = [(i % 10 != 0) and (i < 280) for i in range(400)]  # replan
+
 agent_percentages[351] = 0.70
 agent_percentages[350] = 0.75
 agent_percentages[346] = 0.75
 agent_percentages[301] = 0.75
 agent_percentages[291] = 0.80
 agent_percentages[322] = 0.80
-#agent_percentages[271] = 0.80
 agent_percentages[321] = 0.80
 agent_percentages[320] = 0.80
-# agent_percentages[252] = 0.80
-#agent_percentages[261] = 0.80
 agent_percentages[311] = 0.80
 #agent_percentages[241] = 0.85
 agent_percentages[331] = 0.85
@@ -83,10 +81,8 @@ agent_percentages[309] = 0.90
 agent_percentages[281] = 0.95
 agent_percentages[333] = 0.95
 # agent_percentages[233] = 0.95
-# agent_percentages[254] = 0.95
 agent_percentages[304] = 0.95
 # agent_percentages[251] = 0.95
-#agent_percentages[279] = 0.95
 agent_percentages[353] = 0.95
 agent_percentages[342] = 0.95
 agent_percentages[352] = 0.95
@@ -97,20 +93,23 @@ agent_percentages[282] = 0.95
 agent_percentages[354] = 0.85
 agent_percentages[357] = 0.90
 
+replan[142] = False
+replan[219] = False
+replan[252] = False
+agent_percentages[252] = 0.80
+replan[254] = False
+agent_percentages[254] = 0.95
+replan[258] = False
+replan[261] = False
+agent_percentages[261] = 0.80
+replan[263] = False
+replan[271] = False
+agent_percentages[271] = 0.80
+replan[272] = False
+replan[274] = False
+replan[279] = False
+agent_percentages[279] = 0.95
 
-# temp solution: C++ solver path file
-# path_file ="./config/paths.txt"
-# def parse_line_path(l):
-#     return [int(node) for node in l.split(",")[:-1]]
-
-def linearize_loc(in_env, loc):
-    """
-    This method linearize the locaiton(x,y) into an int.
-    :param in_env: local environment of flatland
-    :param loc: locaiton pair(x,y)
-    :return: linearized locaiton, int.
-    """
-    return loc[0]*in_env.width + loc[1]
 
 #####################################################################
 # Instantiate a Remote Client
@@ -126,17 +125,8 @@ if remote_test:
 #####################################################################
 
 evaluation_number = 0  # evaluation counter
-# num_of_evaluations = 400  # total number of evaluations
 total_time_limit = 8 * 60 * 60
 global_time_start = time.time()
-
-# time setting
-build_mcp_time = 2
-mean_execuation_time = [0.0723773751940046, 0.11661171913146973, 0.32429770060947966, 0.8939289024897984, 1.3655752795083183, 2.8116230169932046, 3.779095411300659, 4.005911997386387, 4.350170890490214, 12.420195627212525, 11.083632389704386, 42.45282093683878, 59.50363178253174, 245.8967981338501]
-time_limit_setting =  [5.0602496157941435, 5.060249615794137, 5.06024961579414, 94.86024961579415, 34.19358294912747, 49.86024961579413, 101.1935829491275, 57.193582949127475, 48.86024961579414, 93.86024961579415, 129.36024961579415, 259.86024961579415, 155.86024961579415, 211.86024961579415]
-
-finished_test = [0] * 14
-test_amount = [50,50,50,40,30,30,30,30,20,20,20,10,10,10]
 
 
 while True:
@@ -242,20 +232,8 @@ while True:
     f_w = 1
     debug = False
     # remaining_time = total_time_limit - (time.time() - global_time_start)
-    if remote_client:
-        time_limit = 0 # (predict_time_limit/predict_remaining_time) * remaining_time
-        if debug_print:
-            print("time limit: ",time_limit)
-            print("predict_time_limit: ",predict_time_limit)
-            print("predict_remaining_time: ",predict_remaining_time)
-            print("remaining_time: ",remaining_time)
-            print("finished: ", finished_test)
-    else:
-        time_limit = 0  # remaining_time / (num_of_evaluations - evaluation_number + 1)
+    time_limit = 0 # (predict_time_limit/predict_remaining_time) * remaining_time
     default_group_size = 16  # max number of agents in a group
-    replan = False
-    if evaluation_number < 280:
-        replan = True
     agent_priority_strategy = 3
     neighbor_generation_strategy = 3
     prirority_ordering_strategy = 0
@@ -263,7 +241,7 @@ while True:
 
 
     CBS = PythonCBS(local_env, framework, time_limit, default_group_size, debug, f_w,
-                     replan, agent_priority_strategy,
+                     replan[evaluation_number], agent_priority_strategy,
                     neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
 
     success = CBS.search(agent_percentages[evaluation_number])
