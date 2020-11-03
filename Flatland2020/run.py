@@ -195,20 +195,6 @@ while True:
     #               " goal_locaiton: ", local_env.agents[i].target)
 
 
-
-    #####################################################################
-    #  speed information
-    #   Not used at this moment.
-    #####################################################################
-
-    #speed_list = list()
-    #speed_list_real = list()
-    #for agent in local_env.agents:
-    #    speed_list.append(1/agent.speed_data['speed'])
-    #    speed_list_real.append(agent.speed_data['speed'])
-    # print('speed_list: ', speed_list)
-
-
     #####################################################################
     # step loop information
     #####################################################################
@@ -227,33 +213,16 @@ while True:
 
 
     framework = "LNS"
-    f_w = 1
     debug = False
     # remaining_time = total_time_limit - (time.time() - global_time_start)
     time_limit = 0 # (predict_time_limit/predict_remaining_time) * remaining_time
-    default_group_size = 16  # max number of agents in a group
-    agent_priority_strategy = 3
-    neighbor_generation_strategy = 3
-    prirority_ordering_strategy = 0
-    replan_strategy = 1
-
-    CBS = PythonCBS(local_env, framework, time_limit, default_group_size, debug, f_w,
-                     replan[evaluation_number], agent_priority_strategy,
-                    neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
-    CBS.search(agent_percentages[evaluation_number])
+    max_iterations = 5000
+    default_group_size = 5  # max number of agents in a group
+    CBS = PythonCBS(local_env, framework, time_limit, default_group_size, debug, replan[evaluation_number])
+    CBS.search(agent_percentages[evaluation_number], max_iterations)
     evaluation_number += 1
     CBS.buildMCP()
 
-    #####################################################################
-    # Show the flatland visualization, for debugging
-    #####################################################################
-
-    # if env_renderer_enable:
-    #     env_renderer = RenderTool(local_env, screen_height=4000,
-    #                               screen_width=4000)
-    #     env_renderer.render_env(show=True, show_observations=False, show_predictions=False)
-
-    #####################################################################
 
     while True:
         #####################################################################
