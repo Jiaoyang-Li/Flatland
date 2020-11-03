@@ -28,18 +28,17 @@ public:
     LNS(AgentsLoader& al, FlatlandLoader& ml, double f_w, const constraint_strategy c,
         int agent_priority_strategy,
         const options& options1,
-        bool corridor2,
-        bool trainCorridor1,
-        bool chasing, int neighbor_generation_strategy,
+        int max_group_size,
+        int neighbor_generation_strategy,
         int prirority_ordering_strategy, int replan_strategy):
             al(al), ml(ml), f_w(f_w), c(c), agent_priority_strategy(agent_priority_strategy), options1(options1),
-            corridor2(corridor2), trainCorridor1(trainCorridor1), chasing(chasing),
+            max_group_size(max_group_size),
             destroy_strategy(neighbor_generation_strategy),
             prirority_ordering_strategy(prirority_ordering_strategy),
             replan_strategy(replan_strategy) {
         max_timestep = al.constraintTable.length_max;
     }
-    bool run(float hard_time_limit, float soft_time_limit, float success_rate = 1.1);
+    bool run(float hard_time_limit, float soft_time_limit, float success_rate = 1.1, int max_iterations = 5000);
     bool replan(float time_limit);
     //bool replan(list<int>& to_be_replanned, float time_limit);
     bool getInitialSolution(float success_rate = 1.1);
@@ -59,7 +58,6 @@ private:
     int neighbor_sum_of_showup_time = 0;
     int neighbor_makespan = 0;
     int delta_costs = 0;
-    int group_size = DEFAULT_GROUP_SIZE; // this is useful only when we use CBS to replan
     int max_group_size = DEFAULT_GROUP_SIZE;
 
     vector<int> intersections;
@@ -68,9 +66,6 @@ private:
     // intput params
     float hard_time_limit = 0;
     float soft_time_limit = 0;
-    const bool& corridor2;
-    const bool& trainCorridor1;
-    const bool& chasing;
     int destroy_strategy = 0; // 0: random walk; 1: start; 2: intersection
     int prirority_ordering_strategy = 0; // 0: random; 1: max regret
     int replan_strategy = 0; // 0: CBS; 1: prioritized planning

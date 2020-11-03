@@ -1,7 +1,7 @@
 #include "LNS.h"
 
 
-bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate)
+bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate, int max_iterations)
 {
     start_time = Time::now();
     hard_time_limit = _hard_time_limit;
@@ -73,16 +73,16 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
     boost::unordered_set<int> tabu_list;
     bool succ;
     auto old_runtime = runtime;
-    while (runtime < soft_time_limit && iteration_stats.size() < 5000)
+    while (runtime < soft_time_limit && iteration_stats.size() < max_iterations)
     {
         runtime =((fsec)(Time::now() - start_time)).count();
-        if (al.getNumOfAllAgents() < 2 * group_size)
+        if (al.getNumOfAllAgents() < 2 * max_group_size)
         {
             neighbors.resize(al.getNumOfAllAgents());
             for (int i = 0; i < al.getNumOfAllAgents(); i++)
                 neighbors[i] = i;
             sortNeighborsRandomly();
-            neighbors.resize(min(group_size, al.getNumOfAllAgents()));
+            neighbors.resize(min(max_group_size, al.getNumOfAllAgents()));
             replanByPP();
             runtime = ((fsec)(Time::now() - start_time)).count();
             solution_cost += delta_costs;
@@ -193,7 +193,7 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
                                      0,
                                      0);
         old_runtime = runtime;
-        if (replan_strategy == 0 && group_size > al.agents_all.size())
+        if (replan_strategy == 0 && max_group_size > al.agents_all.size())
             return true; // CBS has replanned paths for all agents. No need for further iterations
     }
     iterations = (int)iteration_stats.size();
@@ -553,13 +553,10 @@ bool LNS::generateNeighborByStart()
     advance(it, step);
     neighbors.assign(it->second.begin(), it->second.end());
     if (neighbors.size() > max_group_size ||
-        (replan_strategy == 0 && neighbors.size() > group_size)) // resize the group for CBS
+        (replan_strategy == 0 && neighbors.size() > max_group_size)) // resize the group for CBS
     {
         sortNeighborsRandomly();
-        if (replan_strategy == 0)
-            neighbors.resize(group_size);
-        else
-            neighbors.resize(max_group_size);
+        neighbors.resize(max_group_size);
     }
     if (options1.debug)
         cout << "Generate " << neighbors.size() << " neighbors by start location " << it->first << endl;
@@ -579,7 +576,7 @@ bool LNS::generateNeighborByTemporalIntersection()
 
     set<int> neighbors_set;
     int location = intersections[rand() % intersections.size()];
-    al.constraintTable.get_agents(neighbors_set, group_size, location);
+    al.constraintTable.get_agents(neighbors_set, max_group_size, location);
     if (neighbors_set.size() <= 1)
         return false;
     neighbors.assign(neighbors_set.begin(), neighbors_set.end());
@@ -605,13 +602,10 @@ bool LNS::generateNeighborByIntersection()
     if (neighbors_set.size() <= 1)
         return false;
     neighbors.assign(neighbors_set.begin(), neighbors_set.end());
-    if (neighbors.size() > max_group_size || (replan_strategy == 0 && neighbors.size() > group_size)) // resize the group for CBS
+    if (neighbors.size() > max_group_size || (replan_strategy == 0 && neighbors.size() > max_group_size)) // resize the group for CBS
     {
         sortNeighborsRandomly();
-        if (replan_strategy == 0)
-            neighbors.resize(group_size);
-        else
-            neighbors.resize(max_group_size);
+        neighbors.resize(max_group_size);
     }
     if (options1.debug)
         cout << "Generate " << neighbors.size() << " neighbors by intersection " << location << endl;
@@ -620,7 +614,7 @@ bool LNS::generateNeighborByIntersection()
 
 void LNS::generateNeighborByRandomWalk(boost::unordered_set<int>& tabu_list)
 {
-    if (group_size >= (int)al.paths_all.size())
+    if (max_group_size >= (int)al.paths_all.size())
     {
         neighbors.resize(al.paths_all.size());
         for (int i = 0; i < (int)al.paths_all.size(); i++)
@@ -648,14 +642,14 @@ void LNS::generateNeighborByRandomWalk(boost::unordered_set<int>& tabu_list)
     neighbors_set.insert(a);
     int T = al.paths_all[a].size();
     int count = 0;
-    while (neighbors_set.size() < group_size && count < 10 && T > 0)
+    while (neighbors_set.size() < max_group_size && count < 10 && T > 0)
     {
         int t = rand() % T;
-        randomWalk(a, al.paths_all[a][t], t, neighbors_set, group_size, (int) al.paths_all[a].size() - 1);
+        randomWalk(a, al.paths_all[a][t], t, neighbors_set, max_group_size, (int) al.paths_all[a].size() - 1);
         T = t;
         count++;
     }
-    while (neighbors_set.size() < group_size)
+    while (neighbors_set.size() < max_group_size)
     {
         int new_agent = rand() % al.paths_all.size();
         neighbors_set.insert(new_agent);
