@@ -59,12 +59,12 @@ max_duration = 20
 
 
 agent_percentages = [1.1 for _ in range(400)]  # agent percentages
-replan = [(i % 10 != 0) and (10 <= i < 280) for i in range(400)]  # replan or not
+replan = [(i % 10 != 0) and (10 <= i < 360) for i in range(400)]  # replan or not
 max_iterations = [0 for _ in range(400)]  # mex iterations for LNS
-for i in range(10, 220):
-    max_iterations[i] = 1000
+#for i in range(10, 220):
+#    max_iterations[i] = 1000
 
-agent_percentages[351] = 0.70
+'''agent_percentages[351] = 0.70
 agent_percentages[350] = 0.75
 agent_percentages[346] = 0.75
 agent_percentages[301] = 0.75
@@ -73,19 +73,14 @@ agent_percentages[322] = 0.80
 agent_percentages[321] = 0.80
 agent_percentages[320] = 0.80
 agent_percentages[311] = 0.80
-# agent_percentages[241] = 0.85
 agent_percentages[331] = 0.85
 agent_percentages[340] = 0.85
 agent_percentages[341] = 0.85
 agent_percentages[349] = 0.90
-# agent_percentages[262] = 0.90
 agent_percentages[309] = 0.90
-# agent_percentages[231] = 0.90
 agent_percentages[281] = 0.95
 agent_percentages[333] = 0.95
-# agent_percentages[233] = 0.95
 agent_percentages[304] = 0.95
-# agent_percentages[251] = 0.95
 agent_percentages[353] = 0.95
 agent_percentages[342] = 0.95
 agent_percentages[352] = 0.95
@@ -94,7 +89,7 @@ agent_percentages[283] = 0.95
 agent_percentages[295] = 0.95
 agent_percentages[282] = 0.95
 agent_percentages[354] = 0.85
-agent_percentages[357] = 0.90
+agent_percentages[357] = 0.90'''
 
 replan[142] = False
 replan[219] = False
