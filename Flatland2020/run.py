@@ -184,9 +184,9 @@ while True:
         # still necessary to reset local environment?
         observation, info = local_env.reset()
 
-    number_of_agents = len(local_env.agents)
+    # number_of_agents = len(local_env.agents)
 
-    max_time_steps = int(4 * 2 * (local_env.width + local_env.height + 20))
+    # max_time_steps = int(4 * 2 * (local_env.width + local_env.height + 20))
 
     # if debug_print:
     #     print("number of agents: ", number_of_agents)
@@ -201,11 +201,11 @@ while True:
     #   Not used at this moment.
     #####################################################################
 
-    speed_list = list()
-    speed_list_real = list()
-    for agent in local_env.agents:
-        speed_list.append(1/agent.speed_data['speed'])
-        speed_list_real.append(agent.speed_data['speed'])
+    #speed_list = list()
+    #speed_list_real = list()
+    #for agent in local_env.agents:
+    #    speed_list.append(1/agent.speed_data['speed'])
+    #    speed_list_real.append(agent.speed_data['speed'])
     # print('speed_list: ', speed_list)
 
 
@@ -225,10 +225,8 @@ while True:
         env_width = local_env.width
         env_height = local_env.height
 
-    # framework = "CPR"
-    # if evaluation_number <= 200:
-    framework = "LNS"
 
+    framework = "LNS"
     f_w = 1
     debug = False
     # remaining_time = total_time_limit - (time.time() - global_time_start)
@@ -239,12 +237,10 @@ while True:
     prirority_ordering_strategy = 0
     replan_strategy = 1
 
-
     CBS = PythonCBS(local_env, framework, time_limit, default_group_size, debug, f_w,
                      replan[evaluation_number], agent_priority_strategy,
                     neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy)
-
-    success = CBS.search(agent_percentages[evaluation_number])
+    CBS.search(agent_percentages[evaluation_number])
     evaluation_number += 1
     CBS.buildMCP()
 
