@@ -42,15 +42,8 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
          << "travel time = " << solution_cost - sum_of_showup_time << ", "
          << "makespan = " << initial_makespan << ", "
          << "runtime = " << runtime << endl;
-    iteration_stats.emplace_back(al.agents_all.size(), 0,
-                                 runtime, runtime,
-                                 makespan,
-                                 solution_cost,
-                                 destroy_strategy,
-                                 (double)(solution_cost) / max_timestep / al.agents_all.size(),
-                                 0,
-                                 0,
-                                 0);
+    // iteration_stats.emplace_back(al.agents_all.size(), 0, runtime, runtime, makespan, solution_cost,
+    //        destroy_strategy, (double)(solution_cost) / max_timestep / al.agents_all.size(), 0, 0, 0);
     if(pp_only || al.getNumOfAllAgents() == 1)
         return true;
     if (destroy_strategy == 3)
@@ -73,8 +66,10 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
     boost::unordered_set<int> tabu_list;
     bool succ;
     auto old_runtime = runtime;
-    while (runtime < soft_time_limit && iteration_stats.size() < max_iterations)
+    iterations = 0;
+    while (runtime < soft_time_limit && iterations < max_iterations)
     {
+        iterations++;
         runtime =((fsec)(Time::now() - start_time)).count();
         if (al.getNumOfAllAgents() < 2 * max_group_size)
         {
@@ -87,19 +82,12 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
             runtime = ((fsec)(Time::now() - start_time)).count();
             solution_cost += delta_costs;
             if (options1.debug)
-                cout << "Iteration " << iteration_stats.size() << ", "
+                cout << "Iteration " << iterations << ", "
                      << "group size = " << neighbors.size() << ", "
                      << "solution cost = " << solution_cost << ", "
                      << "remaining time = " << soft_time_limit - runtime << endl;
-            iteration_stats.emplace_back(neighbors.size(), 0,
-                                         runtime, runtime - old_runtime,
-                                         makespan,
-                                         solution_cost,
-                                         destroy_strategy,
-                                         (double)(solution_cost) / max_timestep / al.agents_all.size(),
-                                         0,
-                                         0,
-                                         0);
+            //iteration_stats.emplace_back(neighbors.size(), 0, runtime, runtime - old_runtime, makespan, solution_cost,
+            //        destroy_strategy, (double)(solution_cost) / max_timestep / al.agents_all.size(), 0, 0, 0);
             old_runtime = runtime;
             continue;
         }
@@ -179,24 +167,16 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
         runtime = ((fsec)(Time::now() - start_time)).count();
         solution_cost += delta_costs;
         if (options1.debug)
-            cout << "Iteration " << iteration_stats.size() << ", "
+            cout << "Iteration " << iterations << ", "
              << "group size = " << neighbors.size() << ", "
              << "solution cost = " << solution_cost << ", "
              << "remaining time = " << soft_time_limit - runtime << endl;
-        iteration_stats.emplace_back(neighbors.size(), 0,
-                                     runtime, runtime - old_runtime,
-                                     makespan,
-                                     solution_cost,
-                                     destroy_strategy,
-                                     (double)(solution_cost) / max_timestep / al.agents_all.size(),
-                                     0,
-                                     0,
-                                     0);
+        //iteration_stats.emplace_back(neighbors.size(), 0, runtime, runtime - old_runtime, makespan, solution_cost,
+        //        destroy_strategy, (double)(solution_cost) / max_timestep / al.agents_all.size(), 0, 0, 0);
         old_runtime = runtime;
         if (replan_strategy == 0 && max_group_size > al.agents_all.size())
             return true; // CBS has replanned paths for all agents. No need for further iterations
     }
-    iterations = (int)iteration_stats.size();
     for (const auto& path : al.paths_all)
     {
         if (path.empty())

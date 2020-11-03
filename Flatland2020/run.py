@@ -59,7 +59,10 @@ max_duration = 20
 
 
 agent_percentages = [1.1 for _ in range(400)]  # agent percentages
-replan = [(i % 10 != 0) and (i < 280) for i in range(400)]  # replan
+replan = [(i % 10 != 0) and (10 <= i < 280) for i in range(400)]  # replan or not
+max_iterations = [0 for _ in range(400)]  # mex iterations for LNS
+for i in range(10, 220):
+    max_iterations[i] = 1000
 
 agent_percentages[351] = 0.70
 agent_percentages[350] = 0.75
@@ -70,12 +73,12 @@ agent_percentages[322] = 0.80
 agent_percentages[321] = 0.80
 agent_percentages[320] = 0.80
 agent_percentages[311] = 0.80
-#agent_percentages[241] = 0.85
+# agent_percentages[241] = 0.85
 agent_percentages[331] = 0.85
 agent_percentages[340] = 0.85
 agent_percentages[341] = 0.85
 agent_percentages[349] = 0.90
-#agent_percentages[262] = 0.90
+# agent_percentages[262] = 0.90
 agent_percentages[309] = 0.90
 # agent_percentages[231] = 0.90
 agent_percentages[281] = 0.95
@@ -215,11 +218,10 @@ while True:
     framework = "LNS"
     debug = False
     # remaining_time = total_time_limit - (time.time() - global_time_start)
-    time_limit = 0 # (predict_time_limit/predict_remaining_time) * remaining_time
-    max_iterations = 5000
+    time_limit = 580 # (predict_time_limit/predict_remaining_time) * remaining_time
     default_group_size = 5  # max number of agents in a group
     CBS = PythonCBS(local_env, framework, time_limit, default_group_size, debug, replan[evaluation_number])
-    CBS.search(agent_percentages[evaluation_number], max_iterations)
+    CBS.search(agent_percentages[evaluation_number], max_iterations[evaluation_number])
     evaluation_number += 1
     CBS.buildMCP()
 
