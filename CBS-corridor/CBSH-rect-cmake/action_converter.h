@@ -104,6 +104,8 @@ public:
                     return 2;
             }
         }
+        assert(false); // this should never happen
+        return -1;
     }
 
 

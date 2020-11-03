@@ -95,6 +95,7 @@ agent_percentages[283] = 0.95
 agent_percentages[295] = 0.95
 agent_percentages[282] = 0.95
 agent_percentages[354] = 0.85
+agent_percentages[357] = 0.90
 
 
 # temp solution: C++ solver path file
@@ -288,7 +289,7 @@ while True:
 
         action = CBS.getActions(local_env, steps, 3.0)
         _, all_rewards, done, info = remote_client.env_step(action)
-       
+
         steps += 1
 
         if done['__all__']:

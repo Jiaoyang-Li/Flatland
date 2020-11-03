@@ -83,71 +83,87 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
                 neighbors[i] = i;
             sortNeighborsRandomly();
             neighbors.resize(min(group_size, al.getNumOfAllAgents()));
+            replanByPP();
+            runtime = ((fsec)(Time::now() - start_time)).count();
+            solution_cost += delta_costs;
+            if (options1.debug)
+                cout << "Iteration " << iteration_stats.size() << ", "
+                     << "group size = " << neighbors.size() << ", "
+                     << "solution cost = " << solution_cost << ", "
+                     << "remaining time = " << soft_time_limit - runtime << endl;
+            iteration_stats.emplace_back(neighbors.size(), 0,
+                                         runtime, runtime - old_runtime,
+                                         makespan,
+                                         solution_cost,
+                                         destroy_strategy,
+                                         (double)(solution_cost) / max_timestep / al.agents_all.size(),
+                                         0,
+                                         0,
+                                         0);
+            old_runtime = runtime;
+            continue;
         }
-        else
+        if (adaptive_destroy)
         {
-            if (adaptive_destroy)
+            double sum = 0;
+            for (const auto& h : destroy_heuristics)
+                sum += h;
+            if (options1.debug)
             {
-                double sum = 0;
+                cout << "destroy heuristics = ";
                 for (const auto& h : destroy_heuristics)
-                    sum += h;
-                if (options1.debug)
-                {
-                    cout << "destroy heuristics = ";
-                    for (const auto& h : destroy_heuristics)
-                        cout << h / sum << ",";
-                }
-                double r = (double) rand() / RAND_MAX;
-                if (r * sum < destroy_heuristics[0])
-                    destroy_strategy = 0;
-                else if (r * sum < destroy_heuristics[0] + destroy_heuristics[1])
-                    destroy_strategy = 1;
-                else
-                    destroy_strategy = 2;
-                if (options1.debug)
-                    cout << "Choose destroy strategy " << destroy_strategy << endl;
+                    cout << h / sum << ",";
             }
-            else if (iterative_destroy)
-            {
-                destroy_strategy = (destroy_strategy + 1) % 3;
-            }
+            double r = (double) rand() / RAND_MAX;
+            if (r * sum < destroy_heuristics[0])
+                destroy_strategy = 0;
+            else if (r * sum < destroy_heuristics[0] + destroy_heuristics[1])
+                destroy_strategy = 1;
+            else
+                destroy_strategy = 2;
+            if (options1.debug)
+                cout << "Choose destroy strategy " << destroy_strategy << endl;
+        }
+        else if (iterative_destroy)
+        {
+            destroy_strategy = (destroy_strategy + 1) % 3;
+        }
 
-            switch (destroy_strategy)
-            {
-                case 0:
-                    generateNeighborByRandomWalk(tabu_list);
-                    break;
-                case 1:
-                    succ = generateNeighborByStart();
-                    if(!succ) // no two agents have the same start locations
-                        return true;
-                    break;
-                case 2:
-                    //if (rand() % 2)
-                    succ = generateNeighborByIntersection();
-                    //else
-                    // succ = generateNeighborByTemporalIntersection();
-                    if(!succ) // the selected intersection has fewer than 2 agents
-                        continue;
-                    break;
-                default:
-                    cout << "Wrong neighbor generation strategy" << endl;
-                    exit(0);
-            }
+        switch (destroy_strategy)
+        {
+            case 0:
+                generateNeighborByRandomWalk(tabu_list);
+                break;
+            case 1:
+                succ = generateNeighborByStart();
+                if(!succ) // no two agents have the same start locations
+                    return true;
+                break;
+            case 2:
+                //if (rand() % 2)
+                succ = generateNeighborByIntersection();
+                //else
+                // succ = generateNeighborByTemporalIntersection();
+                if(!succ) // the selected intersection has fewer than 2 agents
+                    continue;
+                break;
+            default:
+                cout << "Wrong neighbor generation strategy" << endl;
+                exit(0);
+        }
 
-            assert(replan_strategy == 1);
-            switch (prirority_ordering_strategy)  // generate priority ordering for prioritized planning
-            {
-                case 0:
-                    sortNeighborsRandomly();
-                    break;
-                case 1:
-                    sortNeighborsByRegrets();
-                    break;
-                default:
-                    cout << "Wrong prirority ordering strategy" << endl;
-                    exit(0);
-            }
+        assert(replan_strategy == 1);
+        switch (prirority_ordering_strategy)  // generate priority ordering for prioritized planning
+        {
+            case 0:
+                sortNeighborsRandomly();
+                break;
+            case 1:
+                sortNeighborsByRegrets();
+                break;
+            default:
+                cout << "Wrong prirority ordering strategy" << endl;
+                exit(0);
         }
 
         replanByPP();
