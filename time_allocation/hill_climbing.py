@@ -33,23 +33,28 @@ def get_mean_exe_time(exe_time_file):
     return mean_exe_time
 
 #load lns data
-def get_lns_data(lns_folder):
-    lns_files = glob.glob(lns_folder+"*")
+def load_data(lns_folder):
+    lns_files = glob.glob(lns_folder+"*.csv")
 
     lns_data = {}
 
     for lns in lns_files:
-        filename = os.path.basename(lns).split("_")
+        filename = os.path.basename(lns).split(".")[0].split("_")
+
         test = int(filename[1])
-        level = int(filename[3])
+        level = int(filename[2])
         if test not in lns_data:
             lns_data[test] = {}
         if level not in lns_data[test]:
             lns_data[test][level] = {}
-        lns_pa = filename[5].split(".")[0]
-        
+
         data = pd.read_csv(lns)
-        lns_data[test][level][lns_pa] = data
+        list_data = []
+        seconds = 0
+        for
+
+
+        lns_data[test][level] = data
     return lns_data
 
 # load data from file
