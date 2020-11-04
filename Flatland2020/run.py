@@ -65,10 +65,9 @@ replan = [(i % 10 != 0) and (10 <= i < 250) for i in range(400)]  # replan or no
 #max_iterations = [0] * 40  # max iterations for LNS
 #for i in range(1, 22):
 #    max_iterations[i] = 1000
-max_iterations = [0, 190, 410, 2100, 3530, 1150, 1670, 1480, 290, 1450, 3740,
-                  1950, 2950, 3480, 3480, 4750, 3850, 4560, 4000, 4870, 4720,
-                  3200, 1370, 1610, 390, 80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 0]   # max iterations for LNS, learnt from local instances
+max_iterations = [0, 0, 5, 10, 15, 45, 100, 175, 145, 285, 1470, 1655, 2090, 1070,
+                  1000, 805, 1390, 830, 900, 1310, 1065, 770, 0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]   # max iterations for LNS, learnt from local instances
 
 
 

@@ -9,7 +9,7 @@ typedef std::chrono::duration<float> fsec;
 class LNS
 {
 public:
-    std::atomic<bool>* complete = nullptr;
+    std::atomic<bool>* complete= nullptr ;
     bool pp_only = false;
     bool skip_pp = false;
 
@@ -40,6 +40,7 @@ public:
     bool replan(float time_limit);
     //bool replan(list<int>& to_be_replanned, float time_limit);
     bool getInitialSolution(float success_rate = 1.1);
+    void set_complete(std::atomic<bool>* complete){this->complete = complete;}
 private:
     high_resolution_clock::time_point start_time;
     AgentsLoader& al;

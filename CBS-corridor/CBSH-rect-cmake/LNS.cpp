@@ -4,8 +4,7 @@
 bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate, int max_iterations)
 {
     start_time = Time::now();
-    if (this->complete!= nullptr) cout<<"complete not null"<<endl;
-    else cout<<"complete is null"<<endl;
+
     hard_time_limit = _hard_time_limit;
     soft_time_limit = min(_soft_time_limit, hard_time_limit);
     if(! skip_pp) {
@@ -75,7 +74,6 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
     iterations = 0;
     while (runtime < soft_time_limit && iterations < max_iterations && ( this->complete == nullptr || !this->complete->load()))
     {
-        if(this->complete!= nullptr) cout<<this->complete->load()<<endl;
 
         iterations++;
         runtime =((fsec)(Time::now() - start_time)).count();
@@ -488,7 +486,6 @@ bool LNS::getInitialSolution(float success_rate)
     for (auto agent : neighbors)
     {
         runtime = ((fsec)(Time::now() - start_time)).count();
-        if(this->complete!= nullptr) cout<<this->complete->load()<<endl;
         if ( ( this->complete != nullptr && this->complete->load()) || runtime >= hard_time_limit ||
             al.getNumOfAllAgents() - remaining_agents >= success_rate * al.getNumOfAllAgents())
         {

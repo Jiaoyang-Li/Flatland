@@ -537,11 +537,13 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_it
         cout<<"Max threads number: 4"<<endl;
         exit(1);
     }
+    std::atomic<bool> complete;
     for (int i = 0; i<no_threads;i++){
         AgentsLoader* temp = this->al->clone();
         this->al_pool[i] = temp;
         this->lns_pool[i] = new LNS(*al_pool[i], *ml, 1, strategies[i], options1,
                 default_group_size, neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
+        this->lns_pool[i]->complete = &complete;
         runtime = ((fsec)(Time::now() - start_time)).count();;
         wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,
                 success_rate, max_iterations,*this->lns_pool[i]);
@@ -575,7 +577,8 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_it
                 << "Final makespan = " << makespan  << ", "
                 << endl;
         }
-        if (solution_cost < best_cost){
+        if ((best_finished_agents < finished_agents) ||
+            (best_finished_agents == finished_agents && solution_cost < best_cost)){
             best_cost = solution_cost;
             best_al = i;
             best_makespan = makespan;
@@ -611,13 +614,11 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads, float success_rate, 
         exit(1);
     }
     //run pp only
-    std::atomic<bool> complete ;
     for (int i = 0; i<no_threads;i++){
         AgentsLoader* temp = this->al->clone();
         this->al_pool[i] = temp;
         this->lns_pool[i] = new LNS(*al_pool[i], *ml, 1, strategies[i], options1, default_group_size,
                                     3, prirority_ordering_strategy, replan_strategy);
-        this->lns_pool[i]->complete = &complete;
         runtime = ((fsec)(Time::now() - start_time)).count();;
         wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,
                            success_rate, max_iterations, *this->lns_pool[i]);
@@ -629,61 +630,61 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads, float success_rate, 
         pthread_join(threads[i], NULL);
     }
 
-//    int best_pp_cost = INT_MAX;
-//    int best_pp_al = 0;
-//
-//    for (int i=0; i<no_threads; i++){
-//
-//        size_t solution_cost = 0;
-//        int finished_agents = 0;
-//        size_t makespan = 0;
-//        int best_finished_agents = -1;
-//        for (const auto& path : this->al_pool[i]->paths_all)
-//        {
-//            solution_cost += path.size();
-//            makespan = max(path.size(), makespan);
-//            if (!path.empty())
-//                finished_agents++;
-//        }
-//        if (options1.debug){
-//            cout <<"Initial PP strategy = "<<strategies[i]<<", "
-//                 << "Final Solution cost = " << solution_cost << ", "
-//                 << "Final makespan = " << makespan  << ", "
-//                 << endl;
-//        }
-//        if ((best_finished_agents < finished_agents) ||
-//            (best_finished_agents == finished_agents && solution_cost < best_pp_cost)){
-//            best_pp_cost = solution_cost;
-//            best_pp_al = i;
-//        }
-//    }
-//    this->best_initisl_priority_strategy = strategies[best_pp_al];
+    int best_pp_cost = INT_MAX;
+    int best_pp_al = 0;
 
-//    //copy best pp al
-//    for (int i = 0; i<no_threads;i++) {
-//        if (i ==best_pp_al)
-//            continue;
-//        AgentsLoader *temp = this->al_pool[best_pp_al]->clone();
-//        delete this->al_pool[i];
-//        this->al_pool[i] = temp;
-//    }
+    for (int i=0; i<no_threads; i++){
 
-//    //run lns skip pp
-//    for (int i = 0; i<no_threads;i++){
-//        delete this->lns_pool[i];
-//        this->lns_pool[i] = new LNS(*al_pool[i], *ml, 1, 0, options1, default_group_size,
-//                                    neighbours[i], prirority_ordering_strategy, replan_strategy);
-//        this->lns_pool[i]->skip_pp = true;
-//        runtime = ((fsec)(Time::now() - start_time)).count();;
-//        wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,
-//                success_rate, max_iterations, *this->lns_pool[i]);
-//        wrap_handle.push_back(w);
-//        pthread_create( &threads[i], NULL, call_func, w );
-//    }
-//    // wait until all finish
-//    for (int i = 0; i<no_threads;i++){
-//        pthread_join(threads[i], NULL);
-//    }
+        size_t solution_cost = 0;
+        int finished_agents = 0;
+        size_t makespan = 0;
+        int best_finished_agents = -1;
+        for (const auto& path : this->al_pool[i]->paths_all)
+        {
+            solution_cost += path.size();
+            makespan = max(path.size(), makespan);
+            if (!path.empty())
+                finished_agents++;
+        }
+        if (options1.debug){
+            cout <<"Initial PP strategy = "<<strategies[i]<<", "
+                 << "Final Solution cost = " << solution_cost << ", "
+                 << "Final makespan = " << makespan  << ", "
+                 << endl;
+        }
+        if ((best_finished_agents < finished_agents) ||
+            (best_finished_agents == finished_agents && solution_cost < best_pp_cost)){
+            best_pp_cost = solution_cost;
+            best_pp_al = i;
+        }
+    }
+    this->best_initisl_priority_strategy = strategies[best_pp_al];
+
+    //copy best pp al
+    for (int i = 0; i<no_threads;i++) {
+        if (i ==best_pp_al)
+            continue;
+        AgentsLoader *temp = this->al_pool[best_pp_al]->clone();
+        delete this->al_pool[i];
+        this->al_pool[i] = temp;
+    }
+
+    //run lns skip pp
+    for (int i = 0; i<no_threads;i++){
+        delete this->lns_pool[i];
+        this->lns_pool[i] = new LNS(*al_pool[i], *ml, 1, 0, options1, default_group_size,
+                                    neighbours[i], prirority_ordering_strategy, replan_strategy);
+        this->lns_pool[i]->skip_pp = true;
+        runtime = ((fsec)(Time::now() - start_time)).count();;
+        wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,
+                success_rate, max_iterations, *this->lns_pool[i]);
+        wrap_handle.push_back(w);
+        pthread_create( &threads[i], NULL, call_func, w );
+    }
+    // wait until all finish
+    for (int i = 0; i<no_threads;i++){
+        pthread_join(threads[i], NULL);
+    }
 
     int best_cost = INT_MAX;
     int best_al = -1;
