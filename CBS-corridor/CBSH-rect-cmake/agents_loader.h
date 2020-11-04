@@ -84,7 +84,7 @@ public:
         return result;
     }
 
-    void computeHeuristics(const FlatlandLoader* ml);
+    void computeHeuristics(const FlatlandLoader* ml,std::unordered_map<int,vector<hvals>>& existing_heuristics);
     void printPaths() const
     {
         for (int i = 0; i < (int)paths_all.size(); i++)
@@ -189,7 +189,6 @@ private:
     int num_of_dead_agents = 0;
     list<int> unplanned_agents;
     int num_of_agents_all;
-    std::unordered_map<int,vector<hvals>> existing_heuristics; //goal heuristic
 
     void quickSort(vector<int>& agent_order, int low, int high, int agent_priority_strategy);
 };

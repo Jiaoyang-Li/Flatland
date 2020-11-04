@@ -293,7 +293,7 @@ bool PythonCBS<Map>::search(float success_rate, int max_iterations) {
 		cout << "start initialize" << endl;
 	//initialize search engine
 	al->constraintTable.init(ml->map_size());
-    al->computeHeuristics(ml);
+    al->computeHeuristics(ml, this->existing_heuristics);
     if (options1.debug) {
         al->printAllAgentsInitGoal();
     }
@@ -527,7 +527,7 @@ void PythonCBS<Map>::generateNeighbor(int agent_id, const PathEntry& start, int 
 template <class Map>
 bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_iterations){
     al->constraintTable.init(ml->map_size());
-    al->computeHeuristics(ml);
+    al->computeHeuristics(ml,this->existing_heuristics);
     this->al_pool.resize(no_threads);
     this->lns_pool.resize(no_threads);
     this->statistic_list.resize(no_threads);
@@ -602,7 +602,7 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_it
 template <class Map>
 bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads, float success_rate, int max_iterations){
     al->constraintTable.init(ml->map_size());
-    al->computeHeuristics(ml);
+    al->computeHeuristics(ml,this->existing_heuristics);
     this->al_pool.resize(no_threads);
     this->lns_pool.resize(no_threads);
     this->statistic_list.resize(no_threads);

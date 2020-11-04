@@ -132,6 +132,9 @@ public:
         output.close();
     }
     p::dict getActions(p::object railEnv1, int timestep, float time_limit);
+
+    std::unordered_map<int,vector<hvals>> existing_heuristics; //goal heuristic
+
 private:
 	string framework;
 	p::object railEnv;
