@@ -1,6 +1,7 @@
 #pragma once
 #include "SinglePlanning.h"
 #include <chrono>
+#include <atomic>
 using namespace std::chrono;
 typedef std::chrono::high_resolution_clock Time;
 typedef std::chrono::duration<float> fsec;
