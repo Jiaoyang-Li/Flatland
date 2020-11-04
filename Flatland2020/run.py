@@ -172,7 +172,7 @@ while True:
         env_height = local_env.height
 
 
-    framework = "LNS"
+    framework = "Parallel-LNS"
     debug = False
     # remaining_time = total_time_limit - (time.time() - global_time_start)
     time_limit = 580 # (predict_time_limit/predict_remaining_time) * remaining_time
