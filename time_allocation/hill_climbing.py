@@ -14,15 +14,16 @@ iteration_distribution = [0] * no_tests
 time_limit = 580
 max_iterations = 5000
 increase_units = [10,20,50,100,200,500]
-amplify_lns_improve = 1.1
+amplify_lns_improve = 1
 
 
 #simulate annealing parameter
 
 T = 1
 Tmin = 0.0001
-numIterations = 1000
-alpha = 0.9999
+numIterations = 500
+alpha = 0.999
+change_neighbours = 5
 
 
 class cell:
@@ -175,18 +176,23 @@ class state:
         self.total_reward = total_reward
 
     def get_neighbour(self):
-        new_iteration = -1
-        i = -1
 
-        while new_iteration<0 or new_iteration > max_iterations:
-            i = random.randint(1,no_lns_tests-1)
-            direction = random.choice([-1,1])
-            increase_unit = random.choice(increase_units)
-            new_iteration = self.distribution[i] + direction*increase_unit
-        assert(i>=0)
+        neighbours = change_neighbours
+        new_distribution =  self.distribution[:]
+        while neighbours>0:
 
-        new_distribution = self.distribution[:]
-        new_distribution[i] = new_iteration
+            new_iteration = -1
+            i = -1
+
+            while new_iteration<0 or new_iteration >= max_iterations:
+                i = random.randint(1,no_lns_tests-1)
+                direction = random.choice([-1,1])
+                increase_unit = random.choice(increase_units)
+                new_iteration = new_distribution[i] + direction*increase_unit
+            assert(i>=0)
+
+            new_distribution[i] = new_iteration
+            neighbours-=1
         neighbour = state(new_distribution,0)
         return neighbour
 
