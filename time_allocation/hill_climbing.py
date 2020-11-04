@@ -55,7 +55,7 @@ def load_data(lns_folder):
     lns_files = glob.glob(lns_folder+"*.csv")
     print("Load from ",len(lns_files)," files")
 
-    lns_data = [ [cell(i,0,0,0,1) for i in range(0,max_iterations)] for t in range(0,no_tests)  ]
+    lns_data = [ [cell(i,0,0,0,0) for i in range(0,max_iterations)] for t in range(0,no_tests)  ]
 
     for lns in lns_files:
         filename = os.path.basename(lns).split(".")[0].split("_")
@@ -80,11 +80,11 @@ def load_data(lns_folder):
             cost = row[5]
             n_cost = 1 - row[7]
             if index == 0:
-                improve = 1
+                improve = 0
                 inital_n_cost = n_cost
                 initial_time = time
             else:
-                improve = n_cost/inital_n_cost
+                improve = n_cost - inital_n_cost
 
             lns_data[test][index].time += time-initial_time
             lns_data[test][index].cost += cost
@@ -150,18 +150,20 @@ def load_run(file):
 def getReward(distribution,lns_data:List[List[cell]], run_data:List[List[run_cell]]):
     total_reward=0.0
     total_time = 0.0
+    total_lns_time = 0
     for test in range(0,len(run_data)):
         iteration = distribution[test]
         lns_time = lns_data[test][iteration].avg_time()
         lns_improve = lns_data[test][iteration].avg_improve()
 
         for level in range(0,len(run_data[test])):
-            if total_time > total_time_limit or run_data[test][level]==None:
-                return total_reward
-
-            total_time += (run_data[test][level].runtime + lns_time)
-            total_reward += (run_data[test][level].reward * lns_improve)
-    return total_reward
+            t = (run_data[test][level].runtime + lns_time)
+            if total_time + t > total_time_limit or run_data[test][level]==None:
+                return round(total_reward,4),total_time,total_lns_time
+            total_lns_time += lns_time
+            total_time += t
+            total_reward += (run_data[test][level].reward + lns_improve)
+    return round(total_reward,4),total_time,total_lns_time
 
 
 
@@ -170,6 +172,8 @@ def getReward(distribution,lns_data:List[List[cell]], run_data:List[List[run_cel
 class state:
     distribution: list
     total_reward: float
+    total_time: float
+    total_lns_time: float
 
     def __init__(self, distribution,total_reward):
         self.distribution = distribution[:]
@@ -204,7 +208,7 @@ def optimize_time(T,Tmin,alpha,numIterations,lns_data,run_data):
 
     current = state(iteration_distribution[:],0)
     print("calculate reward")
-    current.total_reward = getReward(current.distribution,lns_data,run_data)
+    current.total_reward,current.total_time,current.total_lns_time = getReward(current.distribution,lns_data,run_data)
     max = current
     print("Start")
     print(current.distribution,current.total_reward)
@@ -218,7 +222,7 @@ def optimize_time(T,Tmin,alpha,numIterations,lns_data,run_data):
                 print("Better solution: ",max.distribution,max.total_reward,T)
 
             new: state = current.get_neighbour()
-            new.total_reward = getReward(new.distribution,lns_data,run_data)
+            new.total_reward,new.total_time,new.total_lns_time = getReward(new.distribution,lns_data,run_data)
 
         delta = new.total_reward - current.total_reward
 
@@ -228,21 +232,18 @@ def optimize_time(T,Tmin,alpha,numIterations,lns_data,run_data):
 
         T = T* alpha
 
-    print(max.distribution, max.total_reward)
+    print(max.distribution, max.total_reward,max.total_time,max.total_lns_time)
     return max
 
 
 
 # load data from file
 run_data = load_run(run_csv)
-all = 0
 
 lns_data = load_data(lns_folder)
 
-
-# for i in lns_data[5]:
-#     print(i.time,i.avg_time(),i.improve,i.avg_improve())
-
+# dis =[0, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+# print(getReward(dis,lns_data,run_data))
 
 optimize_time(T,Tmin,alpha,numIterations,lns_data,run_data)
 
