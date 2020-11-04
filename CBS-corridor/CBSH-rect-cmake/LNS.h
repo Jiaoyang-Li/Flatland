@@ -9,6 +9,7 @@ typedef std::chrono::duration<float> fsec;
 class LNS
 {
 public:
+    std::atomic<bool>* complete = nullptr;
     bool pp_only = false;
     bool skip_pp = false;
 

@@ -172,7 +172,7 @@ private:
     Time::time_point start_time;
     float runtime;
     vector<statistics> statistic_list;
-    int strategies[4] = {0,1,3,5};
+    int strategies[4] = {1,3,5,6};
     int neighbours[4] = {0,2,3,4};
 
     //replan

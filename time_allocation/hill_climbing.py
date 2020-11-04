@@ -13,17 +13,17 @@ no_lns_tests = 28
 iteration_distribution = [0] * no_tests
 time_limit = 580
 max_iterations = 5000
-increase_units = [10,20,50,100,200,500]
+increase_units = [5,10,20,50,100,200,500]
 amplify_lns_improve = 1
 
 
 #simulate annealing parameter
 
 T = 1
-Tmin = 0.0001
-numIterations = 500
-alpha = 0.999
-change_neighbours = 5
+Tmin = 0.00001
+numIterations = 1000
+alpha = 0.9995
+change_neighbours =5
 
 
 class cell:
@@ -33,6 +33,8 @@ class cell:
     n_cost: float #total normalized cost over all levels
     improve:float #total improve on percentage over all levels
     no_instaces: int
+    avg_improve: float
+    avg_time: float
 
     def __init__(self,iteration,time,cost,n_cost,improve):
         self.iteration = iteration
@@ -42,20 +44,17 @@ class cell:
         self.improve = improve
         self.no_instaces = 1
 
-    def avg_time(self):
-        return  self.time/self.no_instaces
-    def avg_improve(self):
-        improve =  (self.improve/self.no_instaces)
-        if (improve==1):
-            return 1
-        return  improve * amplify_lns_improve
+    def get_avg_time(self):
+        return  self.avg_time
+    def get_avg_improve(self):
+        return  self.avg_improve
 
 #load lns data
 def load_data(lns_folder):
     lns_files = glob.glob(lns_folder+"*.csv")
     print("Load from ",len(lns_files)," files")
 
-    lns_data = [ [cell(i,0,0,0,0) for i in range(0,max_iterations)] for t in range(0,no_tests)  ]
+    lns_data = [ [cell(i,0,0,0,1) for i in range(0,max_iterations)] for t in range(0,no_tests)  ]
 
     for lns in lns_files:
         filename = os.path.basename(lns).split(".")[0].split("_")
@@ -80,11 +79,11 @@ def load_data(lns_folder):
             cost = row[5]
             n_cost = 1 - row[7]
             if index == 0:
-                improve = 0
+                improve = 1
                 inital_n_cost = n_cost
                 initial_time = time
             else:
-                improve = n_cost - inital_n_cost
+                improve = n_cost/inital_n_cost
 
             lns_data[test][index].time += time-initial_time
             lns_data[test][index].cost += cost
@@ -108,7 +107,24 @@ def load_data(lns_folder):
 
                     lns_data[test][i].no_instaces += 1
         f.close()
-    return lns_data
+
+    valid_range = []
+
+    for t in lns_data:
+        range_top = len(t)
+        for i in t:
+            i.avg_improve = round(i.improve/i.no_instaces,10)
+            i.avg_time = round(i.time/i.no_instaces,10)
+
+        for i in range(len(t)-2, -1, -1):
+            if t[i].avg_improve == t[i+1].avg_improve:
+                range_top = i+2
+            else:
+                print(t[i].avg_improve,t[i+1].avg_improve, i)
+                break
+        valid_range.append((0,range_top))
+
+    return lns_data,valid_range
 
 class run_cell:
     test: int
@@ -151,19 +167,26 @@ def getReward(distribution,lns_data:List[List[cell]], run_data:List[List[run_cel
     total_reward=0.0
     total_time = 0.0
     total_lns_time = 0
+    stop = False
     for test in range(0,len(run_data)):
         iteration = distribution[test]
-        lns_time = lns_data[test][iteration].avg_time()
-        lns_improve = lns_data[test][iteration].avg_improve()
+        lns_time = lns_data[test][iteration].get_avg_time()
+        lns_improve = lns_data[test][iteration].get_avg_improve()
 
         for level in range(0,len(run_data[test])):
+            if run_data[test][level]==None:
+                stop=True
+                break
             t = (run_data[test][level].runtime + lns_time)
-            if total_time + t > total_time_limit or run_data[test][level]==None:
-                return round(total_reward,4),total_time,total_lns_time
+            if total_time + t > total_time_limit:
+                stop=True
+                break
             total_lns_time += lns_time
             total_time += t
-            total_reward += (run_data[test][level].reward + lns_improve)
-    return round(total_reward,4),total_time,total_lns_time
+            total_reward += (run_data[test][level].reward*lns_improve)
+        if stop:
+            break
+    return round(total_reward,10),total_time,total_lns_time
 
 
 
@@ -179,7 +202,7 @@ class state:
         self.distribution = distribution[:]
         self.total_reward = total_reward
 
-    def get_neighbour(self):
+    def get_neighbour(self,valid_range):
 
         neighbours = change_neighbours
         new_distribution =  self.distribution[:]
@@ -188,11 +211,15 @@ class state:
             new_iteration = -1
             i = -1
 
-            while new_iteration<0 or new_iteration >= max_iterations:
+            while new_iteration<0 or new_iteration >= valid_range[i][1]:
                 i = random.randint(1,no_lns_tests-1)
                 direction = random.choice([-1,1])
-                increase_unit = random.choice(increase_units)
+                if new_distribution[i] >= valid_range[i][1]:
+                    increase_unit = -1
+                else:
+                    increase_unit = random.choice(increase_units)
                 new_iteration = new_distribution[i] + direction*increase_unit
+
             assert(i>=0)
 
             new_distribution[i] = new_iteration
@@ -204,7 +231,7 @@ class state:
 
 
 # start simulated annealing
-def optimize_time(T,Tmin,alpha,numIterations,lns_data,run_data):
+def optimize_time(T,Tmin,alpha,numIterations,lns_data,run_data,valid_range):
 
     current = state(iteration_distribution[:],0)
     print("calculate reward")
@@ -221,12 +248,12 @@ def optimize_time(T,Tmin,alpha,numIterations,lns_data,run_data):
                 max = current
                 print("Better solution: ",max.distribution,max.total_reward,T)
 
-            new: state = current.get_neighbour()
+            new: state = current.get_neighbour(valid_range)
             new.total_reward,new.total_time,new.total_lns_time = getReward(new.distribution,lns_data,run_data)
 
         delta = new.total_reward - current.total_reward
 
-        ap = math.e **(delta/T)
+        ap = math.e **(delta*100/T)
         if ap >= random.random():
             current = new
 
@@ -240,12 +267,15 @@ def optimize_time(T,Tmin,alpha,numIterations,lns_data,run_data):
 # load data from file
 run_data = load_run(run_csv)
 
-lns_data = load_data(lns_folder)
+lns_data,valid_range = load_data(lns_folder)
 
-# dis =[0, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+# dis =[0, 190, 410, 2100, 3530, 1150, 1670, 1480, 290, 1450, 3740,
+#       1950, 2950, 3480, 3480, 4750, 3850, 4560, 4000, 4870, 4720,
+#       3200, 1370, 1610, 390, 80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+#       0, 0, 0]
 # print(getReward(dis,lns_data,run_data))
 
-optimize_time(T,Tmin,alpha,numIterations,lns_data,run_data)
+optimize_time(T,Tmin,alpha,numIterations,lns_data,run_data,valid_range)
 
     
     
