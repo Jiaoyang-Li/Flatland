@@ -1,173 +1,244 @@
-import glob, os
+import glob, os, math
 import pandas as pd 
 import random, sys
+from typing import List
 
 
-lns_folder = "/Users/zche0040/Codes/challenge/agent=10/"
-params = ["LNS301","LNS201","LNS001","LNS401"]
-param = "LNS301groupsize=5"
-exe_time_file = "./execuation_time.csv"
+
+lns_folder = "./lns_data/"
+run_csv = "./285.csv"
 total_time_limit = 28800
-test_num = [50,50,50,40,30,30,30,30,20,20,20,10,10,10]
-mcp_build_time = 2
+no_tests = 36
+no_lns_tests = 28
+iteration_distribution = [0] * no_tests
+time_limit = 580
+max_iterations = 5000
+increase_units = [10,20,50,100,200,500]
+amplify_lns_improve = 1.1
 
-#load data from execuation_time.csv
-def get_mean_exe_time(exe_time_file):
-    exe_time_csv = pd.read_csv(exe_time_file)
-    exe_time_csv["test"] = [None] * len(exe_time_csv.index)
-    exe_time_csv["level"] = [None] * len(exe_time_csv.index)
-    for id,row in exe_time_csv.iterrows():
-        instance = row["instance"]
-        level = int(os.path.basename(instance).split("_")[1].split(".")[0])
-        test = int(os.path.dirname(instance).split("_")[1])
-        row["test"] = test
-        row["level"] = level
-        exe_time_csv.iloc[id] = row
 
-    mean_exe_time = [None]*14
+#simulate annealing parameter
 
-    test_groups = exe_time_csv.groupby("test")
-    for test,test_group in test_groups:
-        mean_exe_time[test] = test_group["execuation_time"].mean()
-    
-    return mean_exe_time
+T = 1
+Tmin = 0.0001
+numIterations = 1000
+alpha = 0.9999
+
+
+class cell:
+    iteration: int
+    time: float
+    cost: int #total normalized cost over all levels
+    n_cost: float #total normalized cost over all levels
+    improve:float #total improve on percentage over all levels
+    no_instaces: int
+
+    def __init__(self,iteration,time,cost,n_cost,improve):
+        self.iteration = iteration
+        self.time = time
+        self.cost = cost
+        self.n_cost  = n_cost
+        self.improve = improve
+        self.no_instaces = 1
+
+    def avg_time(self):
+        return  self.time/self.no_instaces
+    def avg_improve(self):
+        improve =  (self.improve/self.no_instaces)
+        if (improve==1):
+            return 1
+        return  improve * amplify_lns_improve
 
 #load lns data
 def load_data(lns_folder):
     lns_files = glob.glob(lns_folder+"*.csv")
+    print("Load from ",len(lns_files)," files")
 
-    lns_data = {}
+    lns_data = [ [cell(i,0,0,0,1) for i in range(0,max_iterations)] for t in range(0,no_tests)  ]
 
     for lns in lns_files:
         filename = os.path.basename(lns).split(".")[0].split("_")
 
         test = int(filename[1])
         level = int(filename[2])
-        if test not in lns_data:
-            lns_data[test] = {}
-        if level not in lns_data[test]:
-            lns_data[test][level] = {}
-
-        data = pd.read_csv(lns)
-        list_data = []
-        seconds = 0
-        for
 
 
-        lns_data[test][level] = data
+        f = open(lns)
+        last_cost = 0
+        last_improve = 0.0
+        last_n_cost = 0.0
+        last_time = 0
+        index = 0
+        inital_n_cost = 0
+        initial_time = 0
+        for line in f.readlines():
+            if line.startswith("g"):
+                continue
+            row = [ float(x) for x in line.split(",") if x!="\n"]
+            time = row[2]
+            cost = row[5]
+            n_cost = 1 - row[7]
+            if index == 0:
+                improve = 1
+                inital_n_cost = n_cost
+                initial_time = time
+            else:
+                improve = n_cost/inital_n_cost
+
+            lns_data[test][index].time += time-initial_time
+            lns_data[test][index].cost += cost
+            lns_data[test][index].n_cost += n_cost
+            lns_data[test][index].improve += improve
+            lns_data[test][index].no_instaces += 1
+
+            last_cost = cost
+            last_improve = improve
+            last_n_cost = n_cost
+            last_time = time-initial_time
+            index +=1
+
+
+        for i in range(index+1,len(lns_data[test])):
+                    lns_data[test][i].time += last_time
+                    lns_data[test][i].cost += last_cost
+                    lns_data[test][i].n_cost += last_n_cost
+
+                    lns_data[test][i].improve += last_improve
+
+                    lns_data[test][i].no_instaces += 1
+        f.close()
     return lns_data
 
+class run_cell:
+    test: int
+    level: int
+    runtime: float
+    reward: float
+
+
+    def __init__(self,test,level,runtime,reward):
+        self.test = test
+        self.level = level
+        self.runtime = runtime
+        self.reward  = reward
+
+def load_run(file):
+    data = pd.read_csv(file)
+    run_data = [[None for x in range(0,10)] for i in range(0,no_tests) ]
+    sum_reward = 0
+    sum_time = 0
+    for index,row in data.iterrows():
+        name = row["case"]
+        runtime = row["runtime"]
+        reward = row["reward"]
+
+        name = name.split("/")
+        test = int(name[0].split("_")[1])
+        level = int(name[1].split("_")[1])
+        run_data[test][level] = run_cell(test,level,runtime,reward)
+        sum_reward+=reward
+        sum_time +=runtime
+    return run_data
+
+
+
+
+
+
+
+def getReward(distribution,lns_data:List[List[cell]], run_data:List[List[run_cell]]):
+    total_reward=0.0
+    total_time = 0.0
+    for test in range(0,len(run_data)):
+        iteration = distribution[test]
+        lns_time = lns_data[test][iteration].avg_time()
+        lns_improve = lns_data[test][iteration].avg_improve()
+
+        for level in range(0,len(run_data[test])):
+            if total_time > total_time_limit or run_data[test][level]==None:
+                return total_reward
+
+            total_time += (run_data[test][level].runtime + lns_time)
+            total_reward += (run_data[test][level].reward * lns_improve)
+    return total_reward
+
+
+
+
+
+class state:
+    distribution: list
+    total_reward: float
+
+    def __init__(self, distribution,total_reward):
+        self.distribution = distribution[:]
+        self.total_reward = total_reward
+
+    def get_neighbour(self):
+        new_iteration = -1
+        i = -1
+
+        while new_iteration<0 or new_iteration > max_iterations:
+            i = random.randint(1,no_lns_tests-1)
+            direction = random.choice([-1,1])
+            increase_unit = random.choice(increase_units)
+            new_iteration = self.distribution[i] + direction*increase_unit
+        assert(i>=0)
+
+        new_distribution = self.distribution[:]
+        new_distribution[i] = new_iteration
+        neighbour = state(new_distribution,0)
+        return neighbour
+
+
+
+
+# start simulated annealing
+def optimize_time(T,Tmin,alpha,numIterations,lns_data,run_data):
+
+    current = state(iteration_distribution[:],0)
+    print("calculate reward")
+    current.total_reward = getReward(current.distribution,lns_data,run_data)
+    max = current
+    print("Start")
+    print(current.distribution,current.total_reward)
+
+
+    while (T > Tmin):
+        for  i in range(0,numIterations):
+
+            if current.total_reward > max.total_reward:
+                max = current
+                print("Better solution: ",max.distribution,max.total_reward,T)
+
+            new: state = current.get_neighbour()
+            new.total_reward = getReward(new.distribution,lns_data,run_data)
+
+        delta = new.total_reward - current.total_reward
+
+        ap = math.e **(delta/T)
+        if ap >= random.random():
+            current = new
+
+        T = T* alpha
+
+    print(max.distribution, max.total_reward)
+    return max
+
+
+
 # load data from file
-lns_data = get_lns_data(lns_folder)
-mean_exe_time = get_mean_exe_time(exe_time_file)
+run_data = load_run(run_csv)
+all = 0
 
-# calculate total time based on time_setting
-def get_total_time(time_setting):
-    total_time = 0
-    for i in range(0,len(time_setting)):
-        total_time += time_setting[i] * test_num[i]
-    return total_time
-        
+lns_data = load_data(lns_folder)
 
-# calculate total normalized cost based on time_setting
-def get_cost(time_setting,cost_list):
-    for i in range(0,len(time_setting)):
-        t = time_setting[i]
-        for param in params:
-            level0 = lns_data[i][0][param]
-            level0 = level0.loc[level0["total runtime"]<= t]
-            if len(level0.index) >0:
-                level0 = min(level0["normalized cost"])
-            else:
-                level0 = 100
-            level1 = lns_data[i][1][param]
-            level1 = level1.loc[level1["total runtime"]<= t]
-            if len(level1.index) >0:
-                level1 = min(level1["normalized cost"])
-            else:
-                level1 = 100
-            mean = (level0+level1)/2
-            if cost_list[i] > mean * test_num[i]:
-                cost_list[i] = mean * test_num[i]
 
-# get new_cost for new time limit.
-def get_new_cost(sel_test,new_time):
-    new_cost = [sys.maxsize] * 2
-    for i in range(0,len(sel_test)) :
-        t = new_time[i]
-        test = sel_test[i]
-        for param in params:
-            level0 = lns_data[test][0][param]
-            level0 = level0.loc[level0["total runtime"]<= t]
-            if len(level0.index) >0:
-                level0 = min(level0["normalized cost"])
-            else:
-                level0 = 100
-            level1 = lns_data[test][1][param]
-            level1 = level1.loc[level1["total runtime"]<= t]
-            if len(level1.index) >0:
-                level1 = min(level1["normalized cost"])
-            else:
-                level1 = 100
-            mean = (level0+level1)/2
-            if new_cost[i] > mean * test_num[test]:
-                new_cost[i] = mean * test_num[test]
-    return new_cost
+# for i in lns_data[5]:
+#     print(i.time,i.avg_time(),i.improve,i.avg_improve())
 
-# start hill clambing
-def optimize_time():
 
-    #get total execuation/build mcp time
-    total_exe_time = 0
-    for i in range(0,len(mean_exe_time)):
-        total_exe_time += (mean_exe_time[i] + mcp_build_time) * test_num[i]
-
-    
-    # remaining_time for lns
-    remaining_time = total_time_limit - total_exe_time
-
-    #initial setting for each test
-    initial_time = remaining_time/400
-    time_setting = [initial_time]*14
-    cost_list = [sys.maxsize]*14
-    get_cost(time_setting,cost_list)
-    sum_norm_cost = sum(cost_list)
-
-    iteration = 0
-    while iteration<=40000:
-        sel_tests = random.sample(range(0,14),2)
-        test_cost = cost_list[sel_tests[0]] + cost_list[sel_tests[1]]
-        selected_time = [time_setting[sel_tests[0]], time_setting[sel_tests[1]]]
-
-        best_time = [time_setting[sel_tests[0]], time_setting[sel_tests[1]]]
-        best_cost = [cost_list[sel_tests[0]],cost_list[sel_tests[1]]]
-        time_ratio = test_num[sel_tests[0]]/test_num[sel_tests[1]]
-
-        time_change = 1
-        new_time = [selected_time[0]+time_change, selected_time[1]-time_change*time_ratio]
-        while new_time[0] > 5 and new_time[0]<280 and new_time[1] > 5 and new_time[1]<280:
-            new_cost = get_new_cost(sel_tests,new_time)
-            if sum(new_cost) < test_cost:
-                best_time = new_time[:]
-                best_cost = new_cost[:]
-                test_cost = sum(new_cost)
-            new_time[0] = selected_time[0]+time_change            
-            new_time[1] = selected_time[1]-time_change*time_ratio
-            time_change += 1
-            iteration+=1
-        time_setting[sel_tests[0]] = best_time[0]
-        time_setting[sel_tests[1]] = best_time[1]
-        cost_list[sel_tests[0]] = best_cost[0]
-        cost_list[sel_tests[1]] = best_cost[1]
-        print("Iteration: ",iteration)
-        print("Update time setting: ", time_setting)
-        print("Update total cost: ", sum(cost_list))
-        print("Total lns time: ", get_total_time(time_setting))
-    print()
-    
-    
-
-optimize_time()
+optimize_time(T,Tmin,alpha,numIterations,lns_data,run_data)
 
     
     
