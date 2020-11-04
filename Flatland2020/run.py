@@ -60,10 +60,13 @@ max_duration = 20
 
 agent_percentages = [1.1] * 400  # agent percentages for initial planning
 replan = [(i % 10 != 0) and (10 <= i < 400) for i in range(400)]  # replan or not
-max_iterations = [0, 190, 410, 2100, 3530, 1150, 1670, 1480, 290, 1450, 3740,
-                  1950, 2950, 3480, 3480, 4750, 3850, 4560, 4000, 4870, 4720,
-                  3200, 1370, 1610, 390, 80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 0]   # max iterations for LNS, learnt from local instances
+max_iterations = [0] * 40  # max iterations for LNS
+for i in range(1, 22):
+    max_iterations[i] = 1000
+#max_iterations = [0, 190, 410, 2100, 3530, 1150, 1670, 1480, 290, 1450, 3740,
+#                  1950, 2950, 3480, 3480, 4750, 3850, 4560, 4000, 4870, 4720,
+#                  3200, 1370, 1610, 390, 80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+#                  0, 0, 0]   # max iterations for LNS, learnt from local instances
 
 
 
