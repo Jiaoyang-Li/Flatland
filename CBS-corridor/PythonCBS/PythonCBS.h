@@ -162,7 +162,7 @@ private:
     int prirority_ordering_strategy = 0;  //0: random; 1: max regret;
     int replan_strategy = 1;
     bool replan_on = false;
-
+    int max_replan_times = 50000;
 
     int replan_times = 0;
     vector<int> curr_locations;

@@ -165,6 +165,22 @@ public:
             }
             return a1.priority < a2.priority;
         }
+        else if (agent_priority_strategy == 6)    // 6: prefer same start locations then max speed then min distance
+        {
+            if (a1.priority == a2.priority)
+            {
+                if (a1.speed == a2.speed)
+                {
+                    if (a1.distance_to_goal == a2.distance_to_goal)
+                    {
+                        return a1.agent_id <= a2.agent_id;
+                    }
+                    return a1.distance_to_goal <= a2.distance_to_goal;
+                }
+                return a1.speed >= a2.speed;
+            }
+            return a1.priority < a2.priority;
+        }
         else
             return true;    // keep the original ordering
     }

@@ -846,7 +846,22 @@ void LNS::sortNeighborsByStrategy()
             }
         }
     }
-
+    else if (agent_priority_strategy == 6)
+    {
+        // decide the agent priority for agents at the same start location
+        start_locations.clear(); // map the agents to their start locations
+        for (auto i : neighbors)
+            start_locations[al.agents_all[i].initial_location].push_back(i);
+        int idx = 0;
+        for (auto& agents : start_locations)
+        {
+            for (auto& i : agents.second)
+            {
+                al.agents_all[i].priority = idx;
+            }
+            idx++;
+        }
+    }
     // sort the agents
     if (agent_priority_strategy != 0)
         quickSort(neighbors, 0, (int)neighbors.size() - 1, false);
