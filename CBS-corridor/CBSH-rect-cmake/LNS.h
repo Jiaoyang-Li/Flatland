@@ -25,13 +25,10 @@ public:
             int, int, double, int, int, int> IterationStats;
     list<IterationStats> iteration_stats;
 
-    LNS(AgentsLoader& al, FlatlandLoader& ml, double f_w, const constraint_strategy c,
-        int agent_priority_strategy,
-        const options& options1,
-        int max_group_size,
-        int neighbor_generation_strategy,
-        int prirority_ordering_strategy, int replan_strategy):
-            al(al), ml(ml), f_w(f_w), c(c), agent_priority_strategy(agent_priority_strategy), options1(options1),
+    LNS(AgentsLoader& al, FlatlandLoader& ml, double f_w,  int agent_priority_strategy,
+        const options& options1,int max_group_size,
+        int neighbor_generation_strategy,int prirority_ordering_strategy, int replan_strategy):
+            al(al), ml(ml), f_w(f_w), agent_priority_strategy(agent_priority_strategy), options1(options1),
             max_group_size(max_group_size),
             destroy_strategy(neighbor_generation_strategy),
             prirority_ordering_strategy(prirority_ordering_strategy),
@@ -47,7 +44,6 @@ private:
     AgentsLoader& al;
     FlatlandLoader& ml;
     double f_w;
-    constraint_strategy c;
     int agent_priority_strategy;
     options options1;
     int max_timestep;

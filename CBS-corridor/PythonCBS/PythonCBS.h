@@ -137,11 +137,12 @@ private:
 	p::object railEnv;
 	FlatlandLoader* ml;  // TODO:: Shouldn't it be Map* ml?
 	AgentsLoader* al;
+	float malfunction_rate;
+	int max_timestep;
 	MCP mcp;
     ActionConverter action_converter;
 	vector<AgentsLoader*> al_pool;
 	vector<LNS*> lns_pool;
-	constraint_strategy s;
 	options options1;
     float hard_time_limit = 580;
     float soft_time_limit;
