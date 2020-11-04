@@ -59,7 +59,7 @@ max_duration = 20
 
 
 agent_percentages = [1.1] * 400  # agent percentages for initial planning
-replan = [(i % 10 != 0) and (10 <= i < 250) for i in range(400)]  # replan or not
+replan = [(i % 10 != 0) and (10 <= i < 400) for i in range(400)]  # replan or not
 max_iterations = [0, 190, 410, 2100, 3530, 1150, 1670, 1480, 290, 1450, 3740,
                   1950, 2950, 3480, 3480, 4750, 3850, 4560, 4000, 4870, 4720,
                   3200, 1370, 1610, 390, 80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
