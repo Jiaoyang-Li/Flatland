@@ -58,16 +58,27 @@ min_duration = 3
 max_duration = 20
 
 
-agent_percentages = [1.1] * 400  # agent percentages for initial planning
-for i in range(261, 400, 10):
+agent_percentages = [1.1] * 400  # agent percentages for initial planning, learnt from local instances
+replan = [(i % 10 != 0) and (10 <= i < 290) for i in range(400)]  # replan or not
+for i in range(261, 340, 10):
     agent_percentages[i] = 0.9
-replan = [(i % 10 != 0) and (10 <= i < 250) for i in range(400)]  # replan or not
+    replan[i] = False
+for i in range(341, 350, 10):
+    agent_percentages[i] = 0.85
+for i in range(351, 370, 10):
+    agent_percentages[i] = 0.7
+for i in range(371, 400, 10):
+    agent_percentages[i] = 0.5
 #max_iterations = [0] * 40  # max iterations for LNS
 #for i in range(1, 22):
 #    max_iterations[i] = 1000
-max_iterations = [0, 0, 5, 10, 15, 45, 100, 175, 145, 285, 1470, 1655, 2090, 1070,
-                  1000, 805, 1390, 830, 900, 1310, 1065, 770, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]   # max iterations for LNS, learnt from local instances
+max_iterations = [0, 0, 5, 10, 25, 50, 20, 155, 145, 250, 445, 1230, 1230, 1095,
+                  1095, 1095, 1090, 1000, 1000, 955, 955, 560, 5, 5, 5, 5, 5, 5,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]  # max iterations for LNS, learnt from local instances
+frameworks = ["LNS"] * 40
+for i in range(len(max_iterations)):
+    if max_iterations[i] > 0:
+        frameworks[i] = "Parallel-LNS"
 
 
 
@@ -172,13 +183,12 @@ while True:
         env_height = local_env.height
 
 
-    framework = "Parallel-LNS"
     debug = False
     # remaining_time = total_time_limit - (time.time() - global_time_start)
     time_limit = 580 # (predict_time_limit/predict_remaining_time) * remaining_time
     default_group_size = 5  # max number of agents in a group
     stop_threshold = 10
-    CBS = PythonCBS(local_env, framework, time_limit, default_group_size, debug, replan[evaluation_number],stop_threshold)
+    CBS = PythonCBS(local_env, frameworks[evaluation_number//10], time_limit, default_group_size, debug, replan[evaluation_number],stop_threshold)
     CBS.search(agent_percentages[evaluation_number], max_iterations[evaluation_number//10])
     evaluation_number += 1
     CBS.buildMCP()
