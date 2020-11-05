@@ -141,7 +141,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
         }*/
 
         mcp.update();
-        if (!replan_on || replan_times >= max_replan_times)
+        if (!replan_on || replan_times >= max_replan_times || replan_runtime >= max_replan_runtime)
             return;
 
         for (auto p = al->new_malfunction_agents.begin(); p != al->new_malfunction_agents.end();)
@@ -234,7 +234,10 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
 
         runtime = ((fsec)(Time::now() - start_time)).count();
         if (runtime >= time_limit)
+        {
+            replan_runtime += runtime;
             return;
+        }
 
         // update paths
         al->paths_all = paths;
@@ -276,6 +279,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
             cout << "Runtime = " << runtime << "s." << endl;
         }
         al->new_malfunction_agents.clear();
+        replan_runtime += ((fsec)(Time::now() - start_time)).count();
     }
 }
 
