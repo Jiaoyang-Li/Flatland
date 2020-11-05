@@ -166,8 +166,10 @@ private:
     int replan_strategy = 1;
     bool replan_on = false;
     int max_replan_times = 50000;
+    float max_replan_runtime = 2000; // seconds
 
     int replan_times = 0;
+    float replan_runtime = 0;
     vector<int> curr_locations;
     vector<int> prev_locations;
 
