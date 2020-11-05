@@ -70,7 +70,7 @@ private:
 class SIPP: public SinglePlanning
 {
 public:
-    bool search();
+    bool search(int upperbound = MAX_COST);
     SIPP(const FlatlandLoader& ml, AgentsLoader& al, double f_w, float time_limit, options option):
             SinglePlanning(ml, al, f_w, time_limit, option) {}
 

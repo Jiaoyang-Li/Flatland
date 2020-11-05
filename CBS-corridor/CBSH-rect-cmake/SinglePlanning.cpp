@@ -300,7 +300,7 @@ SinglePlanning::SinglePlanning(const FlatlandLoader& ml, AgentsLoader& al, doubl
 }
 
 
-bool SIPP::search() // TODO: weighted SIPP
+bool SIPP::search(int upperbound) // TODO: weighted SIPP
 {
 
     assert(f_w < 1.001);
@@ -415,7 +415,8 @@ bool SIPP::search() // TODO: weighted SIPP
             {
                 time_generated += 1;
                 int next_timestep = max(curr->timestep + 1, next_interval.first);
-
+                if (next_timestep + next_h_val >= upperbound)
+                    continue;
                 // generate (maybe temporary) node
                 auto next = new SIPPNode(next_id, next_timestep, next_h_val, curr, next_timestep, next_interval);
                 next->heading = next_heading;
