@@ -9,7 +9,6 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
     soft_time_limit = min(_soft_time_limit, hard_time_limit);
     if(! skip_pp) {
         if (!getInitialSolution(success_rate)) { // get initial solution
-            this->complete.store(true);
             return false;
         }
     }
@@ -48,7 +47,10 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
     // iteration_stats.emplace_back(al.agents_all.size(), 0, runtime, runtime, makespan, solution_cost,
     //        destroy_strategy, (double)(solution_cost) / max_timestep / al.agents_all.size(), 0, 0, 0);
     if(pp_only || al.getNumOfAllAgents() == 1) {
-        this->complete.store(true);
+        if ( this->complete!= nullptr && !this->complete->load()) {
+            this->complete->store(true);
+            this->complete_makespan->store(makespan);
+        }
         return true;
     }
     if (destroy_strategy == 3)
@@ -72,7 +74,7 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
     bool succ;
     auto old_runtime = runtime;
     iterations = 0;
-    while (runtime < soft_time_limit && iterations < max_iterations && (this->complete.load()))
+    while (runtime < soft_time_limit && iterations < max_iterations && (this->complete!=nullptr && !this->complete->load()))
     {
 
         iterations++;
@@ -131,7 +133,10 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
             case 1:
                 succ = generateNeighborByStart();
                 if(!succ) { // no two agents have the same start locations
-                    this->complete.store(true);
+                    if ( this->complete!= nullptr && !this->complete->load()){
+                        this->complete->store(true);
+                        this->complete_makespan->store(makespan);
+                    }
                     return true;
                 }
                 break;
@@ -183,7 +188,10 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
         //        destroy_strategy, (double)(solution_cost) / max_timestep / al.agents_all.size(), 0, 0, 0);
         old_runtime = runtime;
         if (replan_strategy == 0 && max_group_size > al.agents_all.size()) {
-            this->complete.store(true);
+            if ( this->complete!= nullptr && !this->complete->load()){
+                this->complete->store(true);
+                this->complete_makespan->store(makespan);
+            }
             return true; // CBS has replanned paths for all agents. No need for further iterations
         }
     }
@@ -202,7 +210,10 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
     }
 
     cout << "LNS improves the solution to: Sum of costs = " << sum_of_costs << " and makespan = " << makespan <<" runtime "<< runtime<< endl;
-    this->complete.store(true);
+    if ( this->complete!= nullptr && !this->complete->load()){
+        this->complete->store(true);
+        this->complete_makespan->store(makespan);
+    }
     return true;
 }
 
@@ -483,12 +494,17 @@ bool LNS::getInitialSolution(float success_rate)
     for (auto agent : neighbors)
     {
         runtime = ((fsec)(Time::now() - start_time)).count();
-        if ( this->complete.load() || runtime >= hard_time_limit ||
-            al.getNumOfAllAgents() - remaining_agents >= success_rate * al.getNumOfAllAgents())
+        if ( (this->complete!= nullptr && this->complete->load() && (remaining_agents > this->stop_threshold || makespan > this->complete_makespan->load()) )
+            || runtime >= hard_time_limit
+            || al.getNumOfAllAgents() - remaining_agents >= success_rate * al.getNumOfAllAgents())
         {
             cout << "Find a solution for " << al.getNumOfAllAgents() - remaining_agents - dead_agents << " agents" <<
-                    " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" << endl;
+                    " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" << "agent priority "<< agent_priority_strategy<< endl;
             cout << "Sum of costs = " << sum_of_costs <<  " and makespan = " << makespan << endl;
+            if ( this->complete!= nullptr && !this->complete->load()) {
+                this->complete->store(true);
+                this->complete_makespan->store(makespan);
+            }
             return false;
         }
         al.agents[0] = &al.agents_all[agent];
@@ -515,8 +531,8 @@ bool LNS::getInitialSolution(float success_rate)
     }
 
     cout << "Find a solution for " << al.getNumOfAllAgents() - remaining_agents - dead_agents << " agents" <<
-         " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" << endl;
-    cout << "Sum of costs = " << sum_of_costs <<  " and makespan = " << makespan << endl;
+         " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" <<  "agent priority "<< agent_priority_strategy<<endl;
+    cout << "Sum of costs = " << sum_of_costs <<  " and makespan = " << makespan << "runtime ="<<runtime<< endl;
     return true;
 }
 

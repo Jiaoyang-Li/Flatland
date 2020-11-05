@@ -177,7 +177,8 @@ while True:
     # remaining_time = total_time_limit - (time.time() - global_time_start)
     time_limit = 580 # (predict_time_limit/predict_remaining_time) * remaining_time
     default_group_size = 5  # max number of agents in a group
-    CBS = PythonCBS(local_env, framework, time_limit, default_group_size, debug, replan[evaluation_number])
+    stop_threshold = 10
+    CBS = PythonCBS(local_env, framework, time_limit, default_group_size, debug, replan[evaluation_number],stop_threshold)
     CBS.search(agent_percentages[evaluation_number], max_iterations[evaluation_number//10])
     evaluation_number += 1
     CBS.buildMCP()
