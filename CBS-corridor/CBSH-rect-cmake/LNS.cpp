@@ -495,12 +495,12 @@ bool LNS::getInitialSolution(float success_rate)
     {
         runtime = ((fsec)(Time::now() - start_time)).count();
 
-        if ( (this->complete!= nullptr && !this->complete->load() && (remaining_agents > this->stop_threshold || makespan > this->complete_makespan->load()) )
+        if ( (this->complete!= nullptr && this->complete->load() && (remaining_agents > this->stop_threshold || makespan > this->complete_makespan->load()) )
             || runtime >= hard_time_limit
             || al.getNumOfAllAgents() - remaining_agents >= success_rate * al.getNumOfAllAgents())
         {
             cout << "Find a solution for " << al.getNumOfAllAgents() - remaining_agents - dead_agents << " agents" <<
-                    " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" << endl;
+                    " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" << "agent priority "<< agent_priority_strategy<< endl;
             cout << "Sum of costs = " << sum_of_costs <<  " and makespan = " << makespan << endl;
             if ( this->complete!= nullptr && !this->complete->load()) {
                 this->complete->store(true);
@@ -532,7 +532,7 @@ bool LNS::getInitialSolution(float success_rate)
     }
 
     cout << "Find a solution for " << al.getNumOfAllAgents() - remaining_agents - dead_agents << " agents" <<
-         " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" << endl;
+         " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" <<  "agent priority "<< agent_priority_strategy<<endl;
     cout << "Sum of costs = " << sum_of_costs <<  " and makespan = " << makespan << "runtime ="<<runtime<< endl;
     return true;
 }
