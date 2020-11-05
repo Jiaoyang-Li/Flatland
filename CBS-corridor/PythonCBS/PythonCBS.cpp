@@ -537,15 +537,17 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_it
         cout<<"Max threads number: 4"<<endl;
         exit(1);
     }
-    std::atomic<Thread_data> complete;
-    complete.store(Thread_data(false,0,0,0));
+    std::atomic<bool> complete;
+    complete.store(false);
+    std::atomic<int> complete_makespan;
+
     for (int i = 0; i<no_threads;i++){
         AgentsLoader* temp = this->al->clone();
         this->al_pool[i] = temp;
         this->lns_pool[i] = new LNS(*al_pool[i], *ml, 1, strategies[i], options1,
                 default_group_size, neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy,this->stop_threshold);
-        this->lns_pool[i]->complete = &complete;
-        runtime = ((fsec)(Time::now() - start_time)).count();;
+        this->lns_pool[i]->set_complete(&complete,&complete_makespan);
+        runtime = ((fsec)(Time::now() - start_time)).count();
         wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,
                 success_rate, max_iterations,*this->lns_pool[i]);
         pthread_create( &threads[i], NULL, call_func, w );

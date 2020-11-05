@@ -6,22 +6,14 @@ using namespace std::chrono;
 typedef std::chrono::high_resolution_clock Time;
 typedef std::chrono::duration<float> fsec;
 
-struct Thread_data{
-    bool complete=false;
-    int complete_makespan = 0;
-    int incomplete_agents = 0;
-    int complete_cost = 0;
-    Thread_data() noexcept {};
-
-    Thread_data(bool complete,int complete_makespan,int incomplete_agents,int complete_cost):
-        complete(complete),complete_makespan(complete_makespan),incomplete_agents(incomplete_agents),complete_cost(complete_cost){};
-};
 
 #define DEFAULT_GROUP_SIZE 5
 class LNS
 {
 public:
-    std::atomic<Thread_data>* complete= nullptr ;
+    std::atomic<bool>* complete= nullptr ;
+    std::atomic<int>* complete_makespan= nullptr ;
+
     bool pp_only = false;
     bool skip_pp = false;
 
@@ -52,7 +44,7 @@ public:
     bool replan(float time_limit);
     //bool replan(list<int>& to_be_replanned, float time_limit);
     bool getInitialSolution(float success_rate = 1.1);
-    void set_complete(std::atomic<Thread_data>* complete){this->complete = complete;}
+    void set_complete(std::atomic<bool>* complete, std::atomic<int>* complete_makespan){this->complete = complete; this->complete_makespan = complete_makespan;}
 private:
     high_resolution_clock::time_point start_time;
     AgentsLoader& al;
