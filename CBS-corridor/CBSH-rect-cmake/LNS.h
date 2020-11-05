@@ -17,7 +17,7 @@ struct Thread_data{
         complete(complete),complete_makespan(complete_makespan),incomplete_agents(incomplete_agents),complete_cost(complete_cost){};
 };
 
-#define DEFAULT_GROUP_SIZE
+#define DEFAULT_GROUP_SIZE 5
 class LNS
 {
 public:
