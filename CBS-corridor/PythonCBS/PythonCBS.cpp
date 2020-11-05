@@ -142,7 +142,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
         }*/
 
         mcp.update();
-        if (!replan_on || replan_times >= max_replan_times || replan_runtime >= max_replan_runtime)
+        if (!replan_on || replan_times >= max_replan_times  || replan_runtime >= max_replan_runtime)
             return;
 
         for (auto p = al->new_malfunction_agents.begin(); p != al->new_malfunction_agents.end();)
