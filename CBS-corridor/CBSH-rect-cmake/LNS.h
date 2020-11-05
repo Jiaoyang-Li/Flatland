@@ -11,6 +11,7 @@ struct Thread_data{
     int complete_makespan = 0;
     int incomplete_agents = 0;
     int complete_cost = 0;
+    Thread_data(){};
 
     Thread_data(bool complete,int complete_makespan,int incomplete_agents,int complete_cost):
         complete(complete),complete_makespan(complete_makespan),incomplete_agents(incomplete_agents),complete_cost(complete_cost){};
