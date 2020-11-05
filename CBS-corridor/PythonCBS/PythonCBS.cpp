@@ -390,6 +390,7 @@ p::dict PythonCBS<Map>::getResultDetail() {
     result["num_of_agents"] = al->getNumOfAllAgents();
     result["max_timestep"] = max_timestep;
     result["malfunction_rate"] = malfunction_rate;
+    result["unplanned agents"] =statistic_list[thread_id].unfinished_agents;
     //std::stringstream stream;
     //stream << std::fixed << std::setprecision(1) << f_w;
     //std::string s = stream.str();
@@ -589,6 +590,7 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_it
         statistic_list[i].runtime = runtime;
         statistic_list[i].sum_of_costs = solution_cost;
         statistic_list[i].makespan = makespan;
+        statistic_list[i].unfinished_agents = this->al->getNumOfAllAgents() - finished_agents;
 
     }
     delete this->al;

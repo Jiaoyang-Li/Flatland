@@ -25,6 +25,7 @@ struct statistics {
     double initial_runtime;
     int initial_sum_of_costs;
     int initial_makespan;
+    int unfinished_agents;
 
     int HL_num_expanded = 0;
     int HL_num_generated = 0;
