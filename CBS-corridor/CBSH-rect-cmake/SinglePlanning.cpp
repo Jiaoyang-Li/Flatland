@@ -514,6 +514,7 @@ int SIPP::timeInCorridor(SIPPNode* node){
     while(current->parent!= nullptr){
         if (current->loc == -1 || ml.getDegree(current->loc,current->heading) > 1)
             break;
+//        if (current->loc!=current->parent->loc)
         t++;
         current = current->parent;
     }
