@@ -57,7 +57,7 @@ template <class Map>
 class PythonCBS {
 public:
 	PythonCBS(p::object railEnv1, string framework, float soft_time_limit,
-              int default_group_size, bool debug, bool replan);
+              int default_group_size, bool debug, bool replan,int stop_threshold);
 	~PythonCBS(){
 	    delete this->al;
 
@@ -175,8 +175,11 @@ private:
     Time::time_point start_time;
     float runtime;
     vector<statistics> statistic_list;
+
+    //parallel
     int strategies[4] = {1,3,5,6};
     int neighbours[4] = {0,2,3,4};
+    int stop_threshold;
 
     //replan
     list<int> to_be_replanned;

@@ -12,9 +12,9 @@ namespace p = boost::python;
 
 template <class Map>
 PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, float soft_time_limit,
-                          int default_group_size, bool debug, bool replan) :
+                          int default_group_size, bool debug, bool replan, int stop_threshold) :
                           railEnv(railEnv1), framework(framework), soft_time_limit(soft_time_limit),
-                          default_group_size(default_group_size), replan_on(replan) {
+                          default_group_size(default_group_size), replan_on(replan),stop_threshold(stop_threshold) {
 	//Initialize PythonCBS. Load map and agent info into memory
     if (debug)
 	    std::cout << "framework: " << framework << std::endl;
@@ -241,7 +241,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
         al->updateConstraintTable();
 
         LNS lns(*al, *ml, 1, agent_priority_strategy, options1, default_group_size,
-                neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
+                neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy,this->stop_threshold);
         runtime = ((fsec)(Time::now() - start_time)).count();
         lns.replan(time_limit - runtime);
         replan_times += lns.replan_times;
@@ -314,7 +314,7 @@ bool PythonCBS<Map>::search(float success_rate, int max_iterations) {
     else if (framework == "LNS")
     {
         LNS lns(*al, *ml, 1, agent_priority_strategy, options1, default_group_size,
-                neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
+                neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy,this->stop_threshold);
         runtime = ((fsec)(Time::now() - start_time)).count(); 
         bool succ = lns.run(hard_time_limit - runtime, soft_time_limit - runtime, success_rate, max_iterations);
         runtime = ((fsec)(Time::now() - start_time)).count();
@@ -537,12 +537,13 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_it
         cout<<"Max threads number: 4"<<endl;
         exit(1);
     }
-    std::atomic<bool> complete;
+    std::atomic<Thread_data> complete;
+    complete.store(Thread_data(false,0,0,0));
     for (int i = 0; i<no_threads;i++){
         AgentsLoader* temp = this->al->clone();
         this->al_pool[i] = temp;
         this->lns_pool[i] = new LNS(*al_pool[i], *ml, 1, strategies[i], options1,
-                default_group_size, neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
+                default_group_size, neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy,this->stop_threshold);
         this->lns_pool[i]->complete = &complete;
         runtime = ((fsec)(Time::now() - start_time)).count();;
         wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,
@@ -618,7 +619,7 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads, float success_rate, 
         AgentsLoader* temp = this->al->clone();
         this->al_pool[i] = temp;
         this->lns_pool[i] = new LNS(*al_pool[i], *ml, 1, strategies[i], options1, default_group_size,
-                                    3, prirority_ordering_strategy, replan_strategy);
+                                    3, prirority_ordering_strategy, replan_strategy,this->stop_threshold);
         runtime = ((fsec)(Time::now() - start_time)).count();;
         wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,
                            success_rate, max_iterations, *this->lns_pool[i]);
@@ -673,7 +674,7 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads, float success_rate, 
     for (int i = 0; i<no_threads;i++){
         delete this->lns_pool[i];
         this->lns_pool[i] = new LNS(*al_pool[i], *ml, 1, 0, options1, default_group_size,
-                                    neighbours[i], prirority_ordering_strategy, replan_strategy);
+                                    neighbours[i], prirority_ordering_strategy, replan_strategy,this->stop_threshold);
         this->lns_pool[i]->skip_pp = true;
         runtime = ((fsec)(Time::now() - start_time)).count();;
         wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,
@@ -743,7 +744,7 @@ template class PythonCBS<FlatlandLoader>;
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
 {
 	using namespace boost::python;
-	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, float,int, bool, bool>())
+	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, float,int, bool, bool,int>())
 		.def("getResult", &PythonCBS<FlatlandLoader>::getResult)
 		.def("search", &PythonCBS<FlatlandLoader>::search)
 		.def("hasConflicts", &PythonCBS<FlatlandLoader>::findConflicts)

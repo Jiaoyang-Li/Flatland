@@ -6,11 +6,21 @@ using namespace std::chrono;
 typedef std::chrono::high_resolution_clock Time;
 typedef std::chrono::duration<float> fsec;
 
+struct Thread_data{
+    bool complete=false;
+    int complete_makespan = 0;
+    int incomplete_agents = 0;
+    int complete_cost = 0;
+
+    Thread_data(bool complete,int complete_makespan,int incomplete_agents,int complete_cost):
+        complete(complete),complete_makespan(complete_makespan),incomplete_agents(incomplete_agents),complete_cost(complete_cost){};
+};
+
 #define DEFAULT_GROUP_SIZE 5
 class LNS
 {
 public:
-    std::atomic<bool>* complete= nullptr ;
+    std::atomic<Thread_data>* complete= nullptr ;
     bool pp_only = false;
     bool skip_pp = false;
 
@@ -29,7 +39,7 @@ public:
 
     LNS(AgentsLoader& al, FlatlandLoader& ml, double f_w,  int agent_priority_strategy,
         const options& options1,int max_group_size,
-        int neighbor_generation_strategy,int prirority_ordering_strategy, int replan_strategy):
+        int neighbor_generation_strategy,int prirority_ordering_strategy, int replan_strategy, int stop_threshold):
             al(al), ml(ml), f_w(f_w), agent_priority_strategy(agent_priority_strategy), options1(options1),
             max_group_size(max_group_size),
             destroy_strategy(neighbor_generation_strategy),
@@ -41,7 +51,7 @@ public:
     bool replan(float time_limit);
     //bool replan(list<int>& to_be_replanned, float time_limit);
     bool getInitialSolution(float success_rate = 1.1);
-    void set_complete(std::atomic<bool>* complete){this->complete = complete;}
+    void set_complete(std::atomic<Thread_data>* complete){this->complete = complete;}
 private:
     high_resolution_clock::time_point start_time;
     AgentsLoader& al;
@@ -58,6 +68,8 @@ private:
     int neighbor_makespan = 0;
     int delta_costs = 0;
     int max_group_size = DEFAULT_GROUP_SIZE;
+
+    int stop_threshold = 0;
 
     vector<int> intersections;
     map<int, list<int>> start_locations;  // <start location, corresponding agents>
