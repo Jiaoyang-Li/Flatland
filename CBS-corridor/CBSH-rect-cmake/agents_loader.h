@@ -84,7 +84,7 @@ public:
         return result;
     }
 
-    void computeHeuristics(const FlatlandLoader* ml);
+    void computeHeuristics(const FlatlandLoader* ml,std::unordered_map<int,vector<hvals>>& existing_heuristics);
     void printPaths() const
     {
         for (int i = 0; i < (int)paths_all.size(); i++)
@@ -165,6 +165,22 @@ public:
             }
             return a1.priority < a2.priority;
         }
+        else if (agent_priority_strategy == 6)    // 6: prefer same start locations then max speed then min distance
+        {
+            if (a1.priority == a2.priority)
+            {
+                if (a1.speed == a2.speed)
+                {
+                    if (a1.distance_to_goal == a2.distance_to_goal)
+                    {
+                        return a1.agent_id <= a2.agent_id;
+                    }
+                    return a1.distance_to_goal <= a2.distance_to_goal;
+                }
+                return a1.speed >= a2.speed;
+            }
+            return a1.priority < a2.priority;
+        }
         else
             return true;    // keep the original ordering
     }
@@ -173,7 +189,6 @@ private:
     int num_of_dead_agents = 0;
     list<int> unplanned_agents;
     int num_of_agents_all;
-    std::unordered_map<int,vector<hvals>> existing_heuristics; //goal heuristic
 
     void quickSort(vector<int>& agent_order, int low, int high, int agent_priority_strategy);
 };

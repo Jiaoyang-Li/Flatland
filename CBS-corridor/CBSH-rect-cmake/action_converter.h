@@ -15,26 +15,26 @@ public:
     ActionConverter(){}
     ActionConverter(int num_agent, int env_width){num_agent = num_agent; env_width = env_width;}
 
-    int pos2action(int i, p::list curr_locs, p::list prev_locs, p::list next_locs){
+    int pos2action(int i, const vector<int>& curr_locs, const vector<int>& prev_locs, const vector<int>& next_locs){
 
 
-        if (p::extract<int>(p::long_(next_locs[i])) == p::extract<int>(p::long_(curr_locs[i]))){
+        if (next_locs[i] == curr_locs[i]){
             return 4;
         }
-        if(p::extract<int>(p::long_(curr_locs[i])) == -1 && p::extract<int>(p::long_(next_locs[i])) != -1){
+        if(curr_locs[i] == -1 && next_locs[i] != -1){
             return 2;
         }
 
-        int prev_pos0 = loc0(p::extract<int>(p::long_(prev_locs[i])));
-        int prev_pos1 = loc1(p::extract<int>(p::long_(prev_locs[i])));
+        int prev_pos0 = loc0(prev_locs[i]);
+        int prev_pos1 = loc1(prev_locs[i]);
 
 //        cout << p::extract<int>(p::long_(prev_locs[i])) << endl;
 
-        int curr_pos0 = loc0(p::extract<int>(p::long_(curr_locs[i])));
-        int curr_pos1 = loc1(p::extract<int>(p::long_(curr_locs[i])));
+        int curr_pos0 = loc0(curr_locs[i]);
+        int curr_pos1 = loc1(curr_locs[i]);
 
-        int next_pos0 = loc0(p::extract<int>(p::long_(next_locs[i])));
-        int next_pos1 = loc1(p::extract<int>(p::long_(next_locs[i])));
+        int next_pos0 = loc0(next_locs[i]);
+        int next_pos1 = loc1(next_locs[i]);
 
 //        cout << i << endl;
 //        cout << prev_pos0 << " " << prev_pos1 << ", " << curr_pos0 << " " << curr_pos1 << ", " << next_pos0 << " " << next_pos1 << endl;
@@ -104,6 +104,8 @@ public:
                     return 2;
             }
         }
+        assert(false); // this should never happen
+        return -1;
     }
 
 

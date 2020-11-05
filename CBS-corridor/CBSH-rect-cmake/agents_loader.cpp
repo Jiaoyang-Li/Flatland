@@ -453,7 +453,7 @@ bool AgentsLoader::addPaths(const vector<Path*>& new_paths)
     return true;
 }
 
-void AgentsLoader::computeHeuristics(const FlatlandLoader* ml)
+void AgentsLoader::computeHeuristics(const FlatlandLoader* ml, std::unordered_map<int,vector<hvals>>& existing_heuristics)
 {
     for (auto& agent : agents_all) {
         int init_loc = agent.initial_location;

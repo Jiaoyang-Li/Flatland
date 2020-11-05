@@ -36,16 +36,19 @@ struct statistics {
 struct wrap {
     float hard_time_limit;
     float soft_time_limit;
+    float success_rate;
+    int max_iterations;
     LNS& ins;
 
-    wrap(float hard_time_limit, float soft_time_limit, LNS& f ) :
-        hard_time_limit(hard_time_limit), soft_time_limit(soft_time_limit), ins(f) {}
+    wrap(float hard_time_limit, float soft_time_limit, float success_rate, int max_iterations, LNS& f ) :
+        hard_time_limit(hard_time_limit), soft_time_limit(soft_time_limit), success_rate(success_rate),
+        max_iterations(max_iterations), ins(f) {}
 };
 
 extern "C" void* call_func( void *f )
 {
     std::unique_ptr< wrap > w( static_cast< wrap* >( f ) );
-    w->ins.run(w->hard_time_limit, w->soft_time_limit);
+    w->ins.run(w->hard_time_limit, w->soft_time_limit, w->success_rate, w->max_iterations);
 
     return 0;
 }
@@ -54,9 +57,7 @@ template <class Map>
 class PythonCBS {
 public:
 	PythonCBS(p::object railEnv1, string framework, float soft_time_limit,
-              int default_group_size, int debug, float f_w,bool replan,
-              int agent_priority_strategy, int neighbor_generation_strategy,
-              int prirority_ordering_strategy, int replan_strategy);
+              int default_group_size, bool debug, bool replan);
 	~PythonCBS(){
 	    delete this->al;
 
@@ -82,34 +83,10 @@ public:
 
 	p::list getResult();
 
-	int defaultGroupSize; // max number of agents in a group
-    bool accept_partial_solution;
-    int agent_priority_strategy;
-	bool search(float success_rate = 1.1);
+	bool search(float success_rate = 1.1, int max_iterations = 5000);
 	p::dict getResultDetail();
-	void replan(p::object railEnv1, int timestep, float time_limit);
-	void updateFw(float fw);
 	void updateAgents(p::object railEnv1);
     bool findConflicts() const;
-    p::list getNextLoc(p::list agent_location, int timestep)
-    {
-        boost::python::list next_loc;
-        if (framework == "CPR")
-        {
-            vector<int> to_go(al->getNumOfAllAgents(), -1);
-            cpr->getNextLoc(to_go);
-            for (int i = 0; i < al->getNumOfAllAgents(); i++)
-                next_loc.append(to_go[i]);
-            return next_loc;
-        }
-        else
-        {
-            mcp.getNextLoc(timestep);
-            for (int i = 0; i < al->getNumOfAllAgents(); i++)
-                next_loc.append(mcp.to_go[i]);
-            return next_loc;
-        }
-    }
     void buildMCP(void)
     {
         if (framework != "CPR")
@@ -154,55 +131,51 @@ public:
         }
         output.close();
     }
-    p::list getActions(p::list prev_locs, p::list next_locs, p::list curr_locs){
-        action_converter.num_agent = al->getNumOfAllAgents();
-        action_converter.env_width = ml->cols;
+    p::dict getActions(p::object railEnv1, int timestep, float time_limit);
 
-        boost::python::list actions;
-        for(int i =0; i<al->getNumOfAllAgents(); i++){
-            actions.append(action_converter.pos2action(i, curr_locs, prev_locs, next_locs ));
-        }
+    std::unordered_map<int,vector<hvals>> existing_heuristics; //goal heuristic
 
-        return actions;
-    }
 private:
-	std::string algo;
 	string framework;
 	p::object railEnv;
 	FlatlandLoader* ml;  // TODO:: Shouldn't it be Map* ml?
 	AgentsLoader* al;
+	float malfunction_rate;
+	int max_timestep;
 	MCP mcp;
     ActionConverter action_converter;
 	vector<AgentsLoader*> al_pool;
 	vector<LNS*> lns_pool;
-	constraint_strategy s;
 	options options1;
     float hard_time_limit = 580;
     float soft_time_limit;
-	int kRobust;
-	int max_malfunction;
-	float f_w;
-	// MultiMapICBSSearch<Map>* icbs = NULL;
-	int corridor_option = 0;
-	bool corridor2=false;
-	bool corridor4=false;
-	bool trainCorridor1 = false;
-	bool trainCorridor2 = false;
-	bool chasing = false;
 	int best_thread_id = 0;
 	int best_initisl_priority_strategy = -1;
     int best_neighbour_strategy = -1;
-    int neighbor_generation_strategy;
-    int prirority_ordering_strategy;
-    int replan_strategy;
+    int default_group_size; // max number of agents in a group
+
+    //default params
+    int neighbor_generation_strategy = 3;  // 0: random walk; 1: start; 2: intersection; 3: adaptive; 4: iterative
+    int agent_priority_strategy = 3;  // choose a number between 0 and 5. Suggest 1
+                                        // 0: keep the original ordering
+                                        // 1: prefer max speed then max distance
+                                        // 2: prefer min speed then max distance
+                                        // 3: prefer max speed then min distance
+                                        // 4: prefer min speed then min distance
+    int prirority_ordering_strategy = 0;  //0: random; 1: max regret;
+    int replan_strategy = 1;
     bool replan_on = false;
+    int max_replan_times = 50000;
+
     int replan_times = 0;
+    vector<int> curr_locations;
+    vector<int> prev_locations;
 
 	//stats about CBS
     Time::time_point start_time;
     float runtime;
     vector<statistics> statistic_list;
-    int strategies[4] = {0,1,3,5};
+    int strategies[4] = {1,3,5,6};
     int neighbours[4] = {0,2,3,4};
 
     //replan
@@ -218,11 +191,13 @@ private:
                     int, int, double, int, int, int> IterationStats;
     vector<list<IterationStats>> iteration_stats;
 
-    bool parallel_LNS(int no_threads = 4);
-    bool parallel_neighbour_LNS(int no_threads = 4);
+    bool parallel_LNS(int no_threads = 4, float success_rate = 1.1, int max_iterations = 5000);
+    bool parallel_neighbour_LNS(int no_threads = 4, float success_rate = 1.1, int max_iterations = 5000);
 
     void generateNeighbor(int agent_id, const PathEntry& start, int start_time,
             set<int>& neighbor, int neighbor_size, int upperbound);
+
+    void replan(p::object railEnv1, int timestep, float time_limit);
 };
 
 

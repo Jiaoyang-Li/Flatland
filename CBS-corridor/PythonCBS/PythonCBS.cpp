@@ -12,44 +12,64 @@ namespace p = boost::python;
 
 template <class Map>
 PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, float soft_time_limit,
-                          int default_group_size, int debug, float f_w,bool replan,
-                          int agent_priority_strategy, int neighbor_generation_strategy,
-                          int prirority_ordering_strategy, int replan_strategy) :
-                          railEnv(railEnv1), framework(framework),
-                          soft_time_limit(soft_time_limit),
-                          f_w(f_w), defaultGroupSize(default_group_size),
-                          replan_on(replan),
-                          agent_priority_strategy(agent_priority_strategy),
-                          neighbor_generation_strategy(neighbor_generation_strategy),
-                          prirority_ordering_strategy(prirority_ordering_strategy),
-                          replan_strategy(replan_strategy) {
+                          int default_group_size, bool debug, bool replan) :
+                          railEnv(railEnv1), framework(framework), soft_time_limit(soft_time_limit),
+                          default_group_size(default_group_size), replan_on(replan) {
 	//Initialize PythonCBS. Load map and agent info into memory
     if (debug)
-	    std::cout << "framework: " << framework << "    algo: " << algo << "(" << f_w << ")" << std::endl;
+	    std::cout << "framework: " << framework << std::endl;
 	options1.debug = debug;
     srand(0);
-	this->kRobust = 1;
 
     if (options1.debug)
-	std::cout << "get width height " << std::endl;
+	    std::cout << "get width height " << std::endl;
 	p::long_ rows(railEnv.attr("height"));
 	p::long_ cols(railEnv.attr("width"));
     if (options1.debug)
-	std::cout << "load map " << p::extract<int>(rows)<<" x "<< p::extract<int>(cols) << std::endl;
+	    std::cout << "load map " << p::extract<int>(rows)<<" x "<< p::extract<int>(cols) << std::endl;
 	//ml =  new MapLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
     ml = new FlatlandLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
     if (options1.debug)
-    std::cout << "load agents " << std::endl;
+        std::cout << "load agents " << std::endl;
 
 	al =  new AgentsLoader(*ml, railEnv.attr("agents"));
     if (options1.debug)
-	std::cout << "load done " << std::endl;
-    al->constraintTable.length_max = p::extract<int>(railEnv.attr("_max_episode_steps"));
-    std::cout << "Max timestep = " << al->constraintTable.length_max << endl; // the deadline is stored in the constraint table in al, which will be used for all path finding.
-	this->max_malfunction = max_malfunction;
-
+	    std::cout << "load done " << std::endl;
+    max_timestep = p::extract<int>(railEnv.attr("_max_episode_steps"));
+    al->constraintTable.length_max = max_timestep;
+    std::cout << "Max timestep = " << max_timestep << endl; // the deadline is stored in the constraint table in al, which will be used for all path finding.
+    malfunction_rate = p::extract<float>(railEnv.attr("malfunction_process_data").attr("malfunction_rate"));
+    std::cout << "Malfunction rate = " << malfunction_rate << std::endl;
+    curr_locations.resize(ml->map_size(), -1);
+    prev_locations.resize(ml->map_size(), -1);
+    action_converter.num_agent = al->getNumOfAllAgents();
+    action_converter.env_width = ml->cols;
 }
 
+template <class Map>
+p::dict PythonCBS<Map>::getActions(p::object railEnv1, int timestep, float time_limit)
+{
+
+    replan(railEnv1, timestep, time_limit);// replan
+
+    // update curr and prev locations
+    for (int i = 0; i < al->getNumOfAllAgents(); i++)
+    {
+        if (curr_locations[i] != al->agents_all[i].position)
+            prev_locations[i] = curr_locations[i];
+        curr_locations[i] = al->agents_all[i].position;
+    }
+
+
+    mcp.getNextLoc(timestep +  1); // get next location
+
+    // convert next location to actions of boost dict structure
+    boost::python::dict actions;
+    for(int i =0; i<al->getNumOfAllAgents(); i++){
+        actions[i] = action_converter.pos2action(i, curr_locations, prev_locations, mcp.to_go);
+    }
+    return actions;
+}
 
 template <class Map>
 void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) {
@@ -101,15 +121,15 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     {
         start_time = Time::now();// time(NULL) return time in seconds
 
-        vector<int> positions(al->getNumOfAllAgents());
+        /*vector<int> positions(al->getNumOfAllAgents());
         for (int i = 0; i < al->getNumOfAllAgents(); i++)
         {
             positions[i] = al->agents_all[i].position;
-        }
+        }*/
 
         al->updateAgents(*ml, railEnv.attr("agents"));
 
-        for (int i = 0; i < al->getNumOfAllAgents(); i++)
+        /*for (int i = 0; i < al->getNumOfAllAgents(); i++)
         {
             if (al->agents_all[i].position == mcp.to_go[i])
                 continue;
@@ -118,10 +138,10 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
             cout << "At timestep " << timestep << ", Agent " << i << " should move from " << positions[i] << " to " << mcp.to_go[i]
                 << " but it moves to " << al->agents_all[i].position << endl;
             assert(false);
-        }
+        }*/
 
         mcp.update();
-        if (!replan_on)
+        if (!replan_on || replan_times >= max_replan_times)
             return;
 
         for (auto p = al->new_malfunction_agents.begin(); p != al->new_malfunction_agents.end();)
@@ -220,7 +240,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
         al->paths_all = paths;
         al->updateConstraintTable();
 
-        LNS lns(*al, *ml, f_w, s, agent_priority_strategy, options1, corridor2, trainCorridor1, chasing,
+        LNS lns(*al, *ml, 1, agent_priority_strategy, options1, default_group_size,
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
         runtime = ((fsec)(Time::now() - start_time)).count();
         lns.replan(time_limit - runtime);
@@ -259,11 +279,6 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     }
 }
 
-template <class Map>
-void PythonCBS<Map>::updateFw(float fw) {
-	f_w = fw;
-}
-
 
 template <class Map>
 p::list PythonCBS<Map>::getResult() {
@@ -272,13 +287,13 @@ p::list PythonCBS<Map>::getResult() {
 }
 
 template <class Map>
-bool PythonCBS<Map>::search(float success_rate) {
+bool PythonCBS<Map>::search(float success_rate, int max_iterations) {
     start_time = Time::now();// time(NULL) return time in seconds
     if (options1.debug)
 		cout << "start initialize" << endl;
 	//initialize search engine
 	al->constraintTable.init(ml->map_size());
-    al->computeHeuristics(ml);
+    al->computeHeuristics(ml, this->existing_heuristics);
     if (options1.debug) {
         al->printAllAgentsInitGoal();
     }
@@ -298,10 +313,10 @@ bool PythonCBS<Map>::search(float success_rate) {
     }
     else if (framework == "LNS")
     {
-        LNS lns(*al, *ml, f_w, s, agent_priority_strategy, options1, corridor2, trainCorridor1, chasing,
+        LNS lns(*al, *ml, 1, agent_priority_strategy, options1, default_group_size,
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
         runtime = ((fsec)(Time::now() - start_time)).count(); 
-        bool succ = lns.run(hard_time_limit - runtime, soft_time_limit - runtime, success_rate);
+        bool succ = lns.run(hard_time_limit - runtime, soft_time_limit - runtime, success_rate, max_iterations);
         runtime = ((fsec)(Time::now() - start_time)).count();
         statistic_list[0].runtime = runtime;
         statistic_list[0].initial_runtime = lns.initial_runtime;
@@ -322,9 +337,9 @@ bool PythonCBS<Map>::search(float success_rate) {
         return succ;
     }
     else if(framework == "Parallel-LNS")
-        return parallel_LNS(4);
+        return parallel_LNS(4, success_rate, max_iterations);
     else if(framework == "Parallel-Neighbour-LNS")
-        return parallel_neighbour_LNS(4);
+        return parallel_neighbour_LNS(4, success_rate, max_iterations);
     else
 	    return false;
 }
@@ -367,12 +382,14 @@ p::dict PythonCBS<Map>::getResultDetail() {
 	result["initial_makespan"] = statistic_list[thread_id].initial_makespan;
     result["final_makespan"] = statistic_list[thread_id].makespan;
     result["initial_reward"] = statistic_list[thread_id].initial_sum_of_costs * 1.0 /
-            (al->constraintTable.length_max * al->getNumOfAllAgents());
+            (max_timestep * al->getNumOfAllAgents());
     result["final_reward"] = statistic_list[thread_id].sum_of_costs * 1.0 /
-            (al->constraintTable.length_max * al->getNumOfAllAgents());
+            (max_timestep * al->getNumOfAllAgents());
     result["iterations"] = statistic_list[thread_id].iterations;
-    result["num_of_agents"] = al->getNumOfAllAgents();
     result["replan_times"] = replan_times;
+    result["num_of_agents"] = al->getNumOfAllAgents();
+    result["max_timestep"] = max_timestep;
+    result["malfunction_rate"] = malfunction_rate;
     //std::stringstream stream;
     //stream << std::fixed << std::setprecision(1) << f_w;
     //std::string s = stream.str();
@@ -508,9 +525,9 @@ void PythonCBS<Map>::generateNeighbor(int agent_id, const PathEntry& start, int 
 }
 
 template <class Map>
-bool PythonCBS<Map>::parallel_LNS(int no_threads){
+bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_iterations){
     al->constraintTable.init(ml->map_size());
-    al->computeHeuristics(ml);
+    al->computeHeuristics(ml,this->existing_heuristics);
     this->al_pool.resize(no_threads);
     this->lns_pool.resize(no_threads);
     this->statistic_list.resize(no_threads);
@@ -520,13 +537,16 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
         cout<<"Max threads number: 4"<<endl;
         exit(1);
     }
+    std::atomic<bool> complete;
     for (int i = 0; i<no_threads;i++){
         AgentsLoader* temp = this->al->clone();
         this->al_pool[i] = temp;
-        this->lns_pool[i] = new LNS(*al_pool[i], *ml, f_w, s, strategies[i], options1, corridor2, trainCorridor1, chasing,
-                neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
+        this->lns_pool[i] = new LNS(*al_pool[i], *ml, 1, strategies[i], options1,
+                default_group_size, neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
+        this->lns_pool[i]->complete = &complete;
         runtime = ((fsec)(Time::now() - start_time)).count();;
-        wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,*this->lns_pool[i]);
+        wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,
+                success_rate, max_iterations,*this->lns_pool[i]);
         pthread_create( &threads[i], NULL, call_func, w );
     }
     // wait until all finish
@@ -557,7 +577,8 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
                 << "Final makespan = " << makespan  << ", "
                 << endl;
         }
-        if (solution_cost < best_cost){
+        if ((best_finished_agents < finished_agents) ||
+            (best_finished_agents == finished_agents && solution_cost < best_cost)){
             best_cost = solution_cost;
             best_al = i;
             best_makespan = makespan;
@@ -579,9 +600,9 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
 }
 
 template <class Map>
-bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads){
+bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads, float success_rate, int max_iterations){
     al->constraintTable.init(ml->map_size());
-    al->computeHeuristics(ml);
+    al->computeHeuristics(ml,this->existing_heuristics);
     this->al_pool.resize(no_threads);
     this->lns_pool.resize(no_threads);
     this->statistic_list.resize(no_threads);
@@ -596,11 +617,11 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads){
     for (int i = 0; i<no_threads;i++){
         AgentsLoader* temp = this->al->clone();
         this->al_pool[i] = temp;
-        this->lns_pool[i] = new LNS(*al_pool[i], *ml, f_w, s, strategies[i], options1, corridor2, trainCorridor1, chasing,
+        this->lns_pool[i] = new LNS(*al_pool[i], *ml, 1, strategies[i], options1, default_group_size,
                                     3, prirority_ordering_strategy, replan_strategy);
-        this->lns_pool[i]->pp_only = true;
         runtime = ((fsec)(Time::now() - start_time)).count();;
-        wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,*this->lns_pool[i]);
+        wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,
+                           success_rate, max_iterations, *this->lns_pool[i]);
         wrap_handle.push_back(w);
         pthread_create( &threads[i], NULL, call_func, w );
     }
@@ -617,6 +638,7 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads){
         size_t solution_cost = 0;
         int finished_agents = 0;
         size_t makespan = 0;
+        int best_finished_agents = -1;
         for (const auto& path : this->al_pool[i]->paths_all)
         {
             solution_cost += path.size();
@@ -630,7 +652,8 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads){
                  << "Final makespan = " << makespan  << ", "
                  << endl;
         }
-        if (solution_cost < best_pp_cost){
+        if ((best_finished_agents < finished_agents) ||
+            (best_finished_agents == finished_agents && solution_cost < best_pp_cost)){
             best_pp_cost = solution_cost;
             best_pp_al = i;
         }
@@ -649,11 +672,12 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads){
     //run lns skip pp
     for (int i = 0; i<no_threads;i++){
         delete this->lns_pool[i];
-        this->lns_pool[i] = new LNS(*al_pool[i], *ml, f_w, s, 0, options1, corridor2, trainCorridor1, chasing,
+        this->lns_pool[i] = new LNS(*al_pool[i], *ml, 1, 0, options1, default_group_size,
                                     neighbours[i], prirority_ordering_strategy, replan_strategy);
         this->lns_pool[i]->skip_pp = true;
         runtime = ((fsec)(Time::now() - start_time)).count();;
-        wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,*this->lns_pool[i]);
+        wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,
+                success_rate, max_iterations, *this->lns_pool[i]);
         wrap_handle.push_back(w);
         pthread_create( &threads[i], NULL, call_func, w );
     }
@@ -685,13 +709,15 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads){
                  << "Final makespan = " << makespan  << ", "
                  << endl;
         }
-        if (solution_cost < best_cost){
+        if ((best_finished_agents < finished_agents) ||
+            (best_finished_agents == finished_agents && solution_cost < best_cost)){
             best_cost = solution_cost;
             best_al = i;
             best_makespan = makespan;
             best_finished_agents = finished_agents;
         }
     }
+    this->best_initisl_priority_strategy = strategies[best_al];
     delete this->al;
     this->al = this->al_pool[best_al];
     this->best_thread_id = best_al;
@@ -717,19 +743,15 @@ template class PythonCBS<FlatlandLoader>;
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
 {
 	using namespace boost::python;
-	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, float,
-	        int, int,float,bool,int,int,int,int>())
+	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, float,int, bool, bool>())
 		.def("getResult", &PythonCBS<FlatlandLoader>::getResult)
 		.def("search", &PythonCBS<FlatlandLoader>::search)
 		.def("hasConflicts", &PythonCBS<FlatlandLoader>::findConflicts)
 		.def("getResultDetail", &PythonCBS<FlatlandLoader>::getResultDetail)
 		.def("writeResultsToFile", &PythonCBS<FlatlandLoader>::writeResultsToFile)
-		.def("replan",&PythonCBS<FlatlandLoader>::replan)
 		.def("updateAgents", &PythonCBS<FlatlandLoader>::updateAgents)
-		.def("updateFw", &PythonCBS<FlatlandLoader>::updateFw)
 		.def("buildMCP", &PythonCBS<FlatlandLoader>::buildMCP)
         .def("getActions",&PythonCBS<FlatlandLoader>::getActions)
-        .def("getNextLoc", &PythonCBS<FlatlandLoader>::getNextLoc)
         .def("clearMCP", &PythonCBS<FlatlandLoader>::clearMCP)
         .def("printAllMCP", &PythonCBS<FlatlandLoader>::printAllMCP)
         .def("printMCP", &PythonCBS<FlatlandLoader>::printMCP)

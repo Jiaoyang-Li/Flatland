@@ -58,17 +58,55 @@ min_duration = 3
 max_duration = 20
 
 
-agent_percentages = [1.1] * 400  # agent percentages for initial planning
-for i in range(261, 400, 10):
-    agent_percentages[i] = 0.9
-replan = [(i % 10 != 0) and (10 <= i < 250) for i in range(400)]  # replan or not
-#max_iterations = [0] * 40  # max iterations for LNS
-#for i in range(1, 22):
-#    max_iterations[i] = 1000
-max_iterations = [0, 0, 5, 10, 15, 45, 100, 175, 145, 285, 1470, 1655, 2090, 1070,
-                  1000, 805, 1390, 830, 900, 1310, 1065, 770, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]   # max iterations for LNS, learnt from local instances
+agent_percentages = [1.1 for _ in range(400)]  # agent percentages
+replan = [(i % 10 != 0) and (10 <= i < 360) for i in range(400)]  # replan or not
+max_iterations = [0 for _ in range(400)]  # max iterations for LNS
+for i in range(10, 220):
+    max_iterations[i] = 1000
 
+'''agent_percentages[351] = 0.70
+agent_percentages[350] = 0.75
+agent_percentages[346] = 0.75
+agent_percentages[301] = 0.75
+agent_percentages[291] = 0.80
+agent_percentages[322] = 0.80
+agent_percentages[321] = 0.80
+agent_percentages[320] = 0.80
+agent_percentages[311] = 0.80
+agent_percentages[331] = 0.85
+agent_percentages[340] = 0.85
+agent_percentages[341] = 0.85
+agent_percentages[349] = 0.90
+agent_percentages[309] = 0.90
+agent_percentages[281] = 0.95
+agent_percentages[333] = 0.95
+agent_percentages[304] = 0.95
+agent_percentages[353] = 0.95
+agent_percentages[342] = 0.95
+agent_percentages[352] = 0.95
+agent_percentages[344] = 0.95
+agent_percentages[283] = 0.95
+agent_percentages[295] = 0.95
+agent_percentages[282] = 0.95
+agent_percentages[354] = 0.85
+agent_percentages[357] = 0.90'''
+
+replan[142] = False
+replan[219] = False
+replan[252] = False
+agent_percentages[252] = 0.80
+replan[254] = False
+agent_percentages[254] = 0.95
+replan[258] = False
+replan[261] = False
+agent_percentages[261] = 0.80
+replan[263] = False
+replan[271] = False
+agent_percentages[271] = 0.80
+replan[272] = False
+replan[274] = False
+replan[279] = False
+agent_percentages[279] = 0.95
 
 
 #####################################################################
@@ -172,13 +210,13 @@ while True:
         env_height = local_env.height
 
 
-    framework = "Parallel-LNS"
+    framework = "LNS"
     debug = False
     # remaining_time = total_time_limit - (time.time() - global_time_start)
     time_limit = 580 # (predict_time_limit/predict_remaining_time) * remaining_time
     default_group_size = 5  # max number of agents in a group
     CBS = PythonCBS(local_env, framework, time_limit, default_group_size, debug, replan[evaluation_number])
-    CBS.search(agent_percentages[evaluation_number], max_iterations[evaluation_number//10])
+    CBS.search(agent_percentages[evaluation_number], max_iterations[evaluation_number])
     evaluation_number += 1
     CBS.buildMCP()
 
