@@ -72,9 +72,13 @@ class SIPP: public SinglePlanning
 public:
     bool search(int upperbound = MAX_COST);
     SIPP(const FlatlandLoader& ml, AgentsLoader& al, double f_w, float time_limit, options option):
-            SinglePlanning(ml, al, f_w, time_limit, option) {}
+            SinglePlanning(ml, al, f_w, time_limit, option) {};
+
 
 private:
+    int getPenalty(SIPPNode* node);
+    int numberAgentsPass(int exit_loc, int time_range, int timestep);
+    int timeInCorridor(SIPPNode* node);
 
     void getSafeIntervals(int prev_loc, int prev_timestep,
                           const Interval& prev_interval, int next_loc, int next_h, list<Interval>& intervals);

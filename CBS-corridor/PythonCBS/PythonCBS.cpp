@@ -29,6 +29,7 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, float soft_time_
 	    std::cout << "load map " << p::extract<int>(rows)<<" x "<< p::extract<int>(cols) << std::endl;
 	//ml =  new MapLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
     ml = new FlatlandLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
+    ml->setMalfunctionRate(p::extract<float>(railEnv.attr("malfunction_process_data").attr("malfunction_rate")));
     if (options1.debug)
         std::cout << "load agents " << std::endl;
 

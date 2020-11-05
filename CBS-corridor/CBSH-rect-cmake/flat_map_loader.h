@@ -24,6 +24,8 @@ public:
 	FlatlandLoader();
 	int getDegree(int loc) const;
     int getDegree(int loc,int heading) const;
+    float getMalfunctionRate() const {return this->malfunction_rate;}
+    float setMalfunctionRate(float rate){this->malfunction_rate = rate;}
 
 	boost::python::object rail;
 	railCell* railMap;
@@ -32,5 +34,6 @@ public:
 	~FlatlandLoader();
 protected:
 	float blockRate;
+	float malfunction_rate = 0;
 };
 

@@ -87,6 +87,7 @@ void MCP::simulate(vector<Path>& paths, int timestep)
                     int loc = al->paths_all[i][no_wait_time[i][copy_agent_time[i]]].location;
                     cout << "Agent " << i << ": " << paths[i][t+1].location << "->" << loc <<
                         ", which has to be first visited by " << copy_mcp[loc].front() << endl;
+                    assert(loc!=0);
                 }
             }
             assert(move);

@@ -321,7 +321,6 @@ bool SIPP::search(int upperbound) // TODO: weighted SIPP
             agent.malfunction_left, // malfunction_left is the earliest timestep when the agent can start to move
             make_pair(0,constraintTable.length_max + 1));
 
-
     if (agent.status != 0) {
         start->loc = start_location;
         start->h_val--;
@@ -335,6 +334,16 @@ bool SIPP::search(int upperbound) // TODO: weighted SIPP
             start->interval = make_pair(0, t_max);
         }
     }
+//    else{
+//        if (constraintTable.get_latest_constrained_timestep(start_location) > 0)
+//        {
+//            int t_max = agent.malfunction_left + 1;
+//            while(constraintTable.is_constrained(agent.agent_id, start_location, t_max, -1) &&
+//                  t_max <= constraintTable.length_max+5)
+//                t_max++;
+//            start->interval = make_pair(0, t_max+5);
+//        }
+//    }
 
 
     start->heading = agent.heading;
@@ -415,10 +424,11 @@ bool SIPP::search(int upperbound) // TODO: weighted SIPP
             {
                 time_generated += 1;
                 int next_timestep = max(curr->timestep + 1, next_interval.first);
-                if (next_timestep + next_h_val >= upperbound)
+                int next_g_val =  curr->g_val + (next_interval.first - curr->timestep);
+                if (next_timestep + next_h_val >= upperbound || next_timestep + next_h_val >= constraintTable.length_max)
                     continue;
                 // generate (maybe temporary) node
-                auto next = new SIPPNode(next_id, next_timestep, next_h_val, curr, next_timestep, next_interval);
+                auto next = new SIPPNode(next_id, next_g_val, next_h_val, curr, next_timestep, next_interval);
                 next->heading = next_heading;
                 next->time_generated = time_generated;
                 next->position_fraction = move.position_fraction;
@@ -428,6 +438,15 @@ bool SIPP::search(int upperbound) // TODO: weighted SIPP
                     next->show_time = next_timestep;
                 else
                     next->show_time = curr->show_time;
+
+                if(ml.getMalfunctionRate() > 0 && ml.getDegree(next->loc,next->heading) == 1) {
+                    list<Transition> next_locs;
+                    ml.get_transitions(next_locs, next->loc, next->heading, true);
+                    assert(next_locs.size()==1);
+                    if (ml.getDegree(next_locs.front().location,next_locs.front().heading) > 1) {
+                        next->g_val += getPenalty(next);
+                    }
+                }
                 // try to retrieve it from the hash table
                 it = allNodes_table.find(next);
                 if (it == allNodes_table.end())
@@ -467,6 +486,38 @@ bool SIPP::search(int upperbound) // TODO: weighted SIPP
     // no path found
     releaseClosedListNodes();
     return false;
+}
+
+int SIPP::getPenalty(SIPPNode* node){
+    int timerange = timeInCorridor(node);
+    int passAgents = numberAgentsPass(node->loc,timerange,node->timestep);
+    int malfunction_steps_exp = 36;
+    int malfunction_expection = ml.getMalfunctionRate() * passAgents *malfunction_steps_exp * timerange;
+//    cout<<malfunction_expection<<","<<passAgents<<","<< ml.getMalfunctionRate()<<","<<endl;
+
+
+    return malfunction_expection;
+}
+
+int SIPP::numberAgentsPass(int exit_loc, int time_range, int timestep){
+    int agents_pass = 0;
+    for(int t = timestep; t>0; t--){
+        if (constraintTable.is_constrained(agent.agent_id,exit_loc,t)) agents_pass++;
+        if ((timestep - t) > time_range) break;
+    }
+    return agents_pass;
+}
+
+int SIPP::timeInCorridor(SIPPNode* node){
+    SIPPNode* current = node;
+    int t = 0;
+    while(current->parent!= nullptr){
+        if (current->loc == -1 || ml.getDegree(current->loc,current->heading) > 1)
+            break;
+        t++;
+        current = current->parent;
+    }
+    return t;
 }
 
 
