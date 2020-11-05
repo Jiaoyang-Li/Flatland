@@ -239,9 +239,9 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
         // update paths
         al->paths_all = paths;
         al->updateConstraintTable();
-
+        std::atomic<bool> complete;
         LNS lns(*al, *ml, 1, agent_priority_strategy, options1, default_group_size,
-                neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
+                neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy,complete);
         runtime = ((fsec)(Time::now() - start_time)).count();
         lns.replan(time_limit - runtime);
         replan_times += lns.replan_times;
@@ -313,8 +313,9 @@ bool PythonCBS<Map>::search(float success_rate, int max_iterations) {
     }
     else if (framework == "LNS")
     {
+        std::atomic<bool> complete;
         LNS lns(*al, *ml, 1, agent_priority_strategy, options1, default_group_size,
-                neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
+                neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy,complete);
         runtime = ((fsec)(Time::now() - start_time)).count(); 
         bool succ = lns.run(hard_time_limit - runtime, soft_time_limit - runtime, success_rate, max_iterations);
         runtime = ((fsec)(Time::now() - start_time)).count();
@@ -542,8 +543,7 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_it
         AgentsLoader* temp = this->al->clone();
         this->al_pool[i] = temp;
         this->lns_pool[i] = new LNS(*al_pool[i], *ml, 1, strategies[i], options1,
-                default_group_size, neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy);
-        this->lns_pool[i]->complete = &complete;
+                default_group_size, neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy,complete);
         runtime = ((fsec)(Time::now() - start_time)).count();;
         wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,
                 success_rate, max_iterations,*this->lns_pool[i]);
@@ -614,11 +614,12 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads, float success_rate, 
         exit(1);
     }
     //run pp only
+    std::atomic<bool> complete; //don't stop it self when other
     for (int i = 0; i<no_threads;i++){
         AgentsLoader* temp = this->al->clone();
         this->al_pool[i] = temp;
         this->lns_pool[i] = new LNS(*al_pool[i], *ml, 1, strategies[i], options1, default_group_size,
-                                    3, prirority_ordering_strategy, replan_strategy);
+                                    3, prirority_ordering_strategy, replan_strategy,complete);
         runtime = ((fsec)(Time::now() - start_time)).count();;
         wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,
                            success_rate, max_iterations, *this->lns_pool[i]);
@@ -669,11 +670,12 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads, float success_rate, 
         this->al_pool[i] = temp;
     }
 
+    complete.store(false); //don't stop it self when other
     //run lns skip pp
     for (int i = 0; i<no_threads;i++){
         delete this->lns_pool[i];
         this->lns_pool[i] = new LNS(*al_pool[i], *ml, 1, 0, options1, default_group_size,
-                                    neighbours[i], prirority_ordering_strategy, replan_strategy);
+                                    neighbours[i], prirority_ordering_strategy, replan_strategy,complete);
         this->lns_pool[i]->skip_pp = true;
         runtime = ((fsec)(Time::now() - start_time)).count();;
         wrap* w = new wrap(hard_time_limit - runtime, soft_time_limit - runtime,

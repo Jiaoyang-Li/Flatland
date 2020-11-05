@@ -10,7 +10,7 @@ typedef std::chrono::duration<float> fsec;
 class LNS
 {
 public:
-    std::atomic<bool>* complete= nullptr ;
+    std::atomic<bool>& complete ;
     bool pp_only = false;
     bool skip_pp = false;
 
@@ -29,19 +29,19 @@ public:
 
     LNS(AgentsLoader& al, FlatlandLoader& ml, double f_w,  int agent_priority_strategy,
         const options& options1,int max_group_size,
-        int neighbor_generation_strategy,int prirority_ordering_strategy, int replan_strategy):
+        int neighbor_generation_strategy,int prirority_ordering_strategy, int replan_strategy,std::atomic<bool>& complete):
             al(al), ml(ml), f_w(f_w), agent_priority_strategy(agent_priority_strategy), options1(options1),
             max_group_size(max_group_size),
             destroy_strategy(neighbor_generation_strategy),
             prirority_ordering_strategy(prirority_ordering_strategy),
-            replan_strategy(replan_strategy) {
+            replan_strategy(replan_strategy),complete(complete) {
         max_timestep = al.constraintTable.length_max;
     }
     bool run(float hard_time_limit, float soft_time_limit, float success_rate = 1.1, int max_iterations = 5000);
     bool replan(float time_limit);
     //bool replan(list<int>& to_be_replanned, float time_limit);
     bool getInitialSolution(float success_rate = 1.1);
-    void set_complete(std::atomic<bool>* complete){this->complete = complete;}
+//    void set_complete(std::atomic<bool>* complete){this->complete = complete;}
 private:
     high_resolution_clock::time_point start_time;
     AgentsLoader& al;
