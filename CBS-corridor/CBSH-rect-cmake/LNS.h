@@ -11,8 +11,7 @@ typedef std::chrono::duration<float> fsec;
 class LNS
 {
 public:
-    std::atomic<bool>* complete= nullptr ;
-    std::atomic<int>* complete_makespan= nullptr ;
+    std::atomic<int>* complete= nullptr ;
 
     bool pp_only = false;
     bool skip_pp = false;
@@ -37,14 +36,14 @@ public:
             max_group_size(max_group_size),
             destroy_strategy(neighbor_generation_strategy),
             prirority_ordering_strategy(prirority_ordering_strategy),
-            replan_strategy(replan_strategy) {
+            replan_strategy(replan_strategy),stop_threshold(stop_threshold) {
         max_timestep = al.constraintTable.length_max;
     }
     bool run(float hard_time_limit, float soft_time_limit, float success_rate = 1.1, int max_iterations = 5000);
     bool replan(float time_limit);
     //bool replan(list<int>& to_be_replanned, float time_limit);
     bool getInitialSolution(float success_rate = 1.1);
-    void set_complete(std::atomic<bool>* complete, std::atomic<int>* complete_makespan){this->complete = complete; this->complete_makespan = complete_makespan;}
+    void set_complete(std::atomic<int>* complete){this->complete = complete;}
 private:
     high_resolution_clock::time_point start_time;
     AgentsLoader& al;
