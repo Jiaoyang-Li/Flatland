@@ -537,7 +537,7 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_it
         cout<<"Max threads number: 4"<<endl;
         exit(1);
     }
-    std::atomic<Thread_data> complete;
+    std::atomic<Thread_data> complete();
     complete.store(Thread_data(false,0,0,0));
     for (int i = 0; i<no_threads;i++){
         AgentsLoader* temp = this->al->clone();
