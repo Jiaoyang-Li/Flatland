@@ -328,30 +328,27 @@ bool LNS::replan(float time_limit)
                     return true;
                 int i = agent.first;
                 int t = agent.second;
-                if (tabu_list.count(i) > 0 //|| // the agent has already been replanned, or
-                    //(get<1>(intersection) - 1 > 0 && // the agent is following the mal_agent. We do not replan them
-                    //al.paths_all[i][t - 1].location >= 0 &&
-                    //al.paths_all[i][t - 1].location == al.paths_all[mal_agent][get<1>(intersection) - 2].location)
-                    )
+                if (tabu_list.count(i) > 0 || // the agent has already been replanned, or
+                    (get<1>(intersection) - 1 > 0 && // the agent is following the mal_agent. We do not replan them
+                     al.paths_all[i][t - 1].location >= 0 &&
+                     al.paths_all[i][t - 1].location == al.paths_all[mal_agent][get<1>(intersection) - 2].location)
+                        )
                     continue;
                 auto copy = al.paths_all[i];
                 al.constraintTable.delete_path(i, al.paths_all[i]);
                 runtime = ((fsec) (Time::now() - start_time)).count();
                 al.agents[0] = &al.agents_all[i];
-                SIPP planner(ml,al,f_w,time_limit - runtime,options1);
+                SIPP planner(ml, al, f_w, time_limit - runtime, options1);
                 planner.search();
                 replan_times++;
-                if (planner.path.empty())
-                {
+                tabu_list.insert(i);
+                if (!planner.path.empty()) {
+                    addAgentPath(i, planner.path);
+                } else if (!copy.empty() &&
+                           (al.agents_all[i].status > 0 || copy.back().location == al.agents_all[i].goal_location)) {
                     addAgentPath(i, copy);
                 }
-                else
-                {
-                    addAgentPath(i, planner.path);
-                    tabu_list.insert(i);
-                }
             }
-
             agent_groups.push_back(agents);
         }
     }

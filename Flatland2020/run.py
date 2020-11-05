@@ -59,15 +59,16 @@ max_duration = 20
 
 
 agent_percentages = [1.1] * 400  # agent percentages for initial planning
+replan = [(i % 10 != 0) and (10 <= i < 280) for i in range(400)]  # replan or not
 for i in range(261, 400, 10):
     agent_percentages[i] = 0.9
-replan = [(i % 10 != 0) and (10 <= i < 250) for i in range(400)]  # replan or not
-#max_iterations = [0] * 40  # max iterations for LNS
-#for i in range(1, 22):
-#    max_iterations[i] = 1000
-max_iterations = [0, 0, 5, 10, 15, 45, 100, 175, 145, 285, 1470, 1655, 2090, 1070,
-                  1000, 805, 1390, 830, 900, 1310, 1065, 770, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]   # max iterations for LNS, learnt from local instances
+    replan[i] = False
+max_iterations = [0] * 40  # max iterations for LNS
+for i in range(1, 22):
+    max_iterations[i] = 1000
+#max_iterations = [0, 0, 5, 10, 15, 45, 100, 175, 145, 285, 1470, 1655, 2090, 1070,
+#                  1000, 805, 1390, 830, 900, 1310, 1065, 770, 0, 0, 0, 0, 0, 0, 0,
+#                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]   # max iterations for LNS, learnt from local instances
 
 
 
@@ -172,7 +173,7 @@ while True:
         env_height = local_env.height
 
 
-    framework = "Parallel-LNS"
+    framework = "LNS"
     debug = False
     # remaining_time = total_time_limit - (time.time() - global_time_start)
     time_limit = 580 # (predict_time_limit/predict_remaining_time) * remaining_time
