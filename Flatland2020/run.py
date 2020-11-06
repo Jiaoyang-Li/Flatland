@@ -59,7 +59,7 @@ max_duration = 20
 
 
 agent_percentages = [1.1] * 400  # agent percentages for initial planning, learnt from local instances
-replan = [(i % 10 != 0) and (10 <= i < 290) for i in range(400)]  # replan or not
+replan = [(i % 10 != 0) and (10 <= i < 300) for i in range(400)]  # replan or not
 for i in range(261, 340, 10):
     agent_percentages[i] = 0.9
     replan[i] = False
@@ -75,7 +75,10 @@ for i in range(371, 400, 10):
 max_iterations = [0, 0, 5, 10, 25, 50, 20, 155, 145, 250, 445, 1230, 1230, 1095,
                   1095, 1095, 1090, 1000, 1000, 955, 955, 560, 5, 5, 5, 5, 5, 0,
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]  # max iterations for LNS, learnt from local instances
-frameworks = ["Parallel-LNS"] * 40
+frameworks = ["LNS"] * 40
+for i in range(len(max_iterations)):
+    if max_iterations[i] > 0:
+        frameworks[i] = "Parallel-LNS"
 
 
 
