@@ -167,7 +167,7 @@ private:
     int replan_strategy = 1;
     bool replan_on = false;
     int max_replan_times = 50000;
-    float max_replan_runtime = 150; // seconds
+    float max_replan_runtime = 100; // seconds
 
     int replan_times = 0;
     float replan_runtime = 0;

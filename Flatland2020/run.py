@@ -73,7 +73,7 @@ for i in range(371, 400, 10):
 #for i in range(1, 22):
 #    max_iterations[i] = 1000
 max_iterations = [0, 0, 5, 10, 25, 50, 20, 155, 145, 250, 445, 1230, 1230, 1095,
-                  1095, 1095, 1090, 1000, 1000, 955, 955, 560, 5, 5, 5, 5, 0, 0,
+                  1095, 1095, 1090, 1000, 1000, 955, 955, 560, 5, 5, 5, 5, 5, 0,
                   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]  # max iterations for LNS, learnt from local instances
 frameworks = ["LNS"] * 40
 for i in range(len(max_iterations)):
