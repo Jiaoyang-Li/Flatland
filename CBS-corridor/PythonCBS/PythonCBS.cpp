@@ -592,9 +592,14 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_it
             best_finished_agents = finished_agents;
         }
         statistic_list[i].runtime = runtime;
-        statistic_list[i].sum_of_costs = solution_cost;
-        statistic_list[i].makespan = makespan;
-        statistic_list[i].unfinished_agents = this->al->getNumOfAllAgents() - finished_agents;
+        statistic_list[i].initial_runtime = this->lns_pool[i]->initial_runtime;
+        statistic_list[i].sum_of_costs = this->lns_pool[i]->sum_of_costs;
+        statistic_list[i].initial_sum_of_costs = this->lns_pool[i]->initial_sum_of_costs;
+        statistic_list[i].makespan = this->lns_pool[i]->makespan;
+        statistic_list[i].initial_makespan = this->lns_pool[i]->initial_makespan;
+        statistic_list[i].iterations = this->lns_pool[i]->iterations;
+        iteration_stats[i] = this->lns_pool[i]->iteration_stats;
+
 
     }
     delete this->al;
@@ -728,6 +733,7 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads, float success_rate, 
             best_makespan = makespan;
             best_finished_agents = finished_agents;
         }
+
     }
     this->best_initisl_priority_strategy = strategies[best_al];
     delete this->al;
