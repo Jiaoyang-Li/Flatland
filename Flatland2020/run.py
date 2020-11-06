@@ -187,7 +187,7 @@ while True:
     if evaluation_number < 340:
         time_limit = 200
     else:
-        time_limit = 500
+        time_limit = 300
     default_group_size = 5  # max number of agents in a group
     stop_threshold = 30
     CBS = PythonCBS(local_env, frameworks[evaluation_number//10], time_limit, default_group_size, debug, replan[evaluation_number],stop_threshold)
