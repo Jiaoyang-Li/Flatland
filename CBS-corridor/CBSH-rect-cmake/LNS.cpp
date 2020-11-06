@@ -461,7 +461,7 @@ bool LNS::getInitialSolution(float success_rate, int max_iterations)
     al.agents.resize(1);
     int remaining_agents = (int)neighbors.size();
     int dead_agents = 0;
-    int sum_of_costs = 0;
+    int sum_of_costs = al.sum_of_distances;
     int makespan = 0;
     runtime = ((fsec)(Time::now() - start_time)).count();
     for (auto agent : neighbors)
@@ -498,14 +498,14 @@ bool LNS::getInitialSolution(float success_rate, int max_iterations)
         runtime = ((fsec)(Time::now() - start_time)).count();
         if (!planner.path.empty()) // TODO: can be deleted in the submission verison
         {
-            sum_of_costs += (int) planner.path.size() - 1;
+            sum_of_costs += (int) planner.path.size() - 1 - al.agents_all[agent].distance_to_goal;
             makespan = max((int) planner.path.size() - 1, makespan);
             remaining_agents--;
         }
         else if (runtime < hard_time_limit)
         {
             dead_agents++;
-            sum_of_costs += al.constraintTable.length_max;
+            sum_of_costs += al.constraintTable.length_max - al.agents_all[agent].distance_to_goal;
             makespan = al.constraintTable.length_max;
             remaining_agents--;
         }
