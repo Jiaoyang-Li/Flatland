@@ -148,7 +148,7 @@ private:
 	vector<AgentsLoader*> al_pool;
 	vector<LNS*> lns_pool;
 	options options1;
-    float hard_time_limit = 580;
+    float hard_time_limit = 590;
     float soft_time_limit;
 	int best_thread_id = 0;
 	int best_initisl_priority_strategy = -1;

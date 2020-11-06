@@ -15,7 +15,7 @@ public:
 
     bool pp_only = false;
     bool skip_pp = false;
-
+    bool dead_agent = false; // dead agent is detected
     float runtime = 0;
     float initial_runtime = 0;
     int sum_of_costs = 0;

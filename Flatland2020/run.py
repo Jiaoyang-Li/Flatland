@@ -59,7 +59,7 @@ max_duration = 20
 
 
 agent_percentages = [1.1] * 400  # agent percentages for initial planning, learnt from local instances
-replan = [(i % 10 != 0) and (10 <= i < 300) for i in range(400)]  # replan or not
+replan = [(i % 10 != 0) and (10 <= i < 290) for i in range(400)]  # replan or not
 for i in range(261, 340, 10):
     agent_percentages[i] = 0.9
     replan[i] = False
@@ -184,8 +184,10 @@ while True:
 
 
     debug = False
-    # remaining_time = total_time_limit - (time.time() - global_time_start)
-    time_limit = 580 # (predict_time_limit/predict_remaining_time) * remaining_time
+    if evaluation_number < 340:
+        time_limit = 200
+    else
+        time_limit = 500
     default_group_size = 5  # max number of agents in a group
     stop_threshold = 30
     CBS = PythonCBS(local_env, frameworks[evaluation_number//10], time_limit, default_group_size, debug, replan[evaluation_number],stop_threshold)
