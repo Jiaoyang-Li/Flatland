@@ -456,7 +456,7 @@ bool LNS::getInitialSolution(float success_rate)
                     " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" << "agent priority "<< agent_priority_strategy<< endl;
             cout << "Sum of costs = " << sum_of_costs <<  " and makespan = " << makespan << endl;
             if ( this->complete!= nullptr && this->complete->load()<0) {
-                this->complete->store(makespan);
+                this->complete->store(sum_of_costs);
             }
             return false;
         }
