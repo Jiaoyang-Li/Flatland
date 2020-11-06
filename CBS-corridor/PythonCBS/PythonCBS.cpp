@@ -153,7 +153,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
             LNS lns(*al, *ml, 1, agent_priority_strategy, options1, default_group_size,
                     neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy,this->stop_threshold);
             runtime = ((fsec)(Time::now() - start_time)).count();
-            lns.replan(al->unplanned_agents, time_limit - runtime);
+            lns.replan(al->unplanned_agents, 2 * time_limit - runtime);
             mcp.clear();
             mcp.build(al, ml, options1);
             runtime = ((fsec)(Time::now() - start_time)).count();
