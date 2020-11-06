@@ -320,10 +320,9 @@ bool LNS::replan(float time_limit)
             // get agents that pass through the intersection after the mal agent
             list<pair<int, int>> agents; // <agent_id, timestep>
             al.constraintTable.get_agents(agents, mal_agent, intersection); // TODO: get this information from MCP instead of constraint table
-
+            runtime = ((fsec) (Time::now() - start_time)).count();
             for (const auto &agent : agents) // replan the agents one by one
             {
-                runtime = ((fsec) (Time::now() - start_time)).count();
                 if (runtime >= time_limit)
                     return true;
                 int i = agent.first;
@@ -350,6 +349,9 @@ bool LNS::replan(float time_limit)
                 } else {
                     al.paths_all[i].clear();
                 }
+                runtime = ((fsec) (Time::now() - start_time)).count();
+                if (runtime < time_limit && planner.path.empty())
+                    dead_agent = true;
             }
             agent_groups.push_back(agents);
         }
@@ -396,11 +398,9 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
     set<int> tabu_list; // record the agents already been replanned
     al.num_of_agents = 1;
     al.agents.resize(1);
-    while (!to_be_replanned.empty())
+    runtime = ((fsec)(Time::now() - start_time)).count();
+    while (!to_be_replanned.empty() && runtime < time_limit)
     {
-        runtime = ((fsec) (Time::now() - start_time)).count();
-        if (runtime >= time_limit)
-            return true;
         int i = to_be_replanned.front();
         to_be_replanned.pop_front();
         if (tabu_list.count(i) > 0)
@@ -411,8 +411,13 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
         al.agents[0] = &al.agents_all[i];
         SIPP planner(ml, al, f_w, time_limit - runtime, options1);
         planner.search();
+        runtime = ((fsec) (Time::now() - start_time)).count();
         if (!planner.path.empty()) {
             addAgentPath(i, planner.path);
+        }
+        else if (runtime > time_limit)
+        {
+            to_be_replanned.push_back(i);
         }
     }
 
@@ -440,10 +445,9 @@ bool LNS::getInitialSolution(float success_rate)
     int dead_agents = 0;
     int sum_of_costs = 0;
     int makespan = 0;
+    runtime = ((fsec)(Time::now() - start_time)).count();
     for (auto agent : neighbors)
     {
-        runtime = ((fsec)(Time::now() - start_time)).count();
-
         if ( (this->complete!= nullptr && this->complete->load()>= 0 && (remaining_agents > this->stop_threshold || sum_of_costs > this->complete->load()) )
             || runtime >= hard_time_limit
             || al.getNumOfAllAgents() - remaining_agents >= success_rate * al.getNumOfAllAgents())
@@ -465,17 +469,19 @@ bool LNS::getInitialSolution(float success_rate)
         planner.search();
         updateCBSResults(planner);
         addAgentPath(agent, planner.path);
-        remaining_agents--;
-        if (planner.path.empty()) // TODO: can be deleted in the submission verison
+        runtime = ((fsec)(Time::now() - start_time)).count();
+        if (!planner.path.empty()) // TODO: can be deleted in the submission verison
+        {
+            sum_of_costs += (int) planner.path.size() - 1;
+            makespan = max((int) planner.path.size() - 1, makespan);
+            remaining_agents--;
+        }
+        else if (runtime < hard_time_limit)
         {
             dead_agents++;
             sum_of_costs += al.constraintTable.length_max;
             makespan = al.constraintTable.length_max;
-        }
-        else
-        {
-            sum_of_costs += (int) planner.path.size() - 1;
-            makespan = max((int) planner.path.size() - 1, makespan);
+            remaining_agents--;
         }
     }
 

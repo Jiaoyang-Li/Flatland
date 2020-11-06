@@ -16,6 +16,7 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, float soft_time_
                           railEnv(railEnv1), framework(framework), soft_time_limit(soft_time_limit),
                           default_group_size(default_group_size), replan_on(replan),stop_threshold(stop_threshold) {
 	//Initialize PythonCBS. Load map and agent info into memory
+	hard_time_limit = soft_time_limit;
     if (debug)
 	    std::cout << "framework: " << framework << std::endl;
 	options1.debug = debug;
@@ -155,9 +156,10 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
             lns.replan(al->unplanned_agents, time_limit - runtime);
             mcp.clear();
             mcp.build(al, ml, options1);
-            replan_runtime += ((fsec)(Time::now() - start_time)).count();
+            runtime = ((fsec)(Time::now() - start_time)).count();
+            replan_runtime += runtime;
             cout << "Timestep " << timestep << ": Plan paths for " <<
-                remaining_agents - al->unplanned_agents.size() << " agents" << endl;
+                remaining_agents - al->unplanned_agents.size() << " agents using " << runtime << "seconds" << endl;
             return;
         }
         if (!replan_on || replan_times >= max_replan_times  || replan_runtime >= max_replan_runtime)
@@ -267,6 +269,8 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
         runtime = ((fsec)(Time::now() - start_time)).count();
         lns.replan(time_limit - runtime);
         replan_times += lns.replan_times;
+        if (lns.dead_agent) // when we know for sure that we will not make it
+            replan_on = false; // give up!
 //         lns.replan(to_be_replanned, time_limit - runtime);
         if (options1.debug)
         {
@@ -340,7 +344,7 @@ bool PythonCBS<Map>::search(float success_rate, int max_iterations) {
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy,this->stop_threshold);
         runtime = ((fsec)(Time::now() - start_time)).count(); 
         bool succ = lns.run(hard_time_limit - runtime, soft_time_limit - runtime, success_rate, max_iterations);
-        if (!succ && malfunction_rate < 0.003) // fail to plan paths for all agents for small-mal instances
+        if (!succ && malfunction_rate < 0.0000001) // fail to plan paths for all agents for no-mal instances
         {
             for (int i = (int) lns.neighbors.size() - 1; i >= 0; i--)
             {
