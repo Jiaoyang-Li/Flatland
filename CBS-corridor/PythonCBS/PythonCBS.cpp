@@ -141,6 +141,25 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
         }*/
 
         mcp.update();
+        if (!al->unplanned_agents.empty() && timestep >= 500 && timestep % 100 == 0)
+        {
+            auto remaining_agents = al->unplanned_agents.size();
+            vector<Path> paths;
+            mcp.simulate(paths, timestep);
+            al->paths_all = paths;
+            al->updateConstraintTable();
+
+            LNS lns(*al, *ml, 1, agent_priority_strategy, options1, default_group_size,
+                    neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy,this->stop_threshold);
+            runtime = ((fsec)(Time::now() - start_time)).count();
+            lns.replan(al->unplanned_agents, time_limit - runtime);
+            mcp.clear();
+            mcp.build(al, ml, options1);
+            replan_runtime += ((fsec)(Time::now() - start_time)).count();
+            cout << "Timestep " << timestep << ": Plan paths for " <<
+                remaining_agents - al->unplanned_agents.size() << " agents" << endl;
+            return;
+        }
         if (!replan_on || replan_times >= max_replan_times  || replan_runtime >= max_replan_runtime)
             return;
 
@@ -321,6 +340,15 @@ bool PythonCBS<Map>::search(float success_rate, int max_iterations) {
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy,this->stop_threshold);
         runtime = ((fsec)(Time::now() - start_time)).count(); 
         bool succ = lns.run(hard_time_limit - runtime, soft_time_limit - runtime, success_rate, max_iterations);
+        if (!succ && malfunction_rate < 0.003) // fail to plan paths for all agents for small-mal instances
+        {
+            for (int i = (int) lns.neighbors.size() - 1; i >= 0; i--)
+            {
+                if (!al->paths_all[lns.neighbors[i]].empty())
+                    break;
+                al->unplanned_agents.push_front(lns.neighbors[i]);
+            }
+        }
         runtime = ((fsec)(Time::now() - start_time)).count();
         statistic_list[0].runtime = runtime;
         statistic_list[0].initial_runtime = lns.initial_runtime;
@@ -601,6 +629,14 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_it
     this->al = this->al_pool[best_al];
     this->best_thread_id = best_al;
     this->best_initisl_priority_strategy = strategies[best_al];
+    if (best_finished_agents < al->getNumOfAllAgents() && malfunction_rate < 0.003) // fail to plan paths for all agents for small-mal instances
+    {
+        for (int i = 0; i < (int) al->paths_all.size(); i++)
+        {
+            if (al->paths_all[i].empty())
+                al->unplanned_agents.push_front(i);
+        }
+    }
     runtime = ((fsec)(Time::now() - start_time)).count();;
     if (options1.debug) {
         cout << "Best PP strategy = " << strategies[best_al] << ", "
