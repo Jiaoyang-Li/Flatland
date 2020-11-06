@@ -83,10 +83,13 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
     bool succ;
     auto old_runtime = runtime;
     iterations = 0;
-    while (runtime < soft_time_limit && iterations < max_iterations &&
-            (max_iterations>0 && this->complete!=nullptr && this->complete->load()<0)
-            )
+    while (runtime < soft_time_limit && iterations < max_iterations)
     {
+        if (this->complete!= nullptr &&
+                 ((this->agent_priority_strategy==3 &&  solution_cost > -this->complete->load())
+                  ||(this->agent_priority_strategy!=3 && (this->complete->load()>=0 ||solution_cost > -this->complete->load() )))){
+            break;
+        }
 
         iterations++;
         runtime =((fsec)(Time::now() - start_time)).count();
@@ -144,8 +147,13 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
             case 1:
                 succ = generateNeighborByStart();
                 if(!succ) { // no two agents have the same start locations
-                    if ( this->complete!= nullptr && this->complete->load()<0){
+                    if(this->complete!= nullptr && this->agent_priority_strategy==3){
                         this->complete->store(solution_cost);
+                    }
+                    else if( this->complete!= nullptr && this->agent_priority_strategy!=3){
+                        if (solution_cost < -this->complete->load()) {
+                            this->complete->store(-solution_cost);
+                        }
                     }
                     return true;
                 }
@@ -198,8 +206,13 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
         //        destroy_strategy, (double)(solution_cost) / max_timestep / al.agents_all.size(), 0, 0, 0);
         old_runtime = runtime;
         if (replan_strategy == 0 && max_group_size > al.agents_all.size()) {
-            if ( this->complete!= nullptr && this->complete->load()<0){
-                this->complete->store(sum_of_costs);
+            if(this->complete!= nullptr && this->agent_priority_strategy==3){
+                this->complete->store(solution_cost);
+            }
+            else if( this->complete!= nullptr && this->agent_priority_strategy!=3){
+                if (solution_cost < -this->complete->load()) {
+                    this->complete->store(-solution_cost);
+                }
             }
             return true; // CBS has replanned paths for all agents. No need for further iterations
         }
@@ -218,14 +231,11 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
         }
     }
 
-    cout << "LNS improves the solution to: Sum of costs = " << sum_of_costs << " and makespan = " << makespan <<" runtime "<< runtime<< endl;
-    if (max_iterations>0 && this->complete!= nullptr && this->complete->load()<0) {
+    cout << "LNS improves the solution to: Sum of costs = " << sum_of_costs << " and makespan = " << makespan <<" runtime "<< runtime<< " priority "<<this->agent_priority_strategy<< endl;
+    if(this->complete!= nullptr && this->agent_priority_strategy==3){
         this->complete->store(solution_cost);
     }
-    else if( max_iterations == 0 && this->complete!= nullptr && this->agent_priority_strategy==3){
-        this->complete->store(solution_cost);
-    }
-    else if( max_iterations == 0 && this->complete!= nullptr && this->agent_priority_strategy!=3){
+    else if( this->complete!= nullptr && this->agent_priority_strategy!=3){
         if (solution_cost < -this->complete->load()) {
             this->complete->store(-solution_cost);
         }
@@ -466,8 +476,7 @@ bool LNS::getInitialSolution(float success_rate, int max_iterations)
     runtime = ((fsec)(Time::now() - start_time)).count();
     for (auto agent : neighbors)
     {
-        if ( (max_iterations>0 && this->complete!= nullptr && this->complete->load()>= 0 && (remaining_agents > this->stop_threshold || sum_of_costs > this->complete->load()) )
-            || (max_iterations==0 && this->complete!= nullptr &&
+        if ( ( this->complete!= nullptr &&
                     ((this->agent_priority_strategy==3 &&  sum_of_costs > -this->complete->load())
                     ||(this->agent_priority_strategy!=3 && (this->complete->load()>=0 ||sum_of_costs > -this->complete->load() ))))
             || runtime >= hard_time_limit
@@ -476,10 +485,7 @@ bool LNS::getInitialSolution(float success_rate, int max_iterations)
             cout << "Find a solution for " << al.getNumOfAllAgents() - remaining_agents - dead_agents << " agents" <<
                     " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" << "agent priority "<< agent_priority_strategy<< endl;
             cout << "Sum of costs = " << sum_of_costs <<  " and makespan = " << makespan << endl;
-            if ( max_iterations>0 && this->complete!= nullptr && this->complete->load()<0) {
-                this->complete->store(sum_of_costs);
-            }
-            else if(max_iterations == 0 && this->complete!= nullptr && this->agent_priority_strategy==3 ){
+            if(this->complete!= nullptr && this->agent_priority_strategy==3 ){
                 this->complete->store(sum_of_costs);
             }
             //if agent_priority_strategy != 3 and stop here, means it's solution is worse no signal needed
