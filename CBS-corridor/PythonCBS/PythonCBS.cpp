@@ -633,7 +633,7 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_it
     this->al = this->al_pool[best_al];
     this->best_thread_id = best_al;
     this->best_initisl_priority_strategy = strategies[best_al];
-    if (best_finished_agents < al->getNumOfAllAgents() && malfunction_rate < 0.003) // fail to plan paths for all agents for small-mal instances
+    if (best_finished_agents < al->getNumOfAllAgents() && malfunction_rate < 0.0000001) // fail to plan paths for all agents for no-mal instances
     {
         for (int i = 0; i < (int) al->paths_all.size(); i++)
         {
