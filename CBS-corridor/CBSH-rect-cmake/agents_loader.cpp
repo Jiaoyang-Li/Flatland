@@ -455,6 +455,7 @@ void AgentsLoader::recoverAgents(int _num_of_agents, int iteration, int num_inst
 
 void AgentsLoader::computeHeuristics(const FlatlandLoader* ml, std::unordered_map<int,vector<hvals>>& existing_heuristics)
 {
+    sum_of_distances = 0;
     for (auto& agent : agents_all) {
         int init_loc = agent.initial_location;
         int goal_loc = agent.goal_location;
@@ -471,6 +472,7 @@ void AgentsLoader::computeHeuristics(const FlatlandLoader* ml, std::unordered_ma
         }
 
         agent.distance_to_goal = (*agent.heuristics)[init_loc].get_hval(agent.heading);
+        sum_of_distances += agent.distance_to_goal;
     }
 }
 
@@ -481,6 +483,7 @@ AgentsLoader* AgentsLoader::clone(){
     new_al->agents_all =  this->agents_all;
     new_al->paths_all =  this->paths_all;
     new_al->constraintTable = this->constraintTable;
+    new_al->sum_of_distances = this->sum_of_distances;
     return new_al;
 
 }

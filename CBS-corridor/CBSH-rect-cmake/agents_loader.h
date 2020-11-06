@@ -49,7 +49,7 @@ public:
     list<int> new_agents; // agents that have just appear on the map
     list<int> unplanned_agents;
     int num_active_agents = 0;
-
+    int sum_of_distances = 0;
 
     AgentsLoader();
     AgentsLoader(const FlatlandLoader &ml, boost::python::object agents);
