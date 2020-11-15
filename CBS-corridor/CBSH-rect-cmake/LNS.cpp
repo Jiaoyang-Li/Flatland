@@ -337,7 +337,7 @@ bool LNS::replan(float time_limit)
                 al.constraintTable.delete_path(i, al.paths_all[i]);
                 runtime = ((fsec) (Time::now() - start_time)).count();
                 al.agents[0] = &al.agents_all[i];
-                SIPP planner(ml, al, f_w, time_limit - runtime, options1);
+                SinglePlanning planner(ml, al, f_w, time_limit - runtime, options1);
                 planner.search();
                 replan_times++;
                 tabu_list.insert(i);
@@ -373,7 +373,7 @@ bool LNS::replan(float time_limit)
             al.constraintTable.delete_path(i, al.paths_all[i]);
             runtime = ((fsec) (Time::now() - start_time)).count();
             al.agents[0] = &al.agents_all[i];
-            SIPP planner(ml,al,f_w,time_limit - runtime,options1);
+            SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
             planner.search();
             replan_times++;
             if (planner.path.empty())
@@ -409,7 +409,7 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
         al.constraintTable.delete_path(i, al.paths_all[i]);
         runtime = ((fsec) (Time::now() - start_time)).count();
         al.agents[0] = &al.agents_all[i];
-        SIPP planner(ml, al, f_w, time_limit - runtime, options1);
+        SinglePlanning planner(ml, al, f_w, time_limit - runtime, options1);
         planner.search();
         runtime = ((fsec) (Time::now() - start_time)).count();
         if (!planner.path.empty()) {
@@ -465,7 +465,7 @@ bool LNS::getInitialSolution(float success_rate)
             cout << "Remaining agents = " << remaining_agents <<
              ", remaining time = " << hard_time_limit - runtime << " seconds. " << endl
                     << "Agent " << al.agents[0]->agent_id << endl;
-        SIPP planner(ml,al,f_w,hard_time_limit - runtime,options1);
+        SinglePlanning planner(ml,al,f_w,hard_time_limit - runtime,options1);
         planner.search();
         updateCBSResults(planner);
         addAgentPath(agent, planner.path);
