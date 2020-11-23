@@ -24,7 +24,7 @@ public:
 	FlatlandLoader();
 	int getDegree(int loc) const;
     int getDegree(int loc,int heading) const;
-
+    int getHeading(int from, int to) const;
 	boost::python::object rail;
 	railCell* railMap;
 	void get_transitions(list<Transition>& transition, int location, int heading = -1, bool noWait=false) const;

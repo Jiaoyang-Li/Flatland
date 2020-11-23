@@ -78,7 +78,7 @@ void FlatlandLoader::get_transitions(list<Transition>& transitions, int location
 	int moves[4] = { (bits >> 3) & 1, (bits >> 2) & 1, (bits >> 1) & 1, (bits) & 1 };
 
 	for (int i = 0; i < 4; i++) {
-		if (moves[i] == 1 && railMap[location].highways[i] >= 0) {
+		if (moves[i] == 1 && railMap[location + this->moves_offset[i]].highways[(i + 2) % 4] == 0) {
 			transitions.emplace_back(location + this->moves_offset[i], i); // location + heading
 		}
 	}
@@ -115,6 +115,14 @@ void FlatlandLoader::get_exits(list<Transition>& transitions, int location, int 
         wait.position_fraction = 0.0;
         transitions.push_back(wait);
     }
+}
+
+int FlatlandLoader::getHeading(int from, int to) const
+{
+    for (int i = 0; i < 4; i++)
+        if (from + this->moves_offset[i] == to)
+            return i;
+    return -1;
 }
 
 int FlatlandLoader::getDegree(int loc) const{

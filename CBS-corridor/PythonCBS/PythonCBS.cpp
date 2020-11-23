@@ -61,31 +61,42 @@ p::dict PythonCBS<Map>::getActions(p::object railEnv1, int timestep, float time_
         curr_locations[i] = al->agents_all[i].position;
     }
 
-
-    mcp.getNextLoc(timestep +  1); // get next location
-
-    // convert next location to actions of boost dict structure
     boost::python::dict actions;
-    for(int i =0; i<al->getNumOfAllAgents(); i++){
-        actions[i] = action_converter.pos2action(i, curr_locations, prev_locations, mcp.to_go);
+    if (framework == "CPR")
+    {
+        if (options1.debug)
+            cout << "Timestep " << timestep << endl;
+        cpr->getNextLoc();
+        // convert next location to actions of boost dict structure
+        for(int i =0; i<al->getNumOfAllAgents(); i++){
+            actions[i] = action_converter.pos2action(curr_locations[i], prev_locations[i], cpr->to_go[i]);
+        }
+    }
+    else
+    {
+        mcp.getNextLoc(timestep +  1); // get next location
+        // convert next location to actions of boost dict structure
+        for(int i =0; i<al->getNumOfAllAgents(); i++){
+            actions[i] = action_converter.pos2action(curr_locations[i], prev_locations[i], mcp.to_go[i]);
+        }
     }
     return actions;
 }
 
 template <class Map>
-void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) {
-    int max_timestep = p::extract<int>(railEnv.attr("_max_episode_steps"));
-    al->constraintTable.length_max = max_timestep - timestep; // update max timestep
+void PythonCBS<Map>::replan(const p::object& railEnv1, int timestep, float time_limit) {
+    start_time = Time::now();// time(NULL) return time in seconds
+    int _max_timestep = p::extract<int>(railEnv.attr("_max_episode_steps"));
+    al->constraintTable.length_max = _max_timestep - timestep; // update max timestep
+    al->updateAgents(*ml, railEnv.attr("agents"));
     if (framework == "CPR")
     {
-        //cpr->update(railEnv.attr("agents"));
-        //cpr->planPaths(time_limit);
+        cpr->update();
+        cpr->planPaths(time_limit);
         return;
     }
     else if (framework == "OnlinePP")
     {
-        start_time = Time::now();// time(NULL) return time in seconds
-        al->updateAgents(*ml, railEnv.attr("agents"));
         mcp.update();
         for (int a : al->new_agents)
         {
@@ -120,27 +131,6 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     }
     else // LNS
     {
-        start_time = Time::now();// time(NULL) return time in seconds
-
-        /*vector<int> positions(al->getNumOfAllAgents());
-        for (int i = 0; i < al->getNumOfAllAgents(); i++)
-        {
-            positions[i] = al->agents_all[i].position;
-        }*/
-
-        al->updateAgents(*ml, railEnv.attr("agents"));
-
-        /*for (int i = 0; i < al->getNumOfAllAgents(); i++)
-        {
-            if (al->agents_all[i].position == mcp.to_go[i])
-                continue;
-            if (positions[i] != mcp.to_go[i] && al->agents_all[i].position == positions[i])
-                continue;
-            cout << "At timestep " << timestep << ", Agent " << i << " should move from " << positions[i] << " to " << mcp.to_go[i]
-                << " but it moves to " << al->agents_all[i].position << endl;
-            assert(false);
-        }*/
-
         mcp.update();
         if (!al->unplanned_agents.empty() && timestep >= 500 && timestep % 100 == 0)
         {
