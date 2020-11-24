@@ -15,26 +15,26 @@ public:
     ActionConverter(){}
     ActionConverter(int num_agent, int env_width){num_agent = num_agent; env_width = env_width;}
 
-    int pos2action(int i, const vector<int>& curr_locs, const vector<int>& prev_locs, const vector<int>& next_locs){
+    int pos2action(int curr_loc, int prev_loc, int next_loc){
 
 
-        if (next_locs[i] == curr_locs[i]){
+        if (next_loc == curr_loc){
             return 4;
         }
-        if(curr_locs[i] == -1 && next_locs[i] != -1){
+        if(curr_loc == -1 && next_loc != -1){
             return 2;
         }
 
-        int prev_pos0 = loc0(prev_locs[i]);
-        int prev_pos1 = loc1(prev_locs[i]);
+        int prev_pos0 = loc0(prev_loc);
+        int prev_pos1 = loc1(prev_loc);
 
-//        cout << p::extract<int>(p::long_(prev_locs[i])) << endl;
+//        cout << p::extract<int>(p::long_(prev_loc)) << endl;
 
-        int curr_pos0 = loc0(curr_locs[i]);
-        int curr_pos1 = loc1(curr_locs[i]);
+        int curr_pos0 = loc0(curr_loc);
+        int curr_pos1 = loc1(curr_loc);
 
-        int next_pos0 = loc0(next_locs[i]);
-        int next_pos1 = loc1(next_locs[i]);
+        int next_pos0 = loc0(next_loc);
+        int next_pos1 = loc1(next_loc);
 
 //        cout << i << endl;
 //        cout << prev_pos0 << " " << prev_pos1 << ", " << curr_pos0 << " " << curr_pos1 << ", " << next_pos0 << " " << next_pos1 << endl;

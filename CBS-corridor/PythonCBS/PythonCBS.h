@@ -203,7 +203,7 @@ private:
     void generateNeighbor(int agent_id, const PathEntry& start, int start_time,
             set<int>& neighbor, int neighbor_size, int upperbound);
 
-    void replan(p::object railEnv1, int timestep, float time_limit);
+    void replan(const p::object& railEnv1, int timestep, float time_limit);
 };
 
 
