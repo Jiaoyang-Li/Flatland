@@ -105,9 +105,9 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit)
                 break;
             case 2:
                 //if (rand() % 2)
-                //    succ = generateNeighborByIntersection();
+                succ = generateNeighborByIntersection();
                 //else
-                succ = generateNeighborByTemporalIntersection();
+                // succ = generateNeighborByTemporalIntersection();
                 if(!succ) // the selected intersection has fewer than 2 agents
                     continue;
                 break;
