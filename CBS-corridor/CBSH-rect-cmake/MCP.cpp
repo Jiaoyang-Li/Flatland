@@ -36,6 +36,7 @@ void MCP::simulate(vector<Path>& paths, int timestep) const
         }
     }
     for (int t = 0; t < al->constraintTable.length_max && !unfinished_agents.empty(); t++) {
+        list<int> to_be_deleted;
         for (auto p = unfinished_agents.begin(); p != unfinished_agents.end();) {
             int i = *p;
             assert(copy_agent_time[i] <= (int) no_wait_time[i].size());
@@ -43,7 +44,8 @@ void MCP::simulate(vector<Path>& paths, int timestep) const
             {
                 int previous = al->paths_all[i][no_wait_time[i][copy_agent_time[i] - 1]].location;
                 assert(get<0>(copy_mcp[previous].front()) == i);
-                copy_mcp[previous].pop_front();
+                to_be_deleted.push_back(previous);
+                //copy_mcp[previous].pop_front();
                 p = unfinished_agents.erase(p);
                 continue;
             }
@@ -67,7 +69,8 @@ void MCP::simulate(vector<Path>& paths, int timestep) const
                     {
                         int previous = al->paths_all[i][no_wait_time[i][copy_agent_time[i] - 1]].location;
                         assert(get<0>(copy_mcp[previous].front()) == i);
-                        copy_mcp[previous].pop_front();
+                        to_be_deleted.push_back(previous);
+                        //copy_mcp[previous].pop_front();
                     }
                     copy_agent_time[i]++;
                 } else {
@@ -76,6 +79,9 @@ void MCP::simulate(vector<Path>& paths, int timestep) const
             }
             ++p; // next agent
         }
+
+        for (int i : to_be_deleted)
+            copy_mcp[i].pop_front();
     }
 }
 
@@ -178,79 +184,9 @@ void MCP::getNextLoc(p::list agent_location, int timestep)
             agent_time[i] < no_wait_time[i].size())
         {
             assert(!mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].empty());
-
-            // if (i == 3 && al->paths_all[i][no_wait_time[i][agent_time[i] - 1]].location == 6563)
-            // {
-            //     cout << "********************************************" << endl;
-            //     cout << "Agent: " << i << endl;
-            //     cout << "agent_time: " << agent_time[i] << endl;
-            //     cout << "no_wait_time: " << no_wait_time[i][agent_time[i]] << endl;
-            //     cout << "Next location: " << al->paths_all[i][no_wait_time[i][agent_time[i]]].location << endl;
-            //     cout << "MCP at next location: " << get<0>(mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].front()) << ", " <<
-            //         get<1>(mcp[al->paths_all[i][no_wait_time[i][agent_time[i]]].location].front()) << endl;
-            //     printMCP(6563);
-            //     cout << "********************************************" << endl;
-            //     sleep(10);
-            // }
-
             int loc = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
-            int first_agent = get<0>(mcp[loc].front());
-            // int first_time = get<1>(mcp[loc].front());
-
-            if (get<0>(mcp[loc].front()) == i || agent_time[i] == no_wait_time[i].size() - 1)
-                to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
-
-            else if (first_agent < i && mcp[loc].size() > 1)
-            {
-                if (get<0>(*std::next(mcp[loc].begin())) == i && // the second agent is i
-                    agent_location[first_agent] == loc && // the fist agent is already at loc
-                    to_go[first_agent] != loc &&
-                    al->agents_all[first_agent].malfunction_left == 0)  // the first agent is going to leave
-                    // agent_location[i] != al->paths_all[first_agent][agent_time[first_agent]].location) // not edge conflict
-                {
-                    to_go[i] = al->paths_all[i][no_wait_time[i][agent_time[i]]].location;
-                }
-                /*int next_agent = get<0>(*std::next(mcp[loc].begin()));
-                int next_time = get<1>(*std::next(mcp[loc].begin()));  // equal to agent_time[next_agent]
-                if (next_agent == i &&
-                    appear_time[first_agent] < agent_time[first_agent] &&
-                    al->paths_all[i][next_time-1].heading == al->paths_all[first_agent][first_time-1].heading)
-                {
-                    if (al->paths_all[next_agent][next_agent-1].location < 0)
-                    {
-                        if(agent_location[first_agent] == loc)
-                        {
-                            to_go[i] = al->paths_all[i][agent_time[i]].location;
-                        }
-                    }
-                    else if (abs(ml->row_coordinate(al->paths_all[i][next_time-1].location) -
-                        ml->row_coordinate(al->paths_all[first_agent][first_time-1].location)) +
-                        abs(ml->col_coordinate(al->paths_all[i][next_time-1].location) -
-                        ml->col_coordinate(al->paths_all[first_agent][first_time-1].location)) <= 1)
-                    {
-                        assert(agent_time[next_agent] == next_time);
-                        to_go[i] = al->paths_all[i][agent_time[i]].location;
-                    }
-                    // else
-                    // {
-                    //     cout << "First agent: " << first_agent << endl;
-                    //     cout << "First time: " << first_time << endl;
-                    //     cout << "First time - 1 -> loc: " << ml->row_coordinate(al->paths_all[first_agent][first_time-1].location) << ", " << ml->col_coordinate(al->paths_all[first_agent][first_time-1].location) << endl;
-
-                    //     cout << "Next agent: " << next_agent << endl;
-                    //     cout << "Next time: " << next_time << endl;
-                    //     cout << "Next time - 1 -> loc: " << ml->row_coordinate(al->paths_all[next_agent][next_time-1].location) << ", " << ml->col_coordinate(al->paths_all[next_agent][next_time-1].location) << endl;
-
-                    //     cout << "Current Heading: " << al->paths_all[i][agent_time[i]-1].heading << endl;
-                    //     cout << "Current location: " << ml->row_coordinate(al->paths_all[i][agent_time[i]].location) << ", " << ml->col_coordinate(al->paths_all[i][agent_time[i]].location) << endl;
-                    //     cout << "Map size: " << ml->map_size() << endl;
-                    //     cout << "Map size: " << ml->rows << ", " << ml->cols << endl;
-                    //     cout << endl;
-                    //     sleep(60);
-                    //     assert(0);
-                    // }
-                }*/
-            }
+            if (get<0>(mcp[loc].front()) == i)
+                to_go[i] = loc;
         }
     }
     /*if (options1.debug)

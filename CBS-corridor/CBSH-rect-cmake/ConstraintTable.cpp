@@ -30,9 +30,7 @@ bool ConstraintTable::is_constrained(int agent_id, int loc, int timestep) const
         if (CT_paths[loc][t] >= 0)
         {
             assert(agent_id != CT_paths[loc][t]);
-            if ((agent_id > CT_paths[loc][t] && timestep <= t) || // This agent reaches loc earlier than the second agent with smaller id
-                (agent_id < CT_paths[loc][t] && timestep >= t))   // This agent reaches loc later than the second agent with larger id
-                return true;
+            return true;
         }
     }
 	return false;
