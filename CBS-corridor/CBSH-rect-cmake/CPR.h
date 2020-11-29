@@ -6,9 +6,11 @@ namespace p = boost::python;
 class CPR
 {
 public:
+    vector<int> to_go;
+
     CPR(AgentsLoader& al, FlatlandLoader& ml, const options& options1, float time_limit);
-    void getNextLoc(vector<int>& to_go);
-    void update(p::list agent_location);
+    void getNextLoc();
+    void update();
     void planPaths(float time_limit);
 
 private:

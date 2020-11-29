@@ -19,7 +19,7 @@ class ConstraintTable
 public:
 	int length_max = INT_MAX;
 	bool use_list = false;
-
+    int num_of_agents = 10000;
 	void reset()
 	{
 	    auto map_size = CT_paths.size(); CT_paths.clear(); CT_paths.resize(map_size);

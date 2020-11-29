@@ -18,7 +18,7 @@ void SinglePlanning::updatePath(LLNode* goal)
 		path[t].exit_heading = curr->exit_heading;
 		path[t].exit_loc = curr->exit_loc;
 
-
+        //assert(t == goal->g_val || ml.railMap[path[t].location].highways[(path[t+1].heading + 2) % 4] == 0);
 		curr = curr->parent;
 	}
 }
