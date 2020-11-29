@@ -110,7 +110,7 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
         }*/
         cout << endl;
     }
-	if (al->new_malfunction_agents.empty())
+	if (time_limit <= 0.001 || al->new_malfunction_agents.empty())
 	    return; // we do not replan if there are no new mal agents
 
     if (options1.debug)
