@@ -1077,11 +1077,6 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads){
     return true;
 }
 
-template <class Map>
-void PythonCBS<Map>::updateAgents(p::object railEnv1){
-    al->updateAgents(railEnv.attr("agents"));
-}
-
 template class PythonCBS<FlatlandLoader>;
 
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
@@ -1097,9 +1092,8 @@ BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final
 		.def("getResultDetail", &PythonCBS<FlatlandLoader>::getResultDetail)
 		.def("writeResultsToFile", &PythonCBS<FlatlandLoader>::writeResultsToFile)
 		.def("replan",&PythonCBS<FlatlandLoader>::replan)
-		.def("updateAgents", &PythonCBS<FlatlandLoader>::updateAgents)
 		.def("updateFw", &PythonCBS<FlatlandLoader>::updateFw)
-		.def("buildMCP", &PythonCBS<FlatlandLoader>::buildMCP)
+        .def("buildMCP", &PythonCBS<FlatlandLoader>::buildMCP)
         .def("getNextLoc", &PythonCBS<FlatlandLoader>::getNextLoc)
         .def("updateMCP", &PythonCBS<FlatlandLoader>::updateMCP)
         .def("clearMCP", &PythonCBS<FlatlandLoader>::clearMCP)

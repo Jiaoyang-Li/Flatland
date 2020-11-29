@@ -32,6 +32,7 @@ void SingleAgentICBS<Map>::updatePath(LLNode* goal, std::vector<PathEntry> &path
 			path[t].malfunction = true;
 		}
 
+		curr->conflist = nullptr;
 		curr = curr->parent;
 	}
 }
