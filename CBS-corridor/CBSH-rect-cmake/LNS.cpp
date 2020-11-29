@@ -350,8 +350,8 @@ bool LNS::replan(float time_limit)
                     al.paths_all[i].clear();
                 }
                 runtime = ((fsec) (Time::now() - start_time)).count();
-                if (runtime < time_limit && planner.path.empty())
-                    dead_agent = true;
+                //if (runtime < time_limit && planner.path.empty())
+                //    dead_agent = true;
             }
             agent_groups.push_back(agents);
         }

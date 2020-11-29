@@ -38,6 +38,7 @@ AgentsLoader::AgentsLoader(const FlatlandLoader &ml, p::object agents) {
 	///this->heuristics.resize(num_of_agents_all);
     this->agents_all.resize(num_of_agents_all);
     this->paths_all.resize(num_of_agents_all);
+    this->constraintTable.num_of_agents = num_of_agents_all;
     //this->initial_locations_all.resize(num_of_agents_all);
     //this->goal_locations_all.resize(num_of_agents_all);
     //this->headings_all.resize(num_of_agents_all);

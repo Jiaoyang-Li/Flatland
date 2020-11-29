@@ -131,6 +131,7 @@ void PythonCBS<Map>::replan(const p::object& railEnv1, int timestep, float time_
     }
     else // LNS
     {
+        // TODO: for malfunction agents who have not entered the environment, we can simply replan the paths for themselves.
         mcp.update();
         if (!al->unplanned_agents.empty() && timestep >= 500 && timestep % 100 == 0)
         {
@@ -259,8 +260,8 @@ void PythonCBS<Map>::replan(const p::object& railEnv1, int timestep, float time_
         runtime = ((fsec)(Time::now() - start_time)).count();
         lns.replan(time_limit - runtime);
         replan_times += lns.replan_times;
-        if (lns.dead_agent) // when we know for sure that we will not make it
-            replan_on = false; // give up!
+        //if (lns.dead_agent) // when we know for sure that we will not make it
+        //    replan_on = false; // give up!
 //         lns.replan(to_be_replanned, time_limit - runtime);
         if (options1.debug)
         {
