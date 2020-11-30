@@ -131,6 +131,7 @@ void PythonCBS<Map>::replan(const p::object& railEnv1, int timestep, float time_
     }
     else // LNS
     {
+        // TODO: for malfunction agents who have not entered the environment, we can simply replan the paths for themselves.
         mcp.update();
         if (!al->unplanned_agents.empty() && timestep >= 500 && timestep % 100 == 0)
         {
@@ -259,8 +260,8 @@ void PythonCBS<Map>::replan(const p::object& railEnv1, int timestep, float time_
         runtime = ((fsec)(Time::now() - start_time)).count();
         lns.replan(time_limit - runtime);
         replan_times += lns.replan_times;
-        if (lns.dead_agent) // when we know for sure that we will not make it
-            replan_on = false; // give up!
+        //if (lns.dead_agent) // when we know for sure that we will not make it
+        //    replan_on = false; // give up!
 //         lns.replan(to_be_replanned, time_limit - runtime);
         if (options1.debug)
         {
@@ -565,7 +566,7 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_it
         exit(1);
     }
     std::atomic<int> complete;
-    complete.store(-1);
+    complete.store(-MAX_COST);
 
     for (int i = 0; i<no_threads;i++){
         AgentsLoader* temp = this->al->clone();
@@ -614,9 +615,14 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_it
             best_finished_agents = finished_agents;
         }
         statistic_list[i].runtime = runtime;
-        statistic_list[i].sum_of_costs = solution_cost;
-        statistic_list[i].makespan = makespan;
-        statistic_list[i].unfinished_agents = this->al->getNumOfAllAgents() - finished_agents;
+        statistic_list[i].initial_runtime = this->lns_pool[i]->initial_runtime;
+        statistic_list[i].sum_of_costs = this->lns_pool[i]->sum_of_costs;
+        statistic_list[i].initial_sum_of_costs = this->lns_pool[i]->initial_sum_of_costs;
+        statistic_list[i].makespan = this->lns_pool[i]->makespan;
+        statistic_list[i].initial_makespan = this->lns_pool[i]->initial_makespan;
+        statistic_list[i].iterations = this->lns_pool[i]->iterations;
+        iteration_stats[i] = this->lns_pool[i]->iteration_stats;
+
 
     }
     delete this->al;
@@ -758,6 +764,7 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads, float success_rate, 
             best_makespan = makespan;
             best_finished_agents = finished_agents;
         }
+
     }
     this->best_initisl_priority_strategy = strategies[best_al];
     delete this->al;

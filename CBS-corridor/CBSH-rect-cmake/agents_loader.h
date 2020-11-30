@@ -58,6 +58,13 @@ public:
     // void addAgent ( int start_row, int start_col, int goal_row, int goal_col );
     void printAllAgentsInitGoal () const;
     void printCurrentAgentsInitGoal () const;
+    void printPath(int i) const
+    {
+        cout << "Agent " << i << ": ";
+        for (const auto & entry : paths_all[i])
+            cout << entry.location << ",";
+        cout << endl;
+    }
     // pair<int, int> agentStartOrGoalAt(int row, int col);
     // void clearLocationFromAgents(int row, int col);
     ~AgentsLoader();

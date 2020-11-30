@@ -25,7 +25,7 @@ void ConstraintTable::get_agents(set<int>& conflicting_agents, int loc) const
 
     for (auto agent : CT_paths[loc])
     {
-        if (agent >= 0)
+        if (agent >= 0 && agent < num_of_agents)
             conflicting_agents.insert(agent);
     }
 }
@@ -38,7 +38,7 @@ void ConstraintTable::get_agents(list< pair<int, int> >& agents, int excluded_ag
     for (int t = std::get<1>(loc_timeinterval_pair); t < t_max; t++)
     {
         int agent = CT_paths[loc][t];
-        if (agent >= 0 && agent != excluded_agent && (agents.empty() || agents.back().first != agent))
+        if (agent >= 0 && agent < num_of_agents && agent != excluded_agent && (agents.empty() || agents.back().first != agent))
         {
             agents.emplace_back(agent, t);
         }
@@ -55,7 +55,7 @@ void ConstraintTable::get_agents(set<int>& conflicting_agents, int groupsize, in
     if (t_max == 0)
         return;
     int t0 = rand() % t_max;
-    if (CT_paths[loc][t0] >= 0)
+    if (CT_paths[loc][t0] >= 0 && CT_paths[loc][t0] < num_of_agents)
         conflicting_agents.insert(CT_paths[loc][t0]);
     int delta = 1;
     while (t0 - delta >= 0 || t0 + delta <= t_max)
@@ -81,7 +81,7 @@ void ConstraintTable::get_conflicting_agents(int agent_id, set<int>& conflicting
     if (loc < 0 || CT_paths[loc].empty())
         return;
 
-    if (CT_paths[loc][timestep] >= 0)
+    if (CT_paths[loc][timestep] >= 0 && CT_paths[loc][timestep] < num_of_agents)
     {
         conflicting_agents.insert(CT_paths[loc][timestep]);
     }
@@ -102,17 +102,16 @@ bool ConstraintTable::insert_path(int agent_id, const Path& path)
         //    CT_paths[path[timestep-1].location][timestep] != CT_paths[loc][timestep-1] ||
         //    CT_paths[loc][timestep-1] == -1);  // should not have edge conflict
 
-        CT_paths[loc][timestep] = agent_id;
+        CT_paths[loc][timestep] += agent_id + 1;
         latest_conatraints[loc] = std::max(latest_conatraints[loc], timestep);
         // to avoid the situation when an agent cut in line
-        if (path[timestep].position_fraction >= 1 &&
-            (CT_paths[path[timestep].exit_loc].empty() || CT_paths[path[timestep].exit_loc][timestep] < 0) &&
-            (path[timestep].malfunction_left > 0 || (timestep > 0 && path[timestep - 1].malfunction_left > 0)))
+        if (path[timestep].position_fraction >= 1)
         {
             if (CT_paths[path[timestep].exit_loc].empty())
                 CT_paths[path[timestep].exit_loc].resize(length_max + 1, -1);
-            CT_paths[path[timestep].exit_loc][timestep] = agent_id;
-            latest_conatraints[path[timestep].exit_loc] = std::max(latest_conatraints[path[timestep].exit_loc], timestep);
+            if (CT_paths[path[timestep].exit_loc][timestep] < 0)
+                latest_conatraints[path[timestep].exit_loc] = std::max(latest_conatraints[path[timestep].exit_loc], timestep);
+            CT_paths[path[timestep].exit_loc][timestep] += (1 + agent_id) * num_of_agents + 1;
         }
     }
     return true;
@@ -170,8 +169,7 @@ void ConstraintTable::delete_path(int agent_id, const Path& path)
         int loc = path[timestep].location;
         if (loc == -1)
             break;
-        assert(CT_paths[loc][timestep] == agent_id);
-        CT_paths[loc][timestep] = -1;
+        CT_paths[loc][timestep] -= agent_id + 1;
         if (latest_conatraints[loc] == timestep)
         {
             int t = timestep - 1;
@@ -179,12 +177,11 @@ void ConstraintTable::delete_path(int agent_id, const Path& path)
                 t--;
             latest_conatraints[loc] = t;
         }
-        if (path[timestep].position_fraction >= 1 &&
-            (path[timestep].malfunction_left > 0 || (timestep > 0 && path[timestep - 1].malfunction_left > 0)) &&
-            (!CT_paths[path[timestep].exit_loc].empty() && CT_paths[path[timestep].exit_loc][timestep] == agent_id))
+        if (path[timestep].position_fraction >= 1)
         {
-            CT_paths[path[timestep].exit_loc][timestep] = -1;
-            if (latest_conatraints[path[timestep].exit_loc] == timestep)
+            CT_paths[path[timestep].exit_loc][timestep] -= (1 + agent_id) * num_of_agents + 1;
+            if (CT_paths[path[timestep].exit_loc][timestep] == -1 &&
+                latest_conatraints[path[timestep].exit_loc] == timestep)
             {
                 int t = timestep - 1;
                 while(t >= 0 && CT_paths[path[timestep].exit_loc][t] < 0)

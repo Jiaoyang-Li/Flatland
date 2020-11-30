@@ -14,7 +14,7 @@ iteration_distribution = [0] * no_tests
 time_limit = 580
 max_iterations = 5000
 increase_units = [5,10,20,50,100,200,500]
-amplify_lns_improve = 1
+amplify_lns_improve = 1.0
 
 
 #simulate annealing parameter
@@ -47,7 +47,7 @@ class cell:
     def get_avg_time(self):
         return  self.avg_time
     def get_avg_improve(self):
-        return  self.avg_improve
+        return  self.avg_improve if self.avg_improve == 1 else self.avg_improve*amplify_lns_improve
 
 #load lns data
 def load_data(lns_folder):
@@ -269,13 +269,12 @@ run_data = load_run(run_csv)
 
 lns_data,valid_range = load_data(lns_folder)
 
-# dis =[0, 190, 410, 2100, 3530, 1150, 1670, 1480, 290, 1450, 3740,
-#       1950, 2950, 3480, 3480, 4750, 3850, 4560, 4000, 4870, 4720,
-#       3200, 1370, 1610, 390, 80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-#       0, 0, 0]
-# print(getReward(dis,lns_data,run_data))
+dis =[0, 0, 5, 10, 25, 50, 20, 155, 145, 250, 445, 1230, 1230, 1095,
+      1095, 1095, 1090, 1000, 1000, 955, 955, 560, 5, 5, 5, 5, 5, 5,
+      0, 0, 0, 0, 0, 0, 0, 0]
+print(getReward(dis,lns_data,run_data))
 
-optimize_time(T,Tmin,alpha,numIterations,lns_data,run_data,valid_range)
+# optimize_time(T,Tmin,alpha,numIterations,lns_data,run_data,valid_range)
 
     
     
