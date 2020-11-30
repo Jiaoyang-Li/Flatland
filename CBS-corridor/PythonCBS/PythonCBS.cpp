@@ -149,8 +149,8 @@ void PythonCBS<Map>::replan(const p::object& railEnv1, int timestep, float time_
             mcp.build(al, ml, options1);
             runtime = ((fsec)(Time::now() - start_time)).count();
             replan_runtime += runtime;
-            cout << "Timestep " << timestep << ": Plan paths for " <<
-                remaining_agents - al->unplanned_agents.size() << " agents using " << runtime << "seconds" << endl;
+            //cout << "Timestep " << timestep << ": Plan paths for " <<
+            //    remaining_agents - al->unplanned_agents.size() << " agents using " << runtime << "seconds" << endl;
             return;
         }
         if (!replan_on || replan_times >= max_replan_times  || replan_runtime >= max_replan_runtime)

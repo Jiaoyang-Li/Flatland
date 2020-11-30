@@ -284,7 +284,7 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
 //            al.constraintTable.delete_path(i, al.paths_all[i]);
 //            runtime = ((fsec) (Time::now() - start_time)).count();
 //            al.agents[0] = &al.agents_all[i];
-//            SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
+//            SIPP planner(ml,al,f_w,time_limit - runtime,options1);
 //            planner.search();
 //            assert(planner.path.size() <= copy.size());
 //            if (planner.path.empty())
@@ -365,7 +365,7 @@ bool LNS::replan(float time_limit)
                 al.constraintTable.delete_path(i, al.paths_all[i]);
                 runtime = ((fsec) (Time::now() - start_time)).count();
                 al.agents[0] = &al.agents_all[i];
-                SinglePlanning planner(ml, al, f_w, time_limit - runtime, options1);
+                SIPP planner(ml, al, f_w, time_limit - runtime, options1);
                 planner.search();
                 replan_times++;
                 tabu_list.insert(i);
@@ -401,7 +401,7 @@ bool LNS::replan(float time_limit)
             al.constraintTable.delete_path(i, al.paths_all[i]);
             runtime = ((fsec) (Time::now() - start_time)).count();
             al.agents[0] = &al.agents_all[i];
-            SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
+            SIPP planner(ml,al,f_w,time_limit - runtime,options1);
             planner.search();
             replan_times++;
             if (planner.path.empty())
@@ -437,8 +437,9 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
         al.constraintTable.delete_path(i, al.paths_all[i]);
         runtime = ((fsec) (Time::now() - start_time)).count();
         al.agents[0] = &al.agents_all[i];
-        SinglePlanning planner(ml, al, f_w, time_limit - runtime, options1);
+        SIPP planner(ml, al, f_w, time_limit - runtime, options1);
         planner.search();
+        //cout << ((fsec)(Time::now() - start_time)).count() - runtime << ",";
         runtime = ((fsec) (Time::now() - start_time)).count();
         if (!planner.path.empty()) {
             addAgentPath(i, planner.path);
@@ -497,8 +498,10 @@ bool LNS::getInitialSolution(float success_rate, int max_iterations)
             cout << "Remaining agents = " << remaining_agents <<
              ", remaining time = " << hard_time_limit - runtime << " seconds. " << endl
                     << "Agent " << al.agents[0]->agent_id << endl;
-        SinglePlanning planner(ml,al,f_w,hard_time_limit - runtime,options1);
+        //runtime = ((fsec)(Time::now() - start_time)).count();
+        SIPP planner(ml, al, f_w, hard_time_limit - runtime, options1);
         planner.search();
+        //cout << ((fsec)(Time::now() - start_time)).count() - runtime << ",";
         updateCBSResults(planner);
         addAgentPath(agent, planner.path);
         runtime = ((fsec)(Time::now() - start_time)).count();
@@ -517,7 +520,7 @@ bool LNS::getInitialSolution(float success_rate, int max_iterations)
         }
     }
 
-    cout << "Find a solution for " << al.getNumOfAllAgents() - remaining_agents - dead_agents << " agents" <<
+    cout << endl << "Find a solution for " << al.getNumOfAllAgents() - remaining_agents - dead_agents << " agents" <<
          " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" <<  "agent priority "<< agent_priority_strategy<<endl;
     cout << "Sum of costs = " << sum_of_costs <<  " and makespan = " << makespan << "runtime ="<<runtime<< endl;
     return true;
@@ -685,7 +688,7 @@ void LNS::replanByPP()
 //        icbs.runICBSSearch();
 //        updateCBSResults(icbs);
 //        addAgentPath(agent, *icbs.paths[0]);
-        SinglePlanning planner(ml,al,f_w,0,options1);
+        SIPP planner(ml,al,f_w,0,options1);
         planner.search();
         updateCBSResults(planner);
         addAgentPath(agent, planner.path);
