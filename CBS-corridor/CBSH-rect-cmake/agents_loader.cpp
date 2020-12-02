@@ -38,6 +38,7 @@ AgentsLoader::AgentsLoader(const FlatlandLoader &ml, p::object agents) {
 	///this->heuristics.resize(num_of_agents_all);
     this->agents_all.resize(num_of_agents_all);
     this->paths_all.resize(num_of_agents_all);
+    this->constraintTable.num_of_agents = num_of_agents_all;
     //this->initial_locations_all.resize(num_of_agents_all);
     //this->goal_locations_all.resize(num_of_agents_all);
     //this->headings_all.resize(num_of_agents_all);
@@ -317,7 +318,7 @@ void AgentsLoader::addAgent(int start_row, int start_col, int goal_row, int goal
 // 3: prefer max speed then min distance
 // 4: prefer min speed then min distance
 // 5: prefer different start locations then max speed then max distance
-void AgentsLoader::generateAgentOrder(int agent_priority_strategy)
+/*void AgentsLoader::generateAgentOrder(int agent_priority_strategy)
 {
     if (agent_priority_strategy == 5)
     {
@@ -342,7 +343,7 @@ void AgentsLoader::generateAgentOrder(int agent_priority_strategy)
     if (agent_priority_strategy != 0)
         quickSort(agent_order, 0, num_of_agents_all - 1, agent_priority_strategy);
     unplanned_agents = list<int>(agent_order.begin(), agent_order.end());
-}
+}*/
 
 void AgentsLoader::updateConstraintTable()
 {
@@ -375,7 +376,7 @@ void AgentsLoader::quickSort(vector<int>& agent_order, int low, int high, int ag
     quickSort(agent_order, i + 1, high, agent_priority_strategy); // After i
 }
 
-void AgentsLoader::updateToBePlannedAgents(int _num_of_agents)
+/*void AgentsLoader::updateToBePlannedAgents(int _num_of_agents)
 {
     if (unplanned_agents.empty())
     {
@@ -393,7 +394,7 @@ void AgentsLoader::updateToBePlannedAgents(int _num_of_agents)
         ++p;
     }
     cout << endl;
-}
+}*/
 
 void AgentsLoader::sampleAgents(int _num_of_agents, int iteration, int num_instances, bool deletePath)
 {
@@ -426,7 +427,7 @@ void AgentsLoader::recoverAgents(int _num_of_agents, int iteration, int num_inst
     }
 }
 
-bool AgentsLoader::addPaths(const vector<Path*>& new_paths)
+/*bool AgentsLoader::addPaths(const vector<Path*>& new_paths)
 {
     assert((int)new_paths.size() == num_of_agents);
     list<int> giveup_agents;
@@ -451,10 +452,11 @@ bool AgentsLoader::addPaths(const vector<Path*>& new_paths)
     }
     unplanned_agents.splice(unplanned_agents.begin(), giveup_agents);
     return true;
-}
+}*/
 
 void AgentsLoader::computeHeuristics(const FlatlandLoader* ml, std::unordered_map<int,vector<hvals>>& existing_heuristics)
 {
+    sum_of_distances = 0;
     for (auto& agent : agents_all) {
         int init_loc = agent.initial_location;
         int goal_loc = agent.goal_location;
@@ -471,6 +473,7 @@ void AgentsLoader::computeHeuristics(const FlatlandLoader* ml, std::unordered_ma
         }
 
         agent.distance_to_goal = (*agent.heuristics)[init_loc].get_hval(agent.heading);
+        sum_of_distances += agent.distance_to_goal;
     }
 }
 
@@ -481,6 +484,7 @@ AgentsLoader* AgentsLoader::clone(){
     new_al->agents_all =  this->agents_all;
     new_al->paths_all =  this->paths_all;
     new_al->constraintTable = this->constraintTable;
+    new_al->sum_of_distances = this->sum_of_distances;
     return new_al;
 
 }

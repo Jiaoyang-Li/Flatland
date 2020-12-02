@@ -15,7 +15,7 @@ public:
 
     bool pp_only = false;
     bool skip_pp = false;
-
+    bool dead_agent = false; // dead agent is detected
     float runtime = 0;
     float initial_runtime = 0;
     int sum_of_costs = 0;
@@ -24,6 +24,7 @@ public:
     int initial_makespan = 0;
     int iterations = 0;
     int replan_times = 0;
+    vector<int> neighbors;
     //stats about each iteration
     typedef tuple<int, double, double, double, int,
             int, int, double, int, int, int> IterationStats;
@@ -41,7 +42,7 @@ public:
     }
     bool run(float hard_time_limit, float soft_time_limit, float success_rate = 1.1, int max_iterations = 5000);
     bool replan(float time_limit);
-    //bool replan(list<int>& to_be_replanned, float time_limit);
+    bool replan(list<int>& to_be_replanned, float time_limit);
     bool getInitialSolution(float success_rate = 1.1);
     void set_complete(std::atomic<int>* complete){this->complete = complete;}
 private:
@@ -53,7 +54,6 @@ private:
     options options1;
     int max_timestep;
     //data for neighbors
-    vector<int> neighbors;
     list<Path> neighbor_paths;
     int neighbor_sum_of_costs = 0;
     int neighbor_sum_of_showup_time = 0;

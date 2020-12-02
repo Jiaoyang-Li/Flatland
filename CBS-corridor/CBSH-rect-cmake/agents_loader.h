@@ -47,8 +47,9 @@ public:
 
     list<int> new_malfunction_agents; // agents that have just got malfunction
     list<int> new_agents; // agents that have just appear on the map
+    list<int> unplanned_agents;
     int num_active_agents = 0;
-
+    int sum_of_distances = 0;
 
     AgentsLoader();
     AgentsLoader(const FlatlandLoader &ml, boost::python::object agents);
@@ -57,14 +58,21 @@ public:
     // void addAgent ( int start_row, int start_col, int goal_row, int goal_col );
     void printAllAgentsInitGoal () const;
     void printCurrentAgentsInitGoal () const;
+    void printPath(int i) const
+    {
+        cout << "Agent " << i << ": ";
+        for (const auto & entry : paths_all[i])
+            cout << entry.location << ",";
+        cout << endl;
+    }
     // pair<int, int> agentStartOrGoalAt(int row, int col);
     // void clearLocationFromAgents(int row, int col);
     ~AgentsLoader();
 
-    void generateAgentOrder(int agent_priority_strategy);
-    void updateToBePlannedAgents() { updateToBePlannedAgents(num_of_agents_all); };
-    void updateToBePlannedAgents(int num_of_agents);
-    bool addPaths(const vector<Path*>& paths);
+    //void generateAgentOrder(int agent_priority_strategy);
+    //void updateToBePlannedAgents() { updateToBePlannedAgents(num_of_agents_all); };
+    //void updateToBePlannedAgents(int num_of_agents);
+    //bool addPaths(const vector<Path*>& paths);
     int getNumOfUnplannedAgents() const { return (int)unplanned_agents.size(); }
     int getNumOfAllAgents() const { return num_of_agents_all; }
     int getNumOfDeadAgents() const { return num_of_dead_agents; }
@@ -187,7 +195,6 @@ public:
 
 private:
     int num_of_dead_agents = 0;
-    list<int> unplanned_agents;
     int num_of_agents_all;
 
     void quickSort(vector<int>& agent_order, int low, int high, int agent_priority_strategy);

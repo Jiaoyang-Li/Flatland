@@ -74,7 +74,7 @@ for i in range(371, 400, 10):
 #    max_iterations[i] = 1000
 max_iterations = [0, 0, 5, 10, 25, 50, 20, 155, 145, 250, 445, 1230, 1230, 1095,
                   1095, 1095, 1090, 1000, 1000, 955, 955, 560, 5, 5, 5, 5, 5, 5,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]  # max iterations for LNS, learnt from local instances
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]  # max iterations for LNS, learnt from local instances
 frameworks = ["LNS"] * 40
 for i in range(len(max_iterations)):
     if max_iterations[i] > 0:
@@ -184,10 +184,9 @@ while True:
 
 
     debug = False
-    # remaining_time = total_time_limit - (time.time() - global_time_start)
-    time_limit = 580 # (predict_time_limit/predict_remaining_time) * remaining_time
+    time_limit = 200
     default_group_size = 5  # max number of agents in a group
-    stop_threshold = 10
+    stop_threshold = 30
     CBS = PythonCBS(local_env, frameworks[evaluation_number//10], time_limit, default_group_size, debug, replan[evaluation_number],stop_threshold)
     CBS.search(agent_percentages[evaluation_number], max_iterations[evaluation_number//10])
     evaluation_number += 1

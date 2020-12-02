@@ -24,6 +24,7 @@ public:
 	FlatlandLoader();
 	int getDegree(int loc) const;
     int getDegree(int loc,int heading) const;
+    int getHeading(int from, int to) const;
     float getMalfunctionRate() const {return this->malfunction_rate;}
     float setMalfunctionRate(float rate){this->malfunction_rate = rate;}
 

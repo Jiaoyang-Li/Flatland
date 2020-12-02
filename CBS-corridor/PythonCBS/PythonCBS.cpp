@@ -16,6 +16,7 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, float soft_time_
                           railEnv(railEnv1), framework(framework), soft_time_limit(soft_time_limit),
                           default_group_size(default_group_size), replan_on(replan),stop_threshold(stop_threshold) {
 	//Initialize PythonCBS. Load map and agent info into memory
+	hard_time_limit = soft_time_limit;
     if (debug)
 	    std::cout << "framework: " << framework << std::endl;
 	options1.debug = debug;
@@ -61,31 +62,42 @@ p::dict PythonCBS<Map>::getActions(p::object railEnv1, int timestep, float time_
         curr_locations[i] = al->agents_all[i].position;
     }
 
-
-    mcp.getNextLoc(timestep +  1); // get next location
-
-    // convert next location to actions of boost dict structure
     boost::python::dict actions;
-    for(int i =0; i<al->getNumOfAllAgents(); i++){
-        actions[i] = action_converter.pos2action(i, curr_locations, prev_locations, mcp.to_go);
+    if (framework == "CPR")
+    {
+        if (options1.debug)
+            cout << "Timestep " << timestep << endl;
+        cpr->getNextLoc();
+        // convert next location to actions of boost dict structure
+        for(int i =0; i<al->getNumOfAllAgents(); i++){
+            actions[i] = action_converter.pos2action(curr_locations[i], prev_locations[i], cpr->to_go[i]);
+        }
+    }
+    else
+    {
+        mcp.getNextLoc(timestep +  1); // get next location
+        // convert next location to actions of boost dict structure
+        for(int i =0; i<al->getNumOfAllAgents(); i++){
+            actions[i] = action_converter.pos2action(curr_locations[i], prev_locations[i], mcp.to_go[i]);
+        }
     }
     return actions;
 }
 
 template <class Map>
-void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) {
-    int max_timestep = p::extract<int>(railEnv.attr("_max_episode_steps"));
-    al->constraintTable.length_max = max_timestep - timestep; // update max timestep
+void PythonCBS<Map>::replan(const p::object& railEnv1, int timestep, float time_limit) {
+    start_time = Time::now();// time(NULL) return time in seconds
+    int _max_timestep = p::extract<int>(railEnv.attr("_max_episode_steps"));
+    al->constraintTable.length_max = _max_timestep - timestep; // update max timestep
+    al->updateAgents(*ml, railEnv.attr("agents"));
     if (framework == "CPR")
     {
-        //cpr->update(railEnv.attr("agents"));
-        //cpr->planPaths(time_limit);
+        cpr->update();
+        cpr->planPaths(time_limit);
         return;
     }
     else if (framework == "OnlinePP")
     {
-        start_time = Time::now();// time(NULL) return time in seconds
-        al->updateAgents(*ml, railEnv.attr("agents"));
         mcp.update();
         for (int a : al->new_agents)
         {
@@ -120,28 +132,28 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
     }
     else // LNS
     {
-        start_time = Time::now();// time(NULL) return time in seconds
-
-        /*vector<int> positions(al->getNumOfAllAgents());
-        for (int i = 0; i < al->getNumOfAllAgents(); i++)
-        {
-            positions[i] = al->agents_all[i].position;
-        }*/
-
-        al->updateAgents(*ml, railEnv.attr("agents"));
-
-        /*for (int i = 0; i < al->getNumOfAllAgents(); i++)
-        {
-            if (al->agents_all[i].position == mcp.to_go[i])
-                continue;
-            if (positions[i] != mcp.to_go[i] && al->agents_all[i].position == positions[i])
-                continue;
-            cout << "At timestep " << timestep << ", Agent " << i << " should move from " << positions[i] << " to " << mcp.to_go[i]
-                << " but it moves to " << al->agents_all[i].position << endl;
-            assert(false);
-        }*/
-
+        // TODO: for malfunction agents who have not entered the environment, we can simply replan the paths for themselves.
         mcp.update();
+        if (!al->unplanned_agents.empty() && timestep >= 500 && timestep % 100 == 0)
+        {
+            auto remaining_agents = al->unplanned_agents.size();
+            vector<Path> paths;
+            mcp.simulate(paths, timestep);
+            al->paths_all = paths;
+            al->updateConstraintTable();
+
+            LNS lns(*al, *ml, 1, agent_priority_strategy, options1, default_group_size,
+                    neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy,this->stop_threshold);
+            runtime = ((fsec)(Time::now() - start_time)).count();
+            lns.replan(al->unplanned_agents, 2 * time_limit - runtime);
+            mcp.clear();
+            mcp.build(al, ml, options1);
+            runtime = ((fsec)(Time::now() - start_time)).count();
+            replan_runtime += runtime;
+            cout << "Timestep " << timestep << ": Plan paths for " <<
+                remaining_agents - al->unplanned_agents.size() << " agents using " << runtime << "seconds" << endl;
+            return;
+        }
         if (!replan_on || replan_times >= max_replan_times  || replan_runtime >= max_replan_runtime)
             return;
 
@@ -249,6 +261,8 @@ void PythonCBS<Map>::replan(p::object railEnv1, int timestep, float time_limit) 
         runtime = ((fsec)(Time::now() - start_time)).count();
         lns.replan(time_limit - runtime);
         replan_times += lns.replan_times;
+        //if (lns.dead_agent) // when we know for sure that we will not make it
+        //    replan_on = false; // give up!
 //         lns.replan(to_be_replanned, time_limit - runtime);
         if (options1.debug)
         {
@@ -322,6 +336,15 @@ bool PythonCBS<Map>::search(float success_rate, int max_iterations) {
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy,this->stop_threshold);
         runtime = ((fsec)(Time::now() - start_time)).count(); 
         bool succ = lns.run(hard_time_limit - runtime, soft_time_limit - runtime, success_rate, max_iterations);
+        if (!succ && malfunction_rate < 0.003) // fail to plan paths for all agents for no-mal instances
+        {
+            for (int i = (int) lns.neighbors.size() - 1; i >= 0; i--)
+            {
+                if (!al->paths_all[lns.neighbors[i]].empty())
+                    break;
+                al->unplanned_agents.push_front(lns.neighbors[i]);
+            }
+        }
         runtime = ((fsec)(Time::now() - start_time)).count();
         statistic_list[0].runtime = runtime;
         statistic_list[0].initial_runtime = lns.initial_runtime;
@@ -602,6 +625,14 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_it
     this->al = this->al_pool[best_al];
     this->best_thread_id = best_al;
     this->best_initisl_priority_strategy = strategies[best_al];
+    if (best_finished_agents < al->getNumOfAllAgents() && malfunction_rate < 0.003) // fail to plan paths for all agents for small-mal instances
+    {
+        for (int i = 0; i < (int) al->paths_all.size(); i++)
+        {
+            if (al->paths_all[i].empty())
+                al->unplanned_agents.push_front(i);
+        }
+    }
     runtime = ((fsec)(Time::now() - start_time)).count();;
     if (options1.debug) {
         cout << "Best PP strategy = " << strategies[best_al] << ", "

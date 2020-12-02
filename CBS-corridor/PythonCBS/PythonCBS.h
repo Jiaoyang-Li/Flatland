@@ -148,7 +148,7 @@ private:
 	vector<AgentsLoader*> al_pool;
 	vector<LNS*> lns_pool;
 	options options1;
-    float hard_time_limit = 580;
+    float hard_time_limit = 590;
     float soft_time_limit;
 	int best_thread_id = 0;
 	int best_initisl_priority_strategy = -1;
@@ -167,7 +167,7 @@ private:
     int replan_strategy = 1;
     bool replan_on = false;
     int max_replan_times = 50000;
-    float max_replan_runtime = 200; // seconds
+    float max_replan_runtime = 100; // seconds
 
     int replan_times = 0;
     float replan_runtime = 0;
@@ -203,7 +203,7 @@ private:
     void generateNeighbor(int agent_id, const PathEntry& start, int start_time,
             set<int>& neighbor, int neighbor_size, int upperbound);
 
-    void replan(p::object railEnv1, int timestep, float time_limit);
+    void replan(const p::object& railEnv1, int timestep, float time_limit);
 };
 
 

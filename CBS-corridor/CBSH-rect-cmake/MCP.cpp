@@ -271,10 +271,30 @@ void MCP::getNextLoc(int timestep)
 {
     vector<bool> updated(al->getNumOfAllAgents(), false);
     to_go.resize(al->getNumOfAllAgents(), -1);
+    if (options1.debug)
+        cout << "Timestep=" << timestep << ": ";
     for (int i : active_agents)
     {
         getNextLocForAgent(i, updated, timestep);
+        if (options1.debug)
+        {
+            cout << i << "[" << al->agents_all[i].position << "->" << to_go[i];
+            if (al->agents_all[i].position_fraction > 0)
+            {
+                list<Transition> temp;
+                ml->get_transitions(temp, al->agents_all[i].position, al->agents_all[i].heading, true);
+                if (temp.size() == 1)
+                    cout << "(" << temp.front().location << ")";
+                else
+                    cout << "(" << al->agents_all[i].position + ml->moves_offset[al->agents_all[i].exit_heading] << ")";
+
+            }
+
+            cout << "],";
+        }
     }
+    if (options1.debug)
+        cout << endl;
 }
 
 void MCP::getNextLocForAgent(int i, vector<bool>& updated, int timestep)
