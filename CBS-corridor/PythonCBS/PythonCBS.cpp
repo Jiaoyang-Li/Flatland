@@ -917,7 +917,8 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads){
                 << "Final makespan = " << makespan  << ", "
                 << endl;
         }
-        if (solution_cost < best_cost){
+        if (finished_agents > best_finished_agents ||
+                (finished_agents == best_finished_agents  && solution_cost < best_cost)){
             best_cost = solution_cost;
             best_al = i;
             best_makespan = makespan;
