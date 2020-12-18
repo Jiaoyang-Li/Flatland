@@ -227,7 +227,7 @@ bool ConstraintTable::delay(float delayed, int next_agent,int origin_agent, int 
     int loc = paths_all[next_agent][t].location;
 
 
-    for(int t2 = t+1; t2<fmin(paths_all[next_agent][t].delayed_left_time,length_max); t2++){
+    for(int t2 = t+1; t2 < paths_all[next_agent][t].delayed_left_time && t2 < length_max; t2++){
         if (CT_paths[loc][t2]>0 && CT_paths[loc][t2]!=next_agent ){
             int new_agent = CT_paths[loc][t2];
 
