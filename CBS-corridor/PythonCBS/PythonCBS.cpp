@@ -41,9 +41,9 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, float soft_time_
     al->constraintTable.length_max = max_timestep;
     std::cout << "Max timestep = " << max_timestep << endl; // the deadline is stored in the constraint table in al, which will be used for all path finding.
     malfunction_rate = p::extract<float>(railEnv.attr("malfunction_process_data").attr("malfunction_rate"));
+    std::cout << "Malfunction rate = " << malfunction_rate << std::endl;
     if (delay_exp)
         ml->setMalfunctionRate(malfunction_rate);
-    std::cout << "Malfunction rate = " << malfunction_rate << std::endl;
     curr_locations.resize(ml->map_size(), -1);
     prev_locations.resize(ml->map_size(), -1);
     action_converter.num_agent = al->getNumOfAllAgents();
