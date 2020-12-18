@@ -424,7 +424,8 @@ bool SIPP::search(int upperbound) // TODO: weighted SIPP
             {
                 time_generated += 1;
                 int next_timestep = max(curr->timestep + 1, next_interval.first);
-                int next_g_val =  curr->g_val + (next_interval.first - curr->timestep);
+                int move_timestep = next_timestep - curr->timestep; // independent move timestep for later usage as each timestep causes potential delay.
+                float next_g_val =  curr->g_val + move_timestep;
                 if (next_timestep + next_h_val >= upperbound || next_timestep + next_h_val >= constraintTable.length_max)
                     continue;
                 // generate (maybe temporary) node
@@ -439,13 +440,29 @@ bool SIPP::search(int upperbound) // TODO: weighted SIPP
                 else
                     next->show_time = curr->show_time;
 
-                if(ml.getMalfunctionRate() > 0 && ml.getDegree(next->loc,next->heading) == 1) {
-                    list<Transition> next_locs;
-                    ml.get_transitions(next_locs, next->loc, next->heading, true);
-                    assert(next_locs.size()==1);
-                    if (ml.getDegree(next_locs.front().location,next_locs.front().heading) > 1) {
-                        next->g_val += getPenalty(next);
+                if(ml.getMalfunctionRate() > 0 && next->loc!=-1 ) {
+                    //estimate the delay happens on the moving from curr->loc to next->loc.
+                    //This estimation has a drawback, malfunction_steps_exp only considers the agent leave node as early
+                    // as possible. Ignores the fact that we extract path let agent leave as late as possible.
+                    assert(move_timestep>0);
+                    pair<int,int> prev_agent_time =constraintTable.get_previous_agent(next->loc,next->timestep);
+                    float prev_delayed_time = 0;
+                    if(prev_agent_time.first >=0)
+                        prev_delayed_time = al.paths_all[prev_agent_time.first][prev_agent_time.second].delayed_left_time;
+
+                    if (prev_delayed_time >= next_g_val)
+                        next->g_val  = prev_delayed_time+1;
+
+                    float delay_estimation = (next->g_val-curr->g_val) * ml.getMalfunctionRate() * malfunction_steps_exp;
+//                    float delay_estimation = move_timestep * ml.getMalfunctionRate() * malfunction_steps_exp;
+                    if(curr->g_val ==0){
+                        delay_estimation = (next->g_val-next->timestep) * ml.getMalfunctionRate() * malfunction_steps_exp;
                     }
+
+                    next->g_val += delay_estimation;
+                    next->on_node_delay = delay_estimation;
+
+
                 }
                 // try to retrieve it from the hash table
                 it = allNodes_table.find(next);
@@ -491,7 +508,6 @@ bool SIPP::search(int upperbound) // TODO: weighted SIPP
 int SIPP::getPenalty(SIPPNode* node){
     int timerange = timeInCorridor(node);
     int passAgents = numberAgentsPass(node->loc,timerange,node->timestep);
-    int malfunction_steps_exp = 36;
     int malfunction_expection = ml.getMalfunctionRate() * passAgents *malfunction_steps_exp * timerange;
 //    cout<<malfunction_expection<<","<<passAgents<<","<< ml.getMalfunctionRate()<<","<<endl;
 
@@ -574,17 +590,20 @@ void SIPP::updatePath(SIPPNode* goal)
 {
     path.resize(goal->timestep + 1);
     const auto* curr = goal;
+    const auto* prev = curr;
 
     if (agent.status > 0) {//go as early as possible
         for (int t = goal->timestep; t >=0; t--)
         {
             if (t < curr->interval.first && curr->parent!= nullptr)
             {
+                prev = curr;
                 curr = curr->parent;
             }
             assert((curr->parent== nullptr || t>curr->parent->timestep) && t>=curr->interval.first && t<=curr->interval.second);
 
             path[t].location = curr->loc;
+            path[t].delayed_left_time = prev->g_val-1;
             path[t].heading = curr->heading;
             path[t].position_fraction = curr->position_fraction;
             path[t].exit_heading = curr->exit_heading;
@@ -596,24 +615,77 @@ void SIPP::updatePath(SIPPNode* goal)
     else{//go as late as possible
         int t_start = goal->timestep;
         std::stack<const SIPPNode*> states;
+        std::stack<int> latest_lefts;
         while (curr->parent != nullptr) // non-root node
         {
             states.push(curr);
             t_start = min(t_start - 1, curr->parent->interval.second - 1); // latest timestep to leave curr->parent->loc
+            latest_lefts.push(t_start);
             curr = curr->parent;
         }
         const auto* prev = states.top(); states.pop();
         curr = states.top(); states.pop();
+        int prev_latest_left = latest_lefts.top(); latest_lefts.pop();// time left root node
+        int latest_left = latest_lefts.top(); latest_lefts.pop();//time left prev node
+
+        pair<int,int> prev_agent_time =constraintTable.get_previous_agent(prev->loc,prev->timestep);
+        float prev_delayed_time = 0;
+        float prev_estimated_arrive = prev_latest_left+1; // estimated arrive time of prev node
+        if(prev_agent_time.first >=0)
+            prev_delayed_time = al.paths_all[prev_agent_time.first][prev_agent_time.second].delayed_left_time;
+        if(prev_delayed_time >= prev_estimated_arrive)
+            prev_estimated_arrive = prev_delayed_time+1;
+        float on_node_delay = (prev_estimated_arrive - prev_latest_left+1)*ml.getMalfunctionRate()*malfunction_steps_exp;
+        prev_estimated_arrive += on_node_delay;
+        for (int t = 0 ; t < t_start + 1; t++)
+        {
+            path[t].delayed_left_time = prev_estimated_arrive-1;// curr->g_val expected arrive time of curr, timestep is planed arrive time of curr
+            path[t].latest_left = prev_latest_left;
+        }
+
+
+        prev_agent_time =constraintTable.get_previous_agent(curr->loc,curr->timestep);
+
+        if(prev_agent_time.first >=0)
+            prev_delayed_time = al.paths_all[prev_agent_time.first][prev_agent_time.second].delayed_left_time;
+        float estimated_arrive = prev_estimated_arrive+(latest_left-prev_latest_left);// estimated arrive time of curr node
+        if(prev_delayed_time >= estimated_arrive)
+            estimated_arrive = prev_delayed_time+1;
+
+        on_node_delay = (prev_estimated_arrive - prev_estimated_arrive)*ml.getMalfunctionRate()*malfunction_steps_exp;
+        estimated_arrive += on_node_delay;
+
         for (int t = t_start + 1; t < goal->timestep; t++)
         {
             if (t > t_start + 1 && t >= curr->interval.first)
             {
                 prev = curr;
                 curr = states.top(); states.pop();
+                prev_latest_left = latest_left;
+                latest_left = latest_lefts.top(); latest_lefts.pop();
+
+                prev_agent_time =constraintTable.get_previous_agent(curr->loc,curr->timestep);
+
+                prev_estimated_arrive =estimated_arrive;
+                estimated_arrive = estimated_arrive + latest_left - prev_latest_left;
+                if(prev_agent_time.first >=0)
+                    prev_delayed_time = al.paths_all[prev_agent_time.first][prev_agent_time.second].delayed_left_time;
+
+                if (prev_delayed_time >= estimated_arrive)
+                    estimated_arrive  = prev_delayed_time+1;
+
+                on_node_delay = (estimated_arrive-prev_estimated_arrive) * ml.getMalfunctionRate() * malfunction_steps_exp;
+//                    float delay_estimation = move_timestep * ml.getMalfunctionRate() * malfunction_steps_exp;
+
+                estimated_arrive += on_node_delay;
             }
             assert(prev->interval.first <= t && t < prev->interval.second);
             path[t].location = prev->loc;
             path[t].heading = prev->heading;
+            path[t].delayed_left_time = estimated_arrive-1;// curr->g_val expected arrive time of curr, timestep is planed arrive time of curr
+            path[t].latest_left = latest_left;
+            path[t].on_node_delay = on_node_delay;//on_node_delay records delay from agent itself on parent node
+            path[t].g_val = prev->g_val;
             path[t].position_fraction = prev->position_fraction;
             path[t].exit_heading = prev->exit_heading;
             path[t].exit_loc = prev->exit_loc;
@@ -628,6 +700,10 @@ void SIPP::updatePath(SIPPNode* goal)
         path[goal->timestep].position_fraction = goal->position_fraction;
         path[goal->timestep].exit_heading = goal->exit_heading;
         path[goal->timestep].exit_loc = goal->exit_loc;
+        path[goal->timestep].delayed_left_time = estimated_arrive;// curr->g_val expected arrive time of curr, timestep is planed arrive time of curr
+        path[goal->timestep].latest_left = estimated_arrive;
+        path[goal->timestep].on_node_delay = 0;//on_node_delay records delay from agent itself on parent node
+        path[goal->timestep].g_val = prev->g_val;
     }
     if (agent.malfunction_left > 0)
     {

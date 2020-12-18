@@ -49,7 +49,13 @@ struct PathEntry
 	float position_fraction = 0.0;
 	int exit_heading = -1;
 	int exit_loc = -1;
-	//PathEntry(int loc = -1) { location = loc; single = false; }
+	float delayed_left_time = 0;
+    float old_left_time = 0;
+    float g_val = 0;
+    float latest_left = 0;
+    float on_node_delay = 0;
+
+    //PathEntry(int loc = -1) { location = loc; single = false; }
 	//std::list<int> locations; // all possible locations at the same time step (i.e., mdd nodes at the same time step)
 	OldConfList* conflist=nullptr;
 };

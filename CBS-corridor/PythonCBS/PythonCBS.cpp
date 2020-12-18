@@ -12,9 +12,9 @@ namespace p = boost::python;
 
 template <class Map>
 PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, float soft_time_limit,
-                          int default_group_size, bool debug, bool replan, int stop_threshold) :
+                          int default_group_size, bool debug, bool replan, int stop_threshold,bool delay_exp) :
                           railEnv(railEnv1), framework(framework), soft_time_limit(soft_time_limit),
-                          default_group_size(default_group_size), replan_on(replan),stop_threshold(stop_threshold) {
+                          default_group_size(default_group_size), replan_on(replan),stop_threshold(stop_threshold),delay_exp(delay_exp) {
 	//Initialize PythonCBS. Load map and agent info into memory
 	hard_time_limit = soft_time_limit;
     if (debug)
@@ -30,7 +30,8 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, float soft_time_
 	    std::cout << "load map " << p::extract<int>(rows)<<" x "<< p::extract<int>(cols) << std::endl;
 	//ml =  new MapLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
     ml = new FlatlandLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
-    ml->setMalfunctionRate(p::extract<float>(railEnv.attr("malfunction_process_data").attr("malfunction_rate")));
+    if (delay_exp)
+        ml->setMalfunctionRate(p::extract<float>(railEnv.attr("malfunction_process_data").attr("malfunction_rate")));
     if (options1.debug)
         std::cout << "load agents " << std::endl;
 
@@ -787,7 +788,7 @@ template class PythonCBS<FlatlandLoader>;
 BOOST_PYTHON_MODULE(libPythonCBS)  // Name here must match the name of the final shared library, i.e. mantid.dll or mantid.so
 {
 	using namespace boost::python;
-	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, float,int, bool, bool,int>())
+	class_<PythonCBS<FlatlandLoader>>("PythonCBS", init<object, string, float,int, bool, bool,int,bool>())
 		.def("getResult", &PythonCBS<FlatlandLoader>::getResult)
 		.def("search", &PythonCBS<FlatlandLoader>::search)
 		.def("hasConflicts", &PythonCBS<FlatlandLoader>::findConflicts)

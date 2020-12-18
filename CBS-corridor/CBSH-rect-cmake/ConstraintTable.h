@@ -25,11 +25,13 @@ public:
 	    auto map_size = CT_paths.size(); CT_paths.clear(); CT_paths.resize(map_size);
         latest_conatraints.resize(map_size, 0);
     }
-	bool insert_path(int agent_id, const Path& path);
+	bool insert_path(int agent_id, const Path& path, vector<Path>* paths_all = nullptr, float malfunction_rate = 0);
     void delete_path(int agent_id, const Path& path);
     bool insert_path_list(int agent_id, const Path& path);
     void delete_path_list(int agent_id, const Path& path);
 	bool is_constrained(int agent_id, int loc, int t, int pre_loc = -2) const;
+    pair<int,int> get_previous_agent(int loc, int timestep) const;
+    bool delay(float delayed, int next_agent,int origin_agent, int t, vector<Path>& paths_all, float malfunction_rate);
     bool is_constrained_list(int agent_id, int loc, int t, int pre_loc = -2) const;
 	bool blocked(int loc, int t) const;
 	// bool is_good_malfunction_location(int loc, int t);
@@ -47,6 +49,7 @@ public:
         else
             CT_paths.resize(map_size);
     }
+    int count = 0;
 private:
     vector<int> latest_conatraints; // latest constraint at each location
     vector< vector<int> > CT_paths; // this stores the already planned paths, the value is the id of the agent

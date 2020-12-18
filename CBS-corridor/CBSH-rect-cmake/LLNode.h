@@ -19,7 +19,7 @@ class LLNode
 public:
 
     int loc;
-    int g_val;
+    float g_val;
     float h_val = 0;
     int heading;
     LLNode* parent=nullptr;
@@ -32,6 +32,8 @@ public:
     float position_fraction = 0.0;
     int exit_loc=-1;
     int exit_heading=-1;
+
+    float on_node_delay;
 
 
     // the following is used to comapre nodes in the OPEN list
@@ -59,7 +61,7 @@ public:
 
     LLNode();
     //LLNode(const LLNode& other);
-    LLNode(int loc, int g_val, int h_val, LLNode* parent, int timestep);
+    LLNode(int loc, float g_val, int h_val, LLNode* parent, int timestep);
     inline double getFVal() const { return g_val + h_val; }
 
     // The following is used by googledensehash for checking whether two nodes are equal
@@ -106,7 +108,7 @@ public:
     SIPPNode* parent = nullptr;
 
     SIPPNode() : LLNode() {}
-    SIPPNode(int loc, int g_val, int h_val, SIPPNode* parent, int timestep, Interval interval):
+    SIPPNode(int loc, float g_val, int h_val, SIPPNode* parent, int timestep, Interval interval):
             LLNode(loc, g_val, h_val, nullptr, timestep), parent(parent), interval(std::move(interval)) {}
 
     // The following is used by for generating the hash value of a nodes

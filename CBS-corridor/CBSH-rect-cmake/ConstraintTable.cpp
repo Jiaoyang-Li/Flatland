@@ -87,13 +87,13 @@ void ConstraintTable::get_conflicting_agents(int agent_id, set<int>& conflicting
     }
 }
 
-bool ConstraintTable::insert_path(int agent_id, const Path& path)
+bool ConstraintTable::insert_path(int agent_id, const Path& path, vector<Path>* paths_all, float malfunction_rate)
 {
     for (int timestep = (int)path.size() - 1; timestep >= 0; timestep--)
     {
         int loc = path[timestep].location;
         if (loc == -1)
-            return true;
+            break;
         if (CT_paths[loc].empty())
             CT_paths[loc].resize(length_max + 1, -1);
 
@@ -104,6 +104,7 @@ bool ConstraintTable::insert_path(int agent_id, const Path& path)
 
         CT_paths[loc][timestep] += agent_id + 1;
         latest_conatraints[loc] = std::max(latest_conatraints[loc], timestep);
+
         // to avoid the situation when an agent cut in line
         if (path[timestep].position_fraction >= 1)
         {
@@ -114,6 +115,152 @@ bool ConstraintTable::insert_path(int agent_id, const Path& path)
             CT_paths[path[timestep].exit_loc][timestep] += (1 + agent_id) * num_of_agents + 1;
         }
     }
+
+//    if(malfunction_rate==0){
+//        return true;
+//    }
+
+//    for (int timestep =0 ; timestep <(int)path.size()-1; timestep++)
+//    {
+//        int loc = path[timestep].location;
+//        //delay estimation correction for insert path before an agent.
+//        if(loc == -1 || timestep == (int)path.size()-1){
+//            continue;
+//        }
+//        if(paths_all!= nullptr && timestep+1<=length_max && path[timestep+1].location!= path[timestep].location && path[timestep].delayed_left_time > timestep){
+//            for(int t1 = timestep +1; t1<=fmin(path[timestep].delayed_left_time,length_max); t1++){
+//                if (CT_paths[loc][t1]>0 && CT_paths[loc][t1]!=agent_id){
+//                    int next_agent = CT_paths[loc][t1];
+////                    if(t1 >= (*paths_all)[next_agent].size()-1){//for next_agent at goal location;
+////                        if (path[timestep].delayed_left_time >= (*paths_all)[next_agent][t1].delayed_left_time){
+//////                            float delayed = path[timestep].delayed_left_time - (*paths_all)[next_agent][t1-1].delayed_left_time;
+//////                            (*paths_all)[next_agent][t1-1].delayed_left_time = path[timestep].delayed_left_time+delayed* malfunction_rate*36;
+////                            (*paths_all)[next_agent][t1].delayed_left_time = path[timestep].delayed_left_time+1;//update goal directly;
+//////                            int prev_loc = (*paths_all)[next_agent][t1-1].location;
+//////                            int t_prev = t1-2;
+//////                            while((*paths_all)[next_agent][t_prev].location == prev_loc){
+//////                                (*paths_all)[next_agent][t_prev].delayed_left_time = (*paths_all)[next_agent][t1-1].delayed_left_time;
+//////                                t_prev--;
+//////                            }
+////                        }
+////                        continue;
+////                    }
+//
+//                    if (path[timestep].delayed_left_time > (*paths_all)[next_agent][t1-1].delayed_left_time){
+//                        float delayed = path[timestep].delayed_left_time
+//                                -(*paths_all)[next_agent][t1-1].delayed_left_time;
+//                        int prev_loc = (*paths_all)[next_agent][t1-1].location;
+//                        int t_prev = t1-1;
+//                        while(t_prev >=0 && (*paths_all)[next_agent][t_prev].location == prev_loc){
+//                            t_prev--;
+//                        }
+//
+//                        if(delayed>0) {
+//                            delay(delayed, next_agent,agent_id, t_prev+1, *paths_all,malfunction_rate);
+//                        }
+//                    }
+//
+//                    break;
+//                }
+//            }
+//        }
+//    }
+    return true;
+}
+
+//bool ConstraintTable::delay(float delayed, int next_agent,int origin_agent, int t, vector<Path>& paths_all,float malfunction_rate){
+//    float extra_on_node_delay =  delayed * malfunction_rate * 36;
+//    paths_all[next_agent][t].on_node_delay+=extra_on_node_delay;
+//
+//    for(int tp = t; tp < paths_all[next_agent].size(); tp++){
+//        paths_all[next_agent][tp].old_left_time = paths_all[next_agent][tp].delayed_left_time;
+//        paths_all[next_agent][tp].delayed_left_time+= (delayed +extra_on_node_delay);
+//    }
+//
+//    for(int tp = t; tp < paths_all[next_agent].size(); tp++){
+//        int loc = paths_all[next_agent][tp].location;
+//        for(int t2 = tp+1; t2<fmin(paths_all[next_agent][t].delayed_left_time,length_max); t2++){
+//            if (CT_paths[loc][t2]>0 && CT_paths[loc][t2]!=next_agent ){
+//                int new_agent = CT_paths[loc][t2];
+//
+//                if(paths_all[next_agent][t].delayed_left_time < paths_all[new_agent][t2].latest_left){
+//                    break;
+//                }
+//
+//                float next_delayed = (paths_all[next_agent][t].delayed_left_time+paths_all[new_agent][t2].on_node_delay)
+//                                     -paths_all[new_agent][t2].delayed_left_time;
+//
+//                if(next_delayed>0) {
+//                    delay(next_delayed, new_agent, origin_agent, t2, paths_all,malfunction_rate);
+//                }
+//
+//
+//                break;
+//            }
+//        }
+//    }
+//    return true;
+//}
+
+
+bool ConstraintTable::delay(float delayed, int next_agent,int origin_agent, int t, vector<Path>& paths_all,float malfunction_rate){
+    float extra_on_node_delay = 0; //  delayed * malfunction_rate * 36;
+    for(int tp = t; tp < paths_all[next_agent].size(); tp++){
+        if (tp == paths_all[next_agent].size() -1){
+            paths_all[next_agent][tp].old_left_time = paths_all[next_agent][tp].delayed_left_time;
+            paths_all[next_agent][tp].delayed_left_time = paths_all[next_agent][tp-1].delayed_left_time+1;
+//            paths_all[next_agent][tp].delayed_left_time += (delayed);
+
+        }
+        else {
+            paths_all[next_agent][tp].old_left_time = paths_all[next_agent][tp].delayed_left_time;
+            paths_all[next_agent][tp].delayed_left_time += (delayed + extra_on_node_delay);
+        }
+    }
+
+    //delay update start from time 0 of origin agent to path end. stop recursion to avoid duplicate update
+    if(next_agent == origin_agent || paths_all[next_agent][t].location==-1){
+        return true;
+    }
+
+
+    int loc = paths_all[next_agent][t].location;
+
+
+    for(int t2 = t+1; t2<fmin(paths_all[next_agent][t].delayed_left_time,length_max); t2++){
+        if (CT_paths[loc][t2]>0 && CT_paths[loc][t2]!=next_agent ){
+            int new_agent = CT_paths[loc][t2];
+
+
+//            if(t2 >= paths_all[new_agent].size()-1){//for new_agent at goal location;
+//                if (paths_all[next_agent][t].delayed_left_time >= paths_all[new_agent][t2].delayed_left_time){
+//                    paths_all[new_agent][t2].delayed_left_time = paths_all[next_agent][t].delayed_left_time+1;//update goal directly;
+//
+//                }
+//                continue;
+//            }
+
+
+
+            float next_delayed = paths_all[next_agent][t].delayed_left_time
+                                 -paths_all[new_agent][t2-1].delayed_left_time;
+
+
+
+            if(next_delayed>0) {
+                int prev_loc = paths_all[next_agent][t2-1].location;
+                int t_prev = t2-1;
+                while(t_prev>=0 && paths_all[new_agent][t_prev].location == prev_loc){
+                    t_prev--;
+                }
+                delay(next_delayed, new_agent, origin_agent, t_prev+1, paths_all,malfunction_rate);
+            }
+
+
+            break;
+        }
+    }
+
     return true;
 }
 
@@ -250,4 +397,17 @@ bool ConstraintTable::is_constrained_list(int agent_id, int loc, int timestep, i
         };
     }
 
+}
+
+pair<int,int> ConstraintTable::get_previous_agent(int loc, int timestep) const{
+    if (loc < 0 || CT_paths[loc].empty())
+        return make_pair(-1,0);
+
+    if (timestep > 0){
+        for (int t = timestep; t >= 0; t--){
+            if (CT_paths[loc][t] >= 0)
+                return make_pair(CT_paths[loc][t],t);
+        }
+    }
+    return make_pair(-1,0);
 }

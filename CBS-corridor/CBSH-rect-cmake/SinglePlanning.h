@@ -76,6 +76,7 @@ public:
 
 
 private:
+    int malfunction_steps_exp = 36; //delay timestep expectation/average malfunction timestep.
     int getPenalty(SIPPNode* node);
     int numberAgentsPass(int exit_loc, int time_range, int timestep);
     int timeInCorridor(SIPPNode* node);

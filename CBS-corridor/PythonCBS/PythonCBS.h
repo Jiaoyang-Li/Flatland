@@ -58,7 +58,7 @@ template <class Map>
 class PythonCBS {
 public:
 	PythonCBS(p::object railEnv1, string framework, float soft_time_limit,
-              int default_group_size, bool debug, bool replan,int stop_threshold);
+              int default_group_size, bool debug, bool replan,int stop_threshold, bool delay_exp);
 	~PythonCBS(){
 	    delete this->al;
 
@@ -168,6 +168,7 @@ private:
     bool replan_on = false;
     int max_replan_times = 50000;
     float max_replan_runtime = 100; // seconds
+    bool delay_exp = false;
 
     int replan_times = 0;
     float replan_runtime = 0;

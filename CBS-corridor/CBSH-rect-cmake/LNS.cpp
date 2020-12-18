@@ -755,9 +755,9 @@ void LNS::updateNeighborPathsCosts()
 void LNS::addAgentPath(int agent, const Path& path)
 {
     assert(agent == al.agents_all[agent].agent_id);
-    if(!al.constraintTable.insert_path(agent, path))
-        exit(10);
     al.paths_all[agent] = path;
+    if(!al.constraintTable.insert_path(agent, al.paths_all[agent], &al.paths_all,ml.getMalfunctionRate()))
+        exit(10);
 }
 
 void LNS::deleteNeighborPaths()
