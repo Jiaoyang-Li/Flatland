@@ -151,8 +151,8 @@ void PythonCBS<Map>::replan(const p::object& railEnv1, int timestep, float time_
             mcp.build(al, ml, options1);
             runtime = ((fsec)(Time::now() - start_time)).count();
             replan_runtime += runtime;
-            cout << "Timestep " << timestep << ": Plan paths for " <<
-                remaining_agents - al->unplanned_agents.size() << " agents using " << runtime << "seconds" << endl;
+            //cout << "Timestep " << timestep << ": Plan paths for " <<
+            //    remaining_agents - al->unplanned_agents.size() << " agents using " << runtime << "seconds" << endl;
             return;
         }
         if (!replan_on || replan_times >= max_replan_times  || replan_runtime >= max_replan_runtime)
@@ -337,7 +337,7 @@ bool PythonCBS<Map>::search(float success_rate, int max_iterations) {
                 neighbor_generation_strategy, prirority_ordering_strategy, replan_strategy,this->stop_threshold);
         runtime = ((fsec)(Time::now() - start_time)).count(); 
         bool succ = lns.run(hard_time_limit - runtime, soft_time_limit - runtime, success_rate, max_iterations);
-        if (!succ && malfunction_rate < 0.003) // fail to plan paths for all agents for no-mal instances
+        if (!succ && malfunction_rate < 0) // fail to plan paths for all agents for no-mal instances
         {
             for (int i = (int) lns.neighbors.size() - 1; i >= 0; i--)
             {
@@ -568,7 +568,7 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_it
         exit(1);
     }
     std::atomic<int> complete;
-    complete.store(-1);
+    complete.store(-MAX_COST);
 
     for (int i = 0; i<no_threads;i++){
         AgentsLoader* temp = this->al->clone();
@@ -617,16 +617,21 @@ bool PythonCBS<Map>::parallel_LNS(int no_threads, float success_rate, int max_it
             best_finished_agents = finished_agents;
         }
         statistic_list[i].runtime = runtime;
-        statistic_list[i].sum_of_costs = solution_cost;
-        statistic_list[i].makespan = makespan;
-        statistic_list[i].unfinished_agents = this->al->getNumOfAllAgents() - finished_agents;
+        statistic_list[i].initial_runtime = this->lns_pool[i]->initial_runtime;
+        statistic_list[i].sum_of_costs = this->lns_pool[i]->sum_of_costs;
+        statistic_list[i].initial_sum_of_costs = this->lns_pool[i]->initial_sum_of_costs;
+        statistic_list[i].makespan = this->lns_pool[i]->makespan;
+        statistic_list[i].initial_makespan = this->lns_pool[i]->initial_makespan;
+        statistic_list[i].iterations = this->lns_pool[i]->iterations;
+        iteration_stats[i] = this->lns_pool[i]->iteration_stats;
+
 
     }
     delete this->al;
     this->al = this->al_pool[best_al];
     this->best_thread_id = best_al;
     this->best_initisl_priority_strategy = strategies[best_al];
-    if (best_finished_agents < al->getNumOfAllAgents() && malfunction_rate < 0.003) // fail to plan paths for all agents for small-mal instances
+    if (best_finished_agents < al->getNumOfAllAgents() && malfunction_rate < 0) // fail to plan paths for all agents for small-mal instances
     {
         for (int i = 0; i < (int) al->paths_all.size(); i++)
         {
@@ -761,6 +766,7 @@ bool PythonCBS<Map>::parallel_neighbour_LNS(int no_threads, float success_rate, 
             best_makespan = makespan;
             best_finished_agents = finished_agents;
         }
+
     }
     this->best_initisl_priority_strategy = strategies[best_al];
     delete this->al;

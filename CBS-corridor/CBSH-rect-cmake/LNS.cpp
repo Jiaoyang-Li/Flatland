@@ -8,7 +8,7 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
     hard_time_limit = _hard_time_limit;
     soft_time_limit = min(_soft_time_limit, hard_time_limit);
     if(! skip_pp) {
-        if (!getInitialSolution(success_rate)) { // get initial solution
+        if (!getInitialSolution(success_rate,max_iterations)) { // get initial solution
             return false;
         }
     }
@@ -49,8 +49,16 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
     // iteration_stats.emplace_back(al.agents_all.size(), 0, runtime, runtime, makespan, solution_cost,
     //        destroy_strategy, (double)(solution_cost) / max_timestep / al.agents_all.size(), 0, 0, 0);
     if(pp_only || al.getNumOfAllAgents() == 1) {
-        if ( this->complete!= nullptr && this->complete->load()<0) {
+        if (max_iterations>0 && this->complete!= nullptr && this->complete->load()<0) {
             this->complete->store(solution_cost);
+        }
+        else if( max_iterations == 0 && this->complete!= nullptr && this->agent_priority_strategy==3){
+            this->complete->store(solution_cost);
+        }
+        else if( max_iterations == 0 && this->complete!= nullptr && this->agent_priority_strategy!=3){
+            if (solution_cost < -this->complete->load()) {
+                this->complete->store(-solution_cost);
+            }
         }
         return true;
     }
@@ -75,8 +83,13 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
     bool succ;
     auto old_runtime = runtime;
     iterations = 0;
-    while (runtime < soft_time_limit && iterations < max_iterations && (this->complete!=nullptr && this->complete->load()<0))
+    while (runtime < soft_time_limit && iterations < max_iterations)
     {
+        if (this->complete!= nullptr &&
+                 ((this->agent_priority_strategy==3 &&  solution_cost > -this->complete->load())
+                  ||(this->agent_priority_strategy!=3 && (this->complete->load()>=0 ||solution_cost > -this->complete->load() )))){
+            break;
+        }
 
         iterations++;
         runtime =((fsec)(Time::now() - start_time)).count();
@@ -134,8 +147,13 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
             case 1:
                 succ = generateNeighborByStart();
                 if(!succ) { // no two agents have the same start locations
-                    if ( this->complete!= nullptr && this->complete->load()<0){
+                    if(this->complete!= nullptr && this->agent_priority_strategy==3){
                         this->complete->store(solution_cost);
+                    }
+                    else if( this->complete!= nullptr && this->agent_priority_strategy!=3){
+                        if (solution_cost < -this->complete->load()) {
+                            this->complete->store(-solution_cost);
+                        }
                     }
                     return true;
                 }
@@ -188,8 +206,13 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
         //        destroy_strategy, (double)(solution_cost) / max_timestep / al.agents_all.size(), 0, 0, 0);
         old_runtime = runtime;
         if (replan_strategy == 0 && max_group_size > al.agents_all.size()) {
-            if ( this->complete!= nullptr && this->complete->load()<0){
-                this->complete->store(sum_of_costs);
+            if(this->complete!= nullptr && this->agent_priority_strategy==3){
+                this->complete->store(solution_cost);
+            }
+            else if( this->complete!= nullptr && this->agent_priority_strategy!=3){
+                if (solution_cost < -this->complete->load()) {
+                    this->complete->store(-solution_cost);
+                }
             }
             return true; // CBS has replanned paths for all agents. No need for further iterations
         }
@@ -208,9 +231,14 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
         }
     }
 
-    cout << "LNS improves the solution to: Sum of costs = " << sum_of_costs << " and makespan = " << makespan <<" runtime "<< runtime<< endl;
-    if ( this->complete!= nullptr && this->complete->load()<0){
-        this->complete->store(sum_of_costs);
+    cout << "LNS improves the solution to: Sum of costs = " << sum_of_costs << " and makespan = " << makespan <<" runtime "<< runtime<< " priority "<<this->agent_priority_strategy<< endl;
+    if(this->complete!= nullptr && this->agent_priority_strategy==3){
+        this->complete->store(solution_cost);
+    }
+    else if( this->complete!= nullptr && this->agent_priority_strategy!=3){
+        if (solution_cost < -this->complete->load()) {
+            this->complete->store(-solution_cost);
+        }
     }
 
     return true;
@@ -256,7 +284,7 @@ bool LNS::run(float _hard_time_limit, float _soft_time_limit, float success_rate
 //            al.constraintTable.delete_path(i, al.paths_all[i]);
 //            runtime = ((fsec) (Time::now() - start_time)).count();
 //            al.agents[0] = &al.agents_all[i];
-//            SinglePlanning planner(ml,al,f_w,time_limit - runtime,options1);
+//            SIPP planner(ml,al,f_w,time_limit - runtime,options1);
 //            planner.search();
 //            assert(planner.path.size() <= copy.size());
 //            if (planner.path.empty())
@@ -411,6 +439,7 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
         al.agents[0] = &al.agents_all[i];
         SIPP planner(ml, al, f_w, time_limit - runtime, options1);
         planner.search();
+        //cout << ((fsec)(Time::now() - start_time)).count() - runtime << ",";
         runtime = ((fsec) (Time::now() - start_time)).count();
         if (!planner.path.empty()) {
             addAgentPath(i, planner.path);
@@ -426,7 +455,7 @@ bool LNS::replan(list<int>& to_be_replanned, float time_limit)
 }
 
 
-bool LNS::getInitialSolution(float success_rate)
+bool LNS::getInitialSolution(float success_rate, int max_iterations)
 {
     if (options1.debug)
         cout << "Prioritized planning" << endl;
@@ -448,16 +477,20 @@ bool LNS::getInitialSolution(float success_rate)
     runtime = ((fsec)(Time::now() - start_time)).count();
     for (auto agent : neighbors)
     {
-        if ( (this->complete!= nullptr && this->complete->load()>= 0 && (remaining_agents > this->stop_threshold || sum_of_costs > this->complete->load()) )
+        if ( ( this->complete!= nullptr &&
+                    ((this->agent_priority_strategy==3 &&  sum_of_costs > -this->complete->load())
+                    ||(this->agent_priority_strategy!=3 && (this->complete->load()>=0 ||sum_of_costs > -this->complete->load() ))))
             || runtime >= hard_time_limit
             || al.getNumOfAllAgents() - remaining_agents >= success_rate * al.getNumOfAllAgents())
         {
             cout << "Find a solution for " << al.getNumOfAllAgents() - remaining_agents - dead_agents << " agents" <<
                     " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" << "agent priority "<< agent_priority_strategy<< endl;
             cout << "Sum of costs = " << sum_of_costs <<  " and makespan = " << makespan << endl;
-            if ( this->complete!= nullptr && this->complete->load()<0) {
+            if(this->complete!= nullptr && this->agent_priority_strategy==3 ){
                 this->complete->store(sum_of_costs);
             }
+            //if agent_priority_strategy != 3 and stop here, means it's solution is worse no signal needed
+
             return false;
         }
         al.agents[0] = &al.agents_all[agent];
@@ -465,8 +498,10 @@ bool LNS::getInitialSolution(float success_rate)
             cout << "Remaining agents = " << remaining_agents <<
              ", remaining time = " << hard_time_limit - runtime << " seconds. " << endl
                     << "Agent " << al.agents[0]->agent_id << endl;
-        SIPP planner(ml,al,f_w,hard_time_limit - runtime,options1);
+        //runtime = ((fsec)(Time::now() - start_time)).count();
+        SIPP planner(ml, al, f_w, hard_time_limit - runtime, options1);
         planner.search();
+        //cout << ((fsec)(Time::now() - start_time)).count() - runtime << ",";
         updateCBSResults(planner);
         addAgentPath(agent, planner.path);
         runtime = ((fsec)(Time::now() - start_time)).count();
@@ -485,7 +520,7 @@ bool LNS::getInitialSolution(float success_rate)
         }
     }
 
-    cout << "Find a solution for " << al.getNumOfAllAgents() - remaining_agents - dead_agents << " agents" <<
+    cout << endl << "Find a solution for " << al.getNumOfAllAgents() - remaining_agents - dead_agents << " agents" <<
          " with " << dead_agents << " agents dead and " << remaining_agents << " agents unplanned" <<  "agent priority "<< agent_priority_strategy<<endl;
     cout << "Sum of costs = " << sum_of_costs <<  " and makespan = " << makespan << "runtime ="<<runtime<< endl;
     return true;
@@ -653,7 +688,7 @@ void LNS::replanByPP()
 //        icbs.runICBSSearch();
 //        updateCBSResults(icbs);
 //        addAgentPath(agent, *icbs.paths[0]);
-        SinglePlanning planner(ml,al,f_w,0,options1);
+        SIPP planner(ml,al,f_w,0,options1);
         planner.search();
         updateCBSResults(planner);
         addAgentPath(agent, planner.path);

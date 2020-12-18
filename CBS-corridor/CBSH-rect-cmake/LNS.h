@@ -43,7 +43,7 @@ public:
     bool run(float hard_time_limit, float soft_time_limit, float success_rate = 1.1, int max_iterations = 5000);
     bool replan(float time_limit);
     bool replan(list<int>& to_be_replanned, float time_limit);
-    bool getInitialSolution(float success_rate = 1.1);
+    bool getInitialSolution(float success_rate = 1.1,int max_iterations =5000);
     void set_complete(std::atomic<int>* complete){this->complete = complete;}
 private:
     high_resolution_clock::time_point start_time;
