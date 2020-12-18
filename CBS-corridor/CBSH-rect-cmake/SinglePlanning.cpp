@@ -654,6 +654,11 @@ void SIPP::updatePath(SIPPNode* goal)
 
         on_node_delay = (prev_estimated_arrive - prev_estimated_arrive)*ml.getMalfunctionRate()*malfunction_steps_exp;
         estimated_arrive += on_node_delay;
+        if(ml.getMalfunctionRate()==0){
+            estimated_arrive = latest_left+1;
+            prev_estimated_arrive = prev_latest_left+1;
+
+        }
 
         for (int t = t_start + 1; t < goal->timestep; t++)
         {
@@ -664,20 +669,27 @@ void SIPP::updatePath(SIPPNode* goal)
                 prev_latest_left = latest_left;
                 latest_left = latest_lefts.top(); latest_lefts.pop();
 
-                prev_agent_time =constraintTable.get_previous_agent(curr->loc,curr->timestep);
+                if(ml.getMalfunctionRate()>0) {
+                    prev_agent_time = constraintTable.get_previous_agent(curr->loc, curr->timestep);
 
-                prev_estimated_arrive =estimated_arrive;
-                estimated_arrive = estimated_arrive + latest_left - prev_latest_left;
-                if(prev_agent_time.first >=0)
-                    prev_delayed_time = al.paths_all[prev_agent_time.first][prev_agent_time.second].delayed_left_time;
+                    prev_estimated_arrive = estimated_arrive;
+                    estimated_arrive = estimated_arrive + latest_left - prev_latest_left;
+                    if (prev_agent_time.first >= 0)
+                        prev_delayed_time = al.paths_all[prev_agent_time.first][prev_agent_time.second].delayed_left_time;
 
-                if (prev_delayed_time >= estimated_arrive)
-                    estimated_arrive  = prev_delayed_time+1;
+                    if (prev_delayed_time >= estimated_arrive)
+                        estimated_arrive = prev_delayed_time + 1;
 
-                on_node_delay = (estimated_arrive-prev_estimated_arrive) * ml.getMalfunctionRate() * malfunction_steps_exp;
+                    on_node_delay = (estimated_arrive - prev_estimated_arrive) * ml.getMalfunctionRate() *
+                                    malfunction_steps_exp;
 //                    float delay_estimation = move_timestep * ml.getMalfunctionRate() * malfunction_steps_exp;
 
-                estimated_arrive += on_node_delay;
+                    estimated_arrive += on_node_delay;
+                }
+                else{
+                    estimated_arrive = latest_left+1;
+                    prev_estimated_arrive = prev_latest_left+1;
+                }
             }
             assert(prev->interval.first <= t && t < prev->interval.second);
             path[t].location = prev->loc;

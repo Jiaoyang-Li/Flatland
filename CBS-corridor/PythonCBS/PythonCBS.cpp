@@ -30,8 +30,7 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, float soft_time_
 	    std::cout << "load map " << p::extract<int>(rows)<<" x "<< p::extract<int>(cols) << std::endl;
 	//ml =  new MapLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
     ml = new FlatlandLoader(railEnv.attr("rail"), p::extract<int>(rows), p::extract<int>(cols));
-    if (delay_exp)
-        ml->setMalfunctionRate(p::extract<float>(railEnv.attr("malfunction_process_data").attr("malfunction_rate")));
+
     if (options1.debug)
         std::cout << "load agents " << std::endl;
 
@@ -42,6 +41,8 @@ PythonCBS<Map>::PythonCBS(p::object railEnv1, string framework, float soft_time_
     al->constraintTable.length_max = max_timestep;
     std::cout << "Max timestep = " << max_timestep << endl; // the deadline is stored in the constraint table in al, which will be used for all path finding.
     malfunction_rate = p::extract<float>(railEnv.attr("malfunction_process_data").attr("malfunction_rate"));
+    if (delay_exp)
+        ml->setMalfunctionRate(malfunction_rate);
     std::cout << "Malfunction rate = " << malfunction_rate << std::endl;
     curr_locations.resize(ml->map_size(), -1);
     prev_locations.resize(ml->map_size(), -1);
