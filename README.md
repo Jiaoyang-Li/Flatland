@@ -74,7 +74,7 @@ int strategies[4] = {1,3,5,6}; // agent_priority_strategies for parallel-lns.
 * Dependencies required by docker are described in ./Flatland2020SubmissionKit/apt.txt 
 * Follow the official submission guide to make submissions.
 
-# Algorithm Overview
+<!---# Algorithm Overview
 
 ## MAPF Model
 Here is a summary of the changes to the standard MAPF model:
@@ -269,7 +269,8 @@ Here are some material about the winner solutions of last year.
 |[Fourth place](https://eprints.hsr.ch/855/1/Masterarbeit_Waelter_Jonas.pdf)| Prioritized planning (max-distance agent first) | Complete Path Reservation (CPR) or reinforcement learning| 79% |
 |Fifth place| Reinforcement learning | Reinforcement learning | 55% |
 
-There are also some [presentations](https://www.youtube.com/watch?v=rGzXsOC7qXg) available online.
+There are also some [presentations](https://www.youtube.com/watch?v=rGzXsOC7qXg) available online.>
+-->
 
 # Credits
 The authors of this work are Jiaoyang Li, Zhe Chen, Yi Zheng and Shao-Hung Chan. They are all team members of team An_old_driver.
