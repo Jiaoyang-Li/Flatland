@@ -1,68 +1,285 @@
-# Flatland 2
+# Introduction
 
+This repo contains the solution of NeurIPS 2020 Flatland Challenge from the team An_old_driver.
 
----
-## How to install the CBS solver
+# Dependency
 
-The CBS solver is in the CBS-corridor folder. Go to the folder and follow the instruction there to compile the code. 
-Make sure the generated libPythonCBS.xx is compiled at the folder where your python codes are.
+1. Downgrade your python to 3.6 and make sure python-dev is also installed.
 
----
-## How to run evaluation
+2. Install boost 1.61.0 (must include libboost-python3) 
+   (Other versions of boost may also work. However you need to make sure your boost-python matches the python version 
+    and configure CMakeLists.txt to let the compiler find right packages.)
+    * Follow Section 5 in [boost 1.61.0 document](https://www.boost.org/doc/libs/1_61_0/more/getting_started/unix-variants.html) to install the library;
+    * In particular, when you run bootstrap.sh, make sure it finds the correct version of python. If you didn't see "Detecting Python version... 3.6", use bootstrap.sh --help to learn to configure path to your python manually.
+    * After installation, make sure that libboost-python3 is in you boost library (which is located at /usr/local/lib by defalult). You might find the library with a slightly different name (e.g., libboost-python36 or libboost-python-py36), in which case, you need to replace "python3" with the last part of the name of your library for variable boostPython in both PythonCBS\CMakelists.txt and CBSH-rect-cmake\CMakeLists.txt. For example, change "set(boostPython python3)" to "set(boostPython python36)".
+3. If you are using windows, configure paths of dependencies manually.
 
-1. Go to Flatland2020 folder. 
-2. Make sure that CBS solver is correctly compiled and libPythonCBS.xx is copied into the Flatland2020 Folder
-3. conda activate flatland-rl
-4. python run.py
-5. hit enter to go to next time step
+# Usage
 
----
+Compile codes under Mapf-solver using cmake and make sure libPythonCBS.xx is compiled at the folder where your python codes are.
 
-## Known Flatland Library Bugs/Issues
-
-1. Local test environment does not work if the evaluation process was interrupted.
-
-Reason: redis-server recorded something about the evaluation data in the server cache. If the evalution was interrupted, the cache remains and causes issues when the user tries to rerun the evalution. 
-
-Solution:**redis-cli flushall** to empty cache and rerun the evaluation. Then it works.
-
-2. Old Flatland Stochastic Data API does not work. Seems that they have changed the API. (Fixed)
-
-New flatland API changes: 
+Then, in python codes:
 
 ```python
-malfunction_generator_and_process_data=malfunction_from_params(malfunction_rate=malfunction_rate, min_duration=min_duration, max_duration= max_duration)
+
+# import mapf solver from shared lib
+from libPythonCBS import PythonCBS
+
+agent_priority_strategy = 3  #  the strategy for sorting agents, choosing a number between 0 and 5
+#                               0: keep the original ordering
+#                               1: prefer max speed then max distance
+#                               2: prefer min speed then max distance
+#                               3: prefer max speed then min distance
+#                               4: prefer min speed then min distance
+#                               5: prefer different start locations then max speed then max distance
+neighbor_generation_strategy = 3    # 0: random walk; 1: start; 2: intersection; 3: adaptive; 4: iterative
+
+# Parameter initialization
+debug = False
+framework = "LNS"  # "LNS" for large neighborhood search or "Parallel-LNS" for parallel LNS.
+time_limit = 200  #Time limit for computing initial solution.
+default_group_size = 5  # max number of agents in a group for LNS
+stop_threshold = 30
+max_iteration = 1000 # when set to 0, the algorithm only run prioritized planning for initial solution.
+agent_percentage = 1.1 # >1 to plan all agents. Otherwise plan only certain percentage of agents.
+replan = True # turn on/off partial replanning.
+replan_timelimit = 3.0 # Time limit for replanning.
+
+# Search for solution
+solver = PythonCBS(local_env, framework, time_limit, default_group_size, debug, replan,stop_threshold,agent_priority_strategy,neighbor_generation_strategy)
+solver.search(agent_percentage, max_iteration)
+
+# Build MCP
+solver.buildMCP()
+
+# Then in the main while loop of flatland simulator
+# Get corresponding action dictionary by:
+action = solver.getActions(local_env, steps, replan_timelimit) # steps: current timestep
+
+
+```
+## Other important hard coded parameters.
+
+In ./Mapf-solver/PythonAPI/PythonCBS.h
+```c++
+int max_replan_times = 50000; // Maximum replanning times.
+float max_replan_runtime = 100; // Maximum time spend on replanning.
+int strategies[4] = {1,3,5,6}; // agent_priority_strategies for parallel-lns.
+```
+## Submitting to flatland contest server.
+* Example run.py script is located in folder Flatland2020
+* Place Mapf-solver folder under the root of submission repo. Make sure run.sh can find Mapf-solver for compiling source code.
+* Dependencies required by docker are described in ./Flatland2020/apt.txt 
+
+# Algorithm Overview
+
+## MAPF Model
+Here is a summary of the changes to the standard MAPF model:
+* Agents do not appear on the map before they start to move and disappear from the map after reaching their goal locations.
+* All agents have the same speed.
+* The orientations of the agents are considered. In most cases (unless hitting a deadend), the agents cannot move backwards.
+* Agents need to reach their goal locations before a given max timestep. Accoriding to their [document](http://flatland-rl-docs.s3-website.eu-central-1.amazonaws.com/04_specifications.html#maximum-number-of-allowed-time-steps-in-an-episode), max_timestep = timedelay_factor * alpha * (env.width + env.height + ratio_nr_agents_to_nr_cities), where the following default values are used: timedelay_factor=4, alpha=2 and ratio_nr_agents_to_nr_cities=20.
+* Agents may meet malfunction during plan execuatation.
+
+## Framework 1: LNS
+We use Large Neighbourhood Search (LNS) as the framwork. 
+
+```c++
+A = [a1, a2, ...];  // unplanned agents
+A = sort(A);  // sort the agents by some heuristics (e.g., speed, distance to the goal location)
+P = PrioritizedPlanning(A); // get initial paths by PP
+while(not timeout and m <= num_of_agents) {
+    A' = a subset of agents in A;
+    old_paths = paths of A' in P;
+    remove old_paths from P;
+    paths = replan paths for agents in A' by viewing paths in P as dynamic obstabcles;
+    if (paths are better than old_paths)
+        add paths to P;
+    else
+        add old_paths to P;
+}
 ```
 
----
+### Different stratefies for the neighborhood search
 
-## Useful links: 
+#### Strategy 1: random walk
+We select a bottleneck agent and let it perform a random walk on "improving moves" until it conflicts with m-1 agents.
+Together with the bottle neck agent, we replan the paths of the m agents by CBS.
+```c++
+a = the agent with max cost increment in A but not in tabu_list;
+update tabu_list;
+conflicting_agents = randomWalk(a, m - 1); // let agent a perform a random walk (starting from a random timestep on its path) until it conflicts with m - 1 agents
+A' = {a} + conflicting_agents;
+old_paths = paths of A' in P;
+remove old_paths from P;
+T = min(remaining_runtime, 10s);
+paths = CBS(A', T, P);  // try to find collision-free paths for agents in a that do not collide with any path in P by CBS with a time limit of T 
+if(paths are found) {
+    add paths to P;
+    m += 1;
+} else {
+    add old_paths to P;
+    m -= 1;
+}
+```
 
-  ### - The challenge website: 
-  https://flatland.aicrowd.com/intro.html 
+#### Strategy 2: start location
+We randomly select a start location and collect the agents who start from there.
+We sort the agents in decreasing order of their cost increments (breaking ties randomly) and replan their paths by prioritized planning.
+ ```c++
+x = a random start location;
+A' = agents who start at location x;
+A' = sort(A'); // sort the agents in decreasing order of their cost increments
+old_paths = paths of A' in P;
+remove old_paths from P;
+paths = PrioritizedPlanning(A); // get initial paths by PP
+if (paths are better than old_paths)
+    add paths to P;
+else
+    add old_paths to P;
+ ```
 
-  ### - Flatland Library Page (2.1.10, latest lib is 2.2.x):
-   http://flatland-rl-docs.s3-website.eu-central-1.amazonaws.com/index.html 
+#### Strategy 3: intersection
+We randomly select an intersection and collect the agents who has visited there.
+We sort the agents randomly and replan their paths by prioritized planning.
+ ```c++
+x = a random inersection location;
+A' = agents who has visited x;
+A' = random_shuffle(A');
+old_paths = paths of A' in P;
+remove old_paths from P;
+paths = PrioritizedPlanning(A); // get initial paths by PP
+if (paths are better than old_paths)
+    add paths to P;
+else
+    add old_paths to P;
+ ```
 
-  ### - Useful Discussions:
 
----
+## Framework 2: CPR
 
-**Timeline:** 
+The idea is borrowed from Complete Path Reservation (CPR) from one of the last year's 
+[solution](https://eprints.hsr.ch/855/1/Masterarbeit_Waelter_Jonas.pdf).
+The idea is that we dynamically assign directions to the edges on the graph so that, 
+at any timestep, for every pair of neighboring locations v and u, we only allow agents to move in one direction, 
+i.e., either from v to u or from u to v.
+If we ask all agents to follow their shortest paths on this modified directed graph, it is guaranteed that 
+all agents that have paths to their goal locations on the directed graph 
+can reach their goal locations without deadlocks.
 
-- **June 1st - July 7th:** Warm-Up Round
-- **July 7st - July 31st:** Round 1
-- **August 1st - October 19th:** Round 2
-- **October 20th - October 25th:** Post Challenge Analysis
-- **October 25th:** Final Results Announced
-- **October 16th - November 10th:** Post Challenge Wrap-Up
+We use a matrix ``highways'' of size (map-size * map-size) to represent the directions of the edges. 
+At any timestep, for any pair of locations u and v, highways[u][v] + highways[v][u] = 0.
+- highways[u][v] = k > 0 means that there are currently k agents that *want to* move from u to v. 
+  Future agents can also move from u to v.
+- highways[u][v] = -k < 0 means that there are currently k agents that *want to* move from v to u. 
+  So future agents cannot move from u to v.
+- highways[u][v] = 0 means that there are no agents that *want to* move from u to v or v to u. 
+  So the next agent can move either from u to v or v to u.
+  
+We update highways whenever we plan a path for an agent and whenever an agent moves.
+- If a new planned path traverses edge (u, v), then highways[u][v]++ and highways[v][u]--.
+- If an agent moves from u to v at the current timestep, then highways[u][v]-- and highways[v][u]++,
+  i.e., the agent has already used this edge, so it can release its reservation in highways.
+  
+When we plan path for an agent, we can only use edges (u, v) that satisfy highways[u][v] >= 0. 
 
-----
+We show the pseudo-codes below.
 
-## Current Solution Structure
+### Initial Planning
+```c++
+A = [a1, a2, ..., am];  // unplanned agents
+P = {};  // planned paths
+A = sort(A);  // sort the agents by some heuristics
+highways = a (map-size * map-size) zero matrix; // the directions of the edges
+for (a in A) {
+    path = A*(a, highways);  // find a shortest path by A* that only uses edges (u, v) that satisfy highway[u][v] >= 0
+    if(path is found) {
+        for ((u,v) in path) { // update highways
+            highways[u][v]++;
+            highways[v][u]--;
+        }
+        Add path to P;
+        Remove a from A;
+    }
+}
+```
 
-https://app.lucidchart.com/invitations/accept/156887d6-7e9f-43ca-af22-f24000d166d1
+### Replanning at every timestep during execution
+agent_steps is intialized as a zero vector of length m (m is the number of agents) at timestep 0. 
+It represents the number of steps each agent has already taken along its path.
 
-![image](Structure.png)
+```c++
+/* Update agent_steps and highways */
+currs = locations of all agents at the current timestep;
+prevs = locations of all agents at the previous timestep;
+replan = false;
+for (i = 1; i < m; i ++) {  // m is the number of agents
+    if (currs[i] != prevs[i]) {  // agent i moves from prevs[i] to currs[i]       
+        agent_steps[i]++;
+        highways[prevs[i]][currs[i]]--;
+        highways[currs[i]][prevs[i]]++;       
+        if (highways[prevs[i]][currs[i]] == 0) {
+            replan = true;
+        }
+    }
+}
+
+/* replan if necessary*/
+if (replan) {
+    for (a in A) {
+        path = A*(a, highways);  // find a shortest path by A* that only uses edges (u, v) that satisfy highway[u][v] >= 0
+        if(path is found) {
+            for ((u,v) in path) { // update highways
+                highways[u][v]++;
+                highways[v][u]--;
+            }
+            Add path to P;
+            Remove a from A;
+        }        
+    }
+}
+
+/* generate the next location that each agent needs to go */
+togo = vector(m, nullptr);
+for (i = 1; i < m; i ++) {
+    p = the path of agent ai in P;
+    if (p exists and agent ai has not reach its goal location) {
+        togo[i] = p[agent_steps[i] + 1];
+    }
+}
+return togo;
+```
+
+
+
+
+# Past Winner Solutions
+
+Here are some material about the winner solutions of last year.
+
+
+| Team | Initial planning | Replanning | Success rate in the final round |
+| --- | --- | --- | --- |
+|First place| Prioritized planning (max-speed agent first, breaking ties randomly) with multiple runs | MCP + prioritized planning   | 99% |
+|[Second place](https://docs.google.com/presentation/d/12bbp7MwoB0S7FaTYI4QOAKMoijf_f4em64VkoUtdwts/edit#slide=id.g6dde6a5360_0_1)| Prioritized planning  (max-speed agent first, breaking ties by preferring min-distance agent) | MCP | 96% |
+|[Third place](https://github.com/vetand/FlatlandChallenge2019/blob/master/Approach_description.pdf)| Prioritized planning  (max-speed agent first) | Replan the delayed agent by viewing it as the lowest-priority agent | 95% |
+|[Fourth place](https://eprints.hsr.ch/855/1/Masterarbeit_Waelter_Jonas.pdf)| Prioritized planning (max-distance agent first) | Complete Path Reservation (CPR) or reinforcement learning| 79% |
+|Fifth place| Reinforcement learning | Reinforcement learning | 55% |
+
+There are also some [presentations](https://www.youtube.com/watch?v=rGzXsOC7qXg) available online.
+
+# Credits
+The authors of this work are Jiaoyang Li, Zhe Chen, Yi Zheng and Shao-Hung Chan. They are all team members of team An_old_driver.
+
+We would like to thank 
+Daniel Harabor, Peter J. Stuckey, Hang Ma and Sven Koenig for their ideas and advice.
+
+We would like to thank Han Zhang for initially trying some ideas. 
+
+Copyright (c) 2020 The University of Southern California. All Rights Reserved.
+
+Copyrights licensed under an Academic/non-profit use license.
+
+See the accompanying LICENSE file for terms.
 
 

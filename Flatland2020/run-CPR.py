@@ -169,7 +169,9 @@ while True:
     debug = False
     default_group_size = 5  # max number of agents in a group
     stop_threshold = 30
-    CBS = PythonCBS(local_env, frameworks[evaluation_number//10], time_limit, default_group_size, debug, replan[evaluation_number],stop_threshold)
+    agent_priority_strategy = 3
+    neighbor_generation_strategy = 3
+    CBS = PythonCBS(local_env, frameworks[evaluation_number//10], time_limit, default_group_size, debug, replan[evaluation_number],stop_threshold,agent_priority_strategy,neighbor_generation_strategy)
     CBS.search(agent_percentages[evaluation_number], max_iterations[evaluation_number//10])
     evaluation_number += 1
     CBS.buildMCP()

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cmake ./CBS-corridor -DCMAKE_BUILD_TYPE=Release &&\
+cmake ./Mapf-solver -DCMAKE_BUILD_TYPE=Release &&\
 make &&\
-cp ./PythonCBS/libPythonCBS.so ./libPythonCBS.so &&\
+cp ./libPythonCBS.so ./libPythonCBS.so &&\
 python ./run.py
