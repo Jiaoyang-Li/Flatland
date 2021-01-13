@@ -25,6 +25,7 @@ Then, in python codes:
 # import mapf solver from shared lib
 from libPythonCBS import PythonCBS
 
+# Parameter initialization
 agent_priority_strategy = 3  #  the strategy for sorting agents, choosing a number between 0 and 5
 #                               0: keep the original ordering
 #                               1: prefer max speed then max distance
@@ -33,8 +34,6 @@ agent_priority_strategy = 3  #  the strategy for sorting agents, choosing a numb
 #                               4: prefer min speed then min distance
 #                               5: prefer different start locations then max speed then max distance
 neighbor_generation_strategy = 3    # 0: random walk; 1: start; 2: intersection; 3: adaptive; 4: iterative
-
-# Parameter initialization
 debug = False
 framework = "LNS"  # "LNS" for large neighborhood search or "Parallel-LNS" for parallel LNS.
 time_limit = 200  #Time limit for computing initial solution.
@@ -44,6 +43,9 @@ max_iteration = 1000 # when set to 0, the algorithm only run prioritized plannin
 agent_percentage = 1.1 # >1 to plan all agents. Otherwise plan only certain percentage of agents.
 replan = True # turn on/off partial replanning.
 replan_timelimit = 3.0 # Time limit for replanning.
+
+# Initialize local flatland environment
+local_env = ......
 
 # Search for solution
 solver = PythonCBS(local_env, framework, time_limit, default_group_size, debug, replan,stop_threshold,agent_priority_strategy,neighbor_generation_strategy)
@@ -78,7 +80,7 @@ Here is a summary of the changes to the standard MAPF model:
 * Agents do not appear on the map before they start to move and disappear from the map after reaching their goal locations.
 * All agents have the same speed.
 * The orientations of the agents are considered. In most cases (unless hitting a deadend), the agents cannot move backwards.
-* Agents need to reach their goal locations before a given max timestep. Accoriding to their [document](http://flatland-rl-docs.s3-website.eu-central-1.amazonaws.com/04_specifications.html#maximum-number-of-allowed-time-steps-in-an-episode), max_timestep = timedelay_factor * alpha * (env.width + env.height + ratio_nr_agents_to_nr_cities), where the following default values are used: timedelay_factor=4, alpha=2 and ratio_nr_agents_to_nr_cities=20.
+* Agents need to reach their goal locations before a given max timestep. 
 * Agents may meet malfunction during plan execuatation.
 
 ## Framework 1: LNS
