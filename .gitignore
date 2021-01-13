@@ -11,9 +11,9 @@ Flatland2019
 Mapf-solver/data_analysis
 /.idea/
 /.vscode/
-Flatland2020/cmake_install.cmake
-Flatland2020/CMakeCache.txt
-Flatland2020/Makefile
-Flatland2020/CMakeFiles
+Flatland2020SubmissionKit/cmake_install.cmake
+Flatland2020SubmissionKit/CMakeCache.txt
+Flatland2020SubmissionKit/Makefile
+Flatland2020SubmissionKit/CMakeFiles
 test*
 Mapf-solver/build

@@ -69,9 +69,10 @@ float max_replan_runtime = 100; // Maximum time spend on replanning.
 int strategies[4] = {1,3,5,6}; // agent_priority_strategies for parallel-lns.
 ```
 ## Submitting to flatland contest server.
-* Example run.py script is located in folder Flatland2020
+* Example run.py script is located in folder ./Flatland2020SubmissionKit
 * Place Mapf-solver folder under the root of submission repo. Make sure run.sh can find Mapf-solver for compiling source code.
-* Dependencies required by docker are described in ./Flatland2020/apt.txt 
+* Dependencies required by docker are described in ./Flatland2020SubmissionKit/apt.txt 
+* Follow the official submission guide to make submissions.
 
 # Algorithm Overview
 
