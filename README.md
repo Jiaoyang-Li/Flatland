@@ -30,8 +30,6 @@ The advisors:
 
 We would like to thank to Han Zhang, another Ph.D. student from Sven Koenig's group initially tried some ideas for the competition as well. While not having been directly involved in the competition, a lot of credit also goes to Satish Kumar (Research Assistant Professor in Computer Science, Physics, and Industrial Engineering), who has been part of Sven Koenig's group for a long time and provided many ideas over the years. The team is also working with other researchers at USC (Nora Ayanian and Bistra Dilkina) but also researchers in Canada, Chile, the Czech Republic, Israel, and (previously) Japan.
 
-The organizers of the competition had initially invited Sven Koenig to participate as expert but, given the great outcome for the team, now he is glad that he stepped down and was not involved in the organization of the competition other than its initial proposal to NeurIPS.
-
 The research at the University of Southern California and the US-Australian collaboration was supported by the National Science Foundation (NSF) under grant numbers 1724392, 1409987, 1817189, 1837779, and 1935712. The views and conclusions contained in this document are those of the authors and should not be interpreted as representing the official policies, either expressed or implied, of the sponsoring organizations, agencies, or the U.S. government.
 
 Copyright (c) 2020 The University of Southern California. All Rights Reserved.
