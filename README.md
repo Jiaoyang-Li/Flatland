@@ -7,7 +7,7 @@ on complex railway networks? This is a real-world problem faced by many transpor
 the world such as the Swiss Federal Railways and Deutsche Bahn. Your contribution may shape the way modern traffic management
 systems are implemented, not only in railway but also in other areas of transportation and logistics."
  
-This repository contains the solution from the team an_old_driver, consisting of three Ph.D. students from the 
+This repository contains the solution from the team An_Old_Driver, consisting of three Ph.D. students from the 
 University of Southern California and one Ph.D. student from Monash University, the winner of NeurIPS 2020 Flatland Challenge.
 They used multi-agent path finding (MAPF) technology to reach the highest score in both rounds of the challenge and outperformed all other 
 entries in both tracks, including all reinforcement learning entries. According to the organizers, there were more than
