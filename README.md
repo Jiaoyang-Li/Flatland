@@ -1,35 +1,30 @@
 # Introduction
 
-NeurIPS 2020 Flatland Challenge, is a railway scheduling competition which was held in partnership with German, Swiss,
-and French railway companies. The organizers characterized the research challenge, that lasted several months with continuous software submissions,
-as follows: "This challenge tackles a key problem in the transportation world: How to efficiently manage dense traffic 
+<center><img src=./solution.gif></center>
+
+[NeurIPS 2020 Flatland Challenge](https://www.aicrowd.com/challenges/neurips-2020-flatland-challenge) 
+is a railway scheduling competition which was held in partnership with German, Swiss, and French railway companies. 
+This repository contains the **winner solution** from the team An_Old_Driver.
+
+The organizers characterized the research challenge, that lasted several months with continuous software submissions,
+as follows: 
+>This challenge tackles a key problem in the transportation world: How to efficiently manage dense traffic 
 on complex railway networks? This is a real-world problem faced by many transportation and logistics companies around 
 the world such as the Swiss Federal Railways and Deutsche Bahn. Your contribution may shape the way modern traffic management
-systems are implemented, not only in railway but also in other areas of transportation and logistics."
- 
-This repository contains the solution from the team [An_Old_Driver](https://www.aicrowd.com/challenges/neurips-2020-flatland-challenge/teams/An_Old_Driver), consisting of three Ph.D. students from the University of Southern California and one Ph.D. student from Monash University, the winner of NeurIPS 2020 Flatland Challenge.
-They used multi-agent path finding (MAPF) technology to reach the highest score in both rounds of the challenge and outperformed all other 
-entries in both tracks, including all reinforcement learning entries. According to the organizers, there were more than
-700 participants from 51 countries making more than 2,000 submissions. ([mapf.info](http://mapf.info/index.php/Main/News))
+systems are implemented, not only in railway but also in other areas of transportation and logistics.
+
+The software is based on multi-agent path finding (MAPF) technology and has reached the highest score in both rounds of the challenge and outperformed all other entries in both tracks, including all reinforcement learning entries. According to the organizers, there were more than 700 participants from 51 countries making more than 2,000 submissions. 
+
 
 # Credits
-The team members:
-
+The software is developed by
 * Jiaoyang Li, University of Southern California
 * Zhe Chen, Monash University
 * Yi Zheng, University of Southern California
 * Shao-Hung Chan, University of Southern California
 
-The advisors:
-
-* Daniel Harabor, Monash University
-* Peter Stuckey, Monash University
-* Hang Ma, Simon Fraser University
-* Sven Koenig, University of Southern California
-
-We would like to thank to Han Zhang, another Ph.D. student from Sven Koenig's group initially tried some ideas for the competition as well. While not having been directly involved in the competition, a lot of credit also goes to Satish Kumar (Research Assistant Professor in Computer Science, Physics, and Industrial Engineering), who has been part of Sven Koenig's group for a long time and provided many ideas over the years. The team is also working with other researchers at USC (Nora Ayanian and Bistra Dilkina) but also researchers in Canada, Chile, the Czech Republic, Israel, and (previously) Japan.
-
-The research at the University of Southern California and the US-Australian collaboration was supported by the National Science Foundation (NSF) under grant numbers 1724392, 1409987, 1817189, 1837779, and 1935712. The views and conclusions contained in this document are those of the authors and should not be interpreted as representing the official policies, either expressed or implied, of the sponsoring organizations, agencies, or the U.S. government.
+We would like to thank to Han Zhang for initially tried some ideas for the competition. 
+We would like to thank Daniel Harabor, Peter J. Stuckey, Hang Ma and Sven Koenig for their ideas and advice.
 
 Copyright (c) 2020 The University of Southern California. All Rights Reserved.
 
@@ -37,15 +32,12 @@ Copyrights licensed under an Academic/non-profit use license.
 
 See the accompanying LICENSE file for terms.
 
-# Our Solution
-
-## Presentation
-[![Solution Talk](video_cover.png)](https://www.youtube.com/watch?v=pNbFDVXkHQ0)
-
-## Demo
-![Solution Demo](./solution.gif)
 
 # Dependency
+
+The software is developed in C++ and uses boost-python to interact with the Python-based Flatland simulator. 
+boost-python requires special versions of boost and python, and therefore, 
+we suggest you follow the following instruction to install boost and boost-python.
 
 1. Downgrade your python to 3.6 and make sure python-dev is also installed.
 
@@ -55,16 +47,15 @@ See the accompanying LICENSE file for terms.
     * Follow Section 5 in [boost 1.61.0 document](https://www.boost.org/doc/libs/1_61_0/more/getting_started/unix-variants.html) to install the library;
     * In particular, when you run bootstrap.sh, make sure it finds the correct version of python. If you didn't see "Detecting Python version... 3.6", use bootstrap.sh --help to learn to configure path to your python manually.
     * After installation, make sure that libboost-python3 is in you boost library (which is located at /usr/local/lib by defalult). You might find the library with a slightly different name (e.g., libboost-python36 or libboost-python-py36), in which case, you need to replace "python3" with the last part of the name of your library for variable boostPython in both PythonCBS\CMakelists.txt and CBSH-rect-cmake\CMakeLists.txt. For example, change "set(boostPython python3)" to "set(boostPython python36)".
-3. If you are using windows, configure paths of dependencies manually.
+3. If you are using Windows, configure paths of dependencies manually in ./Mapf-solver/CMakeLists.txt.
 
 # Usage
 
 Compile codes under Mapf-solver using cmake and make sure libPythonCBS.xx is compiled at the folder where your python codes are.
-
-Then, in python codes:
+* ./run_example.py is an example pythoin code that we use to test our software on a locally generated flatland problem.
+* Below is an template python code with explanations:
 
 ```python
-
 # import mapf solver from shared lib
 from libPythonCBS import PythonCBS
 
@@ -97,16 +88,11 @@ solver.search(agent_percentage, max_iteration)
 # Build MCP
 solver.buildMCP()
 
-# Then in the main while loop of flatland simulator
+# Then in the main while loop of the Flatland simulator
 # Get corresponding action dictionary by:
 action = solver.getActions(local_env, steps, replan_timelimit) # steps: current timestep
-
-# Clear MCP after the simulation finish.
-solver.clearMCP()
-
-
 ```
-* ./run_example.py shows how we use our solver on a locally generated flatland problem.
+
 
 ## Other important hard coded parameters.
 
@@ -322,15 +308,16 @@ There are also some [presentations](https://www.youtube.com/watch?v=rGzXsOC7qXg)
 
 # Further Reading
 
-Solutions From Flatland 2019
+## Presentation on our solution
+[![Solution Talk](video_cover.png)](https://www.youtube.com/watch?v=pNbFDVXkHQ0)
+
+More details of the vairous MAPF technologies mentioned in the talk and other MAPF related material can be found at [mapf.info](http://mapf.info/).
+
+## 2019 Flatland Challenge
+Solutions from [2019 Flatland Challenge](https://www.aicrowd.com/challenges/flatland-challenge)
 * [First place](https://www.aicrowd.com/blogs/flatland-mugurel)
 * [Second place](https://docs.google.com/presentation/d/12bbp7MwoB0S7FaTYI4QOAKMoijf_f4em64VkoUtdwts/edit#slide=id.g6dde6a5360_0_1)
 * [Third place](https://github.com/vetand/FlatlandChallenge2019/blob/master/Approach_description.pdf)
 * [Fourth place](https://eprints.hsr.ch/855/1/Masterarbeit_Waelter_Jonas.pdf)
 
 [Flatland 2019 Presentation](https://www.youtube.com/watch?v=rGzXsOC7qXg)
-
-
-
-
-
