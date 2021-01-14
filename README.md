@@ -1,6 +1,52 @@
 # Introduction
 
-This repo contains the solution of NeurIPS 2020 Flatland Challenge from the team An_old_driver.
+NeurIPS 2020 Flatland Challenge, is a railway scheduling competition which was held in partnership with German, Swiss,
+and French railway companies. The organizers characterized the research challenge, that lasted several months with continuous software submissions,
+as follows: "This challenge tackles a key problem in the transportation world: How to efficiently manage dense traffic 
+on complex railway networks? This is a real-world problem faced by many transportation and logistics companies around 
+the world such as the Swiss Federal Railways and Deutsche Bahn. Your contribution may shape the way modern traffic management
+systems are implemented, not only in railway but also in other areas of transportation and logistics."
+ 
+This repository contains the solution from the team an_old_driver, consisting of three Ph.D. students from the 
+University of Southern California and one Ph.D. student from Monash University, the winner of NeurIPS 2020 Flatland Challenge.
+They used multi-agent path finding (MAPF) technology to reach the highest score in both rounds of the challenge and outperformed all other 
+entries in both tracks, including all reinforcement learning entries. According to the organizers, there were more than
+700 participants from 51 countries making more than 2,000 submissions. ([mapf.info](http://mapf.info/index.php/Main/News))
+
+# Credits
+The team members:
+
+* Jiaoyang Li, University of Southern California
+* Zhe Chen, Monash University
+* Yi Zheng, University of Southern California
+* Shao-Hung Chan, University of Southern California
+
+The advisors:
+
+* Daniel Harabor, Monash University
+* Peter Stuckey, Monash University
+* Hang Ma, Simon Fraser University
+* Sven Koenig, University of Southern California
+
+We would like to thank to Han Zhang, another Ph.D. student from Sven Koenig's group initially tried some ideas for the competition as well. While not having been directly involved in the competition, a lot of credit also goes to Satish Kumar (Research Assistant Professor in Computer Science, Physics, and Industrial Engineering), who has been part of Sven Koenig's group for a long time and provided many ideas over the years. The team is also working with other researchers at USC (Nora Ayanian and Bistra Dilkina) but also researchers in Canada, Chile, the Czech Republic, Israel, and (previously) Japan.
+
+The organizers of the competition had initially invited Sven Koenig to participate as expert but, given the great outcome for the team, now he is glad that he stepped down and was not involved in the organization of the competition other than its initial proposal to NeurIPS.
+
+The research at the University of Southern California and the US-Australian collaboration was supported by the National Science Foundation (NSF) under grant numbers 1724392, 1409987, 1817189, 1837779, and 1935712. The views and conclusions contained in this document are those of the authors and should not be interpreted as representing the official policies, either expressed or implied, of the sponsoring organizations, agencies, or the U.S. government.
+
+Copyright (c) 2020 The University of Southern California. All Rights Reserved.
+
+Copyrights licensed under an Academic/non-profit use license.
+
+See the accompanying LICENSE file for terms.
+
+# Our Solution
+
+## Presentation
+[![Solution Talk](./video cover.png)](https://www.youtube.com/watch?v=pNbFDVXkHQ0)
+
+## Demo
+![Solution Demo](./solution.gif)
 
 # Dependency
 
@@ -58,8 +104,13 @@ solver.buildMCP()
 # Get corresponding action dictionary by:
 action = solver.getActions(local_env, steps, replan_timelimit) # steps: current timestep
 
+# Clear MCP after the simulation finish.
+solver.clearMCP()
+
 
 ```
+* ./run_example.py shows how we use our solver on a locally generated flatland problem.
+
 ## Other important hard coded parameters.
 
 In ./Mapf-solver/PythonAPI/PythonCBS.h
@@ -72,7 +123,7 @@ int strategies[4] = {1,3,5,6}; // agent_priority_strategies for parallel-lns.
 * Example run.py script is located in folder ./Flatland2020SubmissionKit
 * Place Mapf-solver folder under the root of submission repo. Make sure run.sh can find Mapf-solver for compiling source code.
 * Dependencies required by docker are described in ./Flatland2020SubmissionKit/apt.txt 
-* Follow the official submission guide to make submissions.
+* Following the official submission guide to make submissions.
 
 <!---# Algorithm Overview
 
@@ -272,18 +323,17 @@ Here are some material about the winner solutions of last year.
 There are also some [presentations](https://www.youtube.com/watch?v=rGzXsOC7qXg) available online.>
 -->
 
-# Credits
-The authors of this work are Jiaoyang Li, Zhe Chen, Yi Zheng and Shao-Hung Chan. They are all team members of team An_old_driver.
+# Further Reading
 
-We would like to thank 
-Daniel Harabor, Peter J. Stuckey, Hang Ma and Sven Koenig for their ideas and advice.
+Solutions From Flatland 2019
+* [First place](https://www.aicrowd.com/blogs/flatland-mugurel)
+* [Second place](https://docs.google.com/presentation/d/12bbp7MwoB0S7FaTYI4QOAKMoijf_f4em64VkoUtdwts/edit#slide=id.g6dde6a5360_0_1)
+* [Third place](https://github.com/vetand/FlatlandChallenge2019/blob/master/Approach_description.pdf)
+* [Fourth place](https://eprints.hsr.ch/855/1/Masterarbeit_Waelter_Jonas.pdf)
 
-We would like to thank Han Zhang for initially trying some ideas. 
+[Flatland 2019 Presentation](https://www.youtube.com/watch?v=rGzXsOC7qXg)
 
-Copyright (c) 2020 The University of Southern California. All Rights Reserved.
 
-Copyrights licensed under an Academic/non-profit use license.
 
-See the accompanying LICENSE file for terms.
 
 
