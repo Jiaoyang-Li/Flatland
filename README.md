@@ -43,7 +43,7 @@ See the accompanying LICENSE file for terms.
 # Our Solution
 
 ## Presentation
-[![Solution Talk](./video cover.png)](https://www.youtube.com/watch?v=pNbFDVXkHQ0)
+[![Solution Talk](video_cover.png)](https://www.youtube.com/watch?v=pNbFDVXkHQ0)
 
 ## Demo
 ![Solution Demo](./solution.gif)
