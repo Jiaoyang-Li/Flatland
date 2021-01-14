@@ -1,6 +1,8 @@
-# Introduction
+# Multi-Agent Path Finding for Large-Scale Rail Planning
 
-<center><img src=./solution.gif></center>
+![Solution Demo](./solution.gif)
+
+## Introduction
 
 [NeurIPS 2020 Flatland Challenge](https://www.aicrowd.com/challenges/neurips-2020-flatland-challenge) 
 is a railway scheduling competition which was held in partnership with German, Swiss, and French railway companies. 
@@ -16,7 +18,7 @@ systems are implemented, not only in railway but also in other areas of transpor
 The software is based on multi-agent path finding (MAPF) technology and has reached the highest score in both rounds of the challenge and outperformed all other entries in both tracks, including all reinforcement learning entries. According to the organizers, there were more than 700 participants from 51 countries making more than 2,000 submissions. 
 
 
-# Credits
+## Credits
 The software is developed by
 * Jiaoyang Li, University of Southern California
 * Zhe Chen, Monash University
@@ -33,7 +35,7 @@ Copyrights licensed under an Academic/non-profit use license.
 See the accompanying LICENSE file for terms.
 
 
-# Dependency
+## Dependency
 
 The software is developed in C++ and uses boost-python to interact with the Python-based Flatland simulator. 
 boost-python requires special versions of boost and python, and therefore, 
@@ -49,11 +51,12 @@ we suggest you follow the following instruction to install boost and boost-pytho
     * After installation, make sure that libboost-python3 is in you boost library (which is located at /usr/local/lib by defalult). You might find the library with a slightly different name (e.g., libboost-python36 or libboost-python-py36), in which case, you need to replace "python3" with the last part of the name of your library for variable boostPython in both PythonCBS\CMakelists.txt and CBSH-rect-cmake\CMakeLists.txt. For example, change "set(boostPython python3)" to "set(boostPython python36)".
 3. If you are using Windows, configure paths of dependencies manually in ./Mapf-solver/CMakeLists.txt.
 
-# Usage
+## Usage
 
+### Testing on your local machine
 Compile codes under Mapf-solver using cmake and make sure libPythonCBS.xx is compiled at the folder where your python codes are.
 * ./run_example.py is an example pythoin code that we use to test our software on a locally generated flatland problem.
-* Below is an template python code with explanations:
+* Below is a template python code with explanations:
 
 ```python
 # import mapf solver from shared lib
@@ -94,7 +97,7 @@ action = solver.getActions(local_env, steps, replan_timelimit) # steps: current 
 ```
 
 
-## Other important hard coded parameters.
+* Other important hard-coded parameters
 
 In ./Mapf-solver/PythonAPI/PythonCBS.h
 ```c++
@@ -102,7 +105,7 @@ int max_replan_times = 50000; // Maximum replanning times.
 float max_replan_runtime = 100; // Maximum time spend on replanning.
 int strategies[4] = {1,3,5,6}; // agent_priority_strategies for parallel-lns.
 ```
-## Submitting to flatland contest server.
+### Submitting to the Flatland contest server.
 * Example run.py script is located in folder ./Flatland2020SubmissionKit
 * Place Mapf-solver folder under the root of submission repo. Make sure run.sh can find Mapf-solver for compiling source code.
 * Dependencies required by docker are described in ./Flatland2020SubmissionKit/apt.txt 
