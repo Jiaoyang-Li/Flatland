@@ -39,7 +39,7 @@ See the accompanying LICENSE file for terms.
 
 The software is developed in C++ and uses boost-python to interact with the Python-based Flatland simulator. 
 boost-python requires special versions of boost and python, and therefore, 
-we suggest you follow the following instruction to install boost and boost-python.
+we suggest you follow the following instruction to install boost and boost-python:
 
 1. Downgrade your python to 3.6 and make sure python-dev is also installed.
 
@@ -97,9 +97,7 @@ action = solver.getActions(local_env, steps, replan_timelimit) # steps: current 
 ```
 
 
-* Other important hard-coded parameters
-
-In ./Mapf-solver/PythonAPI/PythonCBS.h
+* Other important hard-coded parameters are in ./Mapf-solver/PythonAPI/PythonCBS.h:
 ```c++
 int max_replan_times = 50000; // Maximum replanning times.
 float max_replan_runtime = 100; // Maximum time spend on replanning.
