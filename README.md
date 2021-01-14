@@ -1,6 +1,5 @@
 # Multi-Agent Path Finding for Large-Scale Rail Planning
 
-![Solution Demo](./solution.gif)
 <p align="center">
   <img src="./solution.gif" />
 </p>
