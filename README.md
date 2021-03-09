@@ -36,6 +36,8 @@ Copyrights licensed under an Academic/non-profit use license.
 
 See the accompanying LICENSE file for terms.
 
+**In addition to the above license,  this software is not allowed to be used in 2021 or later flatland 
+challenges or any other challenges.**
 
 ## Dependency
 
