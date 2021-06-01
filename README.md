@@ -19,6 +19,9 @@ systems are implemented, not only in railway but also in other areas of transpor
 
 The software is based on multi-agent path finding (MAPF) technology and has reached the highest score in both rounds of the challenge and outperformed all other entries in both tracks, including all reinforcement learning entries. According to the organizers, there were more than 700 participants from 51 countries making more than 2,000 submissions. 
 
+Please check our paper [1] for more details.
+
+[1] Jiaoyang Li, Zhe Chen, Yi Zheng, Shao-Hung Chan, Daniel Harabor, Peter J. Stuckey, Hang Ma and Sven Koenig. Scalable Rail Planning and Replanning: Winning the 2020 Flatland Challenge. In Proceedings of the International Conference on Automated Planning and Scheduling (ICAPS), pages 477-485, 2021.
 
 ## Credits
 The software is developed by
