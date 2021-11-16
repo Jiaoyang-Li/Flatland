@@ -316,8 +316,14 @@ There are also some [presentations](https://www.youtube.com/watch?v=rGzXsOC7qXg)
 
 # Further Reading
 
+## ICAPS Best Demonstration Award Video
+[![Demo Video](https://img.youtube.com/vi/Pw4GBL1UhPA/0.jpg)](https://www.youtube.com/watch?v=Pw4GBL1UhPA)
+
 ## Presentation on our solution
 [![Solution Talk](video_cover.png)](https://www.youtube.com/watch?v=pNbFDVXkHQ0)
+
+
+
 
 More details of the vairous MAPF technologies mentioned in the talk and other MAPF related material can be found at [mapf.info](http://mapf.info/).
 
